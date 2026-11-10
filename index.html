@@ -816,6 +816,8 @@ function pfmT(){if(scr=='game'&&tab=='pf'){tab='home';R();scrollTo(0,0)}else pfm
 body.mpon:not(.m):not(.mtab) #mp{display:flex}
 #mv{display:none;position:fixed;left:10px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:6}
 body.mpv:not(.m):not(.mtab) #mv{display:block}
+#mv.onsc{position:absolute;bottom:auto}
+#mv.onsc .mvd{width:50px;height:50px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
 .mvd{position:relative;display:grid;place-items:center;width:56px;height:56px;padding:0;border:0;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--g),var(--sk1));box-shadow:0 6px 16px rgba(20,70,40,.35);cursor:pointer;animation:vin 7s linear infinite;animation-play-state:paused}
 .mvd.on{animation-play-state:running}
 .mvd img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1051,6 +1053,11 @@ function tickUI(e){
  const b=$e('mtr');if(b)b.textContent=fm(d);
  const m=$e('mpb');if(m)m.style.width=(p*100)+'%';
  document.querySelectorAll('.qeta').forEach(x=>{x.textContent=etaT(+x.dataset.i)})}
+function placeMv(){
+ const v=$e('mv');if(!v)return;
+ const sc=document.querySelector('#app svg[viewBox="0 0 400 248"]');
+ if(sc&&sc.getBoundingClientRect().width>0){const r=sc.getBoundingClientRect();v.classList.add('onsc');v.style.left=(r.left+window.scrollX+10)+'px';v.style.top=(r.top+window.scrollY+10)+'px'}
+ else{v.classList.remove('onsc');v.style.left='';v.style.top=''}}
 const bodyCls=()=>{document.body.classList.toggle('mpon',!!MS.now&&!MS.mc);document.body.classList.toggle('mpv',!!MS.now&&!!MS.mc)};
 function mini(force){
  const t=MS.now,sig=(t?t.id:'')+'|'+MS.playing+'|'+MS.mc;if(!force&&sig===miniSig)return;miniSig=sig;
@@ -1062,7 +1069,8 @@ function ui(){
  const n=$e('mnow');if(n)n.innerHTML=nowH();
  const q=$e('mq');if(q)q.innerHTML=qH();
  const f=$e('spEmb');if(f)f.classList.toggle('show',!!MS.show);
- mini();tickUI(est())}
+
+ mini();placeMv();tickUI(est())}
 
 /* ---------- khởi tạo ---------- */
 document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></div><div id="spEmb"><div id="spEl"></div></div>');
@@ -1071,9 +1079,10 @@ document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></
  o();
  document.body.classList.toggle('mtab',scr=='game'&&tab=='music');
  if(k&&tab=='music'){const n=$e(kid_);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(p0,p1)}catch(e){}}}
- bodyCls();mini();tickUI(est())}}
+ bodyCls();mini();placeMv();tickUI(est())}}
+window.addEventListener('resize',placeMv);window.addEventListener('load',placeMv);
 setInterval(()=>{
- if(!MS.now)return;
+ if(!MS.now)return;if(MS.mc)placeMv();
  if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
  tickUI(est())},500);
 window.MU={search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,

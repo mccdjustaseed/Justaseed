@@ -1313,4 +1313,80 @@ autoServe=function(){
  finally{bd=sv0;cur=live&&live.cs.some(x=>x.id==c0)?c0:(live&&live.cs[0]?live.cs[0].id:null)}}
 })();
 </script>
+<style>
+/* ===== v11: bảng hóa đơn + camera ===== */
+.ivt{display:grid;grid-template-columns:minmax(0,1fr) auto 28px auto;gap:4px 8px;font-size:.86rem;align-items:baseline}
+.ivt>:nth-child(4n+2),.ivt>:nth-child(4n){text-align:right}.ivt>:nth-child(4n+3){text-align:center}
+.ivt>b:nth-child(-n+4){color:var(--mut);font-size:.74rem;border-bottom:1px solid var(--ln);padding-bottom:2px}
+.cctv{background:#0e1712;color:#9fe8b0;border-color:#2a4535;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+.cctv .rec{color:#ff5a5a;font-weight:700;animation:cbk 1.2s steps(2) infinite}@keyframes cbk{50%{opacity:.15}}
+.cev{border-left:5px solid var(--g2);padding:8px 10px}.cev.err,.cev.run{border-left-color:var(--bad)}.cev.no{border-left-color:#d98a0b}.cev.in{border-left-color:#5aa9e6}.cev.neg{border-left-color:#b39ddb}.cev.sys{border-left-color:var(--mut)}
+.cev p{margin:2px 0;font-size:.88rem}.cev p b{color:var(--mut);font-weight:600}
+@media(prefers-reduced-motion:reduce){.cctv .rec{animation:none}}
+</style>
+<script>
+/* ===== v11: hóa đơn có Sản phẩm - Giá - SL - Thành tiền; tab Camera ===== */
+(()=>{
+const ok=x=>x!=null;
+/* ---- hóa đơn ---- */
+window.makeLines=b=>{if(b.all)return[['Toàn bộ hàng trong quầy',b.pr,1,b.pr]];
+ const z=b.z,n=K[z]||1,pp=Math.round(C[z]*(1+MARK)/100)*100,px=(b.ps&&PX[b.ps])||0,L=[];let sm=0;
+ (b.fl||[]).forEach(([id,q])=>{const u=Math.max(0,Math.round((price(id,z)-pp)/n/100)*100);L.push([nm(id),u,q,u*q]);sm+=u*q});
+ L.push(['Giấy '+z+(b.ps&&b.ps!='kr'&&PS[b.ps]?' '+PS[b.ps].n:''),pp+px,1,pp+px]);sm+=pp+px;
+ const ad=b.pr-sm;if(ad)L.push([ad<0?'Giảm giá / mặc cả':'Làm tròn',ad,1,ad]);
+ (b.gift||[]).forEach(([id,q])=>L.push([nm(id)+' (tặng kèm)',0,q,0]));
+ if(b.xt)L.push([nm(b.xt),b.xp,1,b.xp]);return L};
+window.billLines=b=>b.ls||makeLines(b);
+{const o=addBill;addBill=function(b){try{b.ls=makeLines(b)}catch(e){}o(b)}}
+const ivt=L=>`<div class=ivt><b>Sản phẩm</b><b>Giá</b><b>SL</b><b>Thành tiền</b>${L.map(l=>`<span>${esc(l[0])}</span><span>${$(l[1])}</span><span>${l[2]}</span><b>${$(l[3])}</b>`).join('')}</div>`;
+{const o=bill;bill=function(id){o(id);const b=(s.bills||[]).find(x=>x.id==id);if(!b)return;const q=document.querySelectorAll('.ms .card .inq');if(q.length<3)return;
+ q[1].innerHTML=ivt(billLines(b));
+ const ln=(t,v,c)=>`<div class=row style="margin:2px 0"><span>${t}</span><b class="${c||''}">${v}</b></div>`;
+ q[2].innerHTML=(b.tip?ln('Tiền boa','+'+$(b.tip)):'')+ln('Tổng cộng',b.run?'0đ':$(b.pr+b.xp+b.tip),b.run?'bad':'ok')}}
+billCv=function(b){const L=billLines(b),W=720,[c,x]=paperC(W,540+L.length*46+(b.tip?50:0));
+ x.fillText(`HÓA ĐƠN · Ngày ${b.d}${b.t?' · '+b.t:''}`,W/2,160);dashL(x,190,W);x.textAlign='left';x.fillStyle='#244033';x.font='600 30px Onest,sans-serif';x.fillText('Khách: '+b.nm+(b.vip?' 👑':''),80,240,560);
+ x.font='600 22px Onest,sans-serif';x.fillStyle='#678a73';x.fillText('Sản phẩm',80,292);x.textAlign='right';x.fillText('Giá',400,292);x.textAlign='center';x.fillText('SL',470,292);x.textAlign='right';x.fillText('Thành tiền',W-80,292);
+ let y=338;x.font='26px Onest,sans-serif';x.fillStyle='#244033';
+ L.forEach(l=>{x.textAlign='left';x.fillText(l[0],80,y,230);x.textAlign='right';x.fillText($(l[1]),400,y,110);x.textAlign='center';x.fillText(l[2],470,y);x.textAlign='right';x.fillText($(l[3]),W-80,y,150);y+=46});
+ dashL(x,y-16,W);y+=30;if(b.tip){x.textAlign='left';x.fillText('Tiền boa',80,y);x.textAlign='right';x.fillText('+'+$(b.tip),W-80,y);y+=50}
+ x.font='700 40px "Baloo 2",sans-serif';x.textAlign='left';x.fillText('Tổng',80,y+10);x.textAlign='right';x.fillStyle=b.run?'#d9534f':'#388a55';x.fillText(b.run?'0đ':$(b.pr+b.xp+b.tip),W-80,y+10);y+=75;
+ x.textAlign='center';x.fillStyle='#678a73';x.font='26px Onest,sans-serif';x.fillText(b.run?'Khách quỵt tiền':'★'.repeat(b.st)+'☆'.repeat(5-b.st)+' · Cảm ơn quý khách',W/2,y,560);return c};
+/* ---- camera ---- */
+I.cam='M3 7h12v10H3zM15 11l6-3v8l-6-3';
+TABS.splice(TABS.findIndex(t=>t[0]=='shop')+1,0,['cam','cam','Camera']);
+let CW='Chủ tiệm',CR=0,CF='a',CD='t';
+const cam=e=>{s.cam=s.cam||[];e.id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);e.d=s.day;e.t=live?clk():'';s.cam.unshift(e);s.cam=s.cam.slice(0,300);save()};
+const who=c=>({cn:c.nm||'Khách',vip:!!c.vip,look:c.look});
+const req=c=>{const nd=c.mx||{[c.f]:K[c.z]};return Object.entries(nd).map(a=>nm(a[0])+' × '+a[1]).join(' + ')+' · giấy '+c.z+(c.ps&&PS[c.ps]?' '+PS[c.ps].n:'')+(c.xt?' · '+nm(c.xt):'')+(c.ask?' · muốn quà tặng kèm':'')+' · giá '+$(c.pr)};
+const made=d=>{const f=Object.entries(d.fl||{}).map(a=>nm(a[0])+' × '+a[1]).join(' + ')||'(chưa chọn hoa)',g=Object.entries(d.gift||{}).map(a=>nm(a[0])+' × '+a[1]).join(', ');return f+' · giấy '+(d.size||'?')+(d.ps&&PS[d.ps]?' '+PS[d.ps].n:'')+(g?' · '+g:'')};
+{const o=spawn;spawn=function(){const n=live&&live.cs?live.cs.length:0;o();if(!live||!live.cs)return;live.cs.slice(n).forEach(c=>cam({k:'in',who:'Khách',...who(c),big:!!c.big,txt:c.big?'Đại gia ghé quầy, muốn mua toàn bộ hàng':req(c)}))}}
+{const o=give;give=function(id){const c=live&&live.cs&&live.cs.find(x=>x.id==id);if(!c||c.big)return o(id);
+ const rq=req(c),mk=made({fl:bd.fl,size:bd.size,ps:bd.ps,gift:bd.gift}),sv=s.sv,e0=c.err,run=live.run,w=CW;CR++;let r;try{r=o(id)}finally{CR--}
+ const b=(s.bills||[])[0],base={who:w,...who(c),req:rq,made:mk};
+ if(s.sv>sv&&b)cam({k:'sv',...base,bid:b.id,amt:b.pr+b.xp,tip:b.tip,st:b.st});
+ else if(live.run&&!run)cam({k:'run',...base,amt:c.pr,txt:'Khách lấy hàng rồi bỏ chạy không trả tiền'});
+ else if(c.err>e0)cam({k:'err',...base,txt:'Làm sai so với yêu cầu, nguyên liệu bị bỏ đi'});
+ return r}}
+{const o=decline;decline=function(id){const c=live&&live.cs&&live.cs.find(x=>x.id==id);CR++;try{o(id)}finally{CR--}if(c)cam({k:'no',who:CW,...who(c),req:req(c),txt:'Từ chối khéo vì shop không đủ hàng làm bó này'})}}
+{const o=hg;hg=function(id,a){const c=live&&live.cs&&live.cs.find(x=>x.id==id),p0=c&&c.offer;CR++;try{o(id,a)}finally{CR--}if(!c)return;const gone=!live.cs.includes(c),A={ok:'Đồng ý giá khách đề nghị',gift:'Tặng quà thay vì giảm giá',mid:'Đề nghị giá ở giữa'}[a]||'Giữ nguyên giá';
+ cam({k:gone?'no':'neg',who:'Chủ tiệm',...who(c),req:req(c),txt:'Mặc cả (khách xin '+$(p0)+'): '+A+' → '+(gone?'khách bỏ đi':c.hd?'khách đồng ý, giá '+$(c.pr):'khách còn trả giá')})}}
+{const o=rm;rm=function(id){const c=live&&live.cs&&live.cs.find(x=>x.id==id);if(c&&!CR&&!c.big)cam({k:'no',who:'Khách',...who(c),req:req(c),txt:'Chờ quá lâu, khách bỏ đi'});o(id)}}
+{const o=autoServe;autoServe=function(){CW='Nhân viên';try{return o()}finally{CW='Chủ tiệm'}}}
+{const o=openDay;openDay=function(){o();cam({k:'sys',who:'Hệ thống',txt:'Mở quầy ngày '+s.day+(s.hire?' · nhân viên bắt đầu ca làm việc':'')})}}
+{const o=endDay;endDay=function(){if(live&&live.cs)live.cs.filter(c=>!c.big).forEach(c=>cam({k:'no',who:'Khách',...who(c),req:req(c),txt:'Đóng quầy, khách ra về chưa được phục vụ'}));if(live)cam({k:'sys',who:'Hệ thống',txt:'Đóng quầy'+(s.hire?' · nhân viên kết thúc ca':'')});o()}}
+{const o=addBill;addBill=function(b){o(b);if(b.all)cam({k:'sv',who:'Chủ tiệm',cn:b.nm,vip:1,look:b.look,req:'Mua toàn bộ hàng trong quầy',made:'Bán hết hàng cho khách',bid:b.id,amt:b.pr,tip:0,st:5})}}
+/* ---- giao diện tab Camera ---- */
+const KL={in:'🚪 Khách vào quầy',sv:'✅ Giao hàng thành công',err:'❌ Làm sai đơn',no:'🚫 Không bán được',neg:'💬 Mặc cả',run:'🏃 Khách quỵt tiền',sys:'⚙️ Hệ thống'};
+window.camF=(f,d)=>{if(f)CF=f;if(d)CD=d;R()};
+window.camClr=()=>{if(Date.now()-(camClr.t||0)>4000){camClr.t=Date.now();return toast('Bấm lần nữa để xóa toàn bộ nhật ký camera')}s.cam=[];save();R()};
+V.cam=()=>{const A=s.cam||[],td=A.filter(e=>e.d==s.day),L=A.filter(e=>(CD=='a'||e.d==s.day)&&(CF=='a'||e.who==CF)),n=k=>td.filter(e=>e.k==k).length,bt=(a,t,f)=>`<button class="s ${(f?CF:CD)==a?'on2':''}" onclick="camF(${f?`'${a}'`:'0'},${f?'0':`'${a}'`})">${t}</button>`,op=s.ph=='open'&&live;
+ return `<div class="card cctv"><div class=row style="margin:0"><span><span class=rec>● REC</span> CAM 01 · QUẦY</span><b>${op?clk():'--:--'}</b></div><div style="margin-top:4px">Ngày ${s.day} · ${op?'đang mở · '+live.cs.length+' khách trong quầy':'quầy đang đóng'}<br>Nhân viên: ${s.hire?'đang làm việc':'không có ca'} · Hôm nay: ${n('sv')} giao · ${n('err')} sai · ${n('no')+n('run')} mất khách</div></div>
+ <div class=card style="padding:8px"><div class=row style="justify-content:flex-start;margin:0">${bt('t','Hôm nay')}${bt('a','Tất cả ngày')}</div><div class=row style="justify-content:flex-start;margin:4px 0 0">${bt('a','Tất cả',1)}${bt('Nhân viên','Nhân viên',1)}${bt('Chủ tiệm','Chủ tiệm',1)}${bt('Khách','Khách',1)}</div></div>`
+ +(L.length?L.slice(0,80).map(e=>`<div class="card cev ${e.k}"><div class=row style="margin:0"><span style="display:flex;gap:6px;align-items:center">${e.look?`<span style="zoom:.55">${cu(e.look,0,e.vip)}</span>`:''}<span><b>${KL[e.k]||e.k}</b><br><span class=mut>Ngày ${e.d}${e.t?' · '+e.t:''}${e.cn?' · '+esc(e.cn)+(e.vip?' 👑':''):''}</span></span></span><span class=chip>${e.who}</span></div>
+ ${e.req?`<p><b>Khách yêu cầu:</b> ${esc(e.req)}</p>`:''}${e.txt&&e.k!='in'?`<p>${esc(e.txt)}</p>`:e.txt?`<p>${esc(e.txt)}</p>`:''}
+ ${e.made?`<p><b>${e.who} làm đơn:</b> ${esc(e.made)}</p>`:''}${e.k=='sv'?`<p><b>Giao hàng:</b> thu <span class=ok>${$(e.amt)}</span>${e.tip?' + boa '+$(e.tip):''} · ${e.st}★ ${e.bid?`<button class=s onclick="bill('${e.bid}')">Xem bill</button>`:''}</p>`:''}</div>`).join(''):'<div class=card><p class=mut style="margin:0">Chưa có hình ảnh nào được ghi lại. Mở quầy để camera bắt đầu ghi nhận khách, việc làm đơn và giao hàng.</p></div>')
+ +(A.length?`<div class=row><span class=mut>${A.length}/300 sự kiện được lưu</span><button class=s onclick="camClr()">Xóa nhật ký</button></div>`:'')};
+if(typeof ENL!=='undefined'){ENL.push(['Khách yêu cầu','Customer request'],['Nhân viên','Staff'],['Chủ tiệm','Owner']);ENL.sort((a,b)=>b[0].length-a[0].length)}
+R()})();
+</script>
 </body></html>

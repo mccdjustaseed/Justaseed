@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Justaseed – Shop hoa</title>
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Justaseed – Shop hoa</title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Onest:wght@400;600&family=Patrick+Hand&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#e3f5de;--card:#fffdf7;--ink:#244033;--mut:#678a73;--g:#bfe8c6;--g2:#4fb06f;--g3:#388a55;--pk:#ffd3dc;--bad:#d9534f;--sk1:#bfe9fb;--sk2:#eaf9f0;--h1:#a6dfae;--ln:#d5ebd3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -1049,7 +1049,7 @@ function qH(){
  (MS.qo?(MS.q.length?MS.q.map((t,i)=>qrow(t,i,bt('s','Xóa khỏi hàng đợi',`event.stopPropagation();MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Tìm bài rồi bấm Thêm để đưa vào hàng đợi. Bấm vào bài để phát.</p>'):'')}
 const eta=i=>{let w=Math.max(0,(MS.dur||(MS.now&&MS.now.dur)||0)-est());for(let j=0;j<i;j++){const d=MS.q[j].dur;if(!d)return null;w+=d}return MS.now&&!(MS.dur||MS.now.dur)?null:w};
 const etaT=i=>{const w=eta(i);return w==null?'--:--':fm(w)};
-const qrow=(t,i,btns)=>`<div class="mtr qpl" title="Bấm để phát bài này" onclick="MU.jump(${i})"><span class="qn">${i+1}</span><div class="mti"><b><em class="mqi">${esc(t.name)}</em></b></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
+const qrow=(t,i,btns)=>`<div class="mtr qpl" title="Bấm để phát bài này" onclick="MU.jump(${i})"><span class="qn">${i+1}</span><div class="mti"><b><em class="mqi">${esc(t.name)}</em></b><span>${esc(t.ar||"YouTube")}</span></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
 const isFav=t=>!!(t&&MS.fav.some(x=>x.id===t.id));
 function fH(){
  return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.ft()" aria-expanded="${MS.fo?'true':'false'}">${chv(MS.fo)}<h3 style="margin:0">Yêu thích ${MS.fav.length?`<span class="mut">(${MS.fav.length})</span>`:''}</h3></button></div>`+
@@ -1442,7 +1442,14 @@ setInterval(fx,700);addEventListener('resize',fx);fx()})();
 #mq h3,#mf h3{font-size:.95rem}
 #mq .row .s,#mf .row .s{font-size:.8rem}
 #msq{font-size:.9rem;padding:8px 10px}
+#mq .mti{flex:0 0 38%;width:38%;max-width:38%;min-width:0}
+#mq .qeta{margin-left:auto}
+.mnr .mni{flex:0 0 40%;max-width:40%}
+#mq .mti b{display:block;width:100%;min-width:0;overflow:hidden;white-space:nowrap}
+#mq .mti span{display:block;opacity:.6;font-size:.72rem}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
 </style>
+<script>['gesturestart','gesturechange','gestureend'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});let _lt=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-_lt<300)e.preventDefault();_lt=n},{passive:false});</script>
 <style>
 /* v11: vòng tiến trình quanh đĩa than mini */
 .mvw{position:relative;padding:5px;display:block}

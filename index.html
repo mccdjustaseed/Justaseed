@@ -266,6 +266,7 @@ async function uploadCardToWall() {
       user_id: currentUser.id,
       card_image: b64,
       shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
+      game_avatar: s.pf?.av || null,
       day: s.day || 1,
       money: s.money || 0,
       level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
@@ -279,12 +280,68 @@ async function uploadCardToWall() {
   }
 }
 
+
+
+async function reactWall(msgId, type) {
+  if (!currentUser) return;
+  await supabaseClient.from('wall_reactions').upsert({
+    message_id: msgId,
+    user_id: currentUser.id,
+    reaction: type
+  }, { onConflict: 'message_id,user_id' });
+  toast(type === 'like' ? 'Đã thích' : 'Đã không thích');
+}
+
+async function replyWall(parentId, toUser) {
+  const text = prompt('Trả lời:');
+  if (!text || !text.trim()) return;
+  const { error } = await supabaseClient.from('wall_messages').insert({
+    from_user: currentUser.id,
+    to_user: toUser,
+    message: text.trim(),
+    parent_id: parentId
+  });
+  if (error) return toast('Lỗi: ' + error.message);
+  toast('Đã trả lời');
+  visitFriend(toUser);
+}
+
+async function viewMyWall() {
+  if (!currentUser) return toast('Hãy đăng nhập');
+  const { data: msgs } = await supabaseClient.from('wall_messages')
+    .select('id, message, created_at, from_user')
+    .eq('to_user', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  let html = `<div class=card>
+    <div class=row><h3>📝 Tường của tôi</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>`;
+  if (!msgs || !msgs.length) html += '<p class=mut>Chưa có ai ký tường cho bạn.</p>';
+  else {
+    for (const m of msgs) {
+      const { data: p } = await supabaseClient.from('profiles').select('display_name, username, avatar_url').eq('id', m.from_user).maybeSingle();
+      const who = p?.display_name || p?.username || 'Bạn';
+      const av = p?.avatar_url ? `<img src="${p.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">` : '';
+      html += `<div class=bub>
+      <b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>
+      ${esc(m.message)}
+      <div style="margin-top:4px">
+        <button class=s onclick="reactWall(${m.id}, 'like')">👍</button>
+        <button class=s onclick="reactWall(${m.id}, 'dislike')">👎</button>
+        <button class=s onclick="replyWall(${m.id}, '${friendId}')">Trả lời</button>
+      </div>
+    </div>`;
+    }
+  }
+  html += '</div>';
+  document.getElementById('friend-content').innerHTML = html;
+}
+
 async function visitFriend(friendId) {
   if (!currentUser) return toast('Hãy đăng nhập');
   const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).maybeSingle();
   const { data: profile } = await supabaseClient.from('profiles').select('display_name, username').eq('id', friendId).maybeSingle();
   const { data: msgs } = await supabaseClient.from('wall_messages')
-    .select('message, created_at, from_user')
+    .select('id, message, created_at, from_user')
     .eq('to_user', friendId)
     .order('created_at', { ascending: false })
     .limit(15);
@@ -292,8 +349,12 @@ async function visitFriend(friendId) {
   const cardHtml = shop?.card_image 
     ? `<img src="${shop.card_image}" style="width:100%;border-radius:16px;margin:8px 0" alt="Danh thiếp">`
     : `<canvas id="visit-card" width="360" height="200" style="width:100%;border-radius:16px;margin:8px 0;background:#fff"></canvas>`;
+  const avatar = shop?.game_avatar || '';
+  const avHtml = avatar 
+    ? `<img src="${avatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">`
+    : '👤';
   let html = `<div class=card>
-    <div class=row><h3>🏠 ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
+    <div class=row><h3>${avHtml} ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
     ${cardHtml}
     <p class=mut>Ngày ${shop?.day || '?'} · Tiền ${$(shop?.money || 0)} · Cấp ${shop?.level || '?'}</p>
     <div class=row style="margin-top:8px">
@@ -565,6 +626,7 @@ friends() {
       <span>Xin chào <b>${esc(name)}</b></span>
       <button class=s onclick="logoutDiscord()">Đăng xuất</button>
     </div>
+    <button class=s style="width:100%;margin:6px 0" onclick="viewMyWall()">📝 Xem tường của tôi</button>
     <div class=row>
       <input id="friend-search" placeholder="Nhập Discord username..." style="flex:1;width:auto" onkeydown="if(event.key=='Enter')sendFriendByName()">
       <button class=p onclick="sendFriendByName()">Gửi lời mời</button>

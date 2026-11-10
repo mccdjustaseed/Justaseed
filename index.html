@@ -129,7 +129,10 @@ async function upsertProfile(user) {
       toast('Lỗi lưu profile: ' + error.message);
       console.error(error);
     } else {
-      toast('Đã lưu profile: ' + username);
+      try {
+        const k = 'jsProfSaved:' + user.id;
+        if (!localStorage.getItem(k)) { localStorage.setItem(k, '1'); toast('Đã lưu profile: ' + username); }
+      } catch (e) {}
     }
     if (typeof s !== 'undefined') {
       await supabaseClient.from('shop_public').upsert({

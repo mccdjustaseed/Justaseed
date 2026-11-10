@@ -100,10 +100,153 @@ body.nh nav.fx{transform:translate(-50%,calc(100% + 30px))}
 .dtr *{transition:background-color .6s,color .6s,border-color .6s,fill .6s!important}
 .frA{background:conic-gradient(#ffd166,#ff6fa0,#6bb5ff,#7bd88f,#ffd166);animation:frg 3s linear infinite,frp 1.6s ease-in-out infinite}@keyframes frg{to{filter:hue-rotate(360deg)}}@keyframes frp{50%{box-shadow:0 0 14px 3px #ffd16699}}
 #cbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(78px + env(safe-area-inset-bottom,0px));width:min(92%,520px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border-radius:16px;background:var(--card);border:2px solid var(--g2);box-shadow:0 4px 14px rgba(0,0,0,.18);transition:bottom .3s}body.nh #cbar{bottom:calc(14px + env(safe-area-inset-bottom,0px))}
-</style><link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Dancing+Script:wght@600&family=Playfair+Display:wght@700&family=Comfortaa:wght@700&family=Bangers&family=Sriracha&family=Quicksand:wght@700&display=swap" rel="stylesheet"></head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
+</style><link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Dancing+Script:wght@600&family=Playfair+Display:wght@700&family=Comfortaa:wght@700&family=Bangers&family=Sriracha&family=Quicksand:wght@700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+</head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
 <script>
 const $=n=>Math.round(n).toLocaleString('vi-VN')+'đ',esc=t=>String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const I={home:'M3 11l9-8 9 8M5 10v10h14V10',cart:'M3 4h3l2 11h10l2-8H7M9 20h.01M17 20h.01',tag:'M3 12V3h9l9 9-9 9z',shop:'M3 9l2-5h14l2 5M4 9v11h16V9M9 20v-6h6v6',star:'M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3 1.3-6.2L3 9.5l6.3-.7z',quest:'M6 3v18M6 4h12l-3 4 3 4H6',up:'M12 20V5M5 11l7-7 7 7',book:'M4 5h7a2 2 0 012 2v13a2 2 0 00-2-2H4zM20 5h-7a2 2 0 00-2 2',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6',moon:'M20 14a8 8 0 11-10-10 7 7 0 0010 10z',sun:'M12 8a4 4 0 100 8 4 4 0 000-8M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',music:'M9 18V6l10-2v12M9 18a3 3 0 11-6 0 3 3 0 016 0M19 16a3 3 0 11-6 0 3 3 0 016 0',mute:'M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6',undo:'M4 9h11a5 5 0 010 10H8M4 9l4-4M4 9l4 4',bill:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',spk:'M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2'};
+
+// ===== SUPABASE + DISCORD FRIENDS =====
+const SUPABASE_URL = 'https://dpxldincujnnheeesgcu.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_G64piJDVZnrJgxHeBRA30w_U-aNjFHM';
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+
+async function upsertProfile(user) {
+  if (!user) return;
+  const meta = user.user_metadata || {};
+  const username = meta.preferred_username || meta.full_name || meta.name || user.email || 'player';
+  await supabaseClient.from('profiles').upsert({
+    id: user.id,
+    username: username.toLowerCase(),
+    display_name: meta.full_name || meta.name || username,
+    avatar_url: meta.avatar_url || null
+  }, { onConflict: 'id' });
+}
+
+async function initAuth() {
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    currentUser = session?.user || null;
+    if (currentUser) await upsertProfile(currentUser);
+  } catch(e) {}
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    if (currentUser) await upsertProfile(currentUser);
+    if (typeof R === 'function') R();
+  });
+}
+
+async function loginDiscord() {
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'discord',
+    options: { redirectTo: window.location.origin }
+  });
+  if (error) toast('Lỗi đăng nhập: ' + error.message);
+}
+
+async function logoutDiscord() {
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  toast('Đã đăng xuất');
+  if (typeof R === 'function') R();
+}
+
+initAuth();
+
+async function sendFriendByName() {
+  const input = document.getElementById('friend-search');
+  if (!input || !currentUser) return;
+  const name = (input.value || '').trim().toLowerCase();
+  if (!name) return toast('Nhập username Discord');
+  const { data: profiles, error } = await supabaseClient
+    .from('profiles')
+    .select('id, username, display_name')
+    .eq('username', name)
+    .limit(1);
+  if (error || !profiles || !profiles.length) return toast('Không tìm thấy người chơi');
+  const target = profiles[0];
+  if (target.id === currentUser.id) return toast('Không thể kết bạn với chính mình');
+  const { error: err2 } = await supabaseClient.from('friends').insert({
+    user_id: currentUser.id,
+    friend_id: target.id,
+    status: 'pending'
+  });
+  if (err2) {
+    if (err2.code === '23505') toast('Đã gửi lời mời hoặc đã là bạn');
+    else toast('Lỗi: ' + err2.message);
+  } else {
+    toast('Đã gửi lời mời đến ' + (target.display_name || target.username));
+    input.value = '';
+    loadFriendsUI();
+  }
+}
+
+async function acceptFriend(id) {
+  const { error } = await supabaseClient
+    .from('friends')
+    .update({ status: 'accepted' })
+    .eq('id', id);
+  if (error) toast('Lỗi: ' + error.message);
+  else { toast('Đã chấp nhận'); loadFriendsUI(); }
+}
+
+async function removeFriend(id) {
+  const { error } = await supabaseClient.from('friends').delete().eq('id', id);
+  if (error) toast('Lỗi: ' + error.message);
+  else { toast('Đã xóa'); loadFriendsUI(); }
+}
+
+async function loadFriendsUI() {
+  const el = document.getElementById('friend-content');
+  if (!el || !currentUser) return;
+  const uid = currentUser.id;
+  const { data: rows, error } = await supabaseClient
+    .from('friends')
+    .select('id, user_id, friend_id, status, created_at')
+    .or(`user_id.eq.${uid},friend_id.eq.${uid}`);
+  if (error) { el.innerHTML = '<p class=bad>Lỗi tải dữ liệu</p>'; return; }
+  const ids = [...new Set(rows.flatMap(r => [r.user_id, r.friend_id]))];
+  let profiles = {};
+  if (ids.length) {
+    const { data: ps } = await supabaseClient.from('profiles').select('id, username, display_name').in('id', ids);
+    (ps || []).forEach(p => profiles[p.id] = p);
+  }
+  const accepted = [], incoming = [], outgoing = [];
+  rows.forEach(r => {
+    const otherId = r.user_id === uid ? r.friend_id : r.user_id;
+    const other = profiles[otherId] || { display_name: 'Người chơi', username: '?' };
+    const item = { ...r, other };
+    if (r.status === 'accepted') accepted.push(item);
+    else if (r.friend_id === uid) incoming.push(item);
+    else outgoing.push(item);
+  });
+  let html = '';
+  if (incoming.length) {
+    html += '<h3>Lời mời nhận được</h3>';
+    incoming.forEach(x => {
+      html += `<div class=row><span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span></span>
+        <span><button class=p onclick="acceptFriend(${x.id})">Chấp nhận</button> <button class=s onclick="removeFriend(${x.id})">Từ chối</button></span></div>`;
+    });
+  }
+  if (outgoing.length) {
+    html += '<h3>Đã gửi</h3>';
+    outgoing.forEach(x => {
+      html += `<div class=row><span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span></span>
+        <button class=s onclick="removeFriend(${x.id})">Hủy</button></div>`;
+    });
+  }
+  html += '<h3>Bạn bè</h3>';
+  if (!accepted.length) html += '<p class=mut>Chưa có bạn bè nào.</p>';
+  else accepted.forEach(x => {
+    html += `<div class=row><span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span></span>
+      <button class=s onclick="removeFriend(${x.id})">Xóa bạn</button></div>`;
+  });
+  el.innerHTML = html;
+}
+
 const ic=(n,z=18)=>`<svg width=${z} height=${z} viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round style="vertical-align:-3px"><path d="${I[n]}"/></svg>`;
 const stars=n=>`<svg width=${n*15} height=14 viewBox="0 0 ${n*24} 24">${Array.from({length:n},(_,i)=>`<path transform="translate(${i*24} 0)" d="${I.star}" fill="#ffc83d" stroke="#e0a500"/>`).join('')}</svg>`;
 const pet=(n,rx,ry,off,fill)=>Array.from({length:n},(_,i)=>`<ellipse cx=20 cy=${14-off} rx=${rx} ry=${ry} fill="${fill}" transform="rotate(${i*360/n} 20 14)"/>`).join('');
@@ -152,7 +295,7 @@ const G=[{id:'keo',n:'Kẹo',c:1000},{id:'thu',n:'Thư tay',c:3000},{id:'anh',n:
 const C={},K={S:3,M:5,L:10},RENT=40000,UTIL=20000,FIX=RENT+UTIL,MARK=2.15;[...F,...P,...G].forEach(x=>C[x.id]=x.c);
 const SP=[{n:'Vườn Đà Lạt',d:'Hoa tươi, giá tốt, ít suất',m:1,cap:18,it:['cuc','hong','hd','cc','tul','dt','cth']},{n:'Chợ hoa Quảng Bá',d:'Đủ loại, giá cao hơn 25%',m:1.25,cap:40,it:F.map(f=>f.id)},{n:'Tiệm giấy & quà',d:'Giấy gói và quà tặng',m:1,cap:25,it:['S','M','L','keo','thu','anh']}];
 const pc=(id,m)=>Math.round(C[id]*m/100)*100,nm=id=>[...F,...P,...G].find(x=>x.id==id).n;
-const TABS=[['home','home','Tổng quan'],['buy','cart','Nhập hàng'],['price','tag','Giá bán'],['shop','shop','Quầy'],['bag','bag','Túi đồ'],['cat','cat','Mèo'],['dog','cat','Chó'],['furn','shop','Nội thất'],['rev','star','Đánh giá'],['stat','chart','Thống kê'],['quest','quest','Nhiệm vụ'],['up','up','Nâng cấp']];
+const TABS=[['home','home','Tổng quan'],['buy','cart','Nhập hàng'],['price','tag','Giá bán'],['shop','shop','Quầy'],['bag','bag','Túi đồ'],['cat','cat','Mèo'],['dog','cat','Chó'],['furn','shop','Nội thất'],['rev','star','Đánh giá'],['stat','chart','Thống kê'],['quest','quest','Nhiệm vụ'],['up','up','Nâng cấp'],['friends','star','Bạn bè']];
 const Q=[['Phục vụ 5 khách',s=>s.sv>=5,50000],['Đạt 3 đánh giá 5 sao',s=>s.five>=3,80000],['Doanh thu tích lũy 500.000đ',s=>s.rev>=500000,100000],['Sống sót qua 3 ngày',s=>s.day>3,60000],['Mở khóa 1 loại hoa mới',s=>F.some(f=>f.u&&s.un[f.id]),70000],['Mở khóa 3 loại hoa mới',s=>F.filter(f=>f.u&&s.un[f.id]).length>=3,150000]];
 const RV={5:[['Hoa tươi, gói cẩn thận, bạn chủ shop nhiệt tình. Rất đáng tiền!','Bó hoa đẹp đúng ý, sẽ ủng hộ dài dài.'],['Trời ơi bó hoa xinh xỉu luôn, chấm 10 điểm!','Mua tặng crush, bạn ấy mê luôn, cảm ơn shop nha!']],4:[['Hoa đẹp, chờ hơi lâu một chút nhưng ổn.'],['Xinh nha, giá nhỉnh xíu thôi.']],3:[['Tạm được, hoa ổn nhưng phục vụ chậm.'],['Cũng ok á, chờ hơi lâu hic.']],2:[['Chờ lâu, giá chưa hợp lý.'],['Mặc cả không được, hơi buồn.']],1:[['Đợi mãi không ai phục vụ. Thất vọng.'],['Chờ gần cả buổi luôn, bye shop.']]};
 const HG=['Chị ơi bớt giúp em còn {p} nha, em lấy liền!','Anh ơi {p} được không? Em hay mua mà.','Shop ưu đãi tui còn {p} đi, tui mua tặng mẹ.','Mình chỉ có đúng {p} thôi, bán không?'];
@@ -236,6 +379,33 @@ return `<div class=card><div class=row><span><button class="s ${SPT=='d'?'on2':'
 <div class=card><h3>Hao hụt (không tính vào chi)</h3><p class=mut>Giá trị hàng hỏng hoặc bỏ đi, vốn đã nằm trong chi phí nhập hàng. Tổng: <b>${$(loss)}</b></p>${blk('loss',loss)}</div>`},
 quest(){return `<div class=card>${Q.map((q,i)=>{const d=q[1](s),c=s.cl[i];return `<div class=row><span>${q[0]}<br><span class=mut>Thưởng ${$(q[2])}</span></span><button class=p ${d&&!c?'':'disabled'} onclick="claimQ(${i})">${c?'Đã nhận':d?'Nhận':'Chưa xong'}</button></div>`}).join('')}</div>`},
 up(){const c=250000*(s.up+1);return `<div class=card><div class=row><span>Quầy xịn cấp ${s.up}/5<br><span class=mut>+8 giây kiên nhẫn, thêm khách</span></span><button class=p ${s.up<5&&s.money>=c?'':'disabled'} onclick="buyUp(${c})">${s.up<5?$(c):'Tối đa'}</button></div></div><div class=card><h3>Mở khóa hoa mới</h3><p class=mut>Hoa càng hiếm thì giá vốn càng cao, bù lại bán được giá tốt hơn.</p>${F.filter(f=>f.u).map(f=>`<div class=row><span style="display:flex;gap:8px;align-items:center">${fw(f.id,34)}<span><b>${f.n}</b><br><span class=mut>vốn ${$(f.c)}/bông</span></span></span><button class=p ${s.un[f.id]||s.money<f.u?'disabled':''} onclick="unlock('${f.id}')">${s.un[f.id]?'Đã mở':$(f.u)}</button></div>`).join('')}</div>`},
+
+friends() {
+  if (!currentUser) {
+    return `<div class=card>
+      <h3>Kết bạn</h3>
+      <p class=mut>Đăng nhập bằng Discord để kết bạn với người chơi khác.</p>
+      <button class=p onclick="loginDiscord()">Đăng nhập Discord</button>
+    </div>`;
+  }
+  const name = currentUser.user_metadata?.full_name 
+            || currentUser.user_metadata?.name 
+            || currentUser.user_metadata?.preferred_username
+            || currentUser.email 
+            || 'Người chơi';
+  setTimeout(loadFriendsUI, 50);
+  return `<div class=card>
+    <div class=row>
+      <span>Xin chào <b>${esc(name)}</b></span>
+      <button class=s onclick="logoutDiscord()">Đăng xuất</button>
+    </div>
+    <div class=row>
+      <input id="friend-search" placeholder="Nhập Discord username..." style="flex:1;width:auto" onkeydown="if(event.key=='Enter')sendFriendByName()">
+      <button class=p onclick="sendFriendByName()">Gửi lời mời</button>
+    </div>
+    <div id="friend-content"><p class=mut>Đang tải...</p></div>
+  </div>`;
+},
 guide(){return `<div class=card><ol><li><b>Nhập hàng:</b> chọn nhà cung cấp, thêm hoa, giấy, quà vào giỏ. Kiểm tra danh sách, số lượng và số tiền rồi bấm "Xác nhận mua" thì tiền mới bị trừ. Suất có hạn, hoa dư sẽ hỏng.</li><li><b>Giá bán:</b> mặc định = vốn + 215%, có thể chỉnh từng size, xem vốn và lời.</li><li><b>Quầy:</b> chạm khách, mặc cả, rồi chọn theo thứ tự: <span class="tag tf">hoa</span> → <span class="tag tp">giấy gói</span> → <span class="tag tg">quà</span>. Món khách cần được viền màu. Quà tặng bao nhiêu loại, bao nhiêu cái cũng được.</li><li>Sai loại hoa, size giấy hoặc số bông: nguyên liệu bị bỏ, làm lại và bị trừ điểm.</li><li><b>Túi đồ:</b> xem tồn kho và hạn dùng (hoa dư hỏng khoảng 60% qua đêm). <b>Mèo:</b> vuốt ve, cho ăn, mua và mặc phụ kiện. Khách đến theo từng đợt (1–3 người) trong ngày 9:00–22:00, có thể chọn 4 hoặc 8 phút. Một số khách có yêu cầu giấy gói theo hoa văn.</li><li>Khách VIP boa 5-20%. Khách hết kiên nhẫn sẽ bỏ đi.</li><li><b>Đánh giá:</b> chia 2 kênh Google Map và Fanpage, bạn tự viết phản hồi cho từng đánh giá.</li><li><b>Thống kê:</b> xem thu chi chi tiết theo ngày, tuần, tháng.</li><li>Chi phí cố định mỗi ngày: thuê mặt bằng ${$(RENT)} + điện nước ${$(UTIL)}.</li></ol><button class=p onclick="startTut()">Xem lại hướng dẫn từng bước</button></div>`},
 save(){return `<div class=card><button class=p onclick="pop=btoa(unescape(encodeURIComponent(JSON.stringify(s))));R()">Tạo mã lưu</button><br><textarea id=cd style="width:100%;height:90px;margin:8px 0">${pop}</textarea><button class=s onclick="load()">Khôi phục từ mã</button> <button class=s onclick="restart()">Chơi lại</button></div>`}};
 function claimQ(i){s.cl[i]=1;s.money+=Q[i][2];L('in','Thưởng nhiệm vụ',Q[i][0],1,Q[i][2]);beep(800);R()}

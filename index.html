@@ -176,6 +176,27 @@ async function logoutDiscord() {
 
 initAuth();
 
+// Hook to add upload button after card is created
+const origCardUI = window.cardUI;
+if (typeof cardUI === 'function') {
+  window.cardUI = function() {
+    origCardUI.apply(this, arguments);
+    setTimeout(() => {
+      const ms = document.querySelector('.ms');
+      if (ms && !ms.querySelector('#upload-card-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'upload-card-btn';
+        btn.className = 'p';
+        btn.style.marginTop = '8px';
+        btn.textContent = '📌 Đăng danh thiếp lên tường';
+        btn.onclick = uploadCardToWall;
+        ms.appendChild(btn);
+      }
+    }, 300);
+  };
+}
+
+
 async function sendFriendByName() {
   const input = document.getElementById('friend-search');
   if (!input || !currentUser) return;
@@ -220,6 +241,32 @@ async function removeFriend(id) {
 }
 
 
+
+async function uploadCardToWall() {
+  if (!currentUser) return toast('Hãy đăng nhập Discord');
+  if (!QCV && !window.lastCardCanvas) return toast('Chưa có card. Hãy tạo card visit trước');
+  const canvas = QCV || window.lastCardCanvas;
+  toast('Đang đăng...');
+  try {
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png', 0.9));
+    const reader = new FileReader();
+    const b64 = await new Promise((res, rej) => {
+      reader.onload = () => res(reader.result);
+      reader.onerror = rej;
+      reader.readAsDataURL(blob);
+    });
+    const { error } = await supabaseClient.from('shop_public').upsert({
+      user_id: currentUser.id,
+      card_image: b64,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
+    toast('Đã đăng danh thiếp lên tường!');
+  } catch (e) {
+    toast('Lỗi: ' + (e.message || e));
+  }
+}
+
 async function visitFriend(friendId) {
   if (!currentUser) return toast('Hãy đăng nhập');
   const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).maybeSingle();
@@ -230,13 +277,9 @@ async function visitFriend(friendId) {
     .order('created_at', { ascending: false })
     .limit(15);
   const name = shop?.shop_name || profile?.display_name || 'Tiệm hoa';
-  const cardHtml = `
-    <div style="background:linear-gradient(135deg,#e3f5de,#fffdf7);border:2px solid var(--ln);border-radius:18px;padding:16px;margin:8px 0;text-align:center">
-      <div style="font-size:1.4em;font-weight:700">${esc(name)}</div>
-      <div class=mut style="margin:4px 0">Ngày ${shop?.day || '?'} · Cấp ${shop?.level || '?'}</div>
-      <div style="font-size:1.2em;font-weight:700;color:var(--g3)">${$(shop?.money || 0)}</div>
-      <div class=mut style="margin-top:6px">Justaseed · Tiệm hoa nhỏ</div>
-    </div>`;
+  const cardHtml = shop?.card_image 
+    ? `<img src="${shop.card_image}" style="width:100%;border-radius:16px;margin:8px 0" alt="Danh thiếp">`
+    : `<canvas id="visit-card" width="360" height="200" style="width:100%;border-radius:16px;margin:8px 0;background:#fff"></canvas>`;
   let html = `<div class=card>
     <div class=row><h3>🏠 ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
     ${cardHtml}
@@ -258,6 +301,39 @@ async function visitFriend(friendId) {
   html += '</div></div>';
   const el = document.getElementById('friend-content');
   if (el) el.innerHTML = html;
+
+  // Draw shop card on canvas
+  setTimeout(() => {
+    const c = document.getElementById('visit-card');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const w = c.width, h = c.height;
+    // Background
+    const g = ctx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0, '#e3f5de');
+    g.addColorStop(1, '#fffdf7');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+    // Border
+    ctx.strokeStyle = '#d5ebd3';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2,2,w-4,h-4);
+    // Text
+    ctx.fillStyle = '#244033';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 28px "Baloo 2", sans-serif';
+    ctx.fillText(name, w/2, 60);
+    ctx.font = '18px Onest, sans-serif';
+    ctx.fillStyle = '#678a73';
+    ctx.fillText('Ngày ' + (shop?.day||'?') + ' · Cấp ' + (shop?.level||'?'), w/2, 100);
+    ctx.font = 'bold 32px "Baloo 2", sans-serif';
+    ctx.fillStyle = '#388a55';
+    ctx.fillText($(shop?.money||0), w/2, 145);
+    ctx.font = '14px Onest, sans-serif';
+    ctx.fillStyle = '#678a73';
+    ctx.fillText('Justaseed · Tiệm hoa nhỏ', w/2, 175);
+  }, 100);
+
 }
 
 async function postWall(toUser) {

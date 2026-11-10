@@ -124,6 +124,17 @@ async function upsertProfile(user) {
     display_name: meta.full_name || meta.name || username,
     avatar_url: meta.avatar_url || null
   }, { onConflict: 'id' });
+  // Sync basic shop info
+  if (typeof s !== 'undefined') {
+    await supabaseClient.from('shop_public').upsert({
+      user_id: user.id,
+      shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
+      day: s.day || 1,
+      money: s.money || 0,
+      level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+  }
 }
 
 async function initAuth() {
@@ -199,6 +210,50 @@ async function removeFriend(id) {
   else { toast('Đã xóa'); loadFriendsUI(); }
 }
 
+
+async function visitFriend(friendId) {
+  if (!currentUser) return;
+  const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).single();
+  const { data: msgs } = await supabaseClient.from('wall_messages')
+    .select('*, profiles!from_user(display_name, username)')
+    .eq('to_user', friendId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  const name = shop?.shop_name || 'Tiệm hoa';
+  let html = `<div class=card>
+    <div class=row><h3>Thăm ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
+    <p>Ngày ${shop?.day||'?'} · ${$(shop?.money||0)} · Cấp ${shop?.level||'?'}</p>
+    <div class=row>
+      <input id="wall-input" placeholder="Viết lời nhắn..." style="flex:1;width:auto">
+      <button class=p onclick="postWall('${friendId}')">Ký tường</button>
+    </div>
+    <h4>Tường nhà</h4>
+    <div id="wall-list">`;
+  if (!msgs || !msgs.length) html += '<p class=mut>Chưa có lời nhắn nào.</p>';
+  else msgs.forEach(m => {
+    const who = m.profiles?.display_name || m.profiles?.username || 'Bạn';
+    html += `<div class=bub><b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>${esc(m.message)}</div>`;
+  });
+  html += '</div></div>';
+  document.getElementById('friend-content').innerHTML = html;
+}
+
+async function postWall(toUser) {
+  const input = document.getElementById('wall-input');
+  if (!input || !currentUser) return;
+  const msg = input.value.trim();
+  if (!msg) return toast('Nhập nội dung');
+  const { error } = await supabaseClient.from('wall_messages').insert({
+    from_user: currentUser.id,
+    to_user: toUser,
+    message: msg
+  });
+  if (error) return toast('Lỗi: ' + error.message);
+  toast('Đã ký tường');
+  input.value = '';
+  visitFriend(toUser);
+}
+
 async function loadFriendsUI() {
   const el = document.getElementById('friend-content');
   if (!el || !currentUser) return;
@@ -241,8 +296,9 @@ async function loadFriendsUI() {
   html += '<h3>Bạn bè</h3>';
   if (!accepted.length) html += '<p class=mut>Chưa có bạn bè nào.</p>';
   else accepted.forEach(x => {
+    const fid = x.user_id === uid ? x.friend_id : x.user_id;
     html += `<div class=row><span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span></span>
-      <button class=s onclick="removeFriend(${x.id})">Xóa bạn</button></div>`;
+      <span><button class=p onclick="visitFriend('${fid}')">Thăm</button> <button class=s onclick="removeFriend(${x.id})">Xóa bạn</button></span></div>`;
   });
   el.innerHTML = html;
 }
@@ -1378,7 +1434,6 @@ async function sendQrToDiscord() {
   if (!currentUser) return toast('Hãy đăng nhập Discord trước');
   if (!QCV) return toast('Chưa có ảnh QR');
   toast('Đang gửi...');
-  console.log('currentUser:', currentUser); // xem trong Console
   try {
     const blob = await new Promise(r => QCV.toBlob(r, 'image/png'));
     const reader = new FileReader();
@@ -1388,18 +1443,13 @@ async function sendQrToDiscord() {
       reader.readAsDataURL(blob);
     });
     const code = await qrPayload().then(p => p.txt).catch(() => '');
-    
-    // Lấy discord id theo nhiều cách
     const discordId = currentUser.user_metadata?.provider_id 
-                   || currentUser.user_metadata?.sub
-                   || (currentUser.identities && currentUser.identities[0] && currentUser.identities[0].identity_data && currentUser.identities[0].identity_data.sub)
-                   || currentUser.id;
-
-    console.log('discordId sẽ lưu:', discordId);
-
+                   || (currentUser.identities && currentUser.identities[0] && currentUser.identities[0].id)
+                   || currentUser.user_metadata?.sub 
+                   || null;
     const { error } = await supabaseClient.from('qr_requests').upsert({
       user_id: currentUser.id,
-      discord_id: String(discordId),
+      discord_id: discordId,
       qr_image: b64,
       restore_code: code,
       created_at: new Date().toISOString()

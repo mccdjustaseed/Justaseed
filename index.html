@@ -1378,6 +1378,7 @@ async function sendQrToDiscord() {
   if (!currentUser) return toast('Hãy đăng nhập Discord trước');
   if (!QCV) return toast('Chưa có ảnh QR');
   toast('Đang gửi...');
+  console.log('currentUser:', currentUser); // xem trong Console
   try {
     const blob = await new Promise(r => QCV.toBlob(r, 'image/png'));
     const reader = new FileReader();
@@ -1387,13 +1388,18 @@ async function sendQrToDiscord() {
       reader.readAsDataURL(blob);
     });
     const code = await qrPayload().then(p => p.txt).catch(() => '');
+    
+    // Lấy discord id theo nhiều cách
     const discordId = currentUser.user_metadata?.provider_id 
-                   || (currentUser.identities && currentUser.identities[0] && currentUser.identities[0].id)
-                   || currentUser.user_metadata?.sub 
-                   || null;
+                   || currentUser.user_metadata?.sub
+                   || (currentUser.identities && currentUser.identities[0] && currentUser.identities[0].identity_data && currentUser.identities[0].identity_data.sub)
+                   || currentUser.id;
+
+    console.log('discordId sẽ lưu:', discordId);
+
     const { error } = await supabaseClient.from('qr_requests').upsert({
       user_id: currentUser.id,
-      discord_id: discordId,
+      discord_id: String(discordId),
       qr_image: b64,
       restore_code: code,
       created_at: new Date().toISOString()

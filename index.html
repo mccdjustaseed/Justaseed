@@ -94,7 +94,7 @@ nav.fx{position:fixed!important;top:auto!important;bottom:calc(8px + env(safe-ar
 .lb{display:inline-flex;align-items:center;cursor:pointer;border:2px solid var(--g);border-radius:12px;padding:4px 10px;background:var(--card);min-height:38px;font-family:'Baloo 2',sans-serif}
 nav.fx{transition:transform .3s}nav.fx button span{display:block;font-size:.62rem}nav.fx button{min-width:54px;padding:5px 4px}
 body.nh nav.fx{transform:translate(-50%,calc(100% + 30px))}
-#navh{display:none;position:fixed;left:50%;bottom:calc(6px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;padding:2px 18px}body.nh:not(.m) #navh{display:block}
+#navh{display:none;position:fixed;left:50%;bottom:calc(6px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;padding:2px 18px}
 #tut{bottom:84px}
 ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}::view-transition-new(root){z-index:9}
 .dtr *{transition:background-color .6s,color .6s,border-color .6s,fill .6s!important}
@@ -204,7 +204,7 @@ if(s.money<FIX+100000)t.push(`Chừa ${$(FIX)} cho thuê mặt bằng (${$(RENT)
 if(!t.length)t.push('Giá bán mặc định là vốn + 215%. Khách mặc cả nhiều hơn nếu bạn tăng giá quá cao. Chợ Quảng Bá đắt hơn Vườn Đà Lạt 25%.');return t.join(' ')}
 function nxt(){if(s.ph=='end')return['shop','Xem tổng kết'];if(s.ph=='open')return['shop','Quay lại quầy'];return menu().length?['shop','Mở gian hàng']:['buy','Nhập hàng đầu tiên']}
 function R(){if(scr!='game'){save();return}const ni=s.ph=='open'?2:s.ph=='end'?3:menu().length?1:0,sp=['Nhập hàng','Đặt giá','Bán hàng','Tổng kết'].map((x,i)=>`<span class="chip ${i==ni?'on':''}">${x}</span>`).join(''),cc=cartCount();
-document.getElementById('app').innerHTML=`<div class=hd><div><h2 style="display:flex;gap:6px;align-items:center">${catF(38)}${esc(s.name)}</h2><b class=bal>${$(s.money)}</b></div><span><button class=s style="padding:2px" onclick="pfmT()" aria-label="Hồ sơ">${avH(30)}</button> <button class=s onclick="goMenu()" aria-label="Màn hình chính">${ic('home')}</button> <button class=s onclick="toggleDark(event)">${ic(s.dark?'sun':'moon')}</button> <button class=s onclick="mdl('s')" aria-label="Cài đặt">${ic('gear')}</button></span></div><nav role=tablist class=fx>${TABS.map(t=>`<button role=tab class="${tab==t[0]?'on':''}" onclick="tab='${t[0]}';R()">${ic(t[1],20)}<span>${t[2]}</span>${t[0]=='buy'&&cc?'<b class=bd>'+cc+'</b>':''}</button>`).join('')}</nav><main id=tc><div>${sp}</div>${V[tab]()}</main>`;{const n=document.querySelector('nav'),a=n&&n.querySelector('.on');if(a)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;if(tab!==LT){const ix=k=>TABS.findIndex(x=>x[0]==k),d=ix(tab)<ix(LT)?-1:1;LT=tab;const m=document.getElementById('tc');m.style.setProperty('--dx',d*36+'px');m.classList.add('tin');if(a)a.classList.add('pop')}}
+document.getElementById('app').innerHTML=`<div class=hd><div><h2 style="display:flex;gap:6px;align-items:center">${catF(38)}${esc(s.name)}</h2><b class=bal>${$(s.money)}</b></div><span><button class=s style="padding:2px" onclick="pfmT()" aria-label="Hồ sơ">${avH(30)}</button> <button class=s onclick="goMenu()" aria-label="Màn hình chính">${ic('home')}</button> <button class=s onclick="toggleDark(event)">${ic(s.dark?'sun':'moon')}</button> <button class=s onclick="mdl('s')" aria-label="Cài đặt">${ic('gear')}</button></span></div><nav role=tablist class=fx>${TABS.map(t=>`<button role=tab class="${tab==t[0]?'on':''}" onclick="tab='${t[0]}';R()">${ic(t[1],20)}<span>${t[2]}</span>${t[0]=='buy'&&cc?'<b class=bd>'+cc+'</b>':''}</button>`).join('')}</nav><main id=tc>${V[tab]()}</main>`;{const n=document.querySelector('nav'),a=n&&n.querySelector('.on');if(a)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;if(tab!==LT){const ix=k=>TABS.findIndex(x=>x[0]==k),d=ix(tab)<ix(LT)?-1:1;LT=tab;const m=document.getElementById('tc');m.style.setProperty('--dx',d*36+'px');m.classList.add('tin');if(a)a.classList.add('pop')}}
 const tt=s.tut>=0&&s.tut<T.length?T[s.tut]:null;document.getElementById('tutw').innerHTML=tt?`<div id=tut><b>${tt[0]} (${s.tut+1}/${T.length})</b><br>${tt[1]}<div class=row><button class=tskip onclick="s.tut=-1;R()">✕ Bỏ qua hướng dẫn</button><button class=p onclick="s.tut++;tab='${T[Math.min(s.tut+1,T.length-1)][2]}';R()">Tiếp</button></div></div>`:'';save()}
 function th(){document.documentElement.dataset.theme=s.dark?'dark':'light';R()}
 /* ===== ĐÁNH GIÁ ===== */
@@ -394,7 +394,7 @@ o=o.replace(/<g class=bt>[\s\S]*?<\/g>/,D?'':bf('bt','#ff8fab','#ffd166'));
 const gd=F.slice(0,8).map(f=>f.id),gar=`<rect y=190 width=400 height=58 style="fill:color-mix(in srgb,var(--h1) 70%,#1b4a2a)"/>`+Array.from({length:13},(_,i)=>`<g class=sway style="animation-delay:${i*.3}s"><svg x=${6+i*30} y=${194+(i%2)*14+(i%3)*3} width=30 height=30 viewBox="0 0 40 40">${fw(gd[i%gd.length]).replace(/<svg[^>]*>|<\/svg>/g,'')}</svg></g>`).join('');
 const eff=D?[[40,200],[110,226],[180,205],[250,230],[320,208],[370,225],[90,180],[300,185]].map((a,i)=>`<g class=ff style="animation-delay:-${i*.7}s;animation-duration:${3+i%3}s"><circle cx=${a[0]} cy=${a[1]} r=5 fill="#ffe97a" opacity=.3 /><circle cx=${a[0]} cy=${a[1]} r=2 fill="#fff7b0"/></g>`).join(''):bf('bt2','#fff','#ff9fb2')+bf('bt3','#ffd166','#8fd3ff');
 const ct2=`<g onclick=petCat() style="cursor:pointer" transform="translate(296 88) scale(.95)">${catSVG(s.cat,'full',60)}</g>`;
-const i=o.lastIndexOf('</svg>');return o.slice(0,i)+gar+furnSVG()+eff+ct2+dogG()+o.slice(i)}
+const i=o.lastIndexOf('</svg>');return o.slice(0,i)+gar+furnSVG()+eff+((s.po&&s.po.cat&&lvOf(s.xp||0)>=3)?ct2:'')+((s.po&&s.po.dog&&lvOf(s.xp||0)>=3)?dogG():'')+o.slice(i)}
 /* ===== NHẠC CHILL ===== */
 function tone2(f,d,v,t0){try{AC=AC||new AudioContext();if(AC.state=='suspended')AC.resume();const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(t0||0);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.15);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(dly());o.start(t);o.stop(t+d+.1)}catch(e){}}
 function dly(){if(!DLN){const i=AC.createGain(),d=AC.createDelay(),fb=AC.createGain(),lp=AC.createBiquadFilter();d.delayTime.value=.42;fb.gain.value=.38;lp.type='lowpass';lp.frequency.value=1600;i.connect(AC.destination);i.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(AC.destination);DLN=i}return DLN}
@@ -610,8 +610,7 @@ const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;
 const toggleDark=ev=>setDark(s.dark?0:1,ev);
 function tgS(k,ev){if(k=='dark'){toggleDark(ev);return}s[k]=s[k]?0:1;if(k=='mus')music();save();renderMenu()}
 /* thanh tab ẩn/hiện khi trượt */
-let LY=0;addEventListener('scroll',()=>{const y=scrollY;if(y>LY+10&&y>90)document.body.classList.add('nh');else if(y<LY-6||y<40)document.body.classList.remove('nh');LY=y},{passive:true});
-document.body.insertAdjacentHTML('beforeend','<button id=navh class=s onclick="document.body.classList.remove(\'nh\')" aria-label="Hiện thanh tab">▴ Tab</button>');
+let LY=0,LA=0;addEventListener('scroll',()=>{const y=scrollY,d=y-LY;LY=y;if(d*LA<0)LA=0;LA+=d;if(LA>4&&y>24)document.body.classList.add('nh');else if(LA<-4||y<12){document.body.classList.remove('nh')}if(Math.abs(LA)>40)LA=LA>0?40:-40},{passive:true});
 /* font biển hiệu + phông nền gian hàng */
 const SFN=['Baloo 2','Pacifico','Lobster','Dancing Script','Playfair Display','Comfortaa','Bangers','Sriracha','Quicksand','Patrick Hand'];
 const SBG=[{n:'Mặc định'},{n:'Hoàng hôn',l:['#ff9a8b','#ffe3b8','#9cc27a'],d:['#3b2a5c','#8a4a6e','#2b4a3a']},{n:'Bình minh',l:['#ffd1e8','#fff1d6','#b9e2a8'],d:['#3a2a5a','#6a4a7a','#2f5a42']},{n:'Biển',l:['#8fd8ff','#e0f7ff','#f3dba8'],d:['#0f2a4a','#1f5a7a','#3a5a6a'],x:'sea'},{n:'Núi',l:['#b8d4f0','#eef6ff','#a9c8b5'],d:['#16243f','#2d4468','#2e4a42'],x:'mt'},{n:'Thành phố',l:['#cfd8e6','#f0f3f8','#aab8a2'],d:['#0e1830','#27345a','#2a3f45'],x:'city'},{n:'Đêm sao',l:['#0b1530','#27386b','#2a4a4f'],d:['#0b1530','#27386b','#2a4a4f'],x:'star'},{n:'Cầu vồng',l:['#cdbbf5','#ffe3f1','#bfe8c6'],d:['#2a1f4a','#5a3a6a','#2f5a42'],x:'rb'}];
@@ -1443,7 +1442,14 @@ setInterval(fx,700);addEventListener('resize',fx);fx()})();
 #mq .row .s,#mf .row .s{font-size:.8rem}
 #msq{font-size:.9rem;padding:8px 10px}
 #mq .mti span{opacity:.6}
-html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
+#app{zoom:.86}
+body.mtab #app{zoom:1}
+nav.fx{padding:7px 7px;gap:5px}
+nav.fx button{min-width:60px;padding:7px 5px;gap:2px;border-radius:16px}
+nav.fx button svg{width:24px;height:24px}
+nav.fx button span{font-size:.69rem}
+#app{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-behavior:none}
 </style>
 <script>['gesturestart','gesturechange','gestureend'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});let _lt=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-_lt<300)e.preventDefault();_lt=n},{passive:false});</script>
 <style>

@@ -221,30 +221,35 @@ async function removeFriend(id) {
 
 
 async function visitFriend(friendId) {
-  if (!currentUser) return;
-  const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).single();
+  if (!currentUser) return toast('Hãy đăng nhập');
+  const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).maybeSingle();
+  const { data: profile } = await supabaseClient.from('profiles').select('display_name, username').eq('id', friendId).maybeSingle();
   const { data: msgs } = await supabaseClient.from('wall_messages')
-    .select('*, profiles!from_user(display_name, username)')
+    .select('message, created_at, from_user')
     .eq('to_user', friendId)
     .order('created_at', { ascending: false })
-    .limit(20);
-  const name = shop?.shop_name || 'Tiệm hoa';
+    .limit(15);
+  const name = shop?.shop_name || profile?.display_name || 'Tiệm hoa';
   let html = `<div class=card>
-    <div class=row><h3>Thăm ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
-    <p>Ngày ${shop?.day||'?'} · ${$(shop?.money||0)} · Cấp ${shop?.level||'?'}</p>
-    <div class=row>
-      <input id="wall-input" placeholder="Viết lời nhắn..." style="flex:1;width:auto">
+    <div class=row><h3>🏠 ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
+    <p class=mut>Ngày ${shop?.day || '?'} · Tiền ${$(shop?.money || 0)} · Cấp ${shop?.level || '?'}</p>
+    <div class=row style="margin-top:8px">
+      <input id="wall-input" placeholder="Viết lời nhắn cho bạn..." style="flex:1;width:auto">
       <button class=p onclick="postWall('${friendId}')">Ký tường</button>
     </div>
-    <h4>Tường nhà</h4>
+    <h4 style="margin-top:12px">📝 Tường nhà</h4>
     <div id="wall-list">`;
-  if (!msgs || !msgs.length) html += '<p class=mut>Chưa có lời nhắn nào.</p>';
-  else msgs.forEach(m => {
-    const who = m.profiles?.display_name || m.profiles?.username || 'Bạn';
-    html += `<div class=bub><b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>${esc(m.message)}</div>`;
-  });
+  if (!msgs || !msgs.length) html += '<p class=mut>Chưa có ai ký tường.</p>';
+  else {
+    for (const m of msgs) {
+      const { data: p } = await supabaseClient.from('profiles').select('display_name, username').eq('id', m.from_user).maybeSingle();
+      const who = p?.display_name || p?.username || 'Bạn';
+      html += `<div class=bub><b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>${esc(m.message)}</div>`;
+    }
+  }
   html += '</div></div>';
-  document.getElementById('friend-content').innerHTML = html;
+  const el = document.getElementById('friend-content');
+  if (el) el.innerHTML = html;
 }
 
 async function postWall(toUser) {

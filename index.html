@@ -117,23 +117,32 @@ let currentUser = null;
 async function upsertProfile(user) {
   if (!user) return;
   const meta = user.user_metadata || {};
-  const username = meta.preferred_username || meta.full_name || meta.name || user.email || 'player';
-  await supabaseClient.from('profiles').upsert({
-    id: user.id,
-    username: username.toLowerCase(),
-    display_name: meta.full_name || meta.name || username,
-    avatar_url: meta.avatar_url || null
-  }, { onConflict: 'id' });
-  // Sync basic shop info
-  if (typeof s !== 'undefined') {
-    await supabaseClient.from('shop_public').upsert({
-      user_id: user.id,
-      shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
-      day: s.day || 1,
-      money: s.money || 0,
-      level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
+  const username = (meta.preferred_username || meta.full_name || meta.name || user.email || 'player').toLowerCase();
+  try {
+    const { error } = await supabaseClient.from('profiles').upsert({
+      id: user.id,
+      username: username,
+      display_name: meta.full_name || meta.name || username,
+      avatar_url: meta.avatar_url || null
+    }, { onConflict: 'id' });
+    if (error) {
+      toast('Lỗi lưu profile: ' + error.message);
+      console.error(error);
+    } else {
+      toast('Đã lưu profile: ' + username);
+    }
+    if (typeof s !== 'undefined') {
+      await supabaseClient.from('shop_public').upsert({
+        user_id: user.id,
+        shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
+        day: s.day || 1,
+        money: s.money || 0,
+        level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    }
+  } catch (e) {
+    toast('Lỗi: ' + e.message);
   }
 }
 

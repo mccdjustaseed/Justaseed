@@ -321,13 +321,17 @@ async function loadWallThread(ownerId, limit) {
 
 function wallBubbleHtml(m, pmap, ownerId, rootId, isReply, withReact) {
   const p = pmap[m.from_user];
-  const who = p?.display_name || p?.username || 'Bạn';
+  const display = p?.display_name || p?.username || 'Bạn';
+  const uname = p?.username || '';
+  const whoHtml = uname && uname !== display
+    ? `<b>${esc(display)}</b> <span class="mut" style="opacity:.65;font-size:.85em">@${esc(uname)}</span>`
+    : `<b>${esc(display)}</b>`;
   const av = p?.avatar_url ? `<img src="${p.avatar_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">` : '';
   const react = withReact ? `<button class=s onclick="reactWall(${m.id}, 'like')">👍</button>
         <button class=s onclick="reactWall(${m.id}, 'dislike')">👎</button>` : '';
   const wrapStyle = isReply ? 'style="margin:6px 0 0 14px;padding-left:8px;border-left:2px solid #d5ebd3"' : '';
   return `<div class="bub" ${wrapStyle}>
-      ${av}<b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>
+      ${av}${whoHtml} <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>
       ${esc(m.message)}
       ${isReply ? '' : `<div style="margin-top:4px">${react}
         <button class=s onclick="toggleReplyBox(${rootId})">↩ Trả lời</button>
@@ -674,15 +678,19 @@ friends() {
       <button class=p onclick="loginDiscord()">Đăng nhập Discord</button>
     </div>`;
   }
-  const name = currentUser.user_metadata?.full_name 
+  const display = currentUser.user_metadata?.full_name 
             || currentUser.user_metadata?.name 
             || currentUser.user_metadata?.preferred_username
             || currentUser.email 
             || 'Người chơi';
+  const uname = (currentUser.user_metadata?.preferred_username || '').toLowerCase();
+  const nameHtml = uname && uname !== display.toLowerCase()
+    ? `<b>${esc(display)}</b> <span class="mut" style="opacity:.65;font-size:.85em">@${esc(uname)}</span>`
+    : `<b>${esc(display)}</b>`;
   setTimeout(loadFriendsUI, 50);
   return `<div class=card>
     <div class=row>
-      <span>Xin chào <b>${esc(name)}</b></span>
+      <span>Xin chào ${nameHtml}</span>
       <button class=s onclick="logoutDiscord()">Đăng xuất</button>
     </div>
     <button class=s style="width:100%;margin:6px 0" onclick="viewMyWall()">📝 Xem tường của tôi</button>

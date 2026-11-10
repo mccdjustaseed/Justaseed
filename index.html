@@ -266,7 +266,7 @@ async function uploadCardToWall() {
       user_id: currentUser.id,
       card_image: b64,
       shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
-      game_avatar: 'gav:' + JSON.stringify({ av: s.pf?.av || null, pre: s.pf?.pre || null, fr: s.pf?.fr || 0, afr: s.pf?.afr ? 1 : 0 }),
+      game_avatar: 'gav:' + JSON.stringify({ av: s.pf?.av || null, pre: s.pf?.pre || null, fr: s.pf?.fr || 0, afr: s.pf?.afr ? 1 : 0, mu: (s.cd && s.cd.m && s.cd.mt) ? { id: s.cd.mt.id, name: s.cd.mt.name, ar: s.cd.mt.ar, th: s.cd.mt.th } : null }),
       day: s.day || 1,
       money: s.money || 0,
       level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
@@ -404,6 +404,29 @@ function friendAvH(raw, z) {
   return `<span style="position:relative;display:inline-block;width:${z}px;height:${z}px;vertical-align:middle;flex:0 0 auto"><span class="${lock.a ? 'frA' : ''}" style="position:absolute;inset:0;border-radius:50%;${lock.c}"></span><span style="position:absolute;inset:${Math.max(3, Math.round(z * .06))}px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--g)">${i}</span></span>`;
 }
 
+/* ---- đĩa than trên card visit của bạn ---- */
+let VMU = null, VMT = 0;
+function vinylHtml(mu) {
+  VMU = (mu && mu.id) ? mu : null;
+  if (!VMU) return '';
+  const th = esc(VMU.th || ('https://i.ytimg.com/vi/' + VMU.id + '/mqdefault.jpg'));
+  return `<div id="vinyl" class="vnl" onclick="vinylTap()" title="${esc(VMU.name || '')}"><div class="vdisc"><img src="${th}" alt=""><i></i></div><span class="vnm">♪ ${esc(VMU.name || '')}</span></div>`;
+}
+function vinylSync() {
+  clearInterval(VMT);
+  const f = () => {
+    const v = document.getElementById('vinyl');
+    if (!v || !VMU) { clearInterval(VMT); return; }
+    const c = window.MU && MU.cur();
+    v.classList.toggle('spin', !!(c && c.id === VMU.id && MS.playing));
+  };
+  f(); VMT = setInterval(f, 400);
+}
+function vinylTap() {
+  if (!VMU) return;
+  const c = MU.cur();
+  if (c && c.id === VMU.id) MU.tog(); else MU.playTrack(VMU);
+}
 async function visitFriend(friendId) {
   if (!currentUser) return toast('Hãy đăng nhập');
   const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).maybeSingle();
@@ -411,7 +434,7 @@ async function visitFriend(friendId) {
   const wt = await loadWallThread(friendId, 15);
   const name = shop?.shop_name || profile?.display_name || 'Tiệm hoa';
   const cardHtml = shop?.card_image 
-    ? `<img src="${shop.card_image}" style="width:100%;border-radius:16px;margin:8px 0" alt="Danh thiếp">`
+    ? `<div style="position:relative;margin:8px 0"><img src="${shop.card_image}" style="width:100%;border-radius:16px;display:block" alt="Danh thiếp">${vinylHtml(parseGav(shop.game_avatar).mu)}</div>`
     : `<canvas id="visit-card" width="360" height="200" style="width:100%;border-radius:16px;margin:8px 0;background:#fff"></canvas>`;
   const avHtml = friendAvH(shop?.game_avatar, 40);
   let html = `<div class=card>
@@ -429,6 +452,8 @@ async function visitFriend(friendId) {
   html += '</div></div>';
   const el = document.getElementById('friend-content');
   if (el) el.innerHTML = html;
+  const mu = parseGav(shop?.game_avatar).mu;
+  if (mu && mu.id) { try { MU.playTrack(mu); } catch (e) {} vinylSync(); }
 
   // Draw shop card on canvas
   setTimeout(() => {
@@ -1034,7 +1059,9 @@ ini();
 </script><script>
 /* ===== BẢN CẬP NHẬT 5 ===== */
 const $q=id=>document.getElementById(id);
-let BKS=[],NOSIGN=0,BF='a',BQ=null,CO=null,CIM=null,CAV=null;
+let BKS=[],NOSIGN=0,BF='a',BQ=null,CO=null,CIM=null,CAV=null,CMI=null;
+function cardLoadMi(){CMI=null;if(!(CO&&CO.m&&CO.mt))return Promise.resolve();return new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{CMI=i;r()};i.onerror=()=>r();i.src=CO.mt.th;setTimeout(r,4000)})}
+function cardMusic(){if(CO.m){CO.m=0;s.cd={...CO};save();cardUI();return}const c=window.MU&&MU.cur();if(!c)return toast('Chưa có bài nào đang nghe. Hãy mở một bài trong tab Nhạc trước');CO.m=1;CO.mt={id:c.id,name:c.name,ar:c.ar,th:c.th};s.cd={...CO};save();cardLoadMi().then(()=>{cardUI();toast('Đã gắn đĩa than: '+c.name)})}
 const lvOf=x=>{let l=1;while(30*l*(l+1)<=x)l++;return l},cum=l=>30*(l-1)*l,TT=[[1,'Hạt giống'],[3,'Chồi non'],[5,'Chủ tiệm hoa'],[8,'Nghệ nhân'],[12,'Bậc thầy'],[18,'Huyền thoại']],FR=['#bfe8c6','#4fb06f','#5aa9e6','#b39ddb','#ffc83d','#ff6fa0'];
 const ttl=l=>TT.filter(t=>l>=t[0]).pop()[1],frc=l=>FR[Math.min(5,Math.floor((l-1)/3))];
 function xp(n){const a=lvOf(s.xp||0);s.xp=(s.xp||0)+n;const b=lvOf(s.xp);if(b>a){const r=10000*b;s.money+=r;L('in','Thưởng cấp độ','Lên cấp '+b,1,r);setTimeout(()=>toast('Lên cấp '+b+' · '+ttl(b)+' · +'+$(r)),1200);if(scr=='game')R()}save()}
@@ -1110,11 +1137,16 @@ else if(lay==1){rr(40,40,1000,1270,48,T[3]);av(540,270,150);tx(pn,540,520,76,T[4
 [['Ngày',sdNow()],['Khách',s.sv],['Uy tín',s.rep.toFixed(1)+' ★'],['Doanh thu',$(s.rev)],['Hóa đơn',(s.bills||[]).length],['5 sao',s.five]].forEach((a,i)=>stat(a,i,90+(i%3)*300,765+Math.floor(i/3)*130,280,112));scn(90,1040,900,210,0,70,800,187);tx('Justaseed · Tiệm hoa nhỏ, giấc mơ lớn',540,1292,28,T[5])}
 else{rr(30,30,1140,615,40,T[3]);scn(60,60,500,555,176,0,447,496);x.textAlign='left';let X=620;if(CO.p){av(680,150,62);tx(pn,765,148,44,T[4],BA,380,700);tx(`Cấp ${l} · ${ttl(l)}`,765,190,28,T[6],'Onest',380,600)}
 tx(s.name,X,320,72,T[4],sf,520,700);tx('Tiệm hoa nhỏ, giấc mơ lớn',X,365,30,T[5]);x.fillStyle=T[7];x.fillRect(X,395,520,4);tx(`★ Uy tín ${s.rep.toFixed(1)}  ·  ${s.sv} khách`,X,455,34,T[4],'Onest',520,600);tx('Doanh thu '+$(s.rev),X,510,34,T[4],'Onest',520,600);tx(`Ngày ${sdNow()} · Mùa ${SE[season()].n} ${SE[season()].i}`,X,565,30,T[5])}
+if(CO.m&&CO.mt){try{const vx=lay==2?130:lay==0?185:150,vy=lay==2?130:lay==0?335:150,R=lay==2?70:84;x.save();x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=18;x.beginPath();x.arc(vx,vy,R,0,7);x.fillStyle='#16161a';x.fill();x.restore();
+x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=1.5;for(let q=R*.42;q<R;q+=R*.09){x.beginPath();x.arc(vx,vy,q,0,7);x.stroke()}
+const rc=R*.4;x.save();x.beginPath();x.arc(vx,vy,rc,0,7);x.clip();if(CMI){const m=Math.min(CMI.width,CMI.height);x.drawImage(CMI,(CMI.width-m)/2,(CMI.height-m)/2,m,m,vx-rc,vy-rc,2*rc,2*rc)}else{x.fillStyle=T[6];x.fillRect(vx-rc,vy-rc,2*rc,2*rc);x.fillStyle='#fff';x.font=`${rc}px sans-serif`;x.textAlign='center';x.fillText('♪',vx,vy+rc*.35)}x.restore();
+x.beginPath();x.arc(vx,vy,R*.06,0,7);x.fillStyle='#f4f4f4';x.fill();x.beginPath();x.arc(vx,vy,R,0,7);x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.25)';x.stroke();
+x.textAlign='left';const nm=(CO.mt.name||'').slice(0,26);x.font='600 22px Onest,sans-serif';x.fillStyle=T[4];x.globalAlpha=.9;x.fillText('♪ '+nm,vx-R,vy+R+30,lay==2?300:420);x.globalAlpha=1}catch(e){}}
 return c}
 function cardDraw(){try{CVS=drawCard();$q('cpv').src=CVS.toDataURL('image/png')}catch(e){toast('Không tạo được ảnh trên thiết bị này')}}
-function cardUI(){const sc=document.querySelector('.ms'),tp=sc?sc.scrollTop:0;$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>Card visit</h2><button class=s onclick=mdl()>✕</button></div><img id=cpv style="width:100%;border-radius:16px" alt="Card visit"><div class=sec>Mẫu: ${CTP[CO.t][0]}</div><div class=row style="justify-content:flex-start">${CTP.map((t,i)=>`<button class="s ${CO.t==i?'on2':''}" style="width:36px;height:36px;padding:0;background:linear-gradient(135deg,${t[1]},${t[2]})" onclick="cardSet('t',${i})" aria-label="${t[0]}"></button>`).join('')}</div><div class=sec>Bố cục</div><div class=row style="justify-content:flex-start">${['Doanh thu','Hồ sơ','Danh thiếp'].map((n,i)=>`<button class="s ${CO.l==i?'on2':''}" onclick="cardSet('l',${i})">${n}</button>`).join('')}<button class="s ${CO.p?'on2':''}" onclick="cardSet('p',${CO.p?0:1})">Hiện profile</button></div><p class=mut>Nếu nút Lưu không hoạt động, giữ lâu vào ảnh để lưu.</p><div class=row><button class=p onclick=saveCard()>Lưu ảnh</button><button class=s onclick=shareCard()>Chia sẻ</button><button class=s onclick=copyCard()>Sao chép</button><button class=p onclick="uploadCardToWall()">📌 Đăng lên tường</button></div></div></div>`;cardDraw();const n=document.querySelector('.ms');if(n)n.scrollTop=tp}
+function cardUI(){const sc=document.querySelector('.ms'),tp=sc?sc.scrollTop:0;$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>Card visit</h2><button class=s onclick=mdl()>✕</button></div><img id=cpv style="width:100%;border-radius:16px" alt="Card visit"><div class=sec>Mẫu: ${CTP[CO.t][0]}</div><div class=row style="justify-content:flex-start">${CTP.map((t,i)=>`<button class="s ${CO.t==i?'on2':''}" style="width:36px;height:36px;padding:0;background:linear-gradient(135deg,${t[1]},${t[2]})" onclick="cardSet('t',${i})" aria-label="${t[0]}"></button>`).join('')}</div><div class=sec>Bố cục</div><div class=row style="justify-content:flex-start">${['Doanh thu','Hồ sơ','Danh thiếp'].map((n,i)=>`<button class="s ${CO.l==i?'on2':''}" onclick="cardSet('l',${i})">${n}</button>`).join('')}<button class="s ${CO.p?'on2':''}" onclick="cardSet('p',${CO.p?0:1})">Hiện profile</button></div><div class=sec>Đĩa nhạc</div><div class=row style="justify-content:flex-start"><button class="s ${CO.m?'on2':''}" onclick="cardMusic()">${CO.m?'💿 Gỡ đĩa than':'🎵 Thêm bài đang nghe vào card'}</button></div>${CO.m&&CO.mt?`<p class=mut style="margin:4px 0">💿 ${esc(CO.mt.name)}</p>`:''}<p class=mut>Nếu nút Lưu không hoạt động, giữ lâu vào ảnh để lưu.</p><div class=row><button class=p onclick=saveCard()>Lưu ảnh</button><button class=s onclick=shareCard()>Chia sẻ</button><button class=s onclick=copyCard()>Sao chép</button><button class=p onclick="uploadCardToWall()">📌 Đăng lên tường</button></div></div></div>`;cardDraw();const n=document.querySelector('.ms');if(n)n.scrollTop=tp}
 function cardSet(k,v){CO[k]=v;s.cd={...CO};save();cardUI()}
-async function mkCard(){toast('Đang tạo card...');CO=Object.assign({t:0,l:0,p:1},s.cd||{});try{NOSIGN=1;const pr=sceneImg();NOSIGN=0;CIM=await pr}catch(e){NOSIGN=0;CIM=null}CAV=null;if(s.pf.av)CAV=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=s.pf.av});try{await Promise.all(['700 40px "Baloo 2"','40px Onest','40px "'+SFN[s.sf||0]+'"'].map(f=>document.fonts.load(f)))}catch(e){}cardUI()}
+async function mkCard(){toast('Đang tạo card...');CO=Object.assign({t:0,l:0,p:1},s.cd||{});try{NOSIGN=1;const pr=sceneImg();NOSIGN=0;CIM=await pr}catch(e){NOSIGN=0;CIM=null}CAV=null;if(s.pf.av)CAV=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=s.pf.av});try{await Promise.all(['700 40px "Baloo 2"','40px Onest','40px "'+SFN[s.sf||0]+'"'].map(f=>document.fonts.load(f)))}catch(e){}await cardLoadMi();cardUI()}
 async function saveCard(){if(!CVS)return;const b=await new Promise(r=>CVS.toBlob(r,'image/png'));if(!b)return toast('Không tạo được ảnh');try{const d=window.claude&&claude.use?await claude.use('downloads'):null;if(d){await d.save({filename:'justaseed-card.png',data:b});toast('Đã lưu ảnh');return}}catch(e){if(e&&e.code=='declined')return}
 try{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='justaseed-card.png';document.body.appendChild(a);a.click();a.remove();toast('Đã lưu ảnh')}catch(e){toast('Hãy giữ lâu vào ảnh để lưu')}}
 async function copyCard(){if(!CVS)return;try{const b=await new Promise(r=>CVS.toBlob(r,'image/png'));await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);toast('Đã sao chép ảnh')}catch(e){toast('Không sao chép được, hãy giữ lâu vào ảnh')}}
@@ -1574,7 +1606,7 @@ setInterval(()=>{
  if(!MS.now)return;if(MS.mc)placeMv();
  if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
  tickUI(est())},500);
-window.MU={search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
+window.MU={playTrack(tr){if(!tr||!IDRE.test(tr.id))return;if(MS.now&&MS.now.id===tr.id&&MS.playing)return;go({id:tr.id,name:tr.name||'',ar:tr.ar||'',th:tr.th||cov(tr.id),img:tr.th||cov(tr.id),dur:0})},cur(){return MS.now?{id:MS.now.id,name:MS.now.name,ar:MS.now.ar,th:MS.now.th||MS.now.img||cov(MS.now.id)}:null},search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
  rep(){MS.rep=MS.rep?0:1;sv();ui()},
  mc(v){MS.mc=v?1:0;sv();ui()},
  emb(){MS.show=MS.show?0:1;ui()},
@@ -1957,6 +1989,13 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-beh
 .mvr circle{fill:none;stroke-width:3}
 .mvb{stroke:rgba(0,0,0,.22)}.mvf{stroke:var(--g2);stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset .9s linear}
 @media(prefers-reduced-motion:reduce){.mvf{transition:none}}
+.vnl{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:8px;cursor:pointer;z-index:2;max-width:75%}
+.vdisc{position:relative;width:64px;height:64px;border-radius:50%;box-shadow:0 3px 10px rgba(0,0,0,.4);display:grid;place-items:center;flex:0 0 auto;background:repeating-radial-gradient(circle,#16161a 0 3px,#26262c 3px 4px);animation:vnlspin 3.2s linear infinite;animation-play-state:paused}
+.vdisc img{width:26px;height:26px;border-radius:50%;object-fit:cover}
+.vdisc i{position:absolute;width:6px;height:6px;border-radius:50%;background:#f4f4f4}
+.vnl.spin .vdisc{animation-play-state:running}
+.vnm{background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 8px;border-radius:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes vnlspin{to{transform:rotate(360deg)}}
 </style>
 <script>
 /* ===== CẬP NHẬT 8: bộ icon riêng của game (thay emoji thiết bị) ===== */

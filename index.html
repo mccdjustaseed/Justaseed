@@ -1000,7 +1000,7 @@ function sk(v,drag){
  try{ctl.seekTo(p/1000,true)}catch(e){}MS.pos=p;MS.evT=Date.now();tickUI(p)}
 
 /* ---------- hàng đợi ---------- */
-function qui(){sv();const q=$e('mq');if(q)q.innerHTML=qH()}
+function qui(){sv();const q=$e('mq');if(q)q.innerHTML=qH();const x=$e('mnx');if(x)x.innerHTML=nxH()}
 function addRes(i,m){
  const t=MS.res[i];if(!t)return;
  if(m==0||!MS.now){if(MS.now){MS.hist.push(MS.now);if(MS.hist.length>30)MS.hist.shift()}go(t);return qui()}
@@ -1028,12 +1028,13 @@ async function doSearch(){
  MS.busy=0;resUI()}
 
 /* ---------- giao diện ---------- */
-const row=(t,btns,cur)=>`<div class="mtr ${cur?'cur':''}">${t.th?`<img class="mth" src="${esc(t.th)}" alt="">`:'<div class="mth"></div>'}<div class="mti"><b>${esc(t.name)}</b><span>${esc(t.ar||'YouTube')}${t.dur?' · '+fm(t.dur):''}</span></div><div class="mbt">${btns}</div></div>`;
+const row=(t,btns,cur)=>`<div class="mtr ${cur?'cur':''}">${t.th?`<img class="mth" src="${esc(t.th)}" alt="">`:'<div class="mth"></div>'}<div class="mti"><b><em class="mqi">${esc(t.name)}</em></b><span>${esc(t.ar||'YouTube')}${t.dur?' · '+fm(t.dur):''}</span></div><div class="mbt">${btns}</div></div>`;
 const bt=(cls,lb,fn,ic,dis)=>`<button class="${cls}" aria-label="${lb}" title="${lb}" ${dis?'disabled':''} onclick="${fn}">${sg(ic,cls=='s'?16:22)}</button>`;
+const nxH=()=>MS.rep?'<span>🔁 Lặp lại bài này</span>':MS.q.length?'<span>Tiếp theo:</span><b class="mq"><em class="mqi">'+esc(MS.q[0].name)+'</em></b>':'<span>Hết hàng đợi, chưa có bài tiếp theo</span>';
 function nowH(){
  const t=MS.now;
  return `<div class="mnr"><div class="mcv ${MS.playing?'on':''}">${t&&t.img?`<img src="${esc(t.img)}" alt="Ảnh bìa ${esc(t.name)}">`:'<span class="ph">♪</span>'}</div>
-<div class="mni"><p class="mnm">${t?esc(t.name):'Chưa có bài nào đang phát'}</p>
+<div class="mni">${t?`<p class="mnx" id="mnx">${nxH()}</p>`:''}<p class="mnm">${t?'<em class="mqi">'+esc(t.name)+'</em>':'Chưa có bài nào đang phát'}</p>
 <p class="mar mut">${t?esc(t.ar||'YouTube'):'Tìm bài hát hoặc dán link YouTube bên dưới'}</p></div></div>
 <input type="range" id="msk" min="0" max="1000" value="0" ${t?'':'disabled'} aria-label="Tua bài hát" oninput="MU.sk(this.value,1)" onchange="MU.sk(this.value)">
 <div class="mtm"><span id="mtl">0:00</span><span id="mtr">${fm(MS.dur||(t&&t.dur))}</span></div>
@@ -1044,11 +1045,11 @@ function resH(){
  return ''}
 const chv=o=>`<span style="display:inline-block;transition:transform .2s;transform:rotate(${o?0:-90}deg)">${sg('chev',18)}</span>`;
 function qH(){
- return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.qt()" aria-expanded="${MS.qo?'true':'false'}">${chv(MS.qo)}<h3 style="margin:0">Hàng đợi ${MS.q.length?`<span class="mut">(${MS.q.length})</span>`:''}</h3></button><span>${MS.qo&&MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button> `:''}${MS.qo&&MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}</span></div>`+
+ return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.qt()" aria-expanded="${MS.qo?'true':'false'}">${chv(MS.qo)}<h3 style="margin:0">Hàng đợi <span class="qcnt">(${MS.q.length})</span></h3></button><span>${MS.qo&&MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button> `:''}${MS.qo&&MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}</span></div>`+
  (MS.qo?(MS.q.length?MS.q.map((t,i)=>qrow(t,i,bt('s','Phát bài này ngay',`MU.jump(${i})`,'play')+bt('s','Đưa lên trên',`MU.up(${i})`,'up',i==0)+bt('s','Xóa khỏi hàng đợi',`MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Tìm bài rồi bấm ＋ để thêm vào hàng đợi.</p>'):'')}
 const eta=i=>{let w=Math.max(0,(MS.dur||(MS.now&&MS.now.dur)||0)-est());for(let j=0;j<i;j++){const d=MS.q[j].dur;if(!d)return null;w+=d}return MS.now&&!(MS.dur||MS.now.dur)?null:w};
 const etaT=i=>{const w=eta(i);return w==null?'--:--':fm(w)};
-const qrow=(t,i,btns)=>`<div class="mtr"><div class="mti"><b>${esc(t.name)}</b></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
+const qrow=(t,i,btns)=>`<div class="mtr"><span class="qn">${i+1}</span><div class="mti"><b><em class="mqi">${esc(t.name)}</em></b></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
 const isFav=t=>!!(t&&MS.fav.some(x=>x.id===t.id));
 function fH(){
  return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.ft()" aria-expanded="${MS.fo?'true':'false'}">${chv(MS.fo)}<h3 style="margin:0">Yêu thích ${MS.fav.length?`<span class="mut">(${MS.fav.length})</span>`:''}</h3></button></div>`+
@@ -1068,7 +1069,7 @@ function tickUI(e){
  const k=$e('msk');if(k&&!MS.seeking)k.value=Math.round(p*1000);
  const a=$e('mtl');if(a&&!MS.seeking)a.textContent=fm(e);
  const b=$e('mtr');if(b)b.textContent=fm(d);
- const m=$e('mpb');if(m)m.style.width=(p*100)+'%';
+ const m=$e('mpb');if(m)m.style.width=(p*100)+'%';const rg=$e('mvp');if(rg)rg.style.strokeDashoffset=100-p*100;
  document.querySelectorAll('.qeta').forEach(x=>{x.textContent=etaT(+x.dataset.i)})}
 function placeMv(){
  let v=$e('mv');
@@ -1085,8 +1086,8 @@ const bodyCls=()=>{document.body.classList.toggle('mpon',!!MS.now&&!MS.mc);docum
 function mini(force){
  const t=MS.now,sig=(t?t.id:'')+'|'+MS.playing+'|'+MS.mc;if(!force&&sig===miniSig)return;miniSig=sig;
  const m=$e('mp'),v=$e('mv');if(!m)return;
- if(v)v.innerHTML=t?`<button class="mvd ${MS.playing?'on':''}" aria-label="Hiện lại trình phát nhạc" title="Hiện lại trình phát nhạc" onclick="MU.mc(0)">${t.th?`<img src="${esc(t.th)}" alt="">`:'<span>♪</span>'}</button>`:'';
- m.innerHTML=t?`${t.th?`<img class="mpi" src="${esc(t.th)}" alt="" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)">`:'<div class="mpi" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)"></div>'}<div class="mpt" onclick="MU.open()"><b>${esc(t.name)}</b><span>${esc(t.ar||'YouTube')}</span></div>${bt('','Bài trước','MU.prev()','prev')}${bt('pp',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play')}${bt('','Bài tiếp theo','MU.next()','next')}<i id="mpb"></i>`:''}
+ if(v)v.innerHTML=t?`<div class="mvw"><svg class="mvr" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" pathLength="100" class="mvb"/><circle id="mvp" cx="20" cy="20" r="18" pathLength="100" class="mvf"/></svg><button class="mvd ${MS.playing?'on':''}" aria-label="Hiện lại trình phát nhạc" title="Hiện lại trình phát nhạc" onclick="MU.mc(0)">${t.th?`<img src="${esc(t.th)}" alt="">`:'<span>♪</span>'}</button></div>`:'';if(t)try{tickUI(est())}catch(e){};
+ m.innerHTML=t?`${t.th?`<img class="mpi" src="${esc(t.th)}" alt="" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)">`:'<div class="mpi" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)"></div>'}<div class="mpt" onclick="MU.open()"><b><em class="mqi">${esc(t.name)}</em></b><span>${esc(t.ar||'YouTube')}</span></div>${bt('','Bài trước','MU.prev()','prev')}${bt('pp',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play')}${bt('','Bài tiếp theo','MU.next()','next')}<i id="mpb"></i>`:''}
 function ui(){
  bodyCls();
  const n=$e('mnow');if(n)n.innerHTML=nowH();
@@ -1389,4 +1390,28 @@ V.cam=()=>{const A=s.cam||[],td=A.filter(e=>e.d==s.day),L=A.filter(e=>(CD=='a'||
 if(typeof ENL!=='undefined'){ENL.push(['Khách yêu cầu','Customer request'],['Nhân viên','Staff'],['Chủ tiệm','Owner']);ENL.sort((a,b)=>b[0].length-a[0].length)}
 R()})();
 </script>
+<style>
+/* ===== v11: nhạc - chữ chạy ngang, số thứ tự, bài tiếp theo ===== */
+.mqi{font-style:normal}.mqi.run{display:inline-block;animation:mqs var(--md,6s) linear infinite alternate}
+@keyframes mqs{0%,12%{transform:translateX(0)}88%,100%{transform:translateX(var(--mv,0))}}
+.mnm{display:block!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:unset}
+.mnx{display:flex;gap:4px;align-items:baseline;margin:0 0 2px;font-size:.76rem;color:var(--mut);white-space:nowrap;min-width:0}
+.mnx>span{flex:none}.mnx b.mq{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600;color:var(--ink);font-family:Onest,sans-serif}
+.qn{flex:none;width:22px;text-align:center;font-size:.85rem;color:var(--mut);font-variant-numeric:tabular-nums}
+.qcnt{color:var(--mut);opacity:.6;font-weight:400;font-size:.8em}
+#mq .mtr{border-top:1px solid var(--ln)}
+@media(prefers-reduced-motion:reduce){.mqi.run{animation:none;display:inline}}
+</style>
+<script>
+/* chữ quá dài thì chạy ngang qua lại */
+(()=>{const fx=()=>document.querySelectorAll('.mqi').forEach(e=>{const p=e.parentElement;if(!p)return;const k=e.textContent+'|'+p.clientWidth;if(e.dataset.k===k)return;e.dataset.k=k;e.classList.remove('run');const w=p.clientWidth;if(!w)return;const ov=e.getBoundingClientRect().width-w;if(ov>2){e.style.setProperty('--mv',-(ov+6)+'px');e.style.setProperty('--md',Math.max(3,ov/28/.76).toFixed(1)+'s');e.classList.add('run')}});setInterval(fx,700);addEventListener('resize',fx);fx()})();
+</script>
+<style>
+/* v11: vòng tiến trình quanh đĩa than mini */
+.mvw{position:relative;padding:5px;display:block}
+.mvr{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none;z-index:3}
+.mvr circle{fill:none;stroke-width:3}
+.mvb{stroke:rgba(0,0,0,.22)}.mvf{stroke:var(--g2);stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset .9s linear}
+@media(prefers-reduced-motion:reduce){.mvf{transition:none}}
+</style>
 </body></html>

@@ -327,7 +327,7 @@ async function viewMyWall() {
       <div style="margin-top:4px">
         <button class=s onclick="reactWall(${m.id}, 'like')">👍</button>
         <button class=s onclick="reactWall(${m.id}, 'dislike')">👎</button>
-        <button class=s onclick="replyWall(${m.id}, '${friendId}')">Trả lời</button>
+        <button class=s onclick="replyWall(${m.id}, '${currentUser.id}')">Trả lời</button>
       </div>
     </div>`;
     }

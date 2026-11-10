@@ -266,7 +266,7 @@ async function uploadCardToWall() {
       user_id: currentUser.id,
       card_image: b64,
       shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
-      game_avatar: s.pf?.av || null,
+      game_avatar: 'gav:' + JSON.stringify({ av: s.pf?.av || null, pre: s.pf?.pre || null, fr: s.pf?.fr || 0, afr: s.pf?.afr ? 1 : 0 }),
       day: s.day || 1,
       money: s.money || 0,
       level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
@@ -292,69 +292,126 @@ async function reactWall(msgId, type) {
   toast(type === 'like' ? 'Đã thích' : 'Đã không thích');
 }
 
-async function replyWall(parentId, toUser) {
-  const text = prompt('Trả lời:');
-  if (!text || !text.trim()) return;
+// ---- Wall threads: lời nhắn gốc + các phản hồi lồng bên dưới ----
+async function loadWallThread(ownerId, limit) {
+  const { data: roots } = await supabaseClient.from('wall_messages')
+    .select('id, message, created_at, from_user, parent_id')
+    .eq('to_user', ownerId)
+    .is('parent_id', null)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  const ids = (roots || []).map(m => m.id);
+  let replies = [];
+  if (ids.length) {
+    const { data } = await supabaseClient.from('wall_messages')
+      .select('id, message, created_at, from_user, parent_id')
+      .in('parent_id', ids)
+      .order('created_at', { ascending: true });
+    replies = data || [];
+  }
+  const uids = [...new Set([...(roots || []), ...replies].map(m => m.from_user))];
+  const pmap = {};
+  if (uids.length) {
+    const { data: ps } = await supabaseClient.from('profiles')
+      .select('id, display_name, username, avatar_url').in('id', uids);
+    (ps || []).forEach(p => pmap[p.id] = p);
+  }
+  return { roots: roots || [], replies, pmap };
+}
+
+function wallBubbleHtml(m, pmap, ownerId, rootId, isReply, withReact) {
+  const p = pmap[m.from_user];
+  const who = p?.display_name || p?.username || 'Bạn';
+  const av = p?.avatar_url ? `<img src="${p.avatar_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">` : '';
+  const react = withReact ? `<button class=s onclick="reactWall(${m.id}, 'like')">👍</button>
+        <button class=s onclick="reactWall(${m.id}, 'dislike')">👎</button>` : '';
+  const wrapStyle = isReply ? 'style="margin:6px 0 0 14px;padding-left:8px;border-left:2px solid #d5ebd3"' : '';
+  return `<div class="bub" ${wrapStyle}>
+      ${av}<b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>
+      ${esc(m.message)}
+      ${isReply ? '' : `<div style="margin-top:4px">${react}
+        <button class=s onclick="toggleReplyBox(${rootId})">↩ Trả lời</button>
+      </div>`}
+    </div>`;
+}
+
+function wallThreadsHtml(t, ownerId) {
+  let html = '';
+  for (const m of t.roots) {
+    const kids = t.replies.filter(r => r.parent_id === m.id);
+    html += `<div style="margin-bottom:10px">${wallBubbleHtml(m, t.pmap, ownerId, m.id, false, true)}`;
+    for (const r of kids) html += wallBubbleHtml(r, t.pmap, ownerId, m.id, true, false);
+    html += `<div id="rb-${m.id}" class="row" style="display:none;margin:6px 0 0 14px;gap:6px">
+        <input id="ri-${m.id}" placeholder="Viết trả lời..." style="flex:1;width:auto" onkeydown="if(event.key==='Enter')sendWallReply(${m.id}, '${ownerId}')">
+        <button class=p onclick="sendWallReply(${m.id}, '${ownerId}')">Gửi</button>
+      </div></div>`;
+  }
+  return html;
+}
+
+function toggleReplyBox(rootId) {
+  const box = document.getElementById('rb-' + rootId);
+  if (!box) return;
+  const show = box.style.display === 'none';
+  box.style.display = show ? 'flex' : 'none';
+  if (show) { const i = document.getElementById('ri-' + rootId); if (i) i.focus(); }
+}
+
+async function sendWallReply(rootId, ownerId) {
+  if (!currentUser) return toast('Hãy đăng nhập');
+  const input = document.getElementById('ri-' + rootId);
+  const text = input ? input.value.trim() : '';
+  if (!text) return toast('Nhập nội dung');
   const { error } = await supabaseClient.from('wall_messages').insert({
     from_user: currentUser.id,
-    to_user: toUser,
-    message: text.trim(),
-    parent_id: parentId
+    to_user: ownerId,
+    message: text,
+    parent_id: rootId
   });
   if (error) return toast('Lỗi: ' + error.message);
   toast('Đã trả lời');
-  visitFriend(toUser);
+  if (ownerId === currentUser.id) viewMyWall(); else visitFriend(ownerId);
 }
 
 async function viewMyWall() {
   if (!currentUser) return toast('Hãy đăng nhập');
-  const { data: msgs } = await supabaseClient.from('wall_messages')
-    .select('id, message, created_at, from_user')
-    .eq('to_user', currentUser.id)
-    .order('created_at', { ascending: false })
-    .limit(20);
+  const t = await loadWallThread(currentUser.id, 20);
   let html = `<div class=card>
     <div class=row><h3>📝 Tường của tôi</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>`;
-  if (!msgs || !msgs.length) html += '<p class=mut>Chưa có ai ký tường cho bạn.</p>';
-  else {
-    for (const m of msgs) {
-      const { data: p } = await supabaseClient.from('profiles').select('display_name, username, avatar_url').eq('id', m.from_user).maybeSingle();
-      const who = p?.display_name || p?.username || 'Bạn';
-      const av = p?.avatar_url ? `<img src="${p.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">` : '';
-      html += `<div class=bub>
-      <b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>
-      ${esc(m.message)}
-      <div style="margin-top:4px">
-        <button class=s onclick="reactWall(${m.id}, 'like')">👍</button>
-        <button class=s onclick="reactWall(${m.id}, 'dislike')">👎</button>
-        <button class=s onclick="replyWall(${m.id}, '${currentUser.id}')">Trả lời</button>
-      </div>
-    </div>`;
-    }
-  }
+  if (!t.roots.length) html += '<p class=mut>Chưa có ai ký tường cho bạn.</p>';
+  else html += wallThreadsHtml(t, currentUser.id);
   html += '</div>';
   document.getElementById('friend-content').innerHTML = html;
+}
+
+function parseGav(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'string' && raw.startsWith('gav:')) { try { return JSON.parse(raw.slice(4)) || {}; } catch (e) { return {}; } }
+  return { av: raw };
+}
+function friendAvH(raw, z) {
+  const d = parseGav(raw);
+  const f = FRM[Math.min(d.fr || 0, 5)], lock = f.a && !d.afr ? FRM[0] : f;
+  let i;
+  if (d.av) i = `<img src="${d.av}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+  else if (d.pre && typeof FH !== 'undefined' && FH[d.pre]) i = fw(d.pre, z * .7);
+  else if (d.pre && PEM[d.pre]) i = `<span style="font-size:${Math.round(z * .55)}px;line-height:1">${PEM[d.pre]}</span>`;
+  else i = `<span style="font-size:${Math.round(z * .55)}px;line-height:1">👤</span>`;
+  return `<span style="position:relative;display:inline-block;width:${z}px;height:${z}px;vertical-align:middle;flex:0 0 auto"><span class="${lock.a ? 'frA' : ''}" style="position:absolute;inset:0;border-radius:50%;${lock.c}"></span><span style="position:absolute;inset:${Math.max(3, Math.round(z * .06))}px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--g)">${i}</span></span>`;
 }
 
 async function visitFriend(friendId) {
   if (!currentUser) return toast('Hãy đăng nhập');
   const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).maybeSingle();
   const { data: profile } = await supabaseClient.from('profiles').select('display_name, username').eq('id', friendId).maybeSingle();
-  const { data: msgs } = await supabaseClient.from('wall_messages')
-    .select('id, message, created_at, from_user')
-    .eq('to_user', friendId)
-    .order('created_at', { ascending: false })
-    .limit(15);
+  const wt = await loadWallThread(friendId, 15);
   const name = shop?.shop_name || profile?.display_name || 'Tiệm hoa';
   const cardHtml = shop?.card_image 
     ? `<img src="${shop.card_image}" style="width:100%;border-radius:16px;margin:8px 0" alt="Danh thiếp">`
     : `<canvas id="visit-card" width="360" height="200" style="width:100%;border-radius:16px;margin:8px 0;background:#fff"></canvas>`;
-  const avatar = shop?.game_avatar || '';
-  const avHtml = avatar 
-    ? `<img src="${avatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">`
-    : '👤';
+  const avHtml = friendAvH(shop?.game_avatar, 40);
   let html = `<div class=card>
-    <div class=row><h3>${avHtml} ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
+    <div class=row><h3 style="display:flex;align-items:center;gap:8px">${avHtml} ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
     ${cardHtml}
     <p class=mut>Ngày ${shop?.day || '?'} · Tiền ${$(shop?.money || 0)} · Cấp ${shop?.level || '?'}</p>
     <div class=row style="margin-top:8px">
@@ -363,14 +420,8 @@ async function visitFriend(friendId) {
     </div>
     <h4 style="margin-top:12px">📝 Tường nhà</h4>
     <div id="wall-list">`;
-  if (!msgs || !msgs.length) html += '<p class=mut>Chưa có ai ký tường.</p>';
-  else {
-    for (const m of msgs) {
-      const { data: p } = await supabaseClient.from('profiles').select('display_name, username').eq('id', m.from_user).maybeSingle();
-      const who = p?.display_name || p?.username || 'Bạn';
-      html += `<div class=bub><b>${esc(who)}</b> <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>${esc(m.message)}</div>`;
-    }
-  }
+  if (!wt.roots.length) html += '<p class=mut>Chưa có ai ký tường.</p>';
+  else html += wallThreadsHtml(wt, friendId);
   html += '</div></div>';
   const el = document.getElementById('friend-content');
   if (el) el.innerHTML = html;
@@ -464,11 +515,19 @@ async function loadFriendsUI() {
         <button class=s onclick="removeFriend(${x.id})">Hủy</button></div>`;
     });
   }
+  const avMap = {};
+  try {
+    const fids = accepted.map(x => x.user_id === uid ? x.friend_id : x.user_id);
+    if (fids.length) {
+      const { data: sp } = await supabaseClient.from('shop_public').select('user_id, game_avatar').in('user_id', fids);
+      (sp || []).forEach(r => avMap[r.user_id] = r.game_avatar);
+    }
+  } catch (e) { console.warn(e); }
   html += '<h3>Bạn bè</h3>';
   if (!accepted.length) html += '<p class=mut>Chưa có bạn bè nào.</p>';
   else accepted.forEach(x => {
     const fid = x.user_id === uid ? x.friend_id : x.user_id;
-    html += `<div class=row><span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span></span>
+    html += `<div class=row><span style="display:flex;align-items:center;gap:8px">${friendAvH(avMap[fid], 34)}<span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span></span></span>
       <span><button class=p onclick="visitFriend('${fid}')">Thăm</button> <button class=s onclick="removeFriend(${x.id})">Xóa bạn</button></span></div>`;
   });
   el.innerHTML = html;
@@ -1120,7 +1179,7 @@ $q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div 
 /* nhập hàng gọn hơn */
 function addN(si,id,n){if(s.ph!='prep')return;const k=si+id,p=pc(id,SP[si].m),q=CART[k]||0,m=Math.min(n,SP[si].cap-(s.bought[k]||0)-q,Math.floor((s.money-cartTotal())/p));if(m>0)CART[k]=q+m;else toast('Không thể thêm nữa');R()}
 function bFind(v){v=v.toLowerCase();document.querySelectorAll('.card .row').forEach(r=>{if(r.querySelector('.qi'))r.style.display=!v||r.textContent.toLowerCase().includes(v)?'':'none'})}
-{const o=V.buy;V.buy=()=>{const h=o().replace(/<button class=s onclick="buyAll\((\d+),'(\w+)'\)">Hết<\/button>/g,`<button class=s onclick="addN($1,'$2',5)">+5</button> $&`),n=cartCount();return `<input placeholder="🔍 Tìm hàng..." oninput="bFind(this.value)" style="width:100%;margin-bottom:8px">`+h+(n&&s.ph=='prep'?`<div id=cbar><span><b>${n}</b> món · ${$(cartTotal())}</span><button class=p onclick="confirmBuy()">Thanh toán</button></div>`:'')}}
+{const o=V.buy;V.buy=()=>{const h=o().replace(/<button class=s onclick="buyAll\((\d+),'(\w+)'\)">Hết<\/button>/g,`<button class=s onclick="addN($1,'$2',5)">+5</button> $&`),n=cartCount();return `<input placeholder="Tìm hàng..." oninput="bFind(this.value)" style="width:100%;margin-bottom:8px">`+h+(n&&s.ph=='prep'?`<div id=cbar><span><b>${n}</b> món · ${$(cartTotal())}</span><button class=p onclick="confirmBuy()">Thanh toán</button></div>`:'')}}
 /* tiếng Anh */
 const ENL=`Tổng quan|Overview;Nhập hàng|Restock;Giá bán|Prices;Quầy|Counter;Túi đồ|Bag;Nội thất|Furniture;Đánh giá|Reviews;Hóa đơn|Bills;Thành tích|Achievements;Thống kê|Stats;Nhiệm vụ nhanh|Quick quests;Nhiệm vụ|Quests;Gian hàng|Stall;Nâng cấp|Upgrades;Cài đặt|Settings;Hồ sơ|Profile;Hướng dẫn|Guide;Âm thanh|Sound;Nhạc nền|Music;Chế độ tối|Dark mode;Chế độ sáng|Light mode;Bật|On;Tắt|Off;Màu nền|Background color;Mặc định|Default;Ngôn ngữ|Language;Lưu tiến trình|Save progress;Chơi lại|Restart;Chơi tiếp|Continue;Chơi mới|New game;Tiệm hoa nhỏ, giấc mơ lớn|A small flower shop, a big dream;Ngày|Day;Mùa|Season;Xuân|Spring;Hạ|Summer;Thu|Autumn;Đông|Winter;Menu hôm nay|Today's menu;Giỏ nhập hàng|Restock cart;Xác nhận đơn nhập hàng|Confirm restock order;Xác nhận mua|Confirm purchase;Thanh toán|Checkout;Hủy giỏ|Clear cart;Tổng số lượng|Total quantity;Cần thanh toán|To pay;Số dư hiện tại|Current balance;Số dư sau khi mua|Balance after;Tìm hàng|Search items;Hết suất nhập|Sold out;Không đủ tiền|Not enough money;Không thể thêm nữa|Can't add more;Hết|Max;suất|slots;kho|stock;Nhận nuôi|Adopt;Nhận|Claim;Chưa xong|Not done;Đã nhận|Claimed;Đã có|Owned;Mua|Buy;Mặc|Wear;Cởi|Remove;Vuốt ve|Pet;Cho ăn|Feed;Chơi ném bóng|Play fetch;Độ thân thiết|Bond;Mèo|Cat;Chó|Dog;Thú cưng|Pet;Cửa hàng phụ kiện|Accessory shop;Cửa hàng nội thất|Furniture shop;Tóc giả|Wig;Nón|Hat;Khăn|Scarf;Vương miện|Crown;Cần cấp|Requires level;Cấp|Level;Hạt giống|Seed;Chồi non|Sprout;Chủ tiệm hoa|Florist;Chủ tiệm|Owner;Nghệ nhân|Artisan;Bậc thầy|Master;Huyền thoại|Legend;Khách đã phục vụ|Customers served;Khách|Customers;Doanh thu|Revenue;Lợi nhuận|Profit;Uy tín|Reputation;sao|stars;Ảnh đại diện|Avatar;Đổi ảnh|Change photo;Xóa ảnh|Remove photo;Tên|Name;Giới thiệu|Bio;Chủ tiệm trong gian hàng|Owner in stall;Đang hiện|Visible;Đang ẩn|Hidden;Nữ|Female;Nam|Male;Khung avatar|Avatar frame;Tạo card visit|Create visit card;Card visit|Visit card;Hiện profile|Show profile;Bố cục|Layout;Mẫu|Theme;Lưu ảnh|Save image;Chia sẻ|Share;Sao chép|Copy;Nhân viên|Staff;Đã thuê|Hired;Tự giao hàng cả ngày|Auto-delivers all day;Làm mới|Refresh;miễn phí|free;Lịch sử hóa đơn|Bill history;Tất cả|All;Hôm nay|Today;Theo khách|By customer;Xem bill|View bill;Xem|View;Giá bán|Sale price;Tiền boa|Tip;Tổng|Total;Khách quỵt tiền|Customer ran off;Đơn đầu tiên|First order;Phục vụ|Serve;Giao hàng|Deliver;Chọn giấy gói|Choose wrapping;Quà tặng|Gifts;Giấy gói|Wrapping;Hoa|Flowers;Font biển hiệu|Sign font;Phông nền gian hàng|Stall background;Đại gia Mthuan ghé quầy|Tycoon Mthuan visits the stall;Lên cấp|Level up;Thưởng|Reward;Hoàn thành|Complete;Sống sót|Survive;Phục vụ thêm|Serve more;Kiếm thêm|Earn more;Nhận thêm|Get more;Thuê|Hire;Mở cửa|Open shop;Đóng cửa|Close shop;Nghỉ|Break;Combo|Combo;Đang tạo card|Creating card;Đã lưu ảnh|Image saved`.split(';').map(x=>x.split('|')).sort((a,b)=>b[0].length-a[0].length);
 function trN(n){if(n.nodeType==3){let t=n.nodeValue,o=t;for(const[a,b]of ENL)if(t.includes(a))t=t.split(a).join(b);if(t!=o)n.nodeValue=t}else if(n.nodeType==1&&!/^(SCRIPT|STYLE|TEXTAREA|SVG|svg)$/.test(n.tagName)){if(n.placeholder)for(const[a,b]of ENL)if(n.placeholder.includes(a))n.placeholder=n.placeholder.split(a).join(b);n.childNodes.forEach(trN)}}
@@ -1891,4 +1950,105 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-beh
 .mvb{stroke:rgba(0,0,0,.22)}.mvf{stroke:var(--g2);stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset .9s linear}
 @media(prefers-reduced-motion:reduce){.mvf{transition:none}}
 </style>
+<script>
+/* ===== CẬP NHẬT 8: bộ icon riêng của game (thay emoji thiết bị) ===== */
+(()=>{
+const W=x=>`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">${x}</svg>`;
+const FW=id=>{try{return fw(id,40).replace('width=40 height=40','width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"')}catch(e){return W('')}};
+const hd=(f,o)=>`<path d="M12 20.5C12 20.5 4 15.5 4 9.8A4.6 4.6 0 0112 7.2 4.6 4.6 0 0120 9.8C20 15.5 12 20.5 12 20.5z" ${f} stroke="#c2304c" stroke-width="1.3"/>`;
+const cloud='M7 18.5a4.5 4.5 0 01-.5-9A6 6 0 0118 10.5a4 4 0 01-.5 8z';
+const ln=(d,w=2.4)=>W(`<path d="${d}" fill="none" stroke="currentColor" stroke-width="${w}"/>`);
+const thumb=`<path d="M3.5 10.5h3.5v9.5H3.5z" fill="#6bb5ff" stroke="#3d86c9" stroke-width="1.2"/><path d="M7 10.5l3.5-6.5a2 2 0 012.5 1.8V9h5a2 2 0 012 2.3l-1 6.2a2 2 0 01-2 1.7H7z" fill="#ffd34d" stroke="#d99a00" stroke-width="1.2"/>`;
+const D={
+crown:W(`<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-1.8 10H4.8z" fill="#ffc83d" stroke="#c98f00" stroke-width="1.3"/><rect x="5" y="18.5" width="14" height="2.2" rx="1" fill="#e0a500"/><circle cx="12" cy="13.5" r="1.3" fill="#e0564f"/><circle cx="8" cy="14.5" r=".9" fill="#5aa9e6"/><circle cx="16" cy="14.5" r=".9" fill="#5aa9e6"/>`),
+blossom:W([0,72,144,216,288].map(a=>`<ellipse cx="12" cy="6.5" rx="3.2" ry="4.2" fill="#ff9ec0" stroke="#e86a95" stroke-width=".8" transform="rotate(${a} 12 12)"/>`).join('')+`<circle cx="12" cy="12" r="2.4" fill="#ffd766"/>`),
+lock:W(`<path d="M8 10.5V8a4 4 0 018 0v2.5" fill="none" stroke="#8d97a3" stroke-width="2"/><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="#f0b429" stroke="#b9820a" stroke-width="1.3"/><circle cx="12" cy="15.5" r="1.5" fill="#7a5a10"/>`),
+drop:W(`<path d="M12 2.8c3.6 4.6 6.2 7.8 6.2 11.2a6.2 6.2 0 01-12.4 0c0-3.4 2.6-6.6 6.2-11.2z" fill="#5ab4f0" stroke="#2f8fd1" stroke-width="1.2"/><path d="M9 14.5a3 3 0 002.2 2.8" fill="none" stroke="#fff" stroke-width="1.5" opacity=".8"/>`),
+camera:W(`<path d="M8 7l1.4-2.5h5.2L16 7z" fill="#6b7d8c"/><rect x="2.5" y="7" width="19" height="13" rx="3" fill="#6b7d8c"/><circle cx="12" cy="13.5" r="4.4" fill="#e8f4ff" stroke="#3d4b57" stroke-width="1.5"/><circle cx="12" cy="13.5" r="2" fill="#5aa9e6"/><circle cx="18.5" cy="9.7" r="1" fill="#ffd766"/>`),
+memo:W(`<rect x="4.5" y="3" width="15" height="18" rx="2" fill="#fff8dc" stroke="#c9a94a" stroke-width="1.3"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#b79a3c" stroke-width="1.5" fill="none"/>`),
+coffee:W(`<path d="M4 9h12v6a5 5 0 01-5 5H9a5 5 0 01-5-5z" fill="#f3d9b1" stroke="#8a5a2b" stroke-width="1.5"/><path d="M16 10.5h1.5a2.5 2.5 0 010 5H16" fill="none" stroke="#8a5a2b" stroke-width="1.5"/><path d="M8 3c-1 1.2 1 2 0 3.5M12 3c-1 1.2 1 2 0 3.5" fill="none" stroke="#9aa8a0" stroke-width="1.3"/>`),
+picture:W(`<rect x="3" y="4.5" width="18" height="15" rx="2.5" fill="#cfeaff" stroke="#4a7ea6" stroke-width="1.5"/><circle cx="8.5" cy="9.5" r="1.8" fill="#ffd766"/><path d="M3.5 18l5.5-5.5 4 4 3-3 4.5 4.5z" fill="#6cc07a" stroke="#3f8f55" stroke-width="1.2"/>`),
+pin:W(`<path d="M12 21v-6.5" stroke="#8a97a3" stroke-width="1.8" fill="none"/><path d="M9 3.5h6l-.7 5.5 3.2 3.5H6.5L9.7 9z" fill="#e0564f" stroke="#a8322d" stroke-width="1.2"/>`),
+clock:W(`<circle cx="12" cy="12" r="9" fill="#fff" stroke="#5c6b78" stroke-width="1.6"/><path d="M12 6.5V12l3.5 2" fill="none" stroke="#244033" stroke-width="1.8"/>`),
+sun:W(`<circle cx="12" cy="12" r="4.5" fill="#ffc83d" stroke="#e09b00" stroke-width="1.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="#ffb020" stroke-width="1.8"/>`),
+runner:W(`<circle cx="14.5" cy="4.5" r="2.2" fill="currentColor"/><path d="M13.5 8.5l-3.5 3 3 2.5-1 5M13.5 8.5l3 3.5 3-1M10 11.5l-3 .5M13 14l3 3 .5 3.5" fill="none" stroke="currentColor" stroke-width="2"/>`),
+sparkle:W(`<path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z" fill="#ffd34d" stroke="#e0a500" stroke-width="1"/><path d="M18 14l.9 2.1 2.1.9-2.1.9L18 20l-.9-2.1-2.1-.9 2.1-.9z" fill="#ffd34d"/>`),
+phone:W(`<rect x="6.5" y="2.5" width="11" height="19" rx="2.5" fill="#fff" stroke="#5c6b78" stroke-width="1.6"/><path d="M12 8v6M9.5 11.5L12 14l2.5-2.5" fill="none" stroke="#4fb06f" stroke-width="1.8"/><circle cx="12" cy="18.5" r=".8" fill="#5c6b78"/>`),
+up:W(thumb),
+down:W(`<g transform="translate(0 24) scale(1 -1)">${thumb}</g>`),
+heart:W(hd('fill="#ec4d6a"')),
+heart0:W(`<path d="M12 20.5C12 20.5 4 15.5 4 9.8A4.6 4.6 0 0112 7.2 4.6 4.6 0 0120 9.8C20 15.5 12 20.5 12 20.5z" fill="none" stroke="#ec4d6a" stroke-width="1.8"/>`),
+leaf:W(`<path d="M5 19C4 10 9 4 20 4c0 10-5 16-13 15z" fill="#e8963a" stroke="#b9661c" stroke-width="1.2"/><path d="M5 19L14 10" stroke="#b9661c" stroke-width="1.3" fill="none"/>`),
+snow:W(`<path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6M9.5 4.5L12 6.5l2.5-2M9.5 19.5L12 17.5l2.5 2" fill="none" stroke="#6bb5e8" stroke-width="1.8"/>`),
+cloud:W(`<path d="${cloud}" fill="#e6eef6" stroke="#9fb4c7" stroke-width="1.5"/>`),
+rain:W(`<path d="${cloud}" transform="translate(0 -3)" fill="#cfdbe8" stroke="#8aa0b5" stroke-width="1.5"/><path d="M8 17.5l-1 3M12.5 17.5l-1 3M17 17.5l-1 3" stroke="#4a9be0" stroke-width="1.8"/>`),
+umbrella:W(`<path d="M3 12a9 9 0 0118 0z" fill="#ff7d9a" stroke="#c84766" stroke-width="1.3"/><path d="M12 12v6.5a2 2 0 01-4 0" fill="none" stroke="#6b4a2b" stroke-width="1.8"/>`),
+scroll:W(`<path d="M6 4h11a2 2 0 012 2v12a2 2 0 01-2 2H8a2 2 0 01-2-2z" fill="#fff4d6" stroke="#c9a94a" stroke-width="1.3"/><path d="M9 9h7M9 12.5h7M9 16h4" stroke="#b79a3c" stroke-width="1.5" fill="none"/>`),
+gift:W(`<rect x="3.5" y="9" width="17" height="11.5" rx="1.5" fill="#ff8fb1" stroke="#c84f78" stroke-width="1.2"/><rect x="2.5" y="6.5" width="19" height="3.5" rx="1" fill="#ffb3cb" stroke="#c84f78" stroke-width="1.2"/><path d="M12 6.5v14" stroke="#ffe066" stroke-width="2.5"/><path d="M12 6.5C9 6.5 8 3 10.5 3.5 12 4 12 6.5 12 6.5zM12 6.5c3 0 4-3.5 1.5-3-1.5.5-1.5 3-1.5 3z" fill="#ffe066" stroke="#d9a400" stroke-width=".8"/>`),
+farmer:W(`<path d="M5 22a7 7 0 0114 0z" fill="#4fb06f"/><circle cx="12" cy="12.5" r="3.5" fill="#ffe0bd"/><ellipse cx="12" cy="8.5" rx="9" ry="2.5" fill="#f3d27a" stroke="#c9a53c" stroke-width="1.1"/><path d="M7.5 8a4.5 4.5 0 019 0z" fill="#f3d27a" stroke="#c9a53c" stroke-width="1.1"/>`),
+flame:W(`<path d="M12 2.5c1 3.5 5.5 5.5 5.5 11a5.5 5.5 0 01-11 0c0-2 1-3.5 2-4.5 0 2 1 2.5 1.5 2.5C10 8.5 10.5 5 12 2.5z" fill="#ff8a2a" stroke="#d9531a" stroke-width="1.1"/><path d="M12 21a3 3 0 01-3-3c0-2 2-3 3-5 1 2 3 3 3 5a3 3 0 01-3 3z" fill="#ffd34d"/>`),
+calendar:W(`<rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="#fff" stroke="#5c6b78" stroke-width="1.4"/><path d="M3.5 9.5h17V7.5A2.5 2.5 0 0018 5H6a2.5 2.5 0 00-2.5 2.5z" fill="#e0564f"/><path d="M8 3v4M16 3v4" stroke="#5c6b78" stroke-width="1.8"/><path d="M8 13h2M12 13h2M8 16.5h2M12 16.5h2" stroke="#8a97a3" stroke-width="1.6"/>`),
+person:W(`<circle cx="12" cy="8" r="4" fill="#8fb9a0"/><path d="M4 21a8 8 0 0116 0z" fill="#8fb9a0"/>`),
+money:W(`<path d="M9 3.5h6l-1.5 3h-3z" fill="#c9923c"/><path d="M10 6.5C5 9 4 14 4.5 17a3.5 3.5 0 003 3h9a3.5 3.5 0 003-3c.5-3-.5-8-5.5-10.5z" fill="#ffc83d" stroke="#c98f00" stroke-width="1.2"/><path d="M12 10v8M14 11.5h-3a1.5 1.5 0 000 3h2a1.5 1.5 0 010 3h-3" fill="none" stroke="#9a6a00" stroke-width="1.4"/>`),
+star:W(`<path d="${I.star}" fill="#ffc83d" stroke="#e0a500" stroke-width="1.4"/>`),
+star0:W(`<path d="${I.star}" fill="none" stroke="#e0a500" stroke-width="1.6"/>`),
+bill:W(`<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" fill="#fff" stroke="#5c6b78" stroke-width="1.4"/><path d="M9 8h6M9 12h6" stroke="#8a97a3" stroke-width="1.6"/>`),
+medal:W(`<path d="M8 3l4 7 4-7" fill="none" stroke="#e0564f" stroke-width="2.2"/><circle cx="12" cy="15" r="5.5" fill="#ffc83d" stroke="#c98f00" stroke-width="1.3"/><path d="M12 12.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="#fff3b0"/>`),
+search:W(`<circle cx="10.5" cy="10.5" r="6" fill="#e8f4ff" stroke="#5c6b78" stroke-width="2"/><path d="M15 15l5.5 5.5" stroke="#5c6b78" stroke-width="2.4"/>`),
+repeat:W(`<path d="M4 11V9a3 3 0 013-3h11l-3-3M20 13v2a3 3 0 01-3 3H6l3 3" fill="none" stroke="currentColor" stroke-width="2"/>`),
+door:W(`<rect x="5" y="2.5" width="14" height="19" rx="1.5" fill="#b87a45" stroke="#7a4b22" stroke-width="1.3"/><rect x="8" y="5.5" width="8" height="5" rx=".8" fill="#d79c63"/><circle cx="16" cy="14" r="1.2" fill="#ffe066"/>`),
+ok:W(`<circle cx="12" cy="12" r="9.5" fill="#4fb06f"/><path d="M7.5 12.3l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.4"/>`),
+no:W(`<circle cx="12" cy="12" r="9.5" fill="#e0564f"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.4"/>`),
+ban:W(`<circle cx="12" cy="12" r="8.5" fill="none" stroke="#e0564f" stroke-width="2.6"/><path d="M6 18L18 6" stroke="#e0564f" stroke-width="2.6"/>`),
+chat:W(`<path d="M4 5.5A2.5 2.5 0 016.5 3h11A2.5 2.5 0 0120 5.5v8a2.5 2.5 0 01-2.5 2.5H11l-4.5 4v-4A2.5 2.5 0 014 13.5z" fill="#fff" stroke="#5aa9e6" stroke-width="1.5"/><path d="M8 8h8M8 11.5h5" stroke="#5aa9e6" stroke-width="1.5"/>`),
+gear:W(`<circle cx="12" cy="12" r="8.2" fill="none" stroke="#7d8a96" stroke-width="3" stroke-dasharray="2.575 2.575"/><circle cx="12" cy="12" r="6.2" fill="#7d8a96"/><circle cx="12" cy="12" r="2.6" fill="#fff"/>`),
+note:W(`<path d="M9 18V6l10-2v12" fill="none" stroke="#7b6bc9" stroke-width="2"/><circle cx="6.5" cy="18" r="2.8" fill="#7b6bc9"/><circle cx="16.5" cy="16" r="2.8" fill="#7b6bc9"/>`),
+x:ln('M6 6l12 12M18 6L6 18'),check:ln('M5 12.5l4.5 4.5L19 7.5'),
+left:ln('M20 12H5M11 6l-6 6 6 6',2.2),right:ln('M4 12h15M13 6l6 6-6 6',2.2),
+back:ln('M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3',2.2),redo:ln('M20 12a8 8 0 11-2.5-5.8M20 4v5h-5',2.2),
+cat:W(`<path d="M4 4l4.5 3.5h7L20 4v9a8 8 0 01-16 0z" fill="#f2b366" stroke="#b9772a" stroke-width="1.3"/><circle cx="9" cy="12.5" r="1.2" fill="#333"/><circle cx="15" cy="12.5" r="1.2" fill="#333"/><path d="M12 14l-1 .8h2z" fill="#e0707f"/><path d="M10.3 16.8q1.7 1.2 3.4 0" fill="none" stroke="#333" stroke-width="1.1"/>`),
+dog:W(`<ellipse cx="4.8" cy="12" rx="3" ry="5.5" fill="#8a5a2b"/><ellipse cx="19.2" cy="12" rx="3" ry="5.5" fill="#8a5a2b"/><circle cx="12" cy="12.5" r="7.5" fill="#e8b97a" stroke="#b9772a" stroke-width="1.2"/><circle cx="9.2" cy="11" r="1.2" fill="#333"/><circle cx="14.8" cy="11" r="1.2" fill="#333"/><ellipse cx="12" cy="15" rx="3" ry="2.2" fill="#f6dcb8"/><ellipse cx="12" cy="14.2" rx="1.4" ry="1" fill="#333"/>`)
+};
+const K={'👑':'crown','🌸':'blossom','🔒':'lock','💧':'drop','📸':'camera','📷':'camera','📝':'memo','☕':'coffee','🖼':'picture','📌':'pin','🕘':'clock','☀':'sun','🏃':'runner','✨':'sparkle','📲':'phone','👍':'up','👎':'down','❤':'heart','♥':'heart','♡':'heart0','🍂':'leaf','❄':'snow','☁':'cloud','🌧':'rain','☔':'umbrella','📜':'scroll','🎁':'gift','👩\u200d🌾':'farmer','🔥':'flame','📅':'calendar','🧑':'person','👤':'person','💰':'money','⭐':'star','★':'star','☆':'star0','🧾':'bill','🏅':'medal','🔍':'search','🔁':'repeat','🚪':'door','✅':'ok','❌':'no','🚫':'ban','💬':'chat','⚙':'gear','♪':'note','✕':'x','✗':'x','✓':'check','←':'left','→':'right','↩':'back','↻':'redo','🐱':'cat','🐶':'dog','🌷':'tul','🌹':'hong','🌻':'hd','💜':'oai','🌼':'cuc','🪷':'sen'};
+const FK={tul:1,hong:1,hd:1,oai:1,cuc:1,sen:1};
+const svg=k=>{const n=K[k];return FK[n]?FW(n):D[n]};
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const RE=new RegExp('('+Object.keys(K).sort((a,b)=>b.length-a.length).map(esc).join('|')+')\uFE0F?','g');
+window.GI={svg,RE,K};
+const st=document.createElement('style');
+st.textContent='.gi{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;line-height:1;flex:0 0 auto}.gi svg{display:block;width:100%;height:100%}';
+document.head.appendChild(st);
+
+/* thay emoji trong DOM bằng SVG */
+const SKIP=/^(SCRIPT|STYLE|TEXTAREA|INPUT|OPTION|SELECT|TITLE)$/;
+const okN=n=>{const p=n.parentElement;if(!p||SKIP.test(p.tagName)||p.closest('svg'))return false;RE.lastIndex=0;return RE.test(n.nodeValue)};
+function rep(n){const t=n.nodeValue,f=document.createDocumentFragment();let last=0,m;RE.lastIndex=0;
+while((m=RE.exec(t))){if(m.index>last)f.append(t.slice(last,m.index));const sp=document.createElement('span');sp.className='gi';sp.setAttribute('aria-hidden','true');sp.innerHTML=svg(m[1]);f.append(sp);last=RE.lastIndex}
+if(last<t.length)f.append(t.slice(last));n.replaceWith(f)}
+function conv(root){if(root.nodeType==3){if(root.isConnected&&okN(root))rep(root);return}
+if(root.nodeType!=1||root.classList.contains('gi'))return;
+const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),L=[];while(w.nextNode())L.push(w.currentNode);
+L.forEach(n=>{if(okN(n))rep(n)})}
+const OPT={childList:true,subtree:true,characterData:true};
+const mo=new MutationObserver(ms=>{mo.disconnect();try{ms.forEach(m=>{if(m.type=='characterData')conv(m.target);else m.addedNodes.forEach(conv)})}finally{mo.observe(document.body,OPT)}});
+conv(document.body);mo.observe(document.body,OPT);
+
+/* thay emoji khi vẽ lên canvas (card visit, bill ảnh) */
+const IMG={};
+const img=k=>{if(IMG[k])return IMG[k];const i=new Image();i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg(k).replace(/currentColor/g,'#3b5a47'));return IMG[k]=i};
+Object.keys(K).forEach(img);
+const ft=CanvasRenderingContext2D.prototype.fillText;
+CanvasRenderingContext2D.prototype.fillText=function(t,x,y,mw){
+t=String(t);RE.lastIndex=0;if(!RE.test(t))return ft.call(this,t,x,y,mw);
+const px=parseFloat((this.font.match(/([\d.]+)px/)||[0,16])[1]),ew=px*1.1,parts=[];let last=0,m;
+RE.lastIndex=0;while((m=RE.exec(t))){if(m.index>last)parts.push(t.slice(last,m.index));parts.push({e:m[1]});last=RE.lastIndex}
+if(last<t.length)parts.push(t.slice(last));
+const al=this.textAlign,bl=this.textBaseline;this.textAlign='left';
+const wd=parts.map(p=>p.e?ew:this.measureText(p).width),tot=wd.reduce((a,b)=>a+b,0),sc=mw&&tot>mw?mw/tot:1;
+let cx=al=='center'?x-tot*sc/2:(al=='right'||al=='end')?x-tot*sc:x;
+const top=bl=='middle'?y-ew*sc/2:bl=='top'||bl=='hanging'?y:bl=='bottom'?y-ew*sc:y-px*.85*sc;
+parts.forEach((p,i)=>{const w=wd[i]*sc;if(p.e){const im=img(p.e);if(im.complete&&im.naturalWidth)this.drawImage(im,cx,top,ew*sc,ew*sc)}else ft.call(this,p,cx,y);cx+=w});
+this.textAlign=al};
+})();
+</script>
 </body></html>

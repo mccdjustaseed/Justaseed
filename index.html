@@ -244,26 +244,38 @@ async function removeFriend(id) {
 
 async function uploadCardToWall() {
   if (!currentUser) return toast('Hãy đăng nhập Discord');
-  if (!QCV && !window.lastCardCanvas) return toast('Chưa có card. Hãy tạo card visit trước');
-  const canvas = QCV || window.lastCardCanvas;
+  const img = document.getElementById('cpv');
+  if (!img || !img.src) return toast('Chưa có card. Hãy tạo card visit trước');
   toast('Đang đăng...');
   try {
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png', 0.9));
-    const reader = new FileReader();
-    const b64 = await new Promise((res, rej) => {
-      reader.onload = () => res(reader.result);
-      reader.onerror = rej;
-      reader.readAsDataURL(blob);
+    // Convert displayed image to base64
+    const b64 = img.src.startsWith('data:') ? img.src : await new Promise((res, rej) => {
+      const c = document.createElement('canvas');
+      const ctx = c.getContext('2d');
+      const i = new Image();
+      i.crossOrigin = 'anonymous';
+      i.onload = () => {
+        c.width = i.width; c.height = i.height;
+        ctx.drawImage(i, 0, 0);
+        res(c.toDataURL('image/png'));
+      };
+      i.onerror = rej;
+      i.src = img.src;
     });
     const { error } = await supabaseClient.from('shop_public').upsert({
       user_id: currentUser.id,
       card_image: b64,
+      shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
+      day: s.day || 1,
+      money: s.money || 0,
+      level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id' });
     if (error) throw error;
     toast('Đã đăng danh thiếp lên tường!');
   } catch (e) {
     toast('Lỗi: ' + (e.message || e));
+    console.error(e);
   }
 }
 

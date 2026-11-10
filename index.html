@@ -773,10 +773,13 @@ function pfmT(){if(scr=='game'&&tab=='pf'){tab='home';R();scrollTo(0,0)}else pfm
 {const o=restart;restart=function(){const k={lang:s.lang,bgL:s.bgL,bgD:s.bgD,pf:s.pf};try{o()}catch(e){}if(!s.pf){ini();Object.keys(k).forEach(x=>{if(k[x]!=null)s[x]=k[x]});tab='home';PFS='me';document.body.classList.remove('nh');th();R()}}}
 </script><style>
 /* ===== NHẠC SPOTIFY ===== */
-.mnr{display:flex;align-items:center;gap:12px;margin:2px 0 4px}.mni{flex:1;min-width:0}.mcv{width:84px;flex:0 0 84px;aspect-ratio:1;margin:0;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,var(--g),var(--sk1));display:grid;place-items:center;box-shadow:0 5px 14px rgba(20,70,40,.28)}
+.mnr{display:flex;align-items:center;gap:12px;margin:2px 0 4px}.mni{flex:1;min-width:0}.mcv{position:relative;width:84px;flex:0 0 84px;aspect-ratio:1;margin:0;border-radius:50%;overflow:hidden;animation:vin 7s linear infinite;animation-play-state:paused;background:linear-gradient(135deg,var(--g),var(--sk1));display:grid;place-items:center;box-shadow:0 5px 14px rgba(20,70,40,.28)}
 .mcv img{width:100%;height:100%;object-fit:cover;display:block}
 .mcv .ph{font-size:2.2rem;opacity:.45}
-.mcv.on{animation:mpl 3.4s ease-in-out infinite}
+.mcv.on{animation-play-state:running}
+.mcv::before{content:'';position:absolute;inset:0;border-radius:50%;z-index:1;pointer-events:none;background:repeating-radial-gradient(circle at 50% 50%,rgba(0,0,0,.16) 0 1px,transparent 1px 4px),conic-gradient(from 20deg,rgba(255,255,255,.22),transparent 25%,rgba(255,255,255,.18) 50%,transparent 75%,rgba(255,255,255,.22))}
+.mcv::after{content:'';position:absolute;left:50%;top:50%;width:20%;height:20%;transform:translate(-50%,-50%);border-radius:50%;z-index:2;background:var(--card);box-shadow:0 0 0 3px rgba(0,0,0,.28) inset,0 0 0 2px rgba(0,0,0,.18)}
+@keyframes vin{to{transform:rotate(360deg)}}
 @keyframes mpl{50%{transform:scale(1.025)}}
 .mnm{font-family:'Baloo 2',sans-serif;font-size:1.1rem;line-height:1.2;text-align:left;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .mar{text-align:left;margin:2px 0 0;font-size:.9rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -794,6 +797,7 @@ function pfmT(){if(scr=='game'&&tab=='pf'){tab='home';R();scrollTo(0,0)}else pfm
 .mti b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Baloo 2',sans-serif;font-weight:500}
 .mti span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.82rem;color:var(--mut)}
 .mtr.cur b{color:var(--g3)}
+.qeta{flex:none;font-size:.85rem;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
 .mbt{display:flex;gap:4px;flex:none}
 .mbt button{width:36px;height:36px;padding:0;display:grid;place-items:center}
 .mbt button.s{border-radius:10px}
@@ -817,7 +821,7 @@ body.mpon:not(.m):not(.mtab) #app{padding-bottom:180px}
 #spEmb{position:fixed;left:0;bottom:0;width:320px;height:180px;opacity:0;pointer-events:none;z-index:-1;border-radius:12px;overflow:hidden}
 #spEmb iframe{width:100%;height:100%;border:0;display:block}
 #spEmb.show{opacity:1;pointer-events:auto;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100% - 24px));height:192px;box-shadow:0 8px 28px rgba(0,0,0,.4)}
-@media(prefers-reduced-motion:reduce){.mcv.on{animation:none}}
+@media(prefers-reduced-motion:reduce){.mcv,.mcv.on{animation:none}}
 </style>
 <script>
 /* ===== NHẠC YOUTUBE ===== */
@@ -825,13 +829,14 @@ body.mpon:not(.m):not(.mtab) #app{padding-bottom:180px}
 const LS='jsMusic',$e=id=>document.getElementById(id);
 const IDRE=/^[\w-]{11}$/;
 const KEY='AIzaSyB7AxXmftO434HSxB28HtIN36g0ud57EN4';
-const MS=window.MS={key:KEY,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0};
-try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
+const MS=window.MS={key:KEY,msg:'',fav:[],qo:1,fo:1,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0};
+try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep','fav','qo','fo'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
 /* bỏ các bài cũ lưu từ Spotify (id dài 22 ký tự) */
 if(!Array.isArray(MS.q))MS.q=[];if(!Array.isArray(MS.hist))MS.hist=[];
+if(!Array.isArray(MS.fav))MS.fav=[];MS.fav=MS.fav.filter(t=>t&&IDRE.test(t.id));if(MS.qo==null)MS.qo=1;if(MS.fo==null)MS.fo=1;
 MS.q=MS.q.filter(t=>t&&IDRE.test(t.id));MS.hist=MS.hist.filter(t=>t&&IDRE.test(t.id));
 if(MS.now&&!IDRE.test(MS.now.id))MS.now=null;
-const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep}))}catch(e){}};
+const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep,fav:MS.fav,qo:MS.qo,fo:MS.fo}))}catch(e){}};
 const fm=ms=>{ms=Math.max(0,Math.round((ms||0)/1000));return Math.floor(ms/60)+':'+String(ms%60).padStart(2,'0')};
 
 /* ---------- icon + tab ---------- */
@@ -850,7 +855,10 @@ x:'<path d="M6 6l12 12M18 6L6 18"/>',
 shuf:'<path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/>',
 rep:'<path d="M17 3l3 3-3 3M4 11V9a3 3 0 013-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 01-3 3H4"/>',
 rep1:'<path d="M17 3l3 3-3 3M4 11V9a3 3 0 013-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 01-3 3H4M11 10l1.5-1v6"/>',
-frame:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15h18"/>'};
+frame:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15h18"/>',
+heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>',
+heartf:'<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z" fill="currentColor"/>',
+chev:'<path d="M6 9l6 6 6-6"/>'};
 const sg=(n,z=22)=>`<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
 
 /* ---------- YouTube: lấy thông tin & tìm kiếm ---------- */
@@ -923,7 +931,7 @@ function go(t){
 function onSt(e){
  const st=e&&e.data;
  if(st===1){
-  MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();
+  MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;
   try{MS.pos=ctl.getCurrentTime()*1000;const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(x){}
   ui();duck()}
  else if(st===2){
@@ -979,16 +987,17 @@ function shuf(){const a=MS.q;for(let i=a.length-1;i>0;i--){const j=Math.floor(Ma
 
 /* ---------- tìm kiếm ---------- */
 async function doSearch(){
- const inp=$e('msq'),q=((inp?inp.value:MS.qry)||'').trim();MS.qry=q;if(!q)return;
- MS.err='';MS.busy=1;MS.res=[];resUI();
+ const inp=$e('msq'),q=((inp?inp.value:MS.qry)||'').trim();MS.qry=q;if(!q||MS.busy)return;
+ MS.err='';MS.msg='';MS.busy=1;resUI();
  try{
-  const m=q.match(LRE);
-  if(m)MS.res=[await getVideo(m[1])];
+  const m=q.match(LRE);let t;
+  if(m)t=await getVideo(m[1]);
   else if(/^https?:\/\//i.test(q))throw new Error('Link chưa đúng dạng. Hãy dùng link video dạng youtube.com/watch?v=… hoặc youtu.be/… (link playlist/kênh chưa hỗ trợ).');
-  else{MS.res=await search(q);if(!MS.res.length)MS.err='Không tìm thấy kết quả. Thử đổi cách gõ, ví dụ "bài - ca sĩ".'}
- }catch(e){
-  MS.res=[];
-  MS.err=(e&&e.message)||'Có lỗi khi tìm kiếm'}
+  else{const r=await search(q);if(!r.length)throw new Error('Không tìm thấy kết quả. Thử đổi cách gõ, ví dụ "bài - ca sĩ".');t=r[0]}
+  MS.res=[t];
+  if(MS.now&&MS.playing)addRes(0,2);else addRes(0,0);
+  MS.res=[];if(inp)inp.value='';MS.qry=''
+ }catch(e){MS.res=[];MS.err=(e&&e.message)||'Có lỗi khi tìm kiếm'}
  MS.busy=0;resUI()}
 
 /* ---------- giao diện ---------- */
@@ -1001,26 +1010,39 @@ function nowH(){
 <p class="mar mut">${t?esc(t.ar||'YouTube'):'Tìm bài hát hoặc dán link YouTube bên dưới'}</p></div></div>
 <input type="range" id="msk" min="0" max="1000" value="0" ${t?'':'disabled'} aria-label="Tua bài hát" oninput="MU.sk(this.value,1)" onchange="MU.sk(this.value)">
 <div class="mtm"><span id="mtl">0:00</span><span id="mtr">${fm(MS.dur||(t&&t.dur))}</span></div>
-<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', MS.show?'Ẩn khung YouTube':'Hiện khung YouTube','MU.emb()','frame').replace('class=""','class="'+(MS.show?'act':'')+'"')}</div>
-<p class="mut" style="text-align:center;margin:8px 0 0;font-size:.78rem">Phát trọn bài từ YouTube, không cần đăng nhập. Một số video chặn phát nhúng sẽ tự bị bỏ qua.</p>`}
+<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', isFav(t)?'Bỏ khỏi yêu thích':'Thêm vào yêu thích','MU.fav()',isFav(t)?'heartf':'heart',!t).replace('class=""','class="'+(isFav(t)?'act':'')+'"')}</div>`}
 function resH(){
  if(MS.busy)return '<p class="mut" style="margin:8px 0 0">Đang tìm…</p>';
  if(MS.err)return `<p class="bad" style="margin:8px 0 0">${esc(MS.err)}</p>`;
- if(!MS.res.length)return '<p class="mut" style="margin:8px 0 0">Gõ <b>tên bài</b>, <b>bài - ca sĩ</b> hoặc dán <b>link YouTube</b>.</p>';
- return '<p class="mut" style="margin:6px 0 2px;font-size:.78rem">▶ phát ngay · ⤓ phát tiếp theo · ＋ thêm vào hàng đợi</p>'+
-  MS.res.map((t,i)=>row(t,bt('s','Phát ngay',`MU.r(${i},0)`,'play')+bt('s','Phát tiếp theo',`MU.r(${i},1)`,'nxq')+bt('s','Thêm vào hàng đợi',`MU.r(${i},2)`,'plus'))).join('')}
+ return ''}
+const chv=o=>`<span style="display:inline-block;transition:transform .2s;transform:rotate(${o?0:-90}deg)">${sg('chev',18)}</span>`;
 function qH(){
- return `<div class="row" style="margin-top:0"><h3 style="margin:0">Hàng đợi ${MS.q.length?`<span class="mut">(${MS.q.length})</span>`:''}</h3><span>${MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button> `:''}${MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}</span></div>`+
- (MS.q.length?MS.q.map((t,i)=>row(t,bt('s','Phát bài này ngay',`MU.jump(${i})`,'play')+bt('s','Đưa lên trên',`MU.up(${i})`,'up',i==0)+bt('s','Xóa khỏi hàng đợi',`MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Bấm ＋ ở kết quả tìm kiếm để thêm bài.</p>')}
+ return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.qt()" aria-expanded="${MS.qo?'true':'false'}">${chv(MS.qo)}<h3 style="margin:0">Hàng đợi ${MS.q.length?`<span class="mut">(${MS.q.length})</span>`:''}</h3></button><span>${MS.qo&&MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button> `:''}${MS.qo&&MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}</span></div>`+
+ (MS.qo?(MS.q.length?MS.q.map((t,i)=>qrow(t,i,bt('s','Phát bài này ngay',`MU.jump(${i})`,'play')+bt('s','Đưa lên trên',`MU.up(${i})`,'up',i==0)+bt('s','Xóa khỏi hàng đợi',`MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Tìm bài rồi bấm ＋ để thêm vào hàng đợi.</p>'):'')}
+const eta=i=>{let w=Math.max(0,(MS.dur||(MS.now&&MS.now.dur)||0)-est());for(let j=0;j<i;j++){const d=MS.q[j].dur;if(!d)return null;w+=d}return MS.now&&!(MS.dur||MS.now.dur)?null:w};
+const etaT=i=>{const w=eta(i);return w==null?'--:--':fm(w)};
+const qrow=(t,i,btns)=>`<div class="mtr"><div class="mti"><b>${esc(t.name)}</b></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
+const isFav=t=>!!(t&&MS.fav.some(x=>x.id===t.id));
+function fH(){
+ return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.ft()" aria-expanded="${MS.fo?'true':'false'}">${chv(MS.fo)}<h3 style="margin:0">Yêu thích ${MS.fav.length?`<span class="mut">(${MS.fav.length})</span>`:''}</h3></button></div>`+
+ (MS.fo?(MS.fav.length?MS.fav.map((t,i)=>row(t,bt('s','Phát ngay',`MU.fp(${i})`,'play')+bt('s','Thêm vào hàng đợi',`MU.fq(${i})`,'plus')+bt('s','Bỏ khỏi yêu thích',`MU.fr(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Chưa có bài nào. Bấm ♡ cạnh nút bài tiếp theo để lưu bài đang phát.</p>'):'')}
+function fui(){sv();const f=$e('mf');if(f)f.innerHTML=fH();const n=$e('mnow');if(n)n.innerHTML=nowH()}
+function favTog(){const t=MS.now;if(!t)return;const i=MS.fav.findIndex(x=>x.id===t.id);if(i>=0){MS.fav.splice(i,1);toast('Đã bỏ khỏi yêu thích')}else{MS.fav.unshift({id:t.id,name:t.name,ar:t.ar,img:t.img,th:t.th,dur:t.dur});toast('Đã thêm vào yêu thích')}fui()}
+function fPlay(i){const t=MS.fav[i];if(!t)return;if(MS.now&&MS.now.id!==t.id){MS.hist.push(MS.now);if(MS.hist.length>30)MS.hist.shift()}go(Object.assign({},t));qui()}
+function fQ(i){const t=MS.fav[i];if(!t)return;if(!MS.now){go(Object.assign({},t));return qui()}MS.q.push(Object.assign({},t));toast('Đã thêm vào hàng đợi');qui()}
+function fRm(i){MS.fav.splice(i,1);fui()}
+function qTog(){MS.qo=MS.qo?0:1;qui()}
+function fTog(){MS.fo=MS.fo?0:1;fui()}
 V.music=()=>{setTimeout(()=>{loadApi().catch(()=>{});if(!ctl&&MS.now)ensureCtl(MS.now.id).catch(()=>{})},0);
- return `<div class="card" id="mnow">${nowH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Link YouTube" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Tìm</button></div><div id="mres">${resH()}</div></div><div class="card" id="mq">${qH()}</div>`};
-function resUI(){const e=$e('mres');if(e)e.innerHTML=resH();if(MS.res.length&&!ctl)ensureCtl(MS.res[0].id).catch(()=>{})}
+ return `<div class="card" id="mnow">${nowH()}</div><div class="card" id="mq">${qH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Link YouTube" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Thêm</button></div><div id="mres">${resH()}</div></div><div class="card" id="mf">${fH()}</div>`};
+function resUI(){const e=$e('mres');if(e)e.innerHTML=resH()}
 function tickUI(e){
  const d=MS.dur||(MS.now&&MS.now.dur)||0,p=d?Math.min(1,e/d):0;
  const k=$e('msk');if(k&&!MS.seeking)k.value=Math.round(p*1000);
  const a=$e('mtl');if(a&&!MS.seeking)a.textContent=fm(e);
  const b=$e('mtr');if(b)b.textContent=fm(d);
- const m=$e('mpb');if(m)m.style.width=(p*100)+'%'}
+ const m=$e('mpb');if(m)m.style.width=(p*100)+'%';
+ document.querySelectorAll('.qeta').forEach(x=>{x.textContent=etaT(+x.dataset.i)})}
 function mini(force){
  const t=MS.now,sig=(t?t.id:'')+'|'+MS.playing;if(!force&&sig===miniSig)return;miniSig=sig;
  const m=$e('mp');if(!m)return;
@@ -1044,7 +1066,7 @@ setInterval(()=>{
  if(!MS.now)return;
  if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
  tickUI(est())},500);
-window.MU={search:doSearch,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
+window.MU={search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
  rep(){MS.rep=MS.rep?0:1;sv();ui()},
  emb(){MS.show=MS.show?0:1;ui()},
  open(){if(scr!='game')return;tab='music';R();scrollTo(0,0)},

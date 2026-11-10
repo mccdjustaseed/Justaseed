@@ -230,8 +230,16 @@ async function visitFriend(friendId) {
     .order('created_at', { ascending: false })
     .limit(15);
   const name = shop?.shop_name || profile?.display_name || 'Tiệm hoa';
+  const cardHtml = `
+    <div style="background:linear-gradient(135deg,#e3f5de,#fffdf7);border:2px solid var(--ln);border-radius:18px;padding:16px;margin:8px 0;text-align:center">
+      <div style="font-size:1.4em;font-weight:700">${esc(name)}</div>
+      <div class=mut style="margin:4px 0">Ngày ${shop?.day || '?'} · Cấp ${shop?.level || '?'}</div>
+      <div style="font-size:1.2em;font-weight:700;color:var(--g3)">${$(shop?.money || 0)}</div>
+      <div class=mut style="margin-top:6px">Justaseed · Tiệm hoa nhỏ</div>
+    </div>`;
   let html = `<div class=card>
     <div class=row><h3>🏠 ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
+    ${cardHtml}
     <p class=mut>Ngày ${shop?.day || '?'} · Tiền ${$(shop?.money || 0)} · Cấp ${shop?.level || '?'}</p>
     <div class=row style="margin-top:8px">
       <input id="wall-input" placeholder="Viết lời nhắn cho bạn..." style="flex:1;width:auto">

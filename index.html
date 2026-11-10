@@ -806,7 +806,7 @@ function pfmT(){if(scr=='game'&&tab=='pf'){tab='home';R();scrollTo(0,0)}else pfm
 .mcard ol{margin:6px 0;padding-left:20px}
 .mcard li{margin:3px 0}
 #mp{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom,0px));width:min(616px,calc(100% - 24px));z-index:6;align-items:center;gap:8px;padding:6px 8px 9px 6px;background:var(--card);border:2px solid var(--g2);border-radius:18px;box-shadow:0 8px 24px rgba(20,70,40,.3);overflow:hidden}
-#mp .mpi{width:42px;height:42px;border-radius:10px;object-fit:cover;background:var(--g);flex:none}
+#mp .mpi{width:42px;height:42px;border-radius:10px;object-fit:cover;background:var(--g);flex:none;cursor:pointer}
 #mp .mpt{flex:1;min-width:0;display:flex;flex-direction:column;cursor:pointer}
 #mp .mpt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Baloo 2',sans-serif;font-weight:500;line-height:1.15}
 #mp .mpt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem;color:var(--mut)}
@@ -814,6 +814,14 @@ function pfmT(){if(scr=='game'&&tab=='pf'){tab='home';R();scrollTo(0,0)}else pfm
 #mp button.pp{background:var(--g2);color:#fff}
 #mp i{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--g2)}
 body.mpon:not(.m):not(.mtab) #mp{display:flex}
+#mv{display:none;position:fixed;left:10px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:6}
+body.mpv:not(.m):not(.mtab) #mv{display:block}
+.mvd{position:relative;display:grid;place-items:center;width:56px;height:56px;padding:0;border:0;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--g),var(--sk1));box-shadow:0 6px 16px rgba(20,70,40,.35);cursor:pointer;animation:vin 7s linear infinite;animation-play-state:paused}
+.mvd.on{animation-play-state:running}
+.mvd img{width:100%;height:100%;object-fit:cover;display:block}
+.mvd span{font-size:1.4rem;opacity:.5}
+.mvd::before{content:'';position:absolute;inset:0;border-radius:50%;z-index:1;pointer-events:none;background:repeating-radial-gradient(circle at 50% 50%,rgba(0,0,0,.16) 0 1px,transparent 1px 4px),conic-gradient(from 20deg,rgba(255,255,255,.22),transparent 25%,rgba(255,255,255,.18) 50%,transparent 75%,rgba(255,255,255,.22))}
+.mvd::after{content:'';position:absolute;left:50%;top:50%;width:20%;height:20%;transform:translate(-50%,-50%);border-radius:50%;z-index:2;background:var(--card);box-shadow:0 0 0 3px rgba(0,0,0,.28) inset,0 0 0 2px rgba(0,0,0,.18)}
 body.mpon.nh:not(.m):not(.mtab) #mp{bottom:calc(40px + env(safe-area-inset-bottom,0px))}
 body.mpon:not(.m):not(.mtab) #cbar{bottom:calc(138px + env(safe-area-inset-bottom,0px))}
 body.mpon.nh:not(.m):not(.mtab) #cbar{bottom:calc(104px + env(safe-area-inset-bottom,0px))}
@@ -821,7 +829,7 @@ body.mpon:not(.m):not(.mtab) #app{padding-bottom:180px}
 #spEmb{position:fixed;left:0;bottom:0;width:320px;height:180px;opacity:0;pointer-events:none;z-index:-1;border-radius:12px;overflow:hidden}
 #spEmb iframe{width:100%;height:100%;border:0;display:block}
 #spEmb.show{opacity:1;pointer-events:auto;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100% - 24px));height:192px;box-shadow:0 8px 28px rgba(0,0,0,.4)}
-@media(prefers-reduced-motion:reduce){.mcv,.mcv.on{animation:none}}
+@media(prefers-reduced-motion:reduce){.mcv,.mcv.on,.mvd,.mvd.on{animation:none}}
 </style>
 <script>
 /* ===== NHẠC YOUTUBE ===== */
@@ -829,14 +837,14 @@ body.mpon:not(.m):not(.mtab) #app{padding-bottom:180px}
 const LS='jsMusic',$e=id=>document.getElementById(id);
 const IDRE=/^[\w-]{11}$/;
 const KEY='AIzaSyB7AxXmftO434HSxB28HtIN36g0ud57EN4';
-const MS=window.MS={key:KEY,msg:'',fav:[],qo:1,fo:1,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0};
-try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep','fav','qo','fo'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
+const MS=window.MS={key:KEY,mc:0,msg:'',fav:[],qo:1,fo:1,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0};
+try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep','fav','qo','fo','mc'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
 /* bỏ các bài cũ lưu từ Spotify (id dài 22 ký tự) */
 if(!Array.isArray(MS.q))MS.q=[];if(!Array.isArray(MS.hist))MS.hist=[];
 if(!Array.isArray(MS.fav))MS.fav=[];MS.fav=MS.fav.filter(t=>t&&IDRE.test(t.id));if(MS.qo==null)MS.qo=1;if(MS.fo==null)MS.fo=1;
 MS.q=MS.q.filter(t=>t&&IDRE.test(t.id));MS.hist=MS.hist.filter(t=>t&&IDRE.test(t.id));
 if(MS.now&&!IDRE.test(MS.now.id))MS.now=null;
-const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep,fav:MS.fav,qo:MS.qo,fo:MS.fo}))}catch(e){}};
+const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep,fav:MS.fav,qo:MS.qo,fo:MS.fo,mc:MS.mc}))}catch(e){}};
 const fm=ms=>{ms=Math.max(0,Math.round((ms||0)/1000));return Math.floor(ms/60)+':'+String(ms%60).padStart(2,'0')};
 
 /* ---------- icon + tab ---------- */
@@ -1043,31 +1051,34 @@ function tickUI(e){
  const b=$e('mtr');if(b)b.textContent=fm(d);
  const m=$e('mpb');if(m)m.style.width=(p*100)+'%';
  document.querySelectorAll('.qeta').forEach(x=>{x.textContent=etaT(+x.dataset.i)})}
+const bodyCls=()=>{document.body.classList.toggle('mpon',!!MS.now&&!MS.mc);document.body.classList.toggle('mpv',!!MS.now&&!!MS.mc)};
 function mini(force){
- const t=MS.now,sig=(t?t.id:'')+'|'+MS.playing;if(!force&&sig===miniSig)return;miniSig=sig;
- const m=$e('mp');if(!m)return;
- m.innerHTML=t?`${t.th?`<img class="mpi" src="${esc(t.th)}" alt="">`:'<div class="mpi"></div>'}<div class="mpt" onclick="MU.open()"><b>${esc(t.name)}</b><span>${esc(t.ar||'YouTube')}</span></div>${bt('','Bài trước','MU.prev()','prev')}${bt('pp',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play')}${bt('','Bài tiếp theo','MU.next()','next')}<i id="mpb"></i>`:''}
+ const t=MS.now,sig=(t?t.id:'')+'|'+MS.playing+'|'+MS.mc;if(!force&&sig===miniSig)return;miniSig=sig;
+ const m=$e('mp'),v=$e('mv');if(!m)return;
+ if(v)v.innerHTML=t?`<button class="mvd ${MS.playing?'on':''}" aria-label="Hiện lại trình phát nhạc" title="Hiện lại trình phát nhạc" onclick="MU.mc(0)">${t.th?`<img src="${esc(t.th)}" alt="">`:'<span>♪</span>'}</button>`:'';
+ m.innerHTML=t?`${t.th?`<img class="mpi" src="${esc(t.th)}" alt="" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)">`:'<div class="mpi" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)"></div>'}<div class="mpt" onclick="MU.open()"><b>${esc(t.name)}</b><span>${esc(t.ar||'YouTube')}</span></div>${bt('','Bài trước','MU.prev()','prev')}${bt('pp',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play')}${bt('','Bài tiếp theo','MU.next()','next')}<i id="mpb"></i>`:''}
 function ui(){
- document.body.classList.toggle('mpon',!!MS.now);
+ bodyCls();
  const n=$e('mnow');if(n)n.innerHTML=nowH();
  const q=$e('mq');if(q)q.innerHTML=qH();
  const f=$e('spEmb');if(f)f.classList.toggle('show',!!MS.show);
  mini();tickUI(est())}
 
 /* ---------- khởi tạo ---------- */
-document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="spEmb"><div id="spEl"></div></div>');
+document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></div><div id="spEmb"><div id="spEl"></div></div>');
 {const o=R;R=function(){
  const a=document.activeElement,k=a&&a.id=='msq',kid_=k&&a.id;let p0,p1;if(k){p0=a.selectionStart;p1=a.selectionEnd}
  o();
  document.body.classList.toggle('mtab',scr=='game'&&tab=='music');
  if(k&&tab=='music'){const n=$e(kid_);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(p0,p1)}catch(e){}}}
- document.body.classList.toggle('mpon',!!MS.now);mini();tickUI(est())}}
+ bodyCls();mini();tickUI(est())}}
 setInterval(()=>{
  if(!MS.now)return;
  if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
  tickUI(est())},500);
 window.MU={search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
  rep(){MS.rep=MS.rep?0:1;sv();ui()},
+ mc(v){MS.mc=v?1:0;sv();ui()},
  emb(){MS.show=MS.show?0:1;ui()},
  open(){if(scr!='game')return;tab='music';R();scrollTo(0,0)},
 };

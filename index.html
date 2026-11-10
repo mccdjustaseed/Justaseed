@@ -951,7 +951,7 @@ function kick(c){
   else{MS.show=1;ui();toast('Trình duyệt chặn tự phát — hãy bấm Play trong khung YouTube')}};
  setTimeout(f,250)}
 function go(t){
- MS.now=t;MS.pos=0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
+ MS.now=t;MS.ended=0;MS.pos=0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
  sv();ui();
  const fin=c=>{if(loaded!==t.id){loaded=t.id;try{c.loadVideoById(t.id)}catch(e){}}kick(c)};
  if(ctl)fin(ctl);else ensureCtl(t.id,1).then(fin).catch(e=>{MS.want=0;ui();toast(e.message||'Không phát được')})}
@@ -973,7 +973,7 @@ function end(){
  if(ending)return;ending=1;setTimeout(()=>{ending=0},2500);
  if(MS.rep&&MS.now){MS.pos=0;MS.want=1;try{ctl.seekTo(0,true);ctl.playVideo()}catch(e){}kick(ctl);return}
  if(MS.q.length)next(1);
- else{MS.playing=0;MS.want=0;MS.pos=0;kid++;try{ctl.pauseVideo()}catch(e){}ui();duck();toast('Đã hết hàng đợi')}}
+ else{MS.playing=0;MS.want=0;MS.pos=0;MS.ended=1;kid++;try{ctl.pauseVideo()}catch(e){}ui();duck();toast('Đã hết hàng đợi')}}
 function next(auto){
  if(!MS.q.length)return auto?0:toast('Hàng đợi đang trống — hãy thêm bài hát');
  const t=MS.q.shift();if(MS.now){MS.hist.push(MS.now);if(MS.hist.length>30)MS.hist.shift()}go(t)}
@@ -1022,7 +1022,7 @@ async function doSearch(){
   else if(/^https?:\/\//i.test(q))throw new Error('Link chưa đúng dạng. Hãy dùng link video dạng youtube.com/watch?v=… hoặc youtu.be/… (link playlist/kênh chưa hỗ trợ).');
   else{const r=await search(q);if(!r.length)throw new Error('Không tìm thấy kết quả. Thử đổi cách gõ, ví dụ "bài - ca sĩ".');t=r[0]}
   MS.res=[t];
-  if(MS.now&&MS.playing)addRes(0,2);else addRes(0,0);
+  if(MS.now&&!MS.ended)addRes(0,2);else addRes(0,0);
   MS.res=[];if(inp)inp.value='';MS.qry=''
  }catch(e){MS.res=[];MS.err=(e&&e.message)||'Có lỗi khi tìm kiếm'}
  MS.busy=0;resUI()}
@@ -1046,10 +1046,10 @@ function resH(){
 const chv=o=>`<span style="display:inline-block;transition:transform .2s;transform:rotate(${o?0:-90}deg)">${sg('chev',18)}</span>`;
 function qH(){
  return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.qt()" aria-expanded="${MS.qo?'true':'false'}">${chv(MS.qo)}<h3 style="margin:0">Hàng đợi <span class="qcnt">(${MS.q.length})</span></h3></button><span>${MS.qo&&MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button> `:''}${MS.qo&&MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}</span></div>`+
- (MS.qo?(MS.q.length?MS.q.map((t,i)=>qrow(t,i,bt('s','Phát bài này ngay',`MU.jump(${i})`,'play')+bt('s','Đưa lên trên',`MU.up(${i})`,'up',i==0)+bt('s','Xóa khỏi hàng đợi',`MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Tìm bài rồi bấm ＋ để thêm vào hàng đợi.</p>'):'')}
+ (MS.qo?(MS.q.length?MS.q.map((t,i)=>qrow(t,i,bt('s','Xóa khỏi hàng đợi',`event.stopPropagation();MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Tìm bài rồi bấm Thêm để đưa vào hàng đợi. Bấm vào bài để phát.</p>'):'')}
 const eta=i=>{let w=Math.max(0,(MS.dur||(MS.now&&MS.now.dur)||0)-est());for(let j=0;j<i;j++){const d=MS.q[j].dur;if(!d)return null;w+=d}return MS.now&&!(MS.dur||MS.now.dur)?null:w};
 const etaT=i=>{const w=eta(i);return w==null?'--:--':fm(w)};
-const qrow=(t,i,btns)=>`<div class="mtr"><span class="qn">${i+1}</span><div class="mti"><b><em class="mqi">${esc(t.name)}</em></b></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
+const qrow=(t,i,btns)=>`<div class="mtr qpl" title="Bấm để phát bài này" onclick="MU.jump(${i})"><span class="qn">${i+1}</span><div class="mti"><b><em class="mqi">${esc(t.name)}</em></b></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
 const isFav=t=>!!(t&&MS.fav.some(x=>x.id===t.id));
 function fH(){
  return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.ft()" aria-expanded="${MS.fo?'true':'false'}">${chv(MS.fo)}<h3 style="margin:0">Yêu thích ${MS.fav.length?`<span class="mut">(${MS.fav.length})</span>`:''}</h3></button></div>`+
@@ -1392,8 +1392,10 @@ R()})();
 </script>
 <style>
 /* ===== v11: nhạc - chữ chạy ngang, số thứ tự, bài tiếp theo ===== */
-.mqi{font-style:normal}.mqi.run{display:inline-block;animation:mqs var(--md,6s) linear infinite alternate}
-@keyframes mqs{0%,12%{transform:translateX(0)}88%,100%{transform:translateX(var(--mv,0))}}
+.mqi{font-style:normal}.mqi.run{display:inline-block;white-space:nowrap;animation:mqs var(--md,8s) linear infinite;will-change:transform}
+.mqa{display:inline-block;padding-right:2.5em}
+@keyframes mqs{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mtr.qpl{cursor:pointer}.mtr.qpl:active{background:color-mix(in srgb,var(--g2) 14%,transparent)}
 .mnm{display:block!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:unset}
 .mnx{display:flex;gap:4px;align-items:baseline;margin:0 0 2px;font-size:.76rem;color:var(--mut);white-space:nowrap;min-width:0}
 .mnx>span{flex:none}.mnx b.mq{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600;color:var(--ink);font-family:Onest,sans-serif}
@@ -1403,9 +1405,44 @@ R()})();
 @media(prefers-reduced-motion:reduce){.mqi.run{animation:none;display:inline}}
 </style>
 <script>
-/* chữ quá dài thì chạy ngang qua lại */
-(()=>{const fx=()=>document.querySelectorAll('.mqi').forEach(e=>{const p=e.parentElement;if(!p)return;const k=e.textContent+'|'+p.clientWidth;if(e.dataset.k===k)return;e.dataset.k=k;e.classList.remove('run');const w=p.clientWidth;if(!w)return;const ov=e.getBoundingClientRect().width-w;if(ov>2){e.style.setProperty('--mv',-(ov+6)+'px');e.style.setProperty('--md',Math.max(3,ov/28/.76).toFixed(1)+'s');e.classList.add('run')}});setInterval(fx,700);addEventListener('resize',fx);fx()})();
+/* chữ quá dài thì chạy ngang một chiều, lặp vòng */
+(()=>{const fx=()=>document.querySelectorAll('.mqi').forEach(e=>{const p=e.parentElement;if(!p)return;
+const txt=e.dataset.t!=null?e.dataset.t:(e.dataset.t=e.textContent);
+const k=txt+'|'+p.clientWidth;if(e.dataset.k===k)return;e.dataset.k=k;
+e.classList.remove('run');e.textContent=txt;
+const w=p.clientWidth;if(!w)return;
+const ov=e.getBoundingClientRect().width-w;
+if(ov>2){e.innerHTML='<span class="mqa"></span><span class="mqa"></span>';e.children[0].textContent=txt;e.children[1].textContent=txt;e.classList.add('run');
+const one=e.getBoundingClientRect().width/2;e.style.setProperty('--md',Math.max(4,one/32).toFixed(1)+'s')}});
+setInterval(fx,700);addEventListener('resize',fx);fx()})();
 </script>
+<style>
+/* v11: thu nhỏ giao diện tab nhạc */
+.mnr{gap:10px;margin:0 0 2px}
+.mcv{width:60px;flex:0 0 60px}
+.mnm{font-size:.95rem}
+.mar{font-size:.8rem;margin-top:1px}
+.mnx{font-size:.7rem;margin-bottom:1px}
+#msk{margin:6px 0 0;height:18px}
+.mtm{font-size:.7rem}
+.mctl{gap:2px;margin-top:2px}
+.mctl button{width:34px;height:34px}
+.mctl button.big{width:42px;height:42px;box-shadow:0 3px 0 var(--g3)}
+.mctl button svg{width:17px;height:17px}
+.mctl button.big svg{width:21px;height:21px}
+.mtr{gap:8px;padding:5px 0}
+.mth{width:38px;height:38px;border-radius:8px}
+.mti b{font-size:.88rem}
+.mti span{font-size:.72rem}
+.qn{width:18px;font-size:.78rem}
+.qeta{font-size:.76rem}
+.mbt{gap:2px}
+.mbt button{width:30px;height:30px}
+.mbt button svg{width:14px;height:14px}
+#mq h3,#mf h3{font-size:.95rem}
+#mq .row .s,#mf .row .s{font-size:.8rem}
+#msq{font-size:.9rem;padding:8px 10px}
+</style>
 <style>
 /* v11: vòng tiến trình quanh đĩa than mini */
 .mvw{position:relative;padding:5px;display:block}

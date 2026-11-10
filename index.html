@@ -672,10 +672,10 @@ V.pet=lk('pet',()=>`<div class=card><div class=row style="justify-content:center
 {const o=V.up;V.up=()=>o()+`<div class=card><p class=mut style="margin:0">Nâng cấp quầy: cấp quầy tối đa = cấp độ ÷ 2 (hiện tại ${Math.min(5,Math.floor(lvOf(s.xp||0)/2))}/5).</p></div>`}
 TABS.splice(TABS.findIndex(t=>t[0]=='cat'),2,['pet','cat','Pet']);TABS.splice(TABS.findIndex(t=>t[0]=='bills')+1,0,['ach','star','Thành tích']);
 /* nhân viên 500k/ngày */
-function hl(){const d=new Date().toLocaleDateString('en-CA');if(!s.hl||s.hl.d!=d)s.hl={d,n:0};return s.hl.n}
+function hl(){const d=new Date().toLocaleDateString('en-CA');if(!s.hl||typeof s.hl!='object'||s.hl.d!=d||!(s.hl.n>=0))s.hl={d,n:0};return s.hl.n}
 function hireStaff(){if(s.hire||s.money<500000)return;if(lvOf(s.xp||0)<10)return toast('Cần cấp 10 để thuê nhân viên');if(hl()>=3)return toast('Hôm nay bạn đã thuê đủ 3 lần');s.hl.n++;s.money-=500000;s.hire=1;L('out','Nhân viên','Thuê 1 ngày',1,500000);beep(700);R()}
-{const o=V.shop;V.shop=function(){const h=o();return s.ph=='open'?h:h+`<div class=card><div class=row><span><b>👩‍🌾 Nhân viên</b><br><span class=mut>Tự giao hàng cả ngày, bạn chỉ cần nhập hàng · ${$(500000)}/ngày<br>${lvOf(s.xp||0)<10?'Mở khóa khi đạt cấp 10 (hiện cấp '+lvOf(s.xp||0)+')':'Còn '+(3-hl())+'/3 lượt thuê hôm nay'}</span></span><button class=p ${s.hire||s.money<500000||hl()>=3||lvOf(s.xp||0)<10?'disabled':''} onclick=hireStaff()>${lvOf(s.xp||0)<10?'🔒 Cấp 10':s.hire?'Đã thuê':$(500000)}</button></div></div>`}}
-function autoServe(){const c=live.cs.find(x=>!x.big&&x.hd&&can(x)&&(!x.xt||x.xm||(s.st[x.xt]||0)>=1));if(!c)return;const sv=bd,c0=cur;bd=nb();bd.size=c.z;bd.fl={...(c.mx||{[c.f]:K[c.z]})};bd.ps=c.ps||bd.ps;if(c.xt&&!c.xm)bd.gift={[c.xt]:1};give(c.id);bd=sv;cur=live.cs.some(x=>x.id==c0)?c0:(live.cs[0]?live.cs[0].id:null)}
+{const o=V.shop;V.shop=function(){const h=o();if(s.ph=='open')return h;try{const lv=lvOf(s.xp||0),n=hl();return h+`<div class=card><div class=row><span><b>👩‍🌾 Nhân viên</b><br><span class=mut>Tự giao hàng cả ngày, bạn chỉ cần nhập hàng · ${$(500000)}/ngày<br>${lv<10?'Mở khóa khi đạt cấp 10 (hiện cấp '+lv+')':(n>=3?'Đã hết 3 lượt thuê hôm nay (ngày mai có lại). Bạn vẫn mở gian hàng bình thường.':'Còn '+(3-n)+'/3 lượt thuê hôm nay')}</span></span><button class=p ${s.hire||s.money<500000||n>=3||lv<10?'disabled':''} onclick=hireStaff()>${lv<10?'🔒 Cấp 10':s.hire?'Đã thuê':(n>=3?'Hết lượt':$(500000))}</button></div></div>`}catch(e){return h}}}
+function autoServe(){const c=live.cs.find(x=>!x.big&&x.hd&&can(x)&&(!x.xt||x.xm||(s.st[x.xt]||0)>=1));if(!c)return;const sv=bd,c0=cur;try{bd=nb();bd.size=c.z;bd.fl={...(c.mx||{[c.f]:K[c.z]})};bd.ps=c.ps||bd.ps;if(c.xt&&!c.xm)bd.gift={[c.xt]:1};give(c.id)}finally{bd=sv;cur=live&&live.cs.some(x=>x.id==c0)?c0:(live&&live.cs[0]?live.cs[0].id:null)}}
 {const o=tick;tick=function(){o();if(s.hire&&live&&!live.run&&live.t%2==0)try{autoServe()}catch(e){}}}
 {const o=endDay;endDay=function(){s.hire=0;o()}}
 /* combo */
@@ -773,18 +773,18 @@ function pfmT(){if(scr=='game'&&tab=='pf'){tab='home';R();scrollTo(0,0)}else pfm
 {const o=restart;restart=function(){const k={lang:s.lang,bgL:s.bgL,bgD:s.bgD,pf:s.pf};try{o()}catch(e){}if(!s.pf){ini();Object.keys(k).forEach(x=>{if(k[x]!=null)s[x]=k[x]});tab='home';PFS='me';document.body.classList.remove('nh');th();R()}}}
 </script><style>
 /* ===== NHẠC SPOTIFY ===== */
-.mcv{width:min(100%,300px);aspect-ratio:1;margin:4px auto 10px;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,var(--g),var(--sk1));display:grid;place-items:center;box-shadow:0 10px 26px rgba(20,70,40,.28)}
+.mnr{display:flex;align-items:center;gap:12px;margin:2px 0 4px}.mni{flex:1;min-width:0}.mcv{width:84px;flex:0 0 84px;aspect-ratio:1;margin:0;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,var(--g),var(--sk1));display:grid;place-items:center;box-shadow:0 5px 14px rgba(20,70,40,.28)}
 .mcv img{width:100%;height:100%;object-fit:cover;display:block}
-.mcv .ph{font-size:4rem;opacity:.45}
+.mcv .ph{font-size:2.2rem;opacity:.45}
 .mcv.on{animation:mpl 3.4s ease-in-out infinite}
 @keyframes mpl{50%{transform:scale(1.025)}}
-.mnm{font-family:'Baloo 2',sans-serif;font-size:1.25rem;line-height:1.2;text-align:center;margin:4px 0 0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.mar{text-align:center;margin:2px 0 0}
+.mnm{font-family:'Baloo 2',sans-serif;font-size:1.1rem;line-height:1.2;text-align:left;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.mar{text-align:left;margin:2px 0 0;font-size:.9rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 #msk{width:100%;padding:0;border:0;accent-color:var(--g2);margin:10px 0 0;background:transparent}
 .mtm{display:flex;justify-content:space-between;font-size:.8rem;color:var(--mut)}
 .mctl{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:6px}
 .mctl button{border:0;background:transparent;color:var(--ink);width:46px;height:46px;border-radius:50%;display:grid;place-items:center;padding:0}
-.mctl button.big{width:66px;height:66px;background:var(--g2);color:#fff;box-shadow:0 4px 0 var(--g3)}
+.mctl button.big{width:58px;height:58px;background:var(--g2);color:#fff;box-shadow:0 4px 0 var(--g3)}
 .mctl button.big:active{transform:translateY(2px);box-shadow:none}
 .mctl button.act{color:var(--g3);background:color-mix(in srgb,var(--g2) 22%,transparent)}
 .mtr{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:2px dashed var(--ln)}
@@ -814,26 +814,30 @@ body.mpon.nh:not(.m):not(.mtab) #mp{bottom:calc(40px + env(safe-area-inset-botto
 body.mpon:not(.m):not(.mtab) #cbar{bottom:calc(138px + env(safe-area-inset-bottom,0px))}
 body.mpon.nh:not(.m):not(.mtab) #cbar{bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 body.mpon:not(.m):not(.mtab) #app{padding-bottom:180px}
-#spEmb{position:fixed;left:0;bottom:0;width:300px;height:80px;opacity:0;pointer-events:none;z-index:-1;border-radius:12px;overflow:hidden}
-#spEmb iframe{width:100%;height:80px;border:0;display:block}
-#spEmb.show{opacity:1;pointer-events:auto;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100% - 24px));box-shadow:0 8px 28px rgba(0,0,0,.4)}
+#spEmb{position:fixed;left:0;bottom:0;width:320px;height:180px;opacity:0;pointer-events:none;z-index:-1;border-radius:12px;overflow:hidden}
+#spEmb iframe{width:100%;height:100%;border:0;display:block}
+#spEmb.show{opacity:1;pointer-events:auto;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100% - 24px));height:192px;box-shadow:0 8px 28px rgba(0,0,0,.4)}
 @media(prefers-reduced-motion:reduce){.mcv.on{animation:none}}
 </style>
 <script>
-/* ===== NHẠC SPOTIFY ===== */
+/* ===== NHẠC YOUTUBE ===== */
 (()=>{
 const LS='jsMusic',$e=id=>document.getElementById(id);
-const CID='8c336415670c422a88ddb6f1828bd786',SEC='c71dec0b6287455392c699ed7bbb8613';
-const MS=window.MS={cid:CID,sec:SEC,auth:null,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0};
+const IDRE=/^[\w-]{11}$/;
+const KEY='AIzaSyB7AxXmftO434HSxB28HtIN36g0ud57EN4';
+const MS=window.MS={key:KEY,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0};
 try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
+/* bỏ các bài cũ lưu từ Spotify (id dài 22 ký tự) */
 if(!Array.isArray(MS.q))MS.q=[];if(!Array.isArray(MS.hist))MS.hist=[];
+MS.q=MS.q.filter(t=>t&&IDRE.test(t.id));MS.hist=MS.hist.filter(t=>t&&IDRE.test(t.id));
+if(MS.now&&!IDRE.test(MS.now.id))MS.now=null;
 const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep}))}catch(e){}};
 const fm=ms=>{ms=Math.max(0,Math.round((ms||0)/1000));return Math.floor(ms/60)+':'+String(ms%60).padStart(2,'0')};
 
 /* ---------- icon + tab ---------- */
 I.music='M9 18V5l12-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM21 16a3 3 0 11-6 0 3 3 0 016 0z';
 {const i=TABS.findIndex(t=>t[0]=='up');TABS.splice(i<0?TABS.length:i,0,['music','music','Nhạc'])}
-if(typeof ENL!=='undefined'){ENL.push(['Nhạc','Music'],['Hàng đợi','Queue'],['Kết nối Spotify','Connect Spotify']);ENL.sort((a,b)=>b[0].length-a[0].length)}
+if(typeof ENL!=='undefined'){ENL.push(['Nhạc','Music'],['Hàng đợi','Queue'],['Kết nối YouTube','Connect YouTube']);ENL.sort((a,b)=>b[0].length-a[0].length)}
 const IC={
 play:'<path d="M7 4.5v15l13-7.5z" fill="currentColor" stroke="none"/>',
 pause:'<rect x="6" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/>',
@@ -846,117 +850,110 @@ x:'<path d="M6 6l12 12M18 6L6 18"/>',
 shuf:'<path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/>',
 rep:'<path d="M17 3l3 3-3 3M4 11V9a3 3 0 013-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 01-3 3H4"/>',
 rep1:'<path d="M17 3l3 3-3 3M4 11V9a3 3 0 013-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 01-3 3H4M11 10l1.5-1v6"/>',
-frame:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15h18"/>',
-ext:'<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'};
+frame:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15h18"/>'};
 const sg=(n,z=22)=>`<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
 
-/* ---------- Spotify API ---------- */
-let tok=null;
-const form=o=>new URLSearchParams(o).toString();
-const tokPost=(body,h)=>fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:Object.assign({'Content-Type':'application/x-www-form-urlencoded'},h||{}),body});
-async function token(){
- if(tok&&tok.exp>Date.now()+3e4)return tok.t;
- if(!MS.cid)return null;
- try{
-  if(MS.sec){
-   let r=await tokPost(form({grant_type:'client_credentials',client_id:MS.cid,client_secret:MS.sec}));
-   if(!r.ok)r=await tokPost('grant_type=client_credentials',{Authorization:'Basic '+btoa(MS.cid+':'+MS.sec)});
-   if(!r.ok)throw new Error('Client ID/Secret chưa đúng (mã '+r.status+')');
-   const j=await r.json();tok={t:j.access_token,exp:Date.now()+j.expires_in*1e3};return tok.t}
- }catch(e){if(e instanceof TypeError)throw new Error('Không kết nối được tới Spotify (mạng hoặc trình duyệt chặn)');throw e}
- return null}
-async function api(p){
- const t=await token();if(!t)throw new Error('NOAUTH');
- let r;try{r=await fetch('https://api.spotify.com/v1'+p,{headers:{Authorization:'Bearer '+t}})}catch(e){throw new Error('Không kết nối được tới Spotify')}
- if(r.status==401)tok=null;
- if(r.status==429)throw new Error('Spotify đang giới hạn tần suất, thử lại sau ít giây');
- if(r.status==403)throw new Error('Spotify từ chối (403). Chủ app cần có Premium, và tài khoản đăng nhập phải nằm trong User management của app.');
- if(!r.ok)throw new Error('Spotify API lỗi '+r.status);
+/* ---------- YouTube: lấy thông tin & tìm kiếm ---------- */
+const LRE=/(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i;
+const dec=h=>{const t=document.createElement('textarea');t.innerHTML=h||'';return t.value};
+const cov=id=>'https://i.ytimg.com/vi/'+id+'/mqdefault.jpg';
+const artist=c=>dec(c).replace(/\s*-\s*Topic$/i,'').replace(/VEVO$/i,'').trim();
+const dur=iso=>{const m=/^P(?:\d+D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(iso||'');return m?((+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0))*1000:0};
+async function yt(path,params){
+ let r;
+ try{r=await fetch('https://www.googleapis.com/youtube/v3/'+path+'?'+new URLSearchParams(Object.assign({key:MS.key},params)))}
+ catch(e){throw new Error('Không kết nối được tới YouTube (mạng hoặc trình duyệt chặn)')}
+ if(!r.ok){
+  let why='';try{const j=await r.json();why=(j.error&&j.error.errors&&j.error.errors[0]&&j.error.errors[0].reason)||''}catch(e){}
+  if(why=='quotaExceeded')throw new Error('Khóa YouTube đã hết hạn mức hôm nay (khoảng 100 lượt tìm/ngày). Hãy dán link YouTube hoặc thử lại ngày mai.');
+  if(why=='keyInvalid'||r.status==400)throw new Error('Khóa YouTube API chưa đúng. Hãy kiểm tra lại khóa.');
+  if(r.status==403)throw new Error('YouTube từ chối khóa này (403). Hãy bật "YouTube Data API v3" cho khóa, và kiểm tra giới hạn tên miền của khóa.');
+  throw new Error('YouTube API lỗi '+r.status)}
  return r.json()}
-const imgs=a=>{a=(a||[]).slice().sort((x,y)=>(y.width||0)-(x.width||0));return[a[1]?a[1].url:(a[0]?a[0].url:''),a.length?a[a.length-1].url:'']};
-const mk=x=>{const[i,t]=imgs(x.album&&x.album.images);return{id:x.id,name:x.name,ar:(x.artists||[]).map(a=>a.name).join(', '),img:i,th:t||i,dur:x.duration_ms||0}};
-const LRE=/(?:open\.spotify\.com\/(?:intl-[a-z-]+\/)?|spotify:)(track|album|playlist|artist|episode|show)[\/:]([A-Za-z0-9]{22})/i;
-async function getTrack(id){
- try{if(await token().catch(()=>null))return mk(await api('/tracks/'+id))}catch(e){}
- try{const r=await fetch('https://open.spotify.com/oembed?url='+encodeURIComponent('https://open.spotify.com/track/'+id));
-  if(r.ok){const j=await r.json();return{id,name:j.title||'Bài hát Spotify',ar:'',img:j.thumbnail_url||'',th:j.thumbnail_url||'',dur:0}}}catch(e){}
- return{id,name:'Bài hát Spotify',ar:'',img:'',th:'',dur:0}}
-const nz=x=>String(x||'').replace(/[đĐ]/g,'d').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-const has=(hay,need)=>{hay=nz(hay);need=nz(need);if(!need)return 0;if(hay.includes(need))return 2;const w=hay.split(' ');return need.split(' ').every(k=>w.includes(k))?1.5:0};
+const fromVideo=v=>({id:v.id,name:dec(v.snippet.title),ar:artist(v.snippet.channelTitle),img:cov(v.id),th:cov(v.id),dur:dur(v.contentDetails&&v.contentDetails.duration)});
+async function getVideo(id){
+ if(MS.key){try{const j=await yt('videos',{part:'snippet,contentDetails',id});if(j.items&&j.items[0])return fromVideo(j.items[0])}catch(e){}}
+ try{const r=await fetch('https://www.youtube.com/oembed?format=json&url='+encodeURIComponent('https://www.youtube.com/watch?v='+id));
+  if(r.ok){const j=await r.json();return{id,name:dec(j.title)||'Video YouTube',ar:artist(j.author_name||''),img:cov(id),th:cov(id),dur:0}}}catch(e){}
+ return{id,name:'Video YouTube',ar:'',img:cov(id),th:cov(id),dur:0}}
 async function search(raw){
- const cl=x=>x.replace(/"/g,'').trim(),qs=[];let pairs=[];
- const m=raw.split(/\s+[-–—]\s+/);
- if(m.length>=2){const A=cl(m[0]),B=cl(m.slice(1).join(' '));pairs=[[A,B]];qs.push(`track:"${A}" artist:"${B}"`,`track:"${B}" artist:"${A}"`,`${A} ${B}`)}
- else{const h=raw.split('-');if(h.length==2&&h[0].trim()&&h[1].trim()){const A=cl(h[0]),B=cl(h[1]);pairs=[[A,B]];qs.push(`track:"${A}" artist:"${B}"`,`track:"${B}" artist:"${A}"`)}qs.push(raw)}
- const rs=await Promise.allSettled(qs.map(q=>api('/search?type=track&limit=10&q='+encodeURIComponent(q))));
- const ok=rs.filter(r=>r.status=='fulfilled');
- if(!ok.length)throw rs[0].reason;
- const seen={},out=[];let rk=0;
- ok.forEach(r=>((r.value.tracks&&r.value.tracks.items)||[]).forEach(x=>{if(!x||seen[x.id])return;seen[x.id]=1;const t=mk(x);t.k=rk++;out.push(t)}));
- if(pairs.length){const sc=t=>{let b=0;for(const[A,B]of pairs)b=Math.max(b,has(t.name,A)+has(t.ar,B),has(t.name,B)+has(t.ar,A));return b};out.forEach(t=>t.sc=sc(t));out.sort((a,b)=>b.sc-a.sc||a.k-b.k)}
- return out.slice(0,12).map(t=>{delete t.k;delete t.sc;return t})}
+  const q=raw.replace(/\s+[-–—]\s+/g,' ');
+ const base={part:'snippet',type:'video',videoEmbeddable:'true',maxResults:'12',q};
+ let j=await yt('search',Object.assign({videoCategoryId:'10'},base));
+ if(!j.items||!j.items.length)j=await yt('search',base);
+ const ids=(j.items||[]).map(x=>x.id&&x.id.videoId).filter(Boolean);
+ if(!ids.length)return[];
+ const d=await yt('videos',{part:'snippet,contentDetails',id:ids.join(',')});
+ return(d.items||[]).map(fromVideo)}
 
-/* ---------- trình phát (Spotify Embed IFrame API) ---------- */
-let ctl=null,ctlP=null,apiP=null,loaded='',kid=0,ignoreUntil=0,lastP=0,ending=0,dk=-1,miniSig='';
+/* ---------- trình phát (YouTube IFrame Player API) ---------- */
+let ctl=null,ctlP=null,apiP=null,loaded='',kid=0,ending=0,dk=-1,miniSig='';
 function loadApi(){
  if(apiP)return apiP;
  apiP=new Promise((res,rej)=>{
-  window.onSpotifyIframeApiReady=A=>res(A);
-  const sc=document.createElement('script');sc.src='https://open.spotify.com/embed/iframe-api/v1';sc.async=true;
-  sc.onerror=()=>{apiP=null;rej(new Error('Không tải được trình phát Spotify (kiểm tra mạng hoặc tiện ích chặn quảng cáo)'))};
+  if(window.YT&&window.YT.Player)return res(window.YT);
+  const prev=window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady=()=>{try{prev&&prev()}catch(e){}res(window.YT)};
+  const sc=document.createElement('script');sc.src='https://www.youtube.com/iframe_api';sc.async=true;
+  sc.onerror=()=>{apiP=null;rej(new Error('Không tải được trình phát YouTube (kiểm tra mạng hoặc tiện ích chặn quảng cáo)'))};
   document.head.appendChild(sc);
-  setTimeout(()=>{if(!ctl){apiP=null;rej(new Error('Trình phát Spotify tải quá lâu'))}},15000)});
+  setTimeout(()=>{if(!ctl&&!(window.YT&&window.YT.Player)){apiP=null;rej(new Error('Trình phát YouTube tải quá lâu'))}},15000)});
  return apiP}
-function ensureCtl(uri){
+function ensureCtl(id,auto){
  if(ctl)return Promise.resolve(ctl);if(ctlP)return ctlP;
- ctlP=loadApi().then(A=>new Promise(res=>{
-  A.createController($e('spEl'),{uri,width:'100%',height:80},c=>{ctl=c;loaded=uri.split(':')[2];c.addListener('playback_update',onUp);res(c)})
+ ctlP=loadApi().then(Y=>new Promise(res=>{
+  const p=new Y.Player('spEl',{width:'100%',height:'100%',videoId:id,
+   playerVars:{playsinline:1,rel:0,modestbranding:1,autoplay:auto?1:0},
+   events:{onReady:()=>{ctl=p;loaded=id;res(p)},onStateChange:onSt,onError:onErr}})
  })).catch(e=>{ctlP=null;throw e});
  return ctlP}
 const est=()=>MS.playing?Math.min(MS.pos+(Date.now()-MS.evT),MS.dur||1e9):MS.pos;
 function kick(c){
  const k=++kid;let n=0;
  const f=()=>{if(k!==kid||!MS.want||MS.playing)return;
-  try{n?c.resume():c.play()}catch(e){}
-  n++;if(n<7)setTimeout(f,n<3?700:1500);
-  else{MS.show=1;ui();toast('Trình duyệt chặn tự phát — hãy bấm Play trong khung Spotify')}};
+  try{c.playVideo()}catch(e){}
+  n++;if(n<6)setTimeout(f,n<3?700:1500);
+  else{MS.show=1;ui();toast('Trình duyệt chặn tự phát — hãy bấm Play trong khung YouTube')}};
  setTimeout(f,250)}
 function go(t){
- MS.now=t;MS.pos=0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();lastP=0;ending=0;ignoreUntil=Date.now()+900;
+ MS.now=t;MS.pos=0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
  sv();ui();
- const uri='spotify:track:'+t.id;
- const run=c=>{loaded=t.id;try{c.loadUri(uri)}catch(e){}kick(c)};
- if(ctl)run(ctl);else ensureCtl(uri).then(run).catch(e=>{MS.want=0;ui();toast(e.message||'Không phát được')})}
-function onUp(e){
- if(Date.now()<ignoreUntil)return;
- const d=(e&&e.data)||{},was=MS.playing;
- MS.dur=d.duration||MS.dur;MS.pos=d.position||0;MS.playing=(!d.isPaused&&MS.now)?1:0;MS.evT=Date.now();
- if(MS.playing)MS.want=1;
- if(!ending&&MS.now){
-  if(MS.dur>0&&MS.pos>=MS.dur-500&&lastP>1500)end();
-  else if(d.isPaused&&MS.pos===0&&lastP>1500&&MS.want)end()}
- lastP=MS.pos;
- if(was!==MS.playing){ui();duck()}}
+ const fin=c=>{if(loaded!==t.id){loaded=t.id;try{c.loadVideoById(t.id)}catch(e){}}kick(c)};
+ if(ctl)fin(ctl);else ensureCtl(t.id,1).then(fin).catch(e=>{MS.want=0;ui();toast(e.message||'Không phát được')})}
+function onSt(e){
+ const st=e&&e.data;
+ if(st===1){
+  MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();
+  try{MS.pos=ctl.getCurrentTime()*1000;const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(x){}
+  ui();duck()}
+ else if(st===2){
+  if(MS.playing){try{MS.pos=ctl.getCurrentTime()*1000}catch(x){}MS.evT=Date.now();MS.playing=0;MS.want=0;kid++;ui();duck()}}
+ else if(st===0){end()}}
+function onErr(e){
+ const c=e&&e.data;
+ toast(c==101||c==150?'Video này không cho phép phát nhúng — thử bài khác':'Không phát được video này');
+ MS.playing=0;MS.want=0;kid++;
+ if(MS.q.length)next(1);else{ui();duck()}}
 function end(){
  if(ending)return;ending=1;setTimeout(()=>{ending=0},2500);
- if(MS.rep&&MS.now){lastP=0;MS.pos=0;ignoreUntil=Date.now()+800;MS.want=1;try{ctl.seek(0)}catch(e){}kick(ctl);return}
+ if(MS.rep&&MS.now){MS.pos=0;MS.want=1;try{ctl.seekTo(0,true);ctl.playVideo()}catch(e){}kick(ctl);return}
  if(MS.q.length)next(1);
- else{MS.playing=0;MS.want=0;MS.pos=0;lastP=0;kid++;try{ctl.pause()}catch(e){}ui();duck();toast('Đã hết hàng đợi')}}
+ else{MS.playing=0;MS.want=0;MS.pos=0;kid++;try{ctl.pauseVideo()}catch(e){}ui();duck();toast('Đã hết hàng đợi')}}
 function next(auto){
  if(!MS.q.length)return auto?0:toast('Hàng đợi đang trống — hãy thêm bài hát');
  const t=MS.q.shift();if(MS.now){MS.hist.push(MS.now);if(MS.hist.length>30)MS.hist.shift()}go(t)}
 function prev(){
  if(MS.pos>3000||!MS.hist.length){
-  if(!MS.now)return;MS.pos=0;lastP=0;MS.evT=Date.now();
-  if(ctl&&loaded===MS.now.id){try{ctl.seek(0)}catch(e){}if(!MS.playing){MS.want=1;kick(ctl)}}else go(MS.now);
+  if(!MS.now)return;MS.pos=0;MS.evT=Date.now();
+  if(ctl&&loaded===MS.now.id){try{ctl.seekTo(0,true)}catch(e){}if(!MS.playing){MS.want=1;kick(ctl)}}else go(MS.now);
   return tickUI(0)}
  const t=MS.hist.pop();if(MS.now)MS.q.unshift(MS.now);go(t)}
 function tog(){
  const t=MS.now;
  if(!t){if(MS.q.length)return next();return toast('Chưa có bài nào — hãy tìm và thêm bài hát')}
  if(!ctl||loaded!==t.id){go(t);return}
- if(MS.playing){MS.pos=est();MS.evT=Date.now();MS.want=0;kid++;MS.playing=0;try{ctl.pause()}catch(e){}ui();duck()}
- else{MS.want=1;try{MS.pos<500?ctl.play():ctl.resume()}catch(e){}kick(ctl)}}
+ if(MS.playing){MS.pos=est();MS.evT=Date.now();MS.want=0;kid++;MS.playing=0;try{ctl.pauseVideo()}catch(e){}ui();duck()}
+ else{MS.want=1;try{ctl.playVideo()}catch(e){}kick(ctl)}}
 function duck(){
  const p=MS.playing?1:0;if(p===dk)return;dk=p;
  try{if(p)clearInterval(MT);else if(s.mus&&scr=='game')music()}catch(e){}}
@@ -965,7 +962,7 @@ function sk(v,drag){
  const d=MS.dur||(MS.now&&MS.now.dur)||0,p=v/1000*d;
  if(drag){MS.seeking=1;const a=$e('mtl');if(a)a.textContent=fm(p);return}
  MS.seeking=0;if(!ctl||!d)return;
- try{ctl.seek(Math.floor(p/1000))}catch(e){}MS.pos=p;MS.evT=Date.now();lastP=p;tickUI(p)}
+ try{ctl.seekTo(p/1000,true)}catch(e){}MS.pos=p;MS.evT=Date.now();tickUI(p)}
 
 /* ---------- hàng đợi ---------- */
 function qui(){sv();const q=$e('mq');if(q)q.innerHTML=qH()}
@@ -986,41 +983,38 @@ async function doSearch(){
  MS.err='';MS.busy=1;MS.res=[];resUI();
  try{
   const m=q.match(LRE);
-  if(m){
-   if(m[1].toLowerCase()!='track')throw new Error('Hiện chỉ hỗ trợ link bài hát (track), chưa hỗ trợ album/playlist.');
-   MS.res=[await getTrack(m[2])]}
-  else if(/^https?:\/\//i.test(q))throw new Error('Link chưa đúng dạng. Hãy dùng link bài hát dạng open.spotify.com/track/… (link rút gọn spotify.link thì mở ra rồi copy lại).');
+  if(m)MS.res=[await getVideo(m[1])];
+  else if(/^https?:\/\//i.test(q))throw new Error('Link chưa đúng dạng. Hãy dùng link video dạng youtube.com/watch?v=… hoặc youtu.be/… (link playlist/kênh chưa hỗ trợ).');
   else{MS.res=await search(q);if(!MS.res.length)MS.err='Không tìm thấy kết quả. Thử đổi cách gõ, ví dụ "bài - ca sĩ".'}
  }catch(e){
   MS.res=[];
-  if(e&&e.message==='NOAUTH')MS.err='Chưa kết nối được Spotify. Bạn vẫn có thể dán link bài hát để phát.';
-  else MS.err=(e&&e.message)||'Có lỗi khi tìm kiếm'}
+  MS.err=(e&&e.message)||'Có lỗi khi tìm kiếm'}
  MS.busy=0;resUI()}
 
 /* ---------- giao diện ---------- */
-const row=(t,btns,cur)=>`<div class="mtr ${cur?'cur':''}">${t.th?`<img class="mth" src="${esc(t.th)}" alt="">`:'<div class="mth"></div>'}<div class="mti"><b>${esc(t.name)}</b><span>${esc(t.ar||'Spotify')}${t.dur?' · '+fm(t.dur):''}</span></div><div class="mbt">${btns}</div></div>`;
+const row=(t,btns,cur)=>`<div class="mtr ${cur?'cur':''}">${t.th?`<img class="mth" src="${esc(t.th)}" alt="">`:'<div class="mth"></div>'}<div class="mti"><b>${esc(t.name)}</b><span>${esc(t.ar||'YouTube')}${t.dur?' · '+fm(t.dur):''}</span></div><div class="mbt">${btns}</div></div>`;
 const bt=(cls,lb,fn,ic,dis)=>`<button class="${cls}" aria-label="${lb}" title="${lb}" ${dis?'disabled':''} onclick="${fn}">${sg(ic,cls=='s'?16:22)}</button>`;
 function nowH(){
  const t=MS.now;
- return `<div class="mcv ${MS.playing?'on':''}">${t&&t.img?`<img src="${esc(t.img)}" alt="Ảnh bìa ${esc(t.name)}">`:'<span class="ph">♪</span>'}</div>
-<p class="mnm">${t?esc(t.name):'Chưa có bài nào đang phát'}</p>
-<p class="mar mut">${t?esc(t.ar||'Spotify'):'Tìm bài hát hoặc dán link Spotify bên dưới'}</p>
+ return `<div class="mnr"><div class="mcv ${MS.playing?'on':''}">${t&&t.img?`<img src="${esc(t.img)}" alt="Ảnh bìa ${esc(t.name)}">`:'<span class="ph">♪</span>'}</div>
+<div class="mni"><p class="mnm">${t?esc(t.name):'Chưa có bài nào đang phát'}</p>
+<p class="mar mut">${t?esc(t.ar||'YouTube'):'Tìm bài hát hoặc dán link YouTube bên dưới'}</p></div></div>
 <input type="range" id="msk" min="0" max="1000" value="0" ${t?'':'disabled'} aria-label="Tua bài hát" oninput="MU.sk(this.value,1)" onchange="MU.sk(this.value)">
 <div class="mtm"><span id="mtl">0:00</span><span id="mtr">${fm(MS.dur||(t&&t.dur))}</span></div>
-<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('','Mở bài này trên Spotify','MU.link()','ext',!(t&&t.id))}</div>
-<p class="mut" style="text-align:center;margin:8px 0 0;font-size:.78rem">Bấm biểu tượng ↗ để mở bài này trực tiếp trên Spotify (không cần đăng nhập ở đây).</p>`}
+<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', MS.show?'Ẩn khung YouTube':'Hiện khung YouTube','MU.emb()','frame').replace('class=""','class="'+(MS.show?'act':'')+'"')}</div>
+<p class="mut" style="text-align:center;margin:8px 0 0;font-size:.78rem">Phát trọn bài từ YouTube, không cần đăng nhập. Một số video chặn phát nhúng sẽ tự bị bỏ qua.</p>`}
 function resH(){
  if(MS.busy)return '<p class="mut" style="margin:8px 0 0">Đang tìm…</p>';
  if(MS.err)return `<p class="bad" style="margin:8px 0 0">${esc(MS.err)}</p>`;
- if(!MS.res.length)return '<p class="mut" style="margin:8px 0 0">Gõ <b>tên bài</b>, <b>bài - ca sĩ</b>, <b>ca sĩ - bài</b> hoặc dán link bài hát Spotify.</p>';
+ if(!MS.res.length)return '<p class="mut" style="margin:8px 0 0">Gõ <b>tên bài</b>, <b>bài - ca sĩ</b> hoặc dán <b>link YouTube</b>.</p>';
  return '<p class="mut" style="margin:6px 0 2px;font-size:.78rem">▶ phát ngay · ⤓ phát tiếp theo · ＋ thêm vào hàng đợi</p>'+
   MS.res.map((t,i)=>row(t,bt('s','Phát ngay',`MU.r(${i},0)`,'play')+bt('s','Phát tiếp theo',`MU.r(${i},1)`,'nxq')+bt('s','Thêm vào hàng đợi',`MU.r(${i},2)`,'plus'))).join('')}
 function qH(){
  return `<div class="row" style="margin-top:0"><h3 style="margin:0">Hàng đợi ${MS.q.length?`<span class="mut">(${MS.q.length})</span>`:''}</h3><span>${MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button> `:''}${MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}</span></div>`+
  (MS.q.length?MS.q.map((t,i)=>row(t,bt('s','Phát bài này ngay',`MU.jump(${i})`,'play')+bt('s','Đưa lên trên',`MU.up(${i})`,'up',i==0)+bt('s','Xóa khỏi hàng đợi',`MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Bấm ＋ ở kết quả tìm kiếm để thêm bài.</p>')}
-V.music=()=>{setTimeout(()=>{if(!ctl&&MS.now)ensureCtl('spotify:track:'+MS.now.id).catch(()=>{})},0);
- return `<div class="card" id="mnow">${nowH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Ca sĩ - Bài · link Spotify" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Tìm</button></div><div id="mres">${resH()}</div></div><div class="card" id="mq">${qH()}</div>`};
-function resUI(){const e=$e('mres');if(e)e.innerHTML=resH();if(MS.res.length&&!ctl)ensureCtl('spotify:track:'+MS.res[0].id).catch(()=>{})}
+V.music=()=>{setTimeout(()=>{loadApi().catch(()=>{});if(!ctl&&MS.now)ensureCtl(MS.now.id).catch(()=>{})},0);
+ return `<div class="card" id="mnow">${nowH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Link YouTube" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Tìm</button></div><div id="mres">${resH()}</div></div><div class="card" id="mq">${qH()}</div>`};
+function resUI(){const e=$e('mres');if(e)e.innerHTML=resH();if(MS.res.length&&!ctl)ensureCtl(MS.res[0].id).catch(()=>{})}
 function tickUI(e){
  const d=MS.dur||(MS.now&&MS.now.dur)||0,p=d?Math.min(1,e/d):0;
  const k=$e('msk');if(k&&!MS.seeking)k.value=Math.round(p*1000);
@@ -1030,7 +1024,7 @@ function tickUI(e){
 function mini(force){
  const t=MS.now,sig=(t?t.id:'')+'|'+MS.playing;if(!force&&sig===miniSig)return;miniSig=sig;
  const m=$e('mp');if(!m)return;
- m.innerHTML=t?`${t.th?`<img class="mpi" src="${esc(t.th)}" alt="">`:'<div class="mpi"></div>'}<div class="mpt" onclick="MU.open()"><b>${esc(t.name)}</b><span>${esc(t.ar||'Spotify')}</span></div>${bt('','Bài trước','MU.prev()','prev')}${bt('pp',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play')}${bt('','Bài tiếp theo','MU.next()','next')}<i id="mpb"></i>`:''}
+ m.innerHTML=t?`${t.th?`<img class="mpi" src="${esc(t.th)}" alt="">`:'<div class="mpi"></div>'}<div class="mpt" onclick="MU.open()"><b>${esc(t.name)}</b><span>${esc(t.ar||'YouTube')}</span></div>${bt('','Bài trước','MU.prev()','prev')}${bt('pp',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play')}${bt('','Bài tiếp theo','MU.next()','next')}<i id="mpb"></i>`:''}
 function ui(){
  document.body.classList.toggle('mpon',!!MS.now);
  const n=$e('mnow');if(n)n.innerHTML=nowH();
@@ -1041,16 +1035,18 @@ function ui(){
 /* ---------- khởi tạo ---------- */
 document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="spEmb"><div id="spEl"></div></div>');
 {const o=R;R=function(){
- const a=document.activeElement,k=a&&a.id=='msq';let p0,p1;if(k){p0=a.selectionStart;p1=a.selectionEnd}
+ const a=document.activeElement,k=a&&a.id=='msq',kid_=k&&a.id;let p0,p1;if(k){p0=a.selectionStart;p1=a.selectionEnd}
  o();
  document.body.classList.toggle('mtab',scr=='game'&&tab=='music');
- if(k&&tab=='music'){const n=$e('msq');if(n){n.focus({preventScroll:true});try{n.setSelectionRange(p0,p1)}catch(e){}}}
+ if(k&&tab=='music'){const n=$e(kid_);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(p0,p1)}catch(e){}}}
  document.body.classList.toggle('mpon',!!MS.now);mini();tickUI(est())}}
-setInterval(()=>{if(!MS.now)return;const e=est();tickUI(e);if(MS.playing&&!ending&&MS.dur&&e>MS.dur+3000)end()},500);
+setInterval(()=>{
+ if(!MS.now)return;
+ if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
+ tickUI(est())},500);
 window.MU={search:doSearch,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
  rep(){MS.rep=MS.rep?0:1;sv();ui()},
  emb(){MS.show=MS.show?0:1;ui()},
-  link(){const t=MS.now;if(t&&t.id)window.open('https://open.spotify.com/track/'+t.id,'_blank','noopener')},
  open(){if(scr!='game')return;tab='music';R();scrollTo(0,0)},
 };
 ui();R();

@@ -846,7 +846,8 @@ x:'<path d="M6 6l12 12M18 6L6 18"/>',
 shuf:'<path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/>',
 rep:'<path d="M17 3l3 3-3 3M4 11V9a3 3 0 013-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 01-3 3H4"/>',
 rep1:'<path d="M17 3l3 3-3 3M4 11V9a3 3 0 013-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 01-3 3H4M11 10l1.5-1v6"/>',
-frame:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15h18"/>'};
+frame:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15h18"/>',
+ext:'<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'};
 const sg=(n,z=22)=>`<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
 
 /* ---------- Spotify API ---------- */
@@ -1006,8 +1007,8 @@ function nowH(){
 <p class="mar mut">${t?esc(t.ar||'Spotify'):'Tìm bài hát hoặc dán link Spotify bên dưới'}</p>
 <input type="range" id="msk" min="0" max="1000" value="0" ${t?'':'disabled'} aria-label="Tua bài hát" oninput="MU.sk(this.value,1)" onchange="MU.sk(this.value)">
 <div class="mtm"><span id="mtl">0:00</span><span id="mtr">${fm(MS.dur||(t&&t.dur))}</span></div>
-<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', MS.show?'Ẩn khung Spotify':'Hiện khung Spotify','MU.emb()','frame').replace('class=""','class="'+(MS.show?'act':'')+'"')}</div>
-<p class="mut" style="text-align:center;margin:8px 0 0;font-size:.78rem">Chưa đăng nhập Spotify trên trình duyệt này thì chỉ nghe thử ~30 giây. Bấm biểu tượng khung để đăng nhập.</p>`}
+<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('','Mở bài này trên Spotify','MU.link()','ext',!(t&&t.id))}</div>
+<p class="mut" style="text-align:center;margin:8px 0 0;font-size:.78rem">Bấm biểu tượng ↗ để mở bài này trực tiếp trên Spotify (không cần đăng nhập ở đây).</p>`}
 function resH(){
  if(MS.busy)return '<p class="mut" style="margin:8px 0 0">Đang tìm…</p>';
  if(MS.err)return `<p class="bad" style="margin:8px 0 0">${esc(MS.err)}</p>`;
@@ -1049,6 +1050,7 @@ setInterval(()=>{if(!MS.now)return;const e=est();tickUI(e);if(MS.playing&&!endin
 window.MU={search:doSearch,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
  rep(){MS.rep=MS.rep?0:1;sv();ui()},
  emb(){MS.show=MS.show?0:1;ui()},
+  link(){const t=MS.now;if(t&&t.id)window.open('https://open.spotify.com/track/'+t.id,'_blank','noopener')},
  open(){if(scr!='game')return;tab='music';R();scrollTo(0,0)},
 };
 ui();R();

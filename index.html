@@ -1373,6 +1373,39 @@ function drawQr(){const T=CTP[QO.t],lay=QO.l,W=lay==1?1200:1080,H=lay==1?675:lay
  return c}
 function qrUI(){const sc=document.querySelector('.ms'),tp=sc?sc.scrollTop:0;$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>QR khôi phục</h2><button class=s onclick=mdl()>✕</button></div><img id=qpv style="width:100%;border-radius:16px" alt="QR khôi phục tiến trình"><div class=sec>Mẫu: ${CTP[QO.t][0]}</div><div class=row style="justify-content:flex-start">${CTP.map((t,i)=>`<button class="s ${QO.t==i?'on2':''}" style="width:36px;height:36px;padding:0;background:linear-gradient(135deg,${t[1]},${t[2]})" onclick="qrSet('t',${i})" aria-label="${t[0]}"></button>`).join('')}</div><div class=sec>Bố cục</div><div class=row style="justify-content:flex-start">${['Thẻ dọc','Danh thiếp','Chỉ QR'].map((n,i)=>`<button class="s ${QO.l==i?'on2':''}" onclick="qrSet('l',${i})">${n}</button>`).join('')}${QO.l==2?'':`<button class="s ${QO.p?'on2':''}" onclick="qrSet('p',${QO.p?0:1})">Hiện profile</button>`}</div><p class=mut>Hãy lưu nguyên cả ảnh, đừng cắt mã QR. Khi cần, vào <b>Khôi phục tiến trình</b> rồi quét mã này. QR gọn nên không gồm lịch sử hóa đơn, đánh giá và ảnh tải lên.</p><div class=row><button class=p onclick=qrSave()>Lưu ảnh</button><button class=s onclick=qrShare()>Chia sẻ</button><button class=s onclick=qrCopy()>Sao chép</button><button class=p onclick=sendQrToDiscord()>Gửi qua Discord</button></div></div></div>`;qrDraw();const n=document.querySelector('.ms');if(n)n.scrollTop=tp}
 function qrSet(k,v){QO[k]=v;s.qc={...QO};save();qrUI()}
+
+async function sendQrToDiscord() {
+  if (!currentUser) return toast('Hãy đăng nhập Discord trước');
+  if (!QCV) return toast('Chưa có ảnh QR');
+  toast('Đang gửi...');
+  try {
+    const blob = await new Promise(r => QCV.toBlob(r, 'image/png'));
+    const reader = new FileReader();
+    const b64 = await new Promise((res, rej) => {
+      reader.onload = () => res(reader.result);
+      reader.onerror = rej;
+      reader.readAsDataURL(blob);
+    });
+    const code = await qrPayload().then(p => p.txt).catch(() => '');
+    const discordId = currentUser.user_metadata?.provider_id 
+                   || (currentUser.identities && currentUser.identities[0] && currentUser.identities[0].id)
+                   || currentUser.user_metadata?.sub 
+                   || null;
+    const { error } = await supabaseClient.from('qr_requests').upsert({
+      user_id: currentUser.id,
+      discord_id: discordId,
+      qr_image: b64,
+      restore_code: code,
+      created_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
+    toast('Đã gửi yêu cầu. Vào Discord gõ /qr để nhận.');
+  } catch (e) {
+    toast('Lỗi gửi: ' + (e.message || e));
+    console.error(e);
+  }
+}
+
 async function qrOpen(){toast('Đang tạo QR...');try{QM=(await qrPayload()).q}catch(e){return toast('Dữ liệu quá lớn để tạo QR, hãy dùng mã văn bản trong Cài đặt')}
  QO=Object.assign({t:(s.cd&&s.cd.t)||0,l:0,p:1},s.qc||{});QCA=null;if(s.pf&&s.pf.av)QCA=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=s.pf.av});
  try{await Promise.all(['700 40px "Baloo 2"','40px Onest','40px "'+SFN[s.sf||0]+'"'].map(f=>document.fonts.load(f)))}catch(e){}qrUI()}

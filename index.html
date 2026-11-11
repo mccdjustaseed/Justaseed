@@ -303,6 +303,7 @@ async function uploadCardToWall() {
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id' });
     if (error) throw error;
+    window.__postedCache = null;
     toast('Đã đăng danh thiếp lên tường!');
   } catch (e) {
     toast('Lỗi: ' + (e.message || e));
@@ -418,8 +419,38 @@ async function viewMyWall() {
   document.getElementById('friend-content').innerHTML = html;
 }
 
+// Trình duyệt (nhất là iOS) chỉ cho tự phát nhạc ngay trong lúc bấm nút, nên tải sẵn ảnh đã đăng để phát được ngay khi bấm.
+window.__postedCache = null;
+async function prefetchMyPosted() {
+  if (!currentUser) return;
+  const c = window.__postedCache;
+  if (c && c.uid === currentUser.id && Date.now() - c.t < 60000) return;
+  try {
+    const { data } = await supabaseClient.from('shop_public')
+      .select('card_image, shop_name, day, money, level, updated_at, game_avatar')
+      .eq('user_id', currentUser.id).maybeSingle();
+    window.__postedCache = { uid: currentUser.id, t: Date.now(), shop: data || null };
+  } catch (e) {}
+}
+// Nếu bị chặn tự phát thì ẩn khung YouTube, chỉ nhắc chạm vào đĩa than
+function quietAutoplay() {
+  setTimeout(() => {
+    try {
+      if (!VMU || MS.playing || !MS.show) return;
+      MU.emb();
+      toast('Chạm vào đĩa than để phát nhạc');
+    } catch (e) {}
+  }, 6500);
+}
 async function viewMyPostedCard() {
   if (!currentUser) return toast('Hãy liên kết Discord');
+  // Phát nhạc ngay trong lúc bấm nút (khi trình duyệt còn cho phép tự phát)
+  let startedId = null;
+  try {
+    const cc = window.__postedCache;
+    const m0 = cc && cc.uid === currentUser.id && cc.shop ? parseGav(cc.shop.game_avatar).mu : null;
+    if (m0 && m0.id) { MU.playTrack(m0); startedId = m0.id; }
+  } catch (e) {}
   const box = document.getElementById('friend-content');
   if (box) box.innerHTML = '<p class=mut>Đang tải...</p>';
   const { data: shop, error } = await supabaseClient.from('shop_public')
@@ -440,8 +471,13 @@ async function viewMyPostedCard() {
   }
   html += '</div>';
   if (box) box.innerHTML = html;
+  window.__postedCache = { uid: currentUser.id, t: Date.now(), shop: shop || null };
   const mu = shop && parseGav(shop.game_avatar).mu;
-  if (mu && mu.id) { try { MU.playTrack(mu); } catch (e) {} vinylSync(); }
+  if (mu && mu.id) {
+    if (mu.id !== startedId) { try { MU.playTrack(mu); } catch (e) {} }
+    vinylSync();
+    quietAutoplay();
+  }
 }
 function saveMyPostedCard() {
   const img = document.getElementById('my-posted-card');
@@ -519,7 +555,7 @@ async function visitFriend(friendId) {
   const el = document.getElementById('friend-content');
   if (el) el.innerHTML = html;
   const mu = parseGav(shop?.game_avatar).mu;
-  if (mu && mu.id) { try { MU.playTrack(mu); } catch (e) {} vinylSync(); }
+  if (mu && mu.id) { try { MU.playTrack(mu); } catch (e) {} vinylSync(); quietAutoplay(); }
 
   // Draw shop card on canvas
   setTimeout(() => {
@@ -801,6 +837,7 @@ friends() {
     ? `<b>${esc(display)}</b> <span class="mut" style="opacity:.65;font-size:.85em">@${esc(uname)}</span>`
     : `<b>${esc(display)}</b>`;
   setTimeout(loadFriendsUI, 50);
+  setTimeout(prefetchMyPosted, 400);
   return `<div class=card>
     <div class=row>
       <span>Xin chào ${nameHtml}</span>

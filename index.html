@@ -372,15 +372,33 @@ async function uploadCardToWall() {
 
 
 
-async function reactWall(msgId, type) {
-  if (!currentUser) return;
-  await supabaseClient.from('wall_reactions').upsert({
-    message_id: msgId,
-    user_id: currentUser.id,
-    reaction: type
-  }, { onConflict: 'message_id,user_id' });
-  toast(type === 'like' ? 'Đã thích' : 'Đã không thích');
+// ---- Tim cho phần ký tường / trả lời (thay like/dislike) ----
+const WALLRX = {};
+function wallHeartInner(mid) {
+  const L = WALLRX[mid] || { n: 0, me: 0 };
+  return `<span class=fhe>${L.me ? '❤️' : '🤍'}</span><span>${L.n || ''}</span>`;
 }
+function wallHeartPaint(mid) {
+  const b = document.getElementById('wh-' + mid);
+  if (!b) return;
+  const L = WALLRX[mid] || { n: 0, me: 0 };
+  b.innerHTML = wallHeartInner(mid);
+  b.classList.toggle('liked', !!L.me);
+}
+async function wallHeart(mid) {
+  if (!currentUser) return toast('Hãy liên kết Discord');
+  const L = WALLRX[mid] || (WALLRX[mid] = { n: 0, me: 0 }), was = L.me;
+  L.me = was ? 0 : 1; L.n = Math.max(0, L.n + (was ? -1 : 1)); wallHeartPaint(mid);
+  const t = supabaseClient.from('wall_reactions');
+  const r = was
+    ? await t.delete().eq('message_id', mid).eq('user_id', currentUser.id)
+    : await t.upsert({ message_id: mid, user_id: currentUser.id, reaction: 'heart' }, { onConflict: 'message_id,user_id' });
+  if (r.error) {
+    L.me = was; L.n = Math.max(0, L.n + (was ? 1 : -1)); wallHeartPaint(mid);
+    toast('Lỗi: ' + r.error.message);
+  }
+}
+function reactWall(msgId) { return wallHeart(msgId); }
 
 // ---- Wall threads: lời nhắn gốc + các phản hồi lồng bên dưới ----
 async function loadWallThread(ownerId, limit) {
@@ -398,6 +416,20 @@ async function loadWallThread(ownerId, limit) {
       .in('parent_id', ids)
       .order('created_at', { ascending: true });
     replies = data || [];
+  }
+  const allIds = [...ids, ...replies.map(r => r.id)];
+  allIds.forEach(id => { WALLRX[id] = { n: 0, me: 0 }; });
+  if (allIds.length) {
+    try {
+      const { data: rx } = await supabaseClient.from('wall_reactions')
+        .select('message_id, user_id, reaction').in('message_id', allIds);
+      (rx || []).forEach(r => {
+        const L = WALLRX[r.message_id];
+        if (L && (r.reaction === 'heart' || r.reaction === 'like')) {
+          L.n++; if (currentUser && r.user_id === currentUser.id) L.me = 1;
+        }
+      });
+    } catch (e) { console.warn(e); }
   }
   const uids = [...new Set([...(roots || []), ...replies].map(m => m.from_user))];
   const pmap = {};
@@ -427,15 +459,14 @@ function wallBubbleHtml(m, pmap, ownerId, rootId, isReply, withReact) {
     ? `<b>${esc(display)}</b> <span class="mut" style="opacity:.65;font-size:.85em">@${esc(uname)}</span>`
     : `<b>${esc(display)}</b>`;
   const av = `<span style="display:inline-block;vertical-align:middle;margin-right:6px;line-height:0">${own ? avH(28) : friendAvTap(p?.gav, 28, m.from_user)}</span>`;
-  const react = withReact ? `<button class=s onclick="reactWall(${m.id}, 'like')">👍</button>
-        <button class=s onclick="reactWall(${m.id}, 'dislike')">👎</button>` : '';
+  const react = `<button class="s wh ${(WALLRX[m.id] || {}).me ? 'liked' : ''}" id="wh-${m.id}" onclick="wallHeart(${m.id})" aria-label="Thả tim">${wallHeartInner(m.id)}</button>`;
   const wrapStyle = isReply ? 'style="margin:6px 0 0 14px;padding-left:8px;border-left:2px solid #d5ebd3"' : '';
-  return `<div class="bub" ${wrapStyle}>
+  return `<div class="bub" id="wm-${m.id}" ${wrapStyle}>
       ${av}${whoHtml} <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>
       ${esc(m.message)}
-      ${isReply ? '' : `<div style="margin-top:4px">${react}
-        <button class=s onclick="toggleReplyBox(${rootId})">↩ Trả lời</button>
-      </div>`}
+      <div style="margin-top:4px">${react}${isReply ? '' : `
+        <button class=s onclick="toggleReplyBox(${rootId})">↩ Trả lời</button>`}
+      </div>
     </div>`;
 }
 
@@ -2144,7 +2175,7 @@ return{make};
 
 const QRB={enc:u=>{let t='';for(let i=0;i<u.length;i+=0x8000)t+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(t).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')},dec:q=>{q=q.replace(/-/g,'+').replace(/_/g,'/');while(q.length%4)q+='=';const b=atob(q),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}};
 const qrPipe=async(u,C,f)=>new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new C(f))).arrayBuffer());
-function qrJson(lv,keepPf){lv=lv||0;const DROP=['led','bills','rv','notifs','forum','cam','prev','lastWallCheck','lastFriendCheck','devClicks','seenCust','qseen'].concat(s.ph=='end'?[]:['rpt']);
+function qrJson(lv,keepPf){lv=lv||0;const DROP=['led','bills','rv','notifs','forum','cam','prev','lastWallCheck','lastFriendCheck','devClicks','seenCust','qseen','nSeen','nInit'].concat(s.ph=='end'?[]:['rpt']);
  return JSON.stringify(s,function(k,v){if(this===s&&DROP.includes(k))return undefined;if(typeof v=='string'&&v.slice(0,5)=='data:'&&!(keepPf&&this===s.pf))return undefined;
   if(lv>=2&&v&&typeof v=='object'&&!Array.isArray(v)&&k!='pr'&&k!=''){const o={};for(const q in v){if(v[q]!==0&&v[q]!==false&&v[q]!==null)o[q]=v[q]}return o}
   return v})}
@@ -3451,7 +3482,8 @@ nav button.locked span { position: relative; }
         s.lastFriendCheck = now;
       } catch (e) {}
     }
-    // (thông báo tường/tim/bảng tin do mô-đun thời gian thực xử lý)
+    // Tường / tim / bảng tin: engine thông báo mới (V39)
+    try { if (window.__nx) await window.__nx.check(); } catch (e) {}
     if (s.notifs.length > 50) s.notifs = s.notifs.slice(0, 50);
     save();
   }
@@ -3467,7 +3499,7 @@ nav button.locked span { position: relative; }
     } else {
       s.notifs.forEach((n, i) => {
         html += `<div class="notif-item ${n.read ? '' : 'unread'}">
-          <b>${n.type === 'fav' ? '⭐ Bạn yêu thích' : n.type === 'friend' ? '👥 Kết bạn' : n.type === 'forum' ? '💬 Diễn đàn' : n.type === 'heart' ? '❤️ Thả tim' : n.type === 'feed' ? '📰 Bảng tin' : '📝 Tường'}</b> · ${new Date(n.time).toLocaleString('vi-VN')}<br>
+          <b>${n.type === 'fav' ? '⭐ Bạn yêu thích' : n.type === 'friend' ? '👥 Kết bạn' : n.type === 'forum' ? '💬 Diễn đàn' : '📝 Tường'}</b> · ${new Date(n.time).toLocaleString('vi-VN')}<br>
           ${esc(n.text)}
           ${!n.read ? `<button class="s" style="margin-top:4px" onclick="s.notifs[${i}].read=true;save();R()">Đã xem</button>` : ''}
         </div>`;
@@ -3976,6 +4008,7 @@ function ntm(){
 function ntGo(i){
  const n=(s.notifs||[])[i];if(!n)return;
  mdl();NTO=0;
+ if(n.tgt&&window.nxGo){window.nxGo(n.tgt);return}
  try{SD.open(n.type=='forum'?'forum':'friends')}catch(e){}
 }
 window.ntm=ntm;window.ntGo=ntGo;
@@ -4864,11 +4897,13 @@ function feedEnter(){
 /* ---- tim ---- */
 async function feedLike(pid){
  if(!currentUser)return;
+ FEED.lk=Date.now();
  const L=FEED.likes[pid]||(FEED.likes[pid]={n:0,me:0}),was=L.me;
  const set=()=>{const b=document.getElementById('fl-'+pid);if(b){b.innerHTML=feedLikeBtn(pid);b.classList.toggle('liked',!!L.me)}};
  L.me=was?0:1;L.n=Math.max(0,L.n+(was?-1:1));set();
  const t=supabaseClient.from('feed_likes');
  const r=was?await t.delete().eq('post_id',pid).eq('user_id',currentUser.id):await t.insert({post_id:pid,user_id:currentUser.id});
+ FEED.lk=Date.now();
  if(r.error&&r.error.code!='23505'){L.me=was;L.n=Math.max(0,L.n+(was?1:-1));set();toast('Lỗi: '+r.error.message)}}
 
 /* ---- bình luận ---- */
@@ -4879,24 +4914,25 @@ function feedToggleCm(pid){
  if(FEED.open[pid]){const i=document.getElementById('fci-'+pid);if(i)i.focus()}}
 function feedCmRefresh(pid){
  const el=document.getElementById('fc-'+pid),b=document.getElementById('fcb-'+pid);
- const i0=document.getElementById('fci-'+pid),v0=i0?i0.value:'',f0=!!i0&&document.activeElement===i0;
- if(el)el.innerHTML=feedCmHtml(pid);
- if(v0||f0){const i1=document.getElementById('fci-'+pid);if(i1){i1.value=v0;if(f0)i1.focus()}}
+ if(el){const i0=document.getElementById('fci-'+pid),v0=i0?i0.value:'',f0=!!i0&&document.activeElement===i0;
+  el.innerHTML=feedCmHtml(pid);
+  const i1=document.getElementById('fci-'+pid);if(i1){if(v0)i1.value=v0;if(f0)i1.focus()}}
  if(b){const n=(FEED.cm[pid]||[]).length;b.innerHTML='💬 <span>'+(n||'')+'</span>'}}
 async function feedComment(pid){
  if(!currentUser)return toast('Hãy liên kết Discord');
  const i=document.getElementById('fci-'+pid),v=i?i.value.replace(/\s+/g,' ').trim().slice(0,300):'';
  if(!v)return toast('Nhập nội dung');
- if(i)i.disabled=true;
+ if(i)i.disabled=true;FEED.lk=Date.now();
  const {data,error}=await supabaseClient.from('feed_comments').insert({post_id:pid,user_id:currentUser.id,body:v}).select('id, post_id, user_id, body, created_at').single();
  if(error){if(i)i.disabled=false;return toast('Lỗi: '+error.message)}
- if(i)i.value='';(FEED.cm[pid]=FEED.cm[pid]||[]).push(data);FEED.open[pid]=true;
- feedCmRefresh(pid);
+ FEED.lk=Date.now();(FEED.cm[pid]=FEED.cm[pid]||[]).push(data);FEED.open[pid]=true;
+ if(i)i.value='';feedCmRefresh(pid);
  const n=document.getElementById('fci-'+pid);if(n)n.focus()}
 async function feedDelCm(pid,cid){
+ FEED.lk=Date.now();
  const {error}=await supabaseClient.from('feed_comments').delete().eq('id',cid);
  if(error)return toast('Lỗi: '+error.message);
- FEED.cm[pid]=(FEED.cm[pid]||[]).filter(c=>c.id!==cid);feedCmRefresh(pid)}
+ FEED.lk=Date.now();FEED.cm[pid]=(FEED.cm[pid]||[]).filter(c=>c.id!==cid);feedCmRefresh(pid)}
 async function feedDelPost(pid){
  if(!confirm('Xóa bài đăng này?'))return;
  const {error}=await supabaseClient.from('feed_posts').delete().eq('id',pid);
@@ -4966,8 +5002,6 @@ function feedMode(m){
  const re=/<div class=row>\s*<input id="friend-search"/;
  return re.test(h)?h.replace(re,m=>feedSegHtml()+m):h}}
 {const o=loadFriendsUI;loadFriendsUI=async function(){
- if(window.__navHold)return;
- window.WALLV=null;
  const si=document.getElementById('friend-search'),row=si&&si.closest('.row');
  if(row)row.style.display=FEEDMODE=='feed'?'none':'';
  if(FEEDMODE!='feed'){try{ClipMu.stop()}catch(e){}return o.apply(this,arguments)}
@@ -4975,254 +5009,232 @@ function feedMode(m){
 </script>
 
 <style>
-/* ===== V39: tim ở tường + viền sáng khi đi tới thông báo ===== */
-.wh{display:inline-flex;align-items:center;gap:5px}
-.wh.liked{color:#e0446f;border-color:#e0446f}
-.wh.liked .fhe{animation:fpop .35s ease}
-.nglow{animation:nglow 1.1s ease-in-out 3}
-@keyframes nglow{
- 0%,100%{box-shadow:0 0 0 2px var(--g2),0 0 0 0 transparent}
- 50%{box-shadow:0 0 0 3px var(--g2),0 0 20px 6px color-mix(in srgb,var(--g2) 55%,transparent)}}
-@media(prefers-reduced-motion:reduce){.nglow{animation:none;box-shadow:0 0 0 3px var(--g2)}}
+/* ===== V39: tim ở tường, viền sáng khi mở từ thông báo ===== */
+button.wh{display:inline-flex;align-items:center;gap:5px}
+button.wh.liked{color:#e0446f;border-color:#e0446f}
+button.wh.liked .fhe{animation:fpop .35s ease}
+.nglow{border-radius:14px;outline:3px solid var(--g2);outline-offset:2px;
+ box-shadow:0 0 0 6px color-mix(in srgb,var(--g2) 28%,transparent),0 0 20px 6px color-mix(in srgb,var(--g2) 55%,transparent);
+ animation:nglow 1.1s ease-in-out 4}
+@keyframes nglow{0%,100%{box-shadow:0 0 0 3px color-mix(in srgb,var(--g2) 18%,transparent),0 0 10px 2px color-mix(in srgb,var(--g2) 35%,transparent)}
+ 50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--g2) 32%,transparent),0 0 26px 8px color-mix(in srgb,var(--g2) 65%,transparent)}}
+.fcm.nglow{padding-left:6px;padding-right:6px}
+@media(prefers-reduced-motion:reduce){.nglow{animation:none}}
 </style>
 <script>
-/* ===== V39: THÔNG BÁO THỜI GIAN THỰC + TIM Ở TƯỜNG + ĐI TỚI ĐÚNG VỊ TRÍ ===== */
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const NAMEC={};
-async function nameOf(uid){
- if(NAMEC[uid])return NAMEC[uid];
- const p=FEED.pmap&&FEED.pmap[uid];
- if(p&&(p.display_name||p.username))return NAMEC[uid]=p.display_name||p.username;
- try{const {data}=await supabaseClient.from('profiles').select('display_name, username').eq('id',uid).maybeSingle();
-  if(data&&(data.display_name||data.username))return NAMEC[uid]=data.display_name||data.username}catch(e){}
- return 'Một người bạn'}
-function pushNotif(n){
- s.notifs=s.notifs||[];
- if(s.notifs.some(x=>x.type===n.type&&x.id===n.id))return false;
- s.notifs.unshift({read:false,time:new Date().toISOString(),...n});
- if(s.notifs.length>50)s.notifs=s.notifs.slice(0,50);
- save();return true}
-const seenHas=k=>(s.nSeen||[]).includes(k);
-function seenAdd(k){s.nSeen=s.nSeen||[];if(!s.nSeen.includes(k)){s.nSeen.push(k);if(s.nSeen.length>400)s.nSeen=s.nSeen.slice(-300)}}
+/* ===== V39: thông báo tường/tim/bảng tin, đi tới đúng vị trí, bảng tin thời gian thực ===== */
+let NXHOLD=0,NXBIG=0;
+{const o=loadFriendsUI;loadFriendsUI=function(){if(NXHOLD)return;return o.apply(this,arguments)}}
+{const o=loadWallThread;loadWallThread=function(owner,lim){return o.call(this,owner,NXBIG?100:lim)}}
 
-/* ---------- viền sáng + cuộn tới vị trí ---------- */
-function nGlow(id){
- const el=document.getElementById(id);if(!el)return false;
- try{el.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){el.scrollIntoView()}
- el.classList.remove('nglow');void el.offsetWidth;el.classList.add('nglow');
- setTimeout(()=>el.classList.remove('nglow'),3600);return true}
+const NX=window.__nx={names:{},busy:0,last:0};
+const nxWait=async(f,ms)=>{const t0=Date.now();while(Date.now()-t0<(ms||3500)){try{const r=f();if(r)return r}catch(e){}await new Promise(r=>setTimeout(r,70))}return null};
 
-/* ---------- tim ở tường (thay 👍/👎) ---------- */
-window.HEART={};
-const heartInner=id=>{const H=HEART[id]||{n:0,me:0};return `<span class=fhe>${H.me?'❤️':'🤍'}</span><span>${H.n||''}</span>`};
-function hUpd(id){const H=HEART[id],b=document.getElementById('wh-'+id);if(b&&H){b.innerHTML=heartInner(id);b.classList.toggle('liked',!!H.me)}}
-async function wallHeartsLoad(ids){
- if(!ids.length||!currentUser)return;
- ids.forEach(i=>HEART[i]={n:0,me:0,u:[]});
- const {data}=await supabaseClient.from('wall_reactions').select('message_id, user_id, reaction').in('message_id',ids);
- (data||[]).forEach(r=>{const H=HEART[r.message_id];if(!H||r.reaction!=='like')return;H.n++;if(r.user_id===currentUser.id)H.me=1;else H.u.push(r.user_id)})}
-{const o=loadWallThread;loadWallThread=async function(){
- const t=await o.apply(this,arguments);
- try{await wallHeartsLoad([...t.roots,...t.replies].map(m=>m.id))}catch(e){console.warn(e)}
- return t}}
-wallBubbleHtml=function(m,pmap,ownerId,rootId,isReply){
- const p=pmap[m.from_user],own=!!(currentUser&&m.from_user===currentUser.id),dn=own?discordNames(currentUser):null;
- const display=dn?dn.display:(p?.display_name||p?.username||'Bạn'),uname=dn?dn.username:(p?.username||'');
- const who=uname&&uname!==display?`<b>${esc(display)}</b> <span class="mut" style="opacity:.65;font-size:.85em">@${esc(uname)}</span>`:`<b>${esc(display)}</b>`;
- const av=`<span style="display:inline-block;vertical-align:middle;margin-right:6px;line-height:0">${own?avH(28):friendAvTap(p?.gav,28,m.from_user)}</span>`;
- const H=HEART[m.id]||{me:0};
- const wrap=isReply?'style="margin:6px 0 0 14px;padding-left:8px;border-left:2px solid #d5ebd3"':'';
- return `<div class="bub" id="wm-${m.id}" ${wrap}>${av}${who} <span class=mut>${new Date(m.created_at).toLocaleString('vi-VN')}</span><br>${esc(m.message)}<div style="margin-top:4px"><button class="s wh ${H.me?'liked':''}" id="wh-${m.id}" onclick="heartWall(${m.id})" aria-label="Thả tim">${heartInner(m.id)}</button>${isReply?'':` <button class=s onclick="toggleReplyBox(${rootId})">↩ Trả lời</button>`}</div></div>`};
-async function heartWall(id){
- if(!currentUser)return toast('Hãy liên kết Discord');
- const H=HEART[id]||(HEART[id]={n:0,me:0,u:[]}),was=H.me;
- H.me=was?0:1;H.n=Math.max(0,H.n+(was?-1:1));hUpd(id);
- const t=supabaseClient.from('wall_reactions');
- const r=was?await t.delete().eq('message_id',id).eq('user_id',currentUser.id):await t.upsert({message_id:id,user_id:currentUser.id,reaction:'like'},{onConflict:'message_id,user_id'});
- if(r.error){H.me=was;H.n=Math.max(0,H.n+(was?1:-1));hUpd(id);toast('Lỗi: '+r.error.message)}}
-reactWall=function(id){return heartWall(id)};
+/* ---- viền sáng (màu theo chủ đề: var(--g2)) ---- */
+function nxFocus(id){
+ const el=document.getElementById(id);
+ if(!el){toast('Nội dung này không còn hiển thị');return false}
+ el.classList.remove('nglow');
+ el.scrollIntoView({behavior:'smooth',block:'center'});
+ void el.offsetWidth;el.classList.add('nglow');
+ setTimeout(()=>{if(el.classList.contains('nglow'))el.scrollIntoView({block:'center'})},650);
+ setTimeout(()=>el.classList.remove('nglow'),4600);
+ return true}
 
-/* ---------- theo dõi tường đang mở ---------- */
-{const o=viewMyWall;viewMyWall=async function(){window.WALLV={owner:currentUser&&currentUser.id};return o.apply(this,arguments)}}
-{const o=visitFriend;visitFriend=async function(id){window.WALLV={owner:id};return o.apply(this,arguments)}}
+/* ---- bảng tin: lấy riêng 1 bài khi bài chưa nằm trong trang đã tải ---- */
+async function feedEnsure(pid){
+ if(FEED.posts.some(p=>p.id==pid))return true;
+ const {data:p}=await supabaseClient.from('feed_posts').select('id, user_id, image, caption, music, created_at').eq('id',pid).maybeSingle();
+ if(!p)return false;
+ const [lk,cm]=await Promise.all([
+  supabaseClient.from('feed_likes').select('post_id, user_id').eq('post_id',pid),
+  supabaseClient.from('feed_comments').select('id, post_id, user_id, body, created_at').eq('post_id',pid).order('created_at',{ascending:true})]);
+ FEED.likes[pid]={n:0,me:0};FEED.cm[pid]=cm.data||[];
+ (lk.data||[]).forEach(r=>{FEED.likes[pid].n++;if(r.user_id===currentUser.id)FEED.likes[pid].me=1});
+ await feedProfiles([p.user_id,...FEED.cm[pid].map(c=>c.user_id)]);
+ FEED.posts.push(p);FEED.posts.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+ return true}
 
-/* ---------- thông báo tường ---------- */
-async function wallNotifHandle(m){
- const me=currentUser&&currentUser.id;if(!m||!me||m.from_user===me)return;      // tự ký / tự trả lời: KHÔNG báo
- const when=m.created_at||new Date().toISOString();
- if(!m.parent_id){
-  if(m.to_user===me)pushNotif({type:'wall',id:'wm:'+m.id,text:'Bạn có một lượt ký tường mới',time:when,ref:{k:'wall',owner:me,id:m.id}});
-  return}
- const nm=await nameOf(m.from_user);
- if(m.to_user===me){
-  pushNotif({type:'wall',id:'wm:'+m.id,text:`“${nm}” đã trả lời phần ký tường của bạn`,time:when,ref:{k:'wall',owner:me,id:m.id}});return}
- const {data:root}=await supabaseClient.from('wall_messages').select('from_user').eq('id',m.parent_id).maybeSingle();
- if(!root||root.from_user!==me)return;
- const where=m.from_user===m.to_user?'trong tường của họ':`trong tường của “${await nameOf(m.to_user)}”`;
- pushNotif({type:'wall',id:'wm:'+m.id,text:`“${nm}” đã trả lời lại bạn ${where}`,time:when,ref:{k:'wall',owner:m.to_user,id:m.id}})}
-async function heartNotify(m,by){
- const nm=await nameOf(by);
- pushNotif({type:'heart',id:'wh:'+m.id+':'+by,text:`“${nm}” đã tim phần ${m.parent_id?'trả lời':'ký tường'} của bạn`,ref:{k:'wall',owner:m.to_user,id:m.id}})}
-async function feedNotify(kind,pid,by,c){
- const nm=await nameOf(by);
- if(kind==='like')pushNotif({type:'feed',id:'fl:'+pid+':'+by,text:`“${nm}” đã tim bài đăng của bạn`,ref:{k:'feed',pid}});
- else{const sn=String(c.body||'').slice(0,40)+(String(c.body||'').length>40?'…':'');
-  pushNotif({type:'feed',id:'fc:'+c.id,text:`“${nm}” đã bình luận bài đăng của bạn: “${sn}”`,time:c.created_at,ref:{k:'feed',pid,cid:c.id}})}}
-
-/* ---------- quét bù (khi offline / chưa bật realtime) ---------- */
-let LS_BUSY=0;
-async function liveScan(){
- if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||LS_BUSY)return;
- LS_BUSY=1;
- const me=currentUser.id,sb=supabaseClient,t0=new Date().toISOString();
- if(!s.nSince)s.nSince=t0;
- const since=s.nSince,cols='id, message, created_at, from_user, to_user, parent_id';
+/* ---- chạm vào thông báo → tới đúng chỗ ---- */
+async function nxGo(t){
+ if(!t||!currentUser)return;
  try{
-  const {data}=await sb.from('wall_messages').select(cols).eq('to_user',me).neq('from_user',me).gt('created_at',since).order('created_at',{ascending:true}).limit(30);
-  for(const m of data||[])await wallNotifHandle(m);
- }catch(e){}
- try{
-  const {data:mine}=await sb.from('wall_messages').select('id').eq('from_user',me).is('parent_id',null).neq('to_user',me).order('created_at',{ascending:false}).limit(30);
-  const ids=(mine||[]).map(x=>x.id);
-  if(ids.length){
-   const {data}=await sb.from('wall_messages').select(cols).in('parent_id',ids).neq('from_user',me).gt('created_at',since).order('created_at',{ascending:true}).limit(30);
-   for(const m of data||[])await wallNotifHandle(m)}
- }catch(e){}
- try{
-  const {data:mm}=await sb.from('wall_messages').select('id, to_user, parent_id').eq('from_user',me).order('created_at',{ascending:false}).limit(60);
-  const ids=(mm||[]).map(x=>x.id);
-  if(ids.length){
-   const {data:rx,error}=await sb.from('wall_reactions').select('message_id, user_id, reaction').in('message_id',ids).neq('user_id',me);
-   if(!error){
-    const first=!s.nSeenInit;
-    for(const r of rx||[]){
-     if(r.reaction!=='like')continue;
-     const key='wh:'+r.message_id+':'+r.user_id;if(seenHas(key))continue;seenAdd(key);
-     if(!first)await heartNotify(mm.find(x=>x.id===r.message_id),r.user_id)}
-    s.nSeenInit=1}}
- }catch(e){}
- try{
-  const {data:my}=await sb.from('feed_posts').select('id').eq('user_id',me).order('created_at',{ascending:false}).limit(40);
-  const ids=(my||[]).map(x=>x.id);
-  if(ids.length){
-   const {data:lk}=await sb.from('feed_likes').select('post_id, user_id, created_at').in('post_id',ids).neq('user_id',me).gt('created_at',since);
-   for(const r of lk||[])await feedNotify('like',r.post_id,r.user_id);
-   const {data:cm}=await sb.from('feed_comments').select('id, post_id, user_id, body, created_at').in('post_id',ids).neq('user_id',me).gt('created_at',since).order('created_at',{ascending:true});
-   for(const c of cm||[])await feedNotify('comment',c.post_id,c.user_id,c)}
- }catch(e){}
- s.nSince=new Date(Date.now()-60000).toISOString();save();
- LS_BUSY=0}
-
-/* ---------- thời gian thực ---------- */
-function wallLiveRefresh(){
- const fc=document.getElementById('friend-content'),sd=document.getElementById('sd');
- if(!fc||!sd||!sd.classList.contains('on')||!window.WALLV||WALLV.owner!==currentUser.id)return;
- if(!/Tường của tôi/.test(fc.textContent))return;
- const ae=document.activeElement;if(ae&&fc.contains(ae)&&/INPUT|TEXTAREA/.test(ae.tagName))return;
- if([...fc.querySelectorAll('input[id^=ri-]')].some(i=>i.value))return;
- viewMyWall()}
-async function nrtWallMsg(m){
- if(!m||!currentUser)return;
- await wallNotifHandle(m);
- if(m.from_user!==currentUser.id&&m.to_user===currentUser.id)wallLiveRefresh()}
-async function nrtHeart(r){
- if(!r||!currentUser||r.user_id===currentUser.id)return;
- const H=HEART[r.message_id];
- if(H){const has=H.u.includes(r.user_id);
-  if(r.reaction==='like'&&!has){H.u.push(r.user_id);H.n++}
-  else if(r.reaction!=='like'&&has){H.u=H.u.filter(x=>x!==r.user_id);H.n=Math.max(0,H.n-1)}
-  hUpd(r.message_id)}
- if(r.reaction!=='like')return;
- const key='wh:'+r.message_id+':'+r.user_id;if(seenHas(key))return;seenAdd(key);
- const {data:m}=await supabaseClient.from('wall_messages').select('id, from_user, to_user, parent_id').eq('id',r.message_id).maybeSingle();
- if(m&&m.from_user===currentUser.id)heartNotify(m,r.user_id)}
-function nrtHeartDel(o){
- if(!o||!o.message_id||!o.user_id||!currentUser||o.user_id===currentUser.id)return;
- const H=HEART[o.message_id];if(!H||!H.u.includes(o.user_id))return;
- H.u=H.u.filter(x=>x!==o.user_id);H.n=Math.max(0,H.n-1);hUpd(o.message_id)}
-async function postOwner(pid){
- const p=FEED.posts.find(x=>x.id===pid);if(p)return p.user_id;
- const {data}=await supabaseClient.from('feed_posts').select('user_id').eq('id',pid).maybeSingle();
- return data&&data.user_id}
-async function nrtLike(r){
- if(!r||!currentUser||r.user_id===currentUser.id)return;
- const L=FEED.likes[r.post_id];
- if(L){L.n++;const b=document.getElementById('fl-'+r.post_id);if(b)b.innerHTML=feedLikeBtn(r.post_id)}
- if(await postOwner(r.post_id)===currentUser.id)feedNotify('like',r.post_id,r.user_id)}
-function nrtUnlike(o){
- if(!o||!o.post_id||!o.user_id||!currentUser||o.user_id===currentUser.id)return;
- const L=FEED.likes[o.post_id];if(!L)return;
- L.n=Math.max(0,L.n-1);const b=document.getElementById('fl-'+o.post_id);if(b)b.innerHTML=feedLikeBtn(o.post_id)}
-async function nrtComment(c){
- if(!c||!currentUser||c.user_id===currentUser.id)return;
- const post=FEED.posts.find(p=>p.id===c.post_id);
- if(post){
-  const a=FEED.cm[c.post_id]||(FEED.cm[c.post_id]=[]);
-  if(!a.some(x=>x.id===c.id)){a.push(c);await feedProfiles([c.user_id]);feedCmRefresh(c.post_id)}}
- if(await postOwner(c.post_id)===currentUser.id)feedNotify('comment',c.post_id,c.user_id,c)}
-function nrtCommentDel(o){
- if(!o||!o.id)return;
- for(const k of Object.keys(FEED.cm)){
-  const a=FEED.cm[k];if(a.some(x=>x.id===o.id)){FEED.cm[k]=a.filter(x=>x.id!==o.id);feedCmRefresh(+k)}}}
-let NRT=null;
-function nrtStart(){
- if(!currentUser||(NRT&&NRT.uid===currentUser.id)||typeof supabaseClient.channel!=='function')return;
- try{
-  if(NRT&&NRT.ch)supabaseClient.removeChannel(NRT.ch);
-  const T=(ev,tb,fn)=>({ev,tb,fn});
-  let ch=supabaseClient.channel('jas-live-'+currentUser.id);
-  [T('INSERT','wall_messages',p=>nrtWallMsg(p.new)),
-   T('INSERT','wall_reactions',p=>nrtHeart(p.new)),
-   T('UPDATE','wall_reactions',p=>nrtHeart(p.new)),
-   T('DELETE','wall_reactions',p=>nrtHeartDel(p.old)),
-   T('INSERT','feed_likes',p=>nrtLike(p.new)),
-   T('DELETE','feed_likes',p=>nrtUnlike(p.old)),
-   T('INSERT','feed_comments',p=>nrtComment(p.new)),
-   T('DELETE','feed_comments',p=>nrtCommentDel(p.old))
-  ].forEach(x=>{ch=ch.on('postgres_changes',{event:x.ev,schema:'public',table:x.tb},pl=>{try{x.fn(pl)}catch(e){console.warn(e)}})});
-  ch.subscribe();
-  NRT={uid:currentUser.id,ch}
- }catch(e){console.warn('realtime',e)}}
-
-/* ---------- bấm thông báo → tới đúng vị trí + viền sáng ---------- */
-function feedSegSet(m){
- FEEDMODE=m;const sg=document.getElementById('fseg');
- if(sg)sg.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on2',(i==0)==(m=='feed')))}
-async function feedGoto(pid,cid){
- let k=0;while(FEED.busy&&k++<60)await sleep(100);
- const hasC=()=>cid?(FEED.cm[pid]||[]).some(c=>c.id===cid):true;
- if(!FEED.t||!hasC())await feedLoad();
- let tries=0;
- while(!FEED.posts.some(p=>p.id===pid)&&FEED.more&&tries++<8)await feedLoad(true);
- if(!FEED.posts.some(p=>p.id===pid)){toast('Bài đăng này không còn hoặc đã quá cũ');return}
- if(cid)FEED.open[pid]=true;
- feedPaint();await sleep(80);
- nGlow(cid&&document.getElementById('fcm-'+cid)?'fcm-'+cid:'fp-'+pid)}
-{const o=window.ntGo;window.ntGo=async function(i){
- const n=(s.notifs||[])[i];
- if(!n||!n.ref)return o.apply(this,arguments);
- window.__navHold=1;
- try{
-  o.call(this,i);                       // đóng bảng thông báo + mở ngăn Cộng đồng
-  await sleep(150);
-  const r=n.ref;
-  if(r.k==='feed'){
-   feedSegSet('feed');window.WALLV=null;feedEnter();await feedGoto(r.pid,r.cid)}
-  else if(r.k==='wall'){
-   feedSegSet('list');
-   const si=document.getElementById('friend-search'),row=si&&si.closest('.row');if(row)row.style.display='';
-   if(r.owner===currentUser.id)await viewMyWall();else await visitFriend(r.owner);
-   await sleep(120);
-   if(!nGlow('wm-'+r.id))toast('Không tìm thấy mục này (có thể đã bị xóa hoặc quá cũ)')}
+  if(t.k=='feed'){
+   FEEDMODE='feed';SD.open('friends');
+   await nxWait(()=>document.getElementById('feed-box'));
+   await nxWait(()=>!FEED.busy,6000);
+   if(!await feedEnsure(t.pid)){toast('Bài đăng không còn nữa');feedPaint();return}
+   if(t.cid)FEED.open[t.pid]=true;
+   feedPaint();
+   await new Promise(r=>setTimeout(r,200));
+   if(!(t.cid&&nxFocus('fcm-'+t.cid)))nxFocus('fp-'+t.pid);
+  }else if(t.k=='wall'){
+   NXHOLD=1;NXBIG=1;
+   SD.open('friends');
+   await nxWait(()=>document.getElementById('friend-content'));
+   if(t.owner===currentUser.id)await viewMyWall();else await visitFriend(t.owner);
+   NXBIG=0;
+   setTimeout(()=>{NXHOLD=0},700);
+   await new Promise(r=>setTimeout(r,220));
+   nxFocus('wm-'+t.mid);
+  }
  }catch(e){console.warn(e)}
- finally{window.__navHold=0}}}
+ finally{NXBIG=0;setTimeout(()=>{NXHOLD=0},900)}}
+window.nxGo=nxGo;
 
-/* ---------- khởi động ---------- */
-setInterval(()=>{
- if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s)return;
- if(!s.nClean){s.notifs=(s.notifs||[]).filter(n=>!(n.type==='wall'&&!n.ref));s.nClean=1;save()}   // xóa thông báo cũ báo nhầm
- nrtStart()},3000);
-setTimeout(liveScan,5000);setInterval(liveScan,30000);
+/* ---- engine thông báo ---- */
+async function nxNames(ids){
+ const need=[...new Set(ids)].filter(u=>u&&!NX.names[u]);
+ if(!need.length)return;
+ try{const {data}=await supabaseClient.from('profiles').select('id, display_name, username').in('id',need);
+  (data||[]).forEach(p=>NX.names[p.id]=p)}catch(e){}
+ need.forEach(u=>{if(!NX.names[u])NX.names[u]={}})}
+const nxName=u=>{const p=NX.names[u]||{};return p.display_name||p.username||'Một người chơi'};
+const nxSnip=x=>{x=String(x||'').replace(/\s+/g,' ').trim();return x.length>40?x.slice(0,40)+'…':x};
+
+NX.check=async function(){
+ if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||NX.busy)return;
+ if(Date.now()-NX.last<3000)return;
+ NX.busy=1;NX.last=Date.now();
+ try{
+  const me=currentUser.id,sb=supabaseClient,nowIso=()=>new Date().toISOString();
+  s.nSeen=s.nSeen||[];s.nInit=s.nInit||{};s.notifs=s.notifs||[];
+  const seen=new Set(s.nSeen),fresh=[];
+  const take=(src,list)=>{
+   if(!s.nInit[src]){list.forEach(x=>{seen.add(x.key);s.nSeen.push(x.key)});s.nInit[src]=1;return}
+   list.forEach(x=>{if(seen.has(x.key))return;seen.add(x.key);s.nSeen.push(x.key);fresh.push(x)})};
+
+  /* A) người khác ký tường / trả lời trên tường của mình (không tính mình tự trả lời) */
+  try{
+   const {data:inb,error}=await sb.from('wall_messages').select('id, from_user, to_user, parent_id, created_at')
+    .eq('to_user',me).neq('from_user',me).order('created_at',{ascending:false}).limit(40);
+   if(!error){
+    await nxNames((inb||[]).map(m=>m.from_user));
+    take('wm',(inb||[]).map(m=>({key:'wm:'+m.id,type:'wall',time:m.created_at,tgt:{k:'wall',owner:me,mid:m.id},
+     text:m.parent_id==null?'Bạn có một lượt ký tường mới':nxName(m.from_user)+' đã trả lời phần ký tường của bạn'})))}
+  }catch(e){}
+
+  /* B) bạn bè trả lời mình ở tường của họ  +  C) bạn bè thả tim ký tường/trả lời của mình */
+  try{
+   const {data:mine,error}=await sb.from('wall_messages').select('id, to_user, parent_id, created_at')
+    .eq('from_user',me).order('created_at',{ascending:false}).limit(150);
+   if(!error&&mine&&mine.length){
+    const mm=new Map(mine.map(m=>[m.id,m]));
+    const rootsElsewhere=mine.filter(m=>m.parent_id==null&&m.to_user!==me).map(m=>m.id);
+    if(rootsElsewhere.length){
+     const {data:rp,error:e2}=await sb.from('wall_messages').select('id, from_user, to_user, parent_id, created_at')
+      .in('parent_id',rootsElsewhere).neq('from_user',me).order('created_at',{ascending:false}).limit(40);
+     if(!e2){
+      await nxNames((rp||[]).flatMap(r=>[r.from_user,r.to_user]));
+      take('wp',(rp||[]).map(r=>({key:'wp:'+r.id,type:'wall',time:r.created_at,tgt:{k:'wall',owner:r.to_user,mid:r.id},
+       text:r.from_user===r.to_user?nxName(r.from_user)+' đã trả lời lại bạn trong tường của họ':nxName(r.from_user)+' đã trả lời bạn trong tường của '+nxName(r.to_user)})))}
+    }
+    const {data:rx,error:e3}=await sb.from('wall_reactions').select('*').in('message_id',[...mm.keys()]).neq('user_id',me).eq('reaction','heart').limit(120);
+    if(!e3){
+     await nxNames((rx||[]).map(r=>r.user_id));
+     take('wr',(rx||[]).filter(r=>mm.has(r.message_id)).map(r=>{const m=mm.get(r.message_id);
+      return {key:'wr:'+r.message_id+':'+r.user_id,type:'heart',time:r.created_at||nowIso(),tgt:{k:'wall',owner:m.to_user,mid:m.id},
+       text:nxName(r.user_id)+' đã tim phần '+(m.parent_id==null?'ký tường':'trả lời')+' của bạn'}}))}
+   }
+  }catch(e){}
+
+  /* D) bảng tin: tim + bình luận trên bài của mình */
+  try{
+   const {data:mp,error}=await sb.from('feed_posts').select('id').eq('user_id',me).order('created_at',{ascending:false}).limit(40);
+   if(!error&&mp&&mp.length){
+    const ids=mp.map(p=>p.id);
+    const [lk,cm]=await Promise.all([
+     sb.from('feed_likes').select('*').in('post_id',ids).neq('user_id',me).limit(200),
+     sb.from('feed_comments').select('id, post_id, user_id, body, created_at').in('post_id',ids).neq('user_id',me).order('created_at',{ascending:false}).limit(60)]);
+    await nxNames([...(lk.data||[]).map(r=>r.user_id),...(cm.data||[]).map(r=>r.user_id)]);
+    if(!lk.error)take('fl',(lk.data||[]).map(r=>({key:'fl:'+r.post_id+':'+r.user_id,type:'heart',time:r.created_at||nowIso(),tgt:{k:'feed',pid:r.post_id},
+     text:nxName(r.user_id)+' đã thả tim bài đăng bảng tin của bạn'})));
+    if(!cm.error)take('fc',(cm.data||[]).map(c=>({key:'fc:'+c.id,type:'feed',time:c.created_at,tgt:{k:'feed',pid:c.post_id,cid:c.id},
+     text:nxName(c.user_id)+' đã bình luận bài đăng bảng tin của bạn: “'+nxSnip(c.body)+'”'})))}
+  }catch(e){}
+
+  fresh.sort((a,b)=>new Date(a.time)-new Date(b.time));
+  fresh.forEach(x=>s.notifs.unshift({type:x.type,id:x.key,text:x.text,time:x.time,read:false,tgt:x.tgt}));
+  if(s.nSeen.length>800)s.nSeen=s.nSeen.slice(-600);
+  if(s.notifs.length>50)s.notifs=s.notifs.slice(0,50);
+  try{save()}catch(e){}
+ }catch(e){console.warn(e)}
+ finally{NX.busy=0}};
+
+/* ---- bảng tin thời gian thực ---- */
+function feedLikeRefresh(pid){
+ const b=document.getElementById('fl-'+pid);if(!b)return;
+ const L=FEED.likes[pid]||{n:0,me:0};
+ b.innerHTML=feedLikeBtn(pid);b.classList.toggle('liked',!!L.me)}
+async function feedSync(){
+ if(typeof currentUser==='undefined'||!currentUser||FEED.busy||FEED.syn||FEED.err)return;
+ const box=document.getElementById('feed-box'),sd=document.getElementById('sd');
+ if(!box||!box.isConnected||(sd&&!sd.classList.contains('on'))||!FEED.ids.length)return;
+ FEED.syn=1;const stamp=FEED.lk||0;
+ try{
+  const uid=currentUser.id;
+  let q=supabaseClient.from('feed_posts').select('id, user_id, caption, music, created_at').in('user_id',FEED.ids).order('created_at',{ascending:false});
+  q=FEED.posts.length?q.gte('created_at',FEED.posts[FEED.posts.length-1].created_at).limit(60):q.limit(FEED_PAGE);
+  const {data:ps,error}=await q;
+  if(error||(FEED.lk||0)!==stamp)return;
+  const light=ps||[],known=new Map(FEED.posts.map(p=>[p.id,p])),newIds=light.filter(p=>!known.has(p.id)).map(p=>p.id);
+  let full=[];
+  if(newIds.length){const r=await supabaseClient.from('feed_posts').select('id, user_id, image, caption, music, created_at').in('id',newIds);full=r.data||[]}
+  const fm=new Map(full.map(p=>[p.id,p])),next=light.map(p=>known.get(p.id)||fm.get(p.id)).filter(Boolean);
+  const ids=next.map(p=>p.id),listChg=ids.join()!==FEED.posts.map(p=>p.id).join();
+  let lk={data:[]},cm={data:[]};
+  if(ids.length){[lk,cm]=await Promise.all([
+   supabaseClient.from('feed_likes').select('post_id, user_id').in('post_id',ids),
+   supabaseClient.from('feed_comments').select('id, post_id, user_id, body, created_at').in('post_id',ids).order('created_at',{ascending:true}).limit(500)])}
+  if((FEED.lk||0)!==stamp)return;
+  await feedProfiles([...next.map(p=>p.user_id),...(cm.data||[]).map(c=>c.user_id)]);
+  if((FEED.lk||0)!==stamp)return;
+  const nl={},nc={};ids.forEach(id=>{nl[id]={n:0,me:0};nc[id]=[]});
+  (lk.data||[]).forEach(r=>{const L=nl[r.post_id];if(L){L.n++;if(r.user_id===uid)L.me=1}});
+  (cm.data||[]).forEach(c=>{if(nc[c.post_id])nc[c.post_id].push(c)});
+  const dl=[],dc=[];
+  ids.forEach(id=>{
+   const ol=FEED.likes[id],oc=FEED.cm[id]||[];
+   if(!ol||ol.n!==nl[id].n||ol.me!==nl[id].me)dl.push(id);
+   if(oc.map(c=>c.id).join()!==nc[id].map(c=>c.id).join())dc.push(id)});
+  FEED.posts=next;ids.forEach(id=>{FEED.likes[id]=nl[id];FEED.cm[id]=nc[id]});
+  FEED.t=Date.now();
+  if(listChg)feedPaint();else{dl.forEach(feedLikeRefresh);dc.forEach(feedCmRefresh)}
+ }catch(e){console.warn(e)}
+ finally{FEED.syn=0}}
+
+/* tim ở tường cập nhật trực tiếp */
+async function wallSync(){
+ const els=[...document.querySelectorAll('[id^="wh-"]')];if(!els.length||typeof currentUser==='undefined'||!currentUser)return;
+ const ids=els.map(e=>+e.id.slice(3));
+ try{
+  const {data,error}=await supabaseClient.from('wall_reactions').select('message_id, user_id, reaction').in('message_id',ids);
+  if(error)return;
+  const nw={};ids.forEach(i=>nw[i]={n:0,me:0});
+  (data||[]).forEach(r=>{const L=nw[r.message_id];if(L&&(r.reaction==='heart'||r.reaction==='like')){L.n++;if(r.user_id===currentUser.id)L.me=1}});
+  ids.forEach(i=>{const o=WALLRX[i]||{n:-1,me:-1};if(o.n!==nw[i].n||o.me!==nw[i].me){WALLRX[i]=nw[i];wallHeartPaint(i)}})
+ }catch(e){}}
+
+/* kênh realtime của Supabase + dự phòng thăm dò định kỳ */
+let NXRT=null,NXRU=null,NXT=0;
+function nxChange(tb){
+ clearTimeout(NXT);
+ NXT=setTimeout(()=>{
+  if(/^feed_/.test(tb))feedSync();
+  if(tb=='wall_reactions')wallSync();
+  NX.check()},350)}
+function nxRtStart(){
+ try{
+  if(typeof currentUser==='undefined'||!currentUser||typeof supabaseClient==='undefined'||!supabaseClient||NXRU===currentUser.id)return;
+  if(NXRT)supabaseClient.removeChannel(NXRT);
+  const c=supabaseClient.channel('jas-live-'+currentUser.id);
+  ['feed_posts','feed_likes','feed_comments','wall_messages','wall_reactions'].forEach(tb=>
+   c.on('postgres_changes',{event:'*',schema:'public',table:tb},()=>nxChange(tb)));
+  c.subscribe();NXRT=c;NXRU=currentUser.id;
+ }catch(e){console.warn(e)}}
+setInterval(nxRtStart,3000);
+setInterval(()=>{if(!document.hidden){feedSync();wallSync()}},8000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){feedSync();wallSync();NX.check()}});
 </script>
 
 </body></html>

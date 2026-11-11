@@ -111,7 +111,7 @@ const SUPABASE_URL = 'https://dpxldincujnnheeesgcu.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_G64piJDVZnrJgxHeBRA30w_U-aNjFHM';
 
 const supabaseClient = (window.supabase && window.supabase.createClient)
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
   : (function(){
       // Không tải được thư viện Supabase (offline/bị chặn): dùng bản giả để game vẫn chạy
       const res={data:null,error:null};
@@ -208,6 +208,7 @@ async function logoutDiscord() {
 }
 
 initAuth();
+try{ if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 
 // Hook to add upload button after card is created
 const origCardUI = window.cardUI;
@@ -2590,10 +2591,10 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
         if (/42P01|PGRST205|game_saves|schema cache/i.test(m)) {
           toast('Chưa tạo được bảng game_saves trên Supabase. Hãy chạy SQL tạo bảng trước.');
         }
-        return false;
+        return null; // lỗi: không chắc, KHÔNG được coi là chưa đăng ký
       }
       return !!(r && r.data);
-    }catch(e){ return false; }
+    }catch(e){ return null; }
   }
 
   // Đăng xuất an toàn: không chờ quá 1,5 giây, luôn xóa token cục bộ
@@ -2747,8 +2748,8 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
     }
 
     // Đăng nhập hoặc phiên cũ
-    if (!exists) {
-      try{ await supabaseClient.auth.signOut(); }catch(e){}
+    if (exists === false && (intent === 'login' || getMode() !== 'discord')) {
+      try{ await supabaseClient.auth.signOut({ scope: 'local' }); }catch(e){}
       currentUser = null;
       window.DISCORD_OK = false;
       setMode('guest');

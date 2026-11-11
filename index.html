@@ -101,7 +101,17 @@ body.nh nav.fx{transform:translate(-50%,calc(100% + 30px))}
 .frA{background:conic-gradient(#ffd166,#ff6fa0,#6bb5ff,#7bd88f,#ffd166);animation:frg 3s linear infinite,frp 1.6s ease-in-out infinite}@keyframes frg{to{filter:hue-rotate(360deg)}}@keyframes frp{50%{box-shadow:0 0 14px 3px #ffd16699}}
 #cbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(78px + env(safe-area-inset-bottom,0px));width:min(92%,520px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border-radius:16px;background:var(--card);border:2px solid var(--g2);box-shadow:0 4px 14px rgba(0,0,0,.18);transition:bottom .3s}body.nh #cbar{bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 </style><link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Dancing+Script:wght@600&family=Playfair+Display:wght@700&family=Comfortaa:wght@700&family=Bangers&family=Sriracha&family=Quicksand:wght@700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script></head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><style>
+.mspd{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:8px}
+.mspd .mut{font-size:.8rem;margin-right:2px}
+.mspd button{padding:5px 14px;font-size:.9rem;min-height:0;width:auto;height:auto;min-width:72px;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.vnl{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.vdisc img{pointer-events:none}
+.pdot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:#9aa3a0;border:2px solid var(--bg,#fff);box-sizing:border-box}
+.pdot.on,.pdi.on{background:#2ecc71}
+.pdi{display:inline-block;width:9px;height:9px;border-radius:50%;background:#9aa3a0;margin-right:5px;vertical-align:1px}
+.ptxt{font-size:.78rem}.ptxt.ptxt-on{color:#27ae60}
+</style></head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
 <script>
 const $=n=>Math.round(n).toLocaleString('vi-VN')+'đ',esc=t=>String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const I={home:'M3 11l9-8 9 8M5 10v10h14V10',cart:'M3 4h3l2 11h10l2-8H7M9 20h.01M17 20h.01',tag:'M3 12V3h9l9 9-9 9z',shop:'M3 9l2-5h14l2 5M4 9v11h16V9M9 20v-6h6v6',star:'M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3 1.3-6.2L3 9.5l6.3-.7z',quest:'M6 3v18M6 4h12l-3 4 3 4H6',up:'M12 20V5M5 11l7-7 7 7',book:'M4 5h7a2 2 0 012 2v13a2 2 0 00-2-2H4zM20 5h-7a2 2 0 00-2 2',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6',moon:'M20 14a8 8 0 11-10-10 7 7 0 0010 10z',sun:'M12 8a4 4 0 100 8 4 4 0 000-8M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',music:'M9 18V6l10-2v12M9 18a3 3 0 11-6 0 3 3 0 016 0M19 16a3 3 0 11-6 0 3 3 0 016 0',mute:'M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6',undo:'M4 9h11a5 5 0 010 10H8M4 9l4-4M4 9l4 4',bill:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',spk:'M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2'};
@@ -440,8 +450,7 @@ async function prefetchMyPosted() {
 function quietAutoplay() {
   setTimeout(() => {
     try {
-      if (!VMU || MS.playing || !MS.show) return;
-      MU.emb();
+      if (!VMU || MS.playing || CardMu.playing()) return;
       toast('Chạm vào đĩa than để phát nhạc');
     } catch (e) {}
   }, 6500);
@@ -449,11 +458,10 @@ function quietAutoplay() {
 async function viewMyPostedCard() {
   if (!currentUser) return toast('Hãy liên kết Discord');
   // Phát nhạc ngay trong lúc bấm nút (khi trình duyệt còn cho phép tự phát)
-  let startedId = null;
   try {
     const cc = window.__postedCache;
     const m0 = cc && cc.uid === currentUser.id && cc.shop ? parseGav(cc.shop.game_avatar).mu : null;
-    if (m0 && m0.id) { MU.playTrack(m0); startedId = m0.id; }
+    if (m0 && m0.id) CardMu.prep(m0, true);
   } catch (e) {}
   const box = document.getElementById('friend-content');
   if (box) box.innerHTML = '<p class=mut>Đang tải...</p>';
@@ -478,9 +486,8 @@ async function viewMyPostedCard() {
   window.__postedCache = { uid: currentUser.id, t: Date.now(), shop: shop || null };
   const mu = shop && parseGav(shop.game_avatar).mu;
   if (mu && mu.id) {
-    if (mu.id !== startedId) { try { MU.playTrack(mu); } catch (e) {} }
+    CardMu.prep(mu, true);
     vinylSync();
-    quietAutoplay();
   }
 }
 function saveMyPostedCard() {
@@ -516,22 +523,159 @@ function vinylHtml(mu) {
   VMU = (mu && mu.id) ? mu : null;
   if (!VMU) return '';
   const th = esc(VMU.th || ('https://i.ytimg.com/vi/' + VMU.id + '/mqdefault.jpg'));
-  return `<div id="vinyl" class="vnl ${VMU.r ? 'vr' : ''}" onclick="vinylTap()"><div class="vdisc"><img src="${th}" alt=""><i></i></div></div>`;
+  return `<div id="vinyl" class="vnl ${VMU.r ? 'vr' : ''}" onclick="vinylTap()" onpointerdown="vinylDown(event)" onpointermove="vinylMove(event)" onpointerup="vinylUp()" onpointerleave="vinylUp()" onpointercancel="vinylUp()" oncontextmenu="return false"><div class="vdisc"><img src="${th}" alt=""><i></i></div></div>`;
 }
+
+/* ---- Trình phát nhạc riêng cho card (không đụng tới nhạc/hàng đợi của người chơi) ---- */
+const CardMu = (function () {
+  let pl = null, plP = null, want = '', cued = '', playing = 0, resumeMain = 0, mu = null;
+  function loadYT() {
+    if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+    if (loadYT.p) return loadYT.p;
+    loadYT.p = new Promise((res, rej) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { try { prev && prev(); } catch (e) {} res(window.YT); };
+      if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+        const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.async = true;
+        sc.onerror = () => { loadYT.p = null; rej(new Error('yt')); };
+        document.head.appendChild(sc);
+      }
+      setTimeout(() => { if (!(window.YT && window.YT.Player)) { loadYT.p = null; rej(new Error('yt')); } }, 15000);
+    });
+    return loadYT.p;
+  }
+  function wrap() {
+    let w = document.getElementById('pvWrap');
+    if (!w) {
+      w = document.createElement('div'); w.id = 'pvWrap';
+      w.style.cssText = 'position:fixed;right:0;bottom:0;width:200px;height:200px;opacity:0;pointer-events:none;z-index:-1;overflow:hidden';
+      w.innerHTML = '<div id="pvEl"></div>';
+      document.body.appendChild(w);
+    }
+    return w;
+  }
+  function ensure(id) {
+    if (pl) return Promise.resolve(pl);
+    if (plP) return plP;
+    wrap();
+    plP = loadYT().then(Y => new Promise(res => {
+      const p = new Y.Player('pvEl', {
+        width: '200', height: '200', videoId: id,
+        playerVars: { playsinline: 1, rel: 0, controls: 0 },
+        events: {
+          onReady: () => { pl = p; cued = id; res(p); },
+          onStateChange: e => {
+            const st = e && e.data;
+            if (st === 1) {
+              // Nếu nhạc người chơi đang phát (không do mình tạm dừng) thì dừng ngay đĩa than
+              if (MS.playing) { try { p.pauseVideo(); } catch (x) {} playing = 0; return; }
+              playing = 1;
+            } else if (st === 2 || st === 0) {
+              playing = 0;
+              if (st === 0) giveBack();
+            }
+          },
+          onError: () => { playing = 0; giveBack(); }
+        }
+      });
+    })).catch(e => { plP = null; throw e; });
+    return plP;
+  }
+  // Trả nhạc lại cho người chơi nếu mình đã tạm dừng nó để nghe đĩa than
+  function giveBack() {
+    if (resumeMain) { resumeMain = 0; try { if (!MS.playing && MS.now) MU.tog(); } catch (e) {} }
+  }
+  function load(id) {
+    return ensure(id).then(p => {
+      if (cued !== id) { cued = id; try { p.cueVideoById(id); } catch (e) {} }
+      return p;
+    });
+  }
+  return {
+    // Chuẩn bị đĩa than; chỉ tự phát khi người chơi KHÔNG đang nghe gì
+    prep(m, auto) {
+      if (!m || !/^[\w-]{11}$/.test(m.id)) return;
+      mu = m; want = m.id;
+      load(m.id).then(p => {
+        if (want !== m.id) return;
+        if (auto && !MS.playing) { try { p.playVideo(); } catch (e) {} }
+      }).catch(() => {});
+    },
+    tap() {
+      if (!mu) return;
+      if (playing) { try { pl.pauseVideo(); } catch (e) {} playing = 0; giveBack(); return; }
+      // Người chơi chủ động bấm đĩa than: tạm dừng nhạc của họ, hết đĩa than sẽ tự phát tiếp
+      if (MS.playing) { resumeMain = 1; try { MU.tog(); } catch (e) {} }
+      load(mu.id).then(p => { try { p.playVideo(); } catch (e) {} }).catch(() => { toast('Không phát được nhạc của card'); giveBack(); });
+    },
+    // rời card / người chơi bật nhạc riêng -> dừng đĩa than; keepMain=true thì không bật lại nhạc chính
+    stop(keepMain) {
+      if (pl && playing) { try { pl.pauseVideo(); } catch (e) {} }
+      playing = 0; want = '';
+      if (keepMain) resumeMain = 0; else giveBack();
+    },
+    playing() { return !!playing; }
+  };
+})();
+
 function vinylSync() {
   clearInterval(VMT);
   const f = () => {
     const v = document.getElementById('vinyl');
-    if (!v || !VMU) { clearInterval(VMT); return; }
-    const c = window.MU && MU.cur();
-    v.classList.toggle('spin', !!(c && c.id === VMU.id && MS.playing));
+    if (!v || !VMU) { clearInterval(VMT); CardMu.stop(); return; }
+    // Người chơi tự bật nhạc của mình trong lúc nghe đĩa than -> nhường nhạc của họ
+    if (CardMu.playing() && MS.playing) CardMu.stop(true);
+    v.classList.toggle('spin', CardMu.playing());
   };
   f(); VMT = setInterval(f, 400);
 }
-function vinylTap() {
+/* ---- nhấn giữ đĩa than: xem thông tin bài hát + thêm yêu thích ---- */
+let VLP = 0, VLF = 0, VX = 0, VY = 0;
+function vinylDown(e) {
+  VLF = 0; clearTimeout(VLP); VX = e.clientX; VY = e.clientY;
+  VLP = setTimeout(() => { VLF = 1; try { navigator.vibrate && navigator.vibrate(15); } catch (x) {} vinylInfo(); }, 450);
+}
+function vinylMove(e) { if (Math.abs(e.clientX - VX) > 12 || Math.abs(e.clientY - VY) > 12) clearTimeout(VLP); }
+function vinylUp() { clearTimeout(VLP); }
+function vinylInfoRender() {
+  const m = VMU, box = document.getElementById('modal');
+  if (!m || !box) return;
+  const th = m.th || ('https://i.ytimg.com/vi/' + m.id + '/mqdefault.jpg');
+  const fav = window.MU && MU.isFav(m.id);
+  box.innerHTML = `<div class=mb onclick="if(event.target==this)mdl()"><div class=ms id="vinfo">
+    <div class=row><h2>Bài hát trên card</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>
+    <div style="display:flex;gap:12px;align-items:center;margin:8px 0 12px">
+      <img src="${esc(th)}" alt="" style="width:84px;height:84px;border-radius:14px;object-fit:cover;flex:0 0 auto">
+      <div style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(m.name || 'Video YouTube')}</b><span class=mut>${esc(m.ar || 'YouTube')}</span></div>
+    </div>
+    <button class=p style="width:100%" onclick="vinylFav()">${fav ? '♥ Bỏ khỏi yêu thích' : '♡ Thêm vào yêu thích'}</button>
+  </div></div>`;
+}
+function vinylInfo() {
   if (!VMU) return;
-  const c = MU.cur();
-  if (c && c.id === VMU.id) MU.tog(); else MU.playTrack(VMU);
+  const m = VMU;
+  vinylInfoRender();
+  if (!m.name) {
+    fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + m.id))
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        if (!j || VMU !== m) return;
+        m.name = j.title || m.name;
+        m.ar = (j.author_name || '').replace(/ - Topic$/, '') || m.ar;
+        if (document.getElementById('vinfo')) vinylInfoRender();
+      }).catch(() => {});
+  }
+}
+function vinylFav() {
+  if (!VMU || !window.MU) return;
+  const added = MU.favSet(VMU);
+  toast(added ? 'Đã thêm vào yêu thích' : 'Đã bỏ khỏi yêu thích');
+  vinylInfoRender();
+}
+function vinylTap() {
+  if (VLF) { VLF = 0; return; }   // vừa nhấn giữ xong -> không tính là chạm
+  if (!VMU) return;
+  CardMu.tap();
 }
 async function visitFriend(friendId) {
   if (!currentUser) return toast('Hãy liên kết Discord');
@@ -544,7 +688,7 @@ async function visitFriend(friendId) {
     : `<canvas id="visit-card" width="360" height="200" style="width:100%;border-radius:16px;margin:8px 0;background:#fff"></canvas>`;
   const avHtml = friendAvTap(shop?.game_avatar, 40, friendId);
   let html = `<div class=card>
-    <div class=row><h3 style="display:flex;align-items:center;gap:8px">${avHtml} ${esc(name)}</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
+    <div class=row><h3 style="display:flex;align-items:center;gap:8px"><span style="position:relative;display:inline-block;line-height:0">${avHtml}<i class="pdot" data-pres="${friendId}"></i></span> <span>${esc(name)}<br><small class="mut ptxt" data-pt="${friendId}" style="font-weight:400">Offline</small></span></h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>
     ${cardHtml}
     <p class=mut>Ngày ${shop?.day || '?'} · Tiền ${$(shop?.money || 0)} · Cấp ${shop?.level || '?'}</p>
     <div class=row style="margin-top:8px">
@@ -558,8 +702,9 @@ async function visitFriend(friendId) {
   html += '</div></div>';
   const el = document.getElementById('friend-content');
   if (el) el.innerHTML = html;
+  try { window.PRES && PRES.paint(); } catch (e) {}
   const mu = parseGav(shop?.game_avatar).mu;
-  if (mu && mu.id) { try { MU.playTrack(mu); } catch (e) {} vinylSync(); quietAutoplay(); }
+  if (mu && mu.id) { CardMu.prep(mu, true); vinylSync(); }
 
   // Draw shop card on canvas
   setTimeout(() => {
@@ -662,10 +807,11 @@ async function loadFriendsUI() {
   if (!accepted.length) html += '<p class=mut>Chưa có bạn bè nào.</p>';
   else accepted.forEach(x => {
     const fid = x.user_id === uid ? x.friend_id : x.user_id;
-    html += `<div class=row><span style="display:flex;align-items:center;gap:8px">${friendAvTap(avMap[fid], 34, fid)}<span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span></span></span>
+    html += `<div class=row><span style="display:flex;align-items:center;gap:8px"><span style="position:relative;display:inline-block;line-height:0">${friendAvTap(avMap[fid], 34, fid)}<i class="pdot" data-pres="${fid}"></i></span><span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span><br><small class="mut ptxt" data-pt="${fid}">Offline</small></span></span>
       <span><button class=p onclick="visitFriend('${fid}')">Thăm</button> <button class=s onclick="removeFriend(${x.id})">Xóa bạn</button></span></div>`;
   });
   el.innerHTML = html;
+  try { window.PRES && PRES.paint(); } catch (e) {}
 }
 
 const ic=(n,z=18)=>`<svg width=${z} height=${z} viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round style="vertical-align:-3px"><path d="${I[n]}"/></svg>`;
@@ -844,7 +990,7 @@ friends() {
   setTimeout(prefetchMyPosted, 400);
   return `<div class=card>
     <div class=row>
-      <span>Xin chào ${nameHtml}</span>
+      <span>Xin chào ${nameHtml}</span><span class="mut me-pres" style="font-size:.85rem">${window.PRES?PRES.meHtml():''}</span>
     </div>
     <div class=row style="margin:6px 0"><button class=s style="flex:1" onclick="viewMyWall()">📝 Xem tường của tôi</button><button class=s style="flex:1" onclick="viewMyPostedCard()">🖼️ Ảnh tôi đã đăng</button></div>
     <div class=row>
@@ -1506,14 +1652,14 @@ button.pz{font-weight:700;white-space:nowrap}
 const LS='jsMusic',$e=id=>document.getElementById(id);
 const IDRE=/^[\w-]{11}$/;
 const KEY='AIzaSyB7AxXmftO434HSxB28HtIN36g0ud57EN4';
-const MS=window.MS={key:KEY,mc:0,msg:'',fav:[],qo:1,fo:1,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0};
-try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep','fav','qo','fo','mc'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
+const MS=window.MS={key:KEY,mc:0,msg:'',fav:[],qo:1,fo:1,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0,rate:1};
+try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep','fav','qo','fo','mc','rate'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
 /* bỏ các bài cũ lưu từ Spotify (id dài 22 ký tự) */
 if(!Array.isArray(MS.q))MS.q=[];if(!Array.isArray(MS.hist))MS.hist=[];
 if(!Array.isArray(MS.fav))MS.fav=[];MS.fav=MS.fav.filter(t=>t&&IDRE.test(t.id));if(MS.qo==null)MS.qo=1;if(MS.fo==null)MS.fo=1;
 MS.q=MS.q.filter(t=>t&&IDRE.test(t.id));MS.hist=MS.hist.filter(t=>t&&IDRE.test(t.id));
 if(MS.now&&!IDRE.test(MS.now.id))MS.now=null;
-const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep,fav:MS.fav,qo:MS.qo,fo:MS.fo,mc:MS.mc}))}catch(e){}};
+const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep,fav:MS.fav,qo:MS.qo,fo:MS.fo,mc:MS.mc,rate:MS.rate}))}catch(e){}};
 const fm=ms=>{ms=Math.max(0,Math.round((ms||0)/1000));return Math.floor(ms/60)+':'+String(ms%60).padStart(2,'0')};
 
 /* ---------- icon + tab ---------- */
@@ -1592,7 +1738,7 @@ function ensureCtl(id,auto){
    events:{onReady:()=>{ctl=p;loaded=id;res(p)},onStateChange:onSt,onError:onErr}})
  })).catch(e=>{ctlP=null;throw e});
  return ctlP}
-const est=()=>MS.playing?Math.min(MS.pos+(Date.now()-MS.evT),MS.dur||1e9):MS.pos;
+const est=()=>MS.playing?Math.min(MS.pos+(Date.now()-MS.evT)*(MS.rate||1),MS.dur||1e9):MS.pos;
 function kick(c){
  const k=++kid;let n=0;
  const f=()=>{if(k!==kid||!MS.want||MS.playing)return;
@@ -1608,7 +1754,7 @@ function go(t){
 function onSt(e){
  const st=e&&e.data;
  if(st===1){
-  MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;
+  MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
   try{MS.pos=ctl.getCurrentTime()*1000;const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(x){}
   ui();duck()}
  else if(st===2){
@@ -1688,7 +1834,8 @@ function nowH(){
 <p class="mar mut">${t?esc(t.ar||'YouTube'):'Tìm bài hát hoặc dán link YouTube bên dưới'}</p></div></div>
 <input type="range" id="msk" min="0" max="1000" value="0" ${t?'':'disabled'} aria-label="Tua bài hát" oninput="MU.sk(this.value,1)" onchange="MU.sk(this.value)">
 <div class="mtm"><span id="mtl">0:00</span><span id="mtr">${fm(MS.dur||(t&&t.dur))}</span></div>
-<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', isFav(t)?'Bỏ khỏi yêu thích':'Thêm vào yêu thích','MU.fav()',isFav(t)?'heartf':'heart',!t).replace('class=""','class="'+(isFav(t)?'act':'')+'"')}</div>`}
+<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', isFav(t)?'Bỏ khỏi yêu thích':'Thêm vào yêu thích','MU.fav()',isFav(t)?'heartf':'heart',!t).replace('class=""','class="'+(isFav(t)?'act':'')+'"')}</div>
+<div class="mspd"><button class="s" onclick="spdTap()" onpointerdown="spdDown()" onpointerup="spdUp()" onpointerleave="spdUp()" onpointercancel="spdUp()" oncontextmenu="return false" aria-label="Tốc độ phát: ${MS.rate||1} lần. Chạm để tăng, nhấn giữ để giảm">⏩ ${MS.rate||1}x</button><span class="mut">chạm: tăng · giữ: giảm</span></div>`}
 function resH(){
  if(MS.busy)return '<p class="mut" style="margin:8px 0 0">Đang tìm…</p>';
  if(MS.err)return `<p class="bad" style="margin:8px 0 0">${esc(MS.err)}</p>`;
@@ -1760,7 +1907,11 @@ setInterval(()=>{
  if(!MS.now)return;if(MS.mc)placeMv();
  if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
  tickUI(est())},500);
-window.MU={playTrack(tr){if(!tr||!IDRE.test(tr.id))return;if(MS.now&&MS.now.id===tr.id&&MS.playing)return;go({id:tr.id,name:tr.name||'',ar:tr.ar||'',th:tr.th||cov(tr.id),img:tr.th||cov(tr.id),dur:0})},cur(){return MS.now?{id:MS.now.id,name:MS.now.name,ar:MS.now.ar,th:MS.now.th||MS.now.img||cov(MS.now.id)}:null},search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
+window.MU={rateStep(d){const A=[.5,.75,1,1.25,1.5,2];let i=A.indexOf(MS.rate||1);if(i<0)i=2;MU.rate(A[(i+d+A.length)%A.length])},
+ rate(v){v=+v;if(!(v>0))return;MS.pos=est();MS.evT=Date.now();MS.rate=v;try{ctl&&ctl.setPlaybackRate(v)}catch(e){}fui();toast('Tốc độ phát: '+v+'x')},
+ favSet(tr){if(!tr||!IDRE.test(tr.id))return false;const i=MS.fav.findIndex(x=>x.id===tr.id);if(i>=0){MS.fav.splice(i,1);fui();return false}MS.fav.unshift({id:tr.id,name:tr.name||'Video YouTube',ar:tr.ar||'',img:tr.th||cov(tr.id),th:tr.th||cov(tr.id),dur:0});fui();return true},
+ isFav(id){return MS.fav.some(x=>x.id===id)},
+ playTrack(tr){if(!tr||!IDRE.test(tr.id))return;if(MS.now&&MS.now.id===tr.id&&MS.playing)return;go({id:tr.id,name:tr.name||'',ar:tr.ar||'',th:tr.th||cov(tr.id),img:tr.th||cov(tr.id),dur:0})},cur(){return MS.now?{id:MS.now.id,name:MS.now.name,ar:MS.now.ar,th:MS.now.th||MS.now.img||cov(MS.now.id)}:null},search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
  rep(){MS.rep=MS.rep?0:1;sv();ui()},
  mc(v){MS.mc=v?1:0;sv();ui()},
  emb(){MS.show=MS.show?0:1;ui()},
@@ -2517,7 +2668,7 @@ let WF=[],WV=0,WP=[],WC=1;
 const RCP=[['Vườn Xuân',['tul','hong','hd']],['Hoàng Hôn Ngọt',['hong','dt','oai']],['Rừng Ấm',['oai','cc','cuc']],['Sương Mai',['sen','lily','phg']],['Mật Hồng',['mdon','cth','vt']],['Nắng Mùa Hè',['hd','cuc','cc']],['Lavender Đêm',['oai','thuy','ct']],['Trà Hoa Thanh',['tc','cuc','dt']],['Tết Sum Vầy',['dao','vt','mai']],['Cánh Đồng Đà Lạt',['cuc','hd','cl']],['Hoàng Gia',['mdon','lan','sen']],['Thiên Đường Trắng',['lily','lan','adao']],['Anh Đào Tháng Ba',['adao','phg','hong']],['Đồng Cỏ Dại',['bcd','cde','cl']],['Hạ Đỏ',['phg','bl','thuy']],['Quý Phi',['mdon','tc','dt']],['Biển Xanh',['cth','cde','oai']],['Bình Minh',['dt','cc','tul']],['Khu Vườn Bí Mật',['lily','bl','tul']],['Hồng Trà',['hong','tc','cuc']]].map((r,i)=>({id:'r'+i,n:r[0],f:r[1]}));
 const rcAll=()=>RCP.concat(s.rcp||[]),rcKey=a=>a.slice().sort().join(),rcOf=a=>a.length==3?rcAll().find(r=>rcKey(r.f)==rcKey(a)):null;
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-const ws=()=>{if(!s.ws)s.ws={fa:{xp:0,n:0},pf:{xp:0,n:0}};if(!s.shelf)s.shelf=[];if(!s.mk)s.mk={fa:1,pf:1};
+const ws=()=>{if(!s.ws)s.ws={fa:{xp:0,n:0},pf:{xp:0,n:0}};if(!s.shelf)s.shelf=[];if(!s.wq)s.wq=[];if(!s.mk)s.mk={fa:1,pf:1};
  if(s.perf&&s.perf.length){s.perf.forEach(x=>s.shelf.push({id:x.id,t:'pf',n:x.n,q:x.q,p:x.p,on:0}));s.perf=[]}return s.ws};
 const wl=k=>1+Math.floor(Math.sqrt((ws()[k].xp||0)/25)),slots=()=>Math.min(6,3+Math.floor(L2()/5)),
  dem=t=>.4+.6*Math.max(0,Math.min(1,(s.mk||{})[t]??1)),val=x=>Math.round(x.p*dem(x.t)/1000)*1000;
@@ -2526,23 +2677,44 @@ Z.rc=id=>{const r=rcAll().find(x=>x.id==id);if(!r)return;if(WP.length==3&&rcKey(
 Z.saveRc=()=>{if(WP.length<3)return toast('Chọn đủ 3 hương trước');const o=rcOf(WP);if(o)return toast('Đã có công thức này: '+o.n);const e=document.getElementById('rcn'),n=((e&&e.value)||'').trim().slice(0,24);if(!n)return toast('Hãy đặt tên cho công thức');s.rcp=s.rcp||[];if(s.rcp.length>=12)return toast('Tối đa 12 công thức riêng, hãy xóa bớt');s.rcp.push({id:uid(),n,f:WP.slice()});toast('Đã lưu công thức "'+n+'"');R()};
 Z.delRc=id=>{s.rcp=(s.rcp||[]).filter(r=>r.id!=id);R()};
 Z.tf=id=>{pk(WF,id,4);R()};Z.tp=id=>{pk(WP,id,3);R()};Z.vs=i=>{WV=i;R()};Z.c=c=>{WC=c;R()};
-Z.mkFa=()=>{ws();if(WF.length<2)return toast('Chọn 2 đến 4 loại hoa');if(s.shelf.length>=CAP)return toast('Kệ đầy ('+CAP+' món), hãy bán bớt');
+Z.mkFa=()=>{ws();if(WF.length<2)return toast('Chọn 2 đến 4 loại hoa');if(s.wq.some(j=>j.t=='fa'))return toast('Bàn cắm hoa đang bận, hãy chờ mẻ hiện tại xong');if(s.shelf.length+s.wq.length>=CAP)return toast('Kệ đầy ('+CAP+' món), hãy bán bớt');
  const v=VS[WV],m=WF.find(id=>(s.st[id]||0)<3);if(m)return toast('Thiếu '+nm(m)+' (cần 3 bông)');if(s.money<v[1])return toast('Không đủ tiền mua '+v[0]);
  const mat=WF.reduce((a,id)=>a+C[id]*3,0)+v[1];WF.forEach(id=>s.st[id]-=3);s.money-=v[1];L('out','Workshop','Vật liệu '+v[0],1,v[1]);
  const cols=new Set(WF.map(id=>FC[id]||id)).size,Q=Math.min(100,Math.round(30+10*WF.length+4*cols+5*wl('fa')+Math.random()*12)),p=Math.round(mat*(1.5+Q/100*.9)*v[2]/1000)*1000;
- s.shelf.push({id:uid(),t:'fa',n:`${v[0]} ${nm(WF[0])} & ${nm(WF[1])}${WF.length>2?' +'+(WF.length-2):''}`,q:Q,p,on:0,cl:WF.map(id=>FC[id]||'#ff8fab'),v:WV});
- s.ws.fa.xp+=12+WF.length*3;s.ws.fa.n++;xp(6+WF.length);WF=[];toast(`Cắm hoa xong · chất lượng ${Q}/100 · đã lên kệ`);R()};
-Z.mkPf=()=>{ws();if(WP.length<3)return toast('Chọn đủ 3 hương');if(s.shelf.length>=CAP)return toast('Kệ đầy ('+CAP+' món), hãy bán bớt');
+ Z.job('fa',fdur(WF.length,WV),{id:uid(),t:'fa',n:`${v[0]} ${nm(WF[0])} & ${nm(WF[1])}${WF.length>2?' +'+(WF.length-2):''}`,q:Q,p,on:0,cl:WF.map(id=>FC[id]||'#ff8fab'),v:WV});
+ s.ws.fa.xp+=12+WF.length*3;s.ws.fa.n++;xp(6+WF.length);WF=[];R()};
+Z.mkPf=()=>{ws();if(WP.length<3)return toast('Chọn đủ 3 hương');if(s.wq.some(j=>j.t=='pf'))return toast('Bàn điều chế đang bận, hãy chờ mẻ hiện tại xong');if(s.shelf.length+s.wq.length>=CAP)return toast('Kệ đầy ('+CAP+' món), hãy bán bớt');
  const need=WC+1,m=WP.find(id=>(s.st[id]||0)<need);if(m)return toast('Thiếu '+nm(m)+' (cần '+need+' bông)');const bt=BOT[WC-1];if(s.money<bt)return toast('Không đủ tiền mua lọ');
  const mat=WP.reduce((a,id)=>a+C[id]*need,0)+bt;WP.forEach(id=>s.st[id]-=need);s.money-=bt;L('out','Workshop','Lọ nước hoa '+CN[WC-1],1,bt);
  const fams=new Set(WP.map(id=>FAM[id]||id)).size,Q=Math.min(100,Math.round(35+14*fams+6*wl('pf')+Math.random()*12)),p=Math.round(mat*(1.5+Q/100)/1000)*1000;
- s.shelf.push({id:uid(),t:'pf',n:rcOf(WP)?`${CN[WC-1]} ${rcOf(WP).n}`:`${CN[WC-1]} ${nm(WP[0])} & ${nm(WP[1])}`,q:Q,p,on:0,cl:WP.map(id=>FC[id]||'#b39ddb'),v:WC});
- s.ws.pf.xp+=12+WC*4;s.ws.pf.n++;xp(8+WC*3);WP=[];toast(`Điều chế xong · chất lượng ${Q}/100 · đã lên kệ`);R()};
+ Z.job('pf',pdur(WC),{id:uid(),t:'pf',n:rcOf(WP)?`${CN[WC-1]} ${rcOf(WP).n}`:`${CN[WC-1]} ${nm(WP[0])} & ${nm(WP[1])}`,q:Q,p,on:0,cl:WP.map(id=>FC[id]||'#b39ddb'),v:WC});
+ s.ws.pf.xp+=12+WC*4;s.ws.pf.n++;xp(8+WC*3);WP=[];R()};
 Z.on=id=>{ws();const x=s.shelf.find(x=>x.id==id);if(!x)return;if(!x.on&&s.shelf.filter(y=>y.on).length>=slots())return toast('Gian hàng chỉ trưng bày tối đa '+slots()+' món');x.on=x.on?0:1;R()};
 Z.sell=id=>{ws();const i=s.shelf.findIndex(x=>x.id==id);if(i<0)return;const x=s.shelf[i],p=Math.round(val(x)*.7/1000)*1000;s.shelf.splice(i,1);s.mk[x.t]=Math.max(0,s.mk[x.t]-.08);s.money+=p;L('in','Workshop','Bán '+x.n,1,p);toast('+'+$(p));R()};
 Z.stall=()=>{if(!live||s.ph!='open'||!s.shelf||(typeof brk=='function'&&brk()))return;const on=s.shelf.filter(x=>x.on);if(!on.length||Math.random()>.005*(.6+.15*s.rep)*Math.sqrt(on.length))return;
  ws();const x=on[Math.floor(Math.random()*on.length)],p=val(x);s.shelf.splice(s.shelf.indexOf(x),1);s.mk[x.t]=Math.max(0,s.mk[x.t]-.12);s.money+=p;s.rev+=p;live.rev+=p;s.sv++;live.n++;L('in','Bán tại gian hàng',x.n,1,p);toast(`${x.t=='pf'?'🧴':'💐'} Bán ${x.n} · +${$(p)}`);R()};
 {const o=tick;tick=function(){o.apply(this,arguments);try{Z.stall()}catch(e){}}}
+
+/* ---- thời gian chờ hoàn thành sản phẩm (tính theo giờ thật, vẫn chạy khi thoát game) ---- */
+const fdur=(n,v)=>60+20*n+30*v,pdur=c=>[180,360,600][c-1]||180;
+const wfmt=sec=>{sec=Math.max(0,Math.ceil(sec));const m=Math.floor(sec/60),r=sec%60;return m+':'+String(r).padStart(2,'0')};
+Z.job=(t,sec,it)=>{ws();const n=Date.now();s.wq.push({id:it.id,t,it,st:n,en:n+sec*1000});toast((t=='pf'?'🧴 Bắt đầu điều chế':'💐 Bắt đầu cắm hoa')+' · xong sau '+wfmt(sec))};
+Z.collect=()=>{if(!s.wq||!s.wq.length)return false;const n=Date.now();let ch=false;
+ for(const j of s.wq.slice()){if(j.en>n)continue;
+  if(s.shelf.length>=CAP){if(!j.w){j.w=1;toast('Kệ đầy, hãy bán bớt để nhận '+j.it.n)}continue}
+  s.shelf.push(j.it);s.wq.splice(s.wq.indexOf(j),1);ch=true;
+  toast((j.t=='pf'?'🧴':'💐')+' Hoàn thành: '+j.it.n+' · chất lượng '+j.it.q+'/100 · đã lên kệ')}
+ if(ch)try{save()}catch(e){}return ch};
+Z.jobCard=()=>{ws();const q=s.wq;if(!q.length)return '';const n=Date.now();
+ return `<div class=card><div class=row><h3>⏳ Đang thực hiện</h3><span class=mut>${q.length} mẻ</span></div>${q.map(j=>{const tot=Math.max(1,j.en-j.st),left=Math.max(0,j.en-n);
+  return `<div style="margin:6px 0"><div class=row style="margin:0"><span>${j.t=='pf'?'🧴':'💐'} <b>${esc(j.it.n)}</b></span><b class=wjt data-id="${j.id}">${left>0?wfmt(left/1000):'Chờ chỗ trên kệ'}</b></div><div class=bar><i class=wjb data-id="${j.id}" style="width:${Math.min(100,(1-left/tot)*100)}%"></i></div></div>`}).join('')}<p class=mut style="margin:4px 0 0">Hết thời gian, món tự lên kệ.</p></div>`};
+setInterval(()=>{try{
+ if(typeof s==='undefined'||!s||!s.wq||!s.wq.length)return;
+ if(Z.collect()){if(typeof scr!=='undefined'&&scr=='game')R();return}
+ if(typeof scr!=='undefined'&&scr=='game'&&typeof tab!=='undefined'&&tab=='ws'){const n=Date.now();
+  s.wq.forEach(j=>{const tot=Math.max(1,j.en-j.st),left=Math.max(0,j.en-n);
+   document.querySelectorAll('[data-id="'+j.id+'"]').forEach(e=>{if(e.classList.contains('wjt'))e.textContent=left>0?wfmt(left/1000):'Chờ chỗ trên kệ';else if(e.classList.contains('wjb'))e.style.width=Math.min(100,(1-left/tot)*100)+'%'})})}
+}catch(e){}},1000);
 const wbar=k=>{const l=wl(k),a=25*(l-1)**2,b=25*l*l;return `<div class=bar><i style="width:${Math.min(100,((ws()[k].xp||0)-a)/(b-a)*100)}%"></i></div>`},
  dm=t=>`<span class=chip>Nhu cầu ${Math.round(s.mk[t]*100)}% · giá x${dem(t).toFixed(2)}</span>`;
 const shelfRow=x=>`<div class=row><span>${x.t=='pf'?'🧴':'💐'} <b>${esc(x.n)}</b>${x.on?' <span class=tag style="background:var(--g3)">Gian hàng</span>':''}<br><span class=mut>Chất lượng ${x.q}/100 · giá ${$(val(x))}</span></span><span><button class="s ${x.on?'on2':''}" onclick="XB.on('${x.id}')">${x.on?'Cất lại':'Ra gian hàng'}</button> <button class=s onclick="XB.sell('${x.id}')">Bán ngay ${$(Math.round(val(x)*.7/1000)*1000)}</button></span></div>`;
@@ -2553,9 +2725,9 @@ const rcSave=()=>{if(WP.length!=3)return '';const o=rcOf(WP);return o?`<p class=
 V.ws=()=>{ws();const lv=L2(),have=fl().filter(f=>(s.st[f.id]||0)>0);
  const chips=(a,fn)=>have.length?`<div class=strip2>${have.map(f=>`<button class="s ${a.includes(f.id)?'on2':''}" onclick="XB.${fn}('${f.id}')">${fw(f.id,20)} ${f.n} <b>${s.st[f.id]}</b></button>`).join('')}</div>`:'<p class=mut>Kho đang trống, hãy nhập hoa trước.</p>';
  const fm=WF.reduce((a,id)=>a+C[id]*3,0)+VS[WV][1],pm=WP.reduce((a,id)=>a+C[id]*(WC+1),0)+BOT[WC-1];
- return `<div class=card><h3>🎓 Workshop</h3><p class=mut style="margin:0">Không giới hạn số lần. Tác phẩm lên kệ, đưa ra gian hàng để bán dần. Làm nhiều một loại thì nhu cầu giảm, giá giảm theo, hồi dần mỗi ngày.</p></div>
- <div class=card><div class=row><h3>💐 Cắm hoa</h3><span>${dm('fa')} <b>Cấp ${wl('fa')}</b></span></div>${wbar('fa')}${lv<2?'<p class=mut>Mở khóa ở cấp độ 2.</p>':`<p class=mut style="margin:6px 0 2px">1. Chọn 2–4 loại hoa (mỗi loại 3 bông)</p>${chips(WF,'tf')}<p class=mut style="margin:6px 0 2px">2. Chọn kiểu cắm</p><div class=strip2>${VS.map((v,i)=>`<button class="s ${WV==i?'on2':''}" onclick="XB.vs(${i})">${v[0]} <span class=mut>${$(v[1])}</span></button>`).join('')}</div><div class=row><span class=mut>Chi phí vật liệu ~${$(fm)}</span><button class=p ${WF.length<2?'disabled':''} onclick="XB.mkFa()">Cắm hoa</button></div>`}</div>
- <div class=card><div class=row><h3>🧪 Điều chế nước hoa</h3><span>${dm('pf')} <b>Cấp ${wl('pf')}</b></span></div>${wbar('pf')}${lv<4?'<p class=mut>Mở khóa ở cấp độ 4.</p>':`${rcUI()}<p class=mut style="margin:6px 0 2px">1. Hoặc tự chọn đúng 3 hương (khác nhóm thì chất lượng cao hơn)</p>${chips(WP,'tp')}${WP.length?`<p class=mut style="margin:2px 0">${WP.map(id=>nm(id)+' · '+FAM[id]).join(' | ')}</p>`:''}${rcSave()}<div class=row><span>2. Nồng độ</span><span>${CN.map((c,i)=>`<button class="s ${WC==i+1?'on2':''}" onclick="XB.c(${i+1})">${c}</button>`).join(' ')}</span></div><div class=row><span class=mut>Cần ${WC+1} bông mỗi hương · ~${$(pm)}</span><button class=p ${WP.length<3?'disabled':''} onclick="XB.mkPf()">Điều chế</button></div>`}</div>`+Z.shelfCard()};
+ return `<div class=card><h3>🎓 Workshop</h3><p class=mut style="margin:0">Không giới hạn số lần, nhưng mỗi mẻ cần thời gian hoàn thành (mỗi bàn làm 1 mẻ một lúc, vẫn chạy khi bạn thoát game). Tác phẩm lên kệ, đưa ra gian hàng để bán dần. Làm nhiều một loại thì nhu cầu giảm, giá giảm theo, hồi dần mỗi ngày.</p></div>
+ ${Z.jobCard()}<div class=card><div class=row><h3>💐 Cắm hoa</h3><span>${dm('fa')} <b>Cấp ${wl('fa')}</b></span></div>${wbar('fa')}${lv<2?'<p class=mut>Mở khóa ở cấp độ 2.</p>':`<p class=mut style="margin:6px 0 2px">1. Chọn 2–4 loại hoa (mỗi loại 3 bông)</p>${chips(WF,'tf')}<p class=mut style="margin:6px 0 2px">2. Chọn kiểu cắm</p><div class=strip2>${VS.map((v,i)=>`<button class="s ${WV==i?'on2':''}" onclick="XB.vs(${i})">${v[0]} <span class=mut>${$(v[1])}</span></button>`).join('')}</div><div class=row><span class=mut>Chi phí vật liệu ~${$(fm)}</span><button class=p ${WF.length<2||s.wq.some(j=>j.t=='fa')?'disabled':''} onclick="XB.mkFa()">Cắm hoa · ⏱ ${wfmt(fdur(Math.max(2,WF.length),WV))}</button></div>`}</div>
+ <div class=card><div class=row><h3>🧪 Điều chế nước hoa</h3><span>${dm('pf')} <b>Cấp ${wl('pf')}</b></span></div>${wbar('pf')}${lv<4?'<p class=mut>Mở khóa ở cấp độ 4.</p>':`${rcUI()}<p class=mut style="margin:6px 0 2px">1. Hoặc tự chọn đúng 3 hương (khác nhóm thì chất lượng cao hơn)</p>${chips(WP,'tp')}${WP.length?`<p class=mut style="margin:2px 0">${WP.map(id=>nm(id)+' · '+FAM[id]).join(' | ')}</p>`:''}${rcSave()}<div class=row><span>2. Nồng độ</span><span>${CN.map((c,i)=>`<button class="s ${WC==i+1?'on2':''}" onclick="XB.c(${i+1})">${c}</button>`).join(' ')}</span></div><div class=row><span class=mut>Cần ${WC+1} bông mỗi hương · ~${$(pm)}</span><button class=p ${WP.length<3||s.wq.some(j=>j.t=='pf')?'disabled':''} onclick="XB.mkPf()">Điều chế · ⏱ ${wfmt(pdur(WC))}</button></div>`}</div>`+Z.shelfCard()};
 {const o=V.sty;V.sty=()=>o()+Z.shelfCard()}
 
 /* ---------- 5. CHỐNG LẠM PHÁT ---------- */
@@ -3912,7 +4084,7 @@ function friendAvTap(raw,z,uid){
 <script>
 /* ===== V27: đồng bộ hồ sơ lên máy chủ + xem hồ sơ bạn bè giống hồ sơ của mình ===== */
 function buildProfileSnap(){
- const o={},skip=new Set(['pf','led','rpt','cl','prev','cd','qc','bought','spent','wet','old','tut','snd','mus']);
+ const o={},skip=new Set(['wq','pf','led','rpt','cl','prev','cd','qc','bought','spent','wet','old','tut','snd','mus']);
  for(const k of Object.keys(s)){
   if(skip.has(k))continue;let v=s[k];
   if(k=='bills')v=(v||[]).slice(0,12).map(b=>({nm:b.nm,pr:b.pr,xp:b.xp,tip:b.tip,run:b.run?1:0}));
@@ -4106,6 +4278,39 @@ CS.flush=async function(){
  await up(true);
  return CS.last===cj()};
 window.CLOUD=CS;
+})();
+</script>
+<script>
+/* ===== Chạm/giữ nút tốc độ ===== */
+let SPDT=0,SPDF=0;
+function spdDown(){SPDF=0;clearTimeout(SPDT);SPDT=setTimeout(()=>{SPDF=1;try{navigator.vibrate&&navigator.vibrate(12)}catch(x){}MU.rateStep(-1)},450)}
+function spdUp(){clearTimeout(SPDT)}
+function spdTap(){if(SPDF){SPDF=0;return}MU.rateStep(1)}
+
+/* ===== Trạng thái online (Supabase Realtime Presence, không cần bảng mới) ===== */
+window.PRES=(function(){
+ let ch=null,uid=null,me=0,on=new Set();
+ const meHtml=()=>`<i class="pdi ${me?'on':''}"></i>${me?'Online':'Offline'}`;
+ function paint(){try{
+  document.querySelectorAll('[data-pres]').forEach(e=>e.classList.toggle('on',on.has(e.getAttribute('data-pres'))));
+  document.querySelectorAll('[data-pt]').forEach(e=>{const o=on.has(e.getAttribute('data-pt'));e.textContent=o?'Online':'Offline';e.classList.toggle('ptxt-on',o)});
+  document.querySelectorAll('.me-pres').forEach(e=>{e.innerHTML=meHtml()})}catch(x){}}
+ function stop(){if(ch){try{supabaseClient.removeChannel(ch)}catch(e){}}ch=null;uid=null;me=0;on=new Set();paint()}
+ function start(){
+  if(!(window.DISCORD_OK&&typeof currentUser!=='undefined'&&currentUser)){if(ch)stop();return}
+  if(ch&&uid===currentUser.id)return;
+  stop();uid=currentUser.id;
+  try{
+   const c=supabaseClient.channel('jas-online',{config:{presence:{key:uid}}});ch=c;
+   c.on('presence',{event:'sync'},()=>{try{on=new Set(Object.keys(c.presenceState()));me=on.has(uid)?1:0;paint()}catch(e){}});
+   c.subscribe(async st=>{
+    if(st==='SUBSCRIBED'){try{if(document.visibilityState!=='hidden')await c.track({at:Date.now()})}catch(e){}}
+    else if(st==='CLOSED'||st==='CHANNEL_ERROR'||st==='TIMED_OUT'){me=0;paint()}});
+  }catch(e){ch=null;uid=null}}
+ document.addEventListener('visibilitychange',()=>{if(!ch)return;try{if(document.visibilityState==='hidden')ch.untrack();else ch.track({at:Date.now()})}catch(e){}});
+ addEventListener('pagehide',()=>{try{ch&&ch.untrack()}catch(e){}});
+ setInterval(start,3000);setTimeout(start,1500);
+ return{paint,meHtml,isOn:id=>on.has(id)};
 })();
 </script>
 </body></html>

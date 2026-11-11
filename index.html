@@ -423,7 +423,7 @@ async function viewMyPostedCard() {
   const box = document.getElementById('friend-content');
   if (box) box.innerHTML = '<p class=mut>Đang tải...</p>';
   const { data: shop, error } = await supabaseClient.from('shop_public')
-    .select('card_image, shop_name, day, money, level, updated_at')
+    .select('card_image, shop_name, day, money, level, updated_at, game_avatar')
     .eq('user_id', currentUser.id).maybeSingle();
   let html = `<div class=card>
     <div class=row><h3>🖼️ Ảnh tôi đã đăng lên tường</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>`;
@@ -433,13 +433,15 @@ async function viewMyPostedCard() {
     html += '<p class=mut>Bạn chưa đăng ảnh nào. Vào <b>Hồ sơ → Card visit</b>, tạo card rồi bấm "📌 Đăng danh thiếp lên tường".</p>';
   } else {
     const when = shop.updated_at ? new Date(shop.updated_at).toLocaleString('vi-VN') : '';
-    html += `<img id="my-posted-card" src="${shop.card_image}" style="width:100%;border-radius:16px;display:block;margin:8px 0" alt="Danh thiếp đã đăng">
+    html += `<div style="position:relative;margin:8px 0"><img id="my-posted-card" src="${shop.card_image}" style="width:100%;border-radius:16px;display:block" alt="Danh thiếp đã đăng">${vinylHtml(parseGav(shop.game_avatar).mu)}</div>
       <p class=mut>${esc(shop.shop_name || 'Tiệm hoa')} · Ngày ${shop.day || '?'} · Tiền ${$(shop.money || 0)} · Cấp ${shop.level || '?'}${when ? '<br>Đăng lúc ' + esc(when) : ''}</p>
       <p class=mut style="font-size:.8rem">Giữ lâu vào ảnh để lưu nếu nút bên dưới không hoạt động.</p>
       <button class=p onclick="saveMyPostedCard()">Lưu ảnh về máy</button>`;
   }
   html += '</div>';
   if (box) box.innerHTML = html;
+  const mu = shop && parseGav(shop.game_avatar).mu;
+  if (mu && mu.id) { try { MU.playTrack(mu); } catch (e) {} vinylSync(); }
 }
 function saveMyPostedCard() {
   const img = document.getElementById('my-posted-card');
@@ -802,7 +804,6 @@ friends() {
   return `<div class=card>
     <div class=row>
       <span>Xin chào ${nameHtml}</span>
-      <button class=s onclick="logoutToMenu()">Đăng xuất</button>
     </div>
     <div class=row style="margin:6px 0"><button class=s style="flex:1" onclick="viewMyWall()">📝 Xem tường của tôi</button><button class=s style="flex:1" onclick="viewMyPostedCard()">🖼️ Ảnh tôi đã đăng</button></div>
     <div class=row>
@@ -2644,6 +2645,25 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
       +'</div>';
   };
 
+  // Nút Đăng xuất nằm trong Cài đặt
+  {
+    const om = mdl;
+    mdl = function(k){
+      om.apply(this, arguments);
+      if (k !== 's') return;
+      setTimeout(function(){
+        const ms = document.querySelector('#modal .ms');
+        if (!ms || ms.querySelector('#logout-card')) return;
+        if (!(typeof currentUser !== 'undefined' && currentUser && window.DISCORD_OK)) return;
+        const nm = currentUser.user_metadata?.preferred_username || currentUser.user_metadata?.name || currentUser.email || 'Discord';
+        const c = document.createElement('div');
+        c.className = 'card'; c.id = 'logout-card';
+        c.innerHTML = '<h3>Tài khoản</h3><p class=mut style="margin:0 0 8px">Đã đăng nhập <b>@' + esc(nm) + '</b></p><button class="s" onclick="logoutToMenu()">Đăng xuất</button>';
+        ms.appendChild(c);
+      }, 120);
+    };
+  }
+
   // Hiện ngay menu mới, không chờ 1 giây như trước
   window.AUTH_READY = false;
   if (typeof scr === 'undefined' || scr !== 'game') renderMenu();
@@ -3328,7 +3348,7 @@ G('sdh').onclick=()=>SD.open();G('sdo').onclick=()=>SD.close();
 function head(){
  const n=unread(),u=typeof currentUser!='undefined'&&currentUser,
   nm=u?(currentUser.user_metadata?.preferred_username||currentUser.user_metadata?.name||currentUser.user_metadata?.full_name||'Đã liên kết'):'';
- const a=u?`<span class=mut style="font-size:.82rem">@${esc(nm)}</span>`:`<button class=p style="padding:5px 10px;font-size:.85rem" onclick="loginWithDiscord()">Đăng nhập</button>`;
+ const a=u?`<span class=mut style="font-size:.82rem">@${esc(nm)}</span>`:'';
  if(G('sda').dataset.k!=a){G('sda').innerHTML=a;G('sda').dataset.k=a}
  const t=TS.map(x=>`<button class="${K==x[0]?'on':''}" onclick="SD.go('${x[0]}')">${ic(x[1],20)}<span>${x[2]}</span>${(x[0]=='notif'?n:x[0]=='quest'?qn():0)?`<b class=bd>${x[0]=='notif'?n:qn()}</b>`:''}</button>`).join('');
  if(HH!=t){G('sdtabs').innerHTML=t;HH=t}

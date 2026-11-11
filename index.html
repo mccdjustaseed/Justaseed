@@ -285,7 +285,7 @@ async function uploadCardToWall() {
       user_id: currentUser.id,
       card_image: b64,
       shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
-      game_avatar: 'gav:' + JSON.stringify({ av: s.pf?.av || null, pre: s.pf?.pre || null, fr: s.pf?.fr || 0, cv: (s.pf?.cv && s.pf.cvs) || null, afr: s.pf?.afr ? 1 : 0, nm: s.pf?.nm || null, bio: s.pf?.bio || null, col: s.pf?.col || null, mu: (s.cd && s.cd.m && s.cd.mt) ? { id: s.cd.mt.id, name: s.cd.mt.name, ar: s.cd.mt.ar, th: s.cd.mt.th, r: s.cd.l == 2 ? 1 : 0 } : null }),
+      game_avatar: buildGav(),
       day: s.day || 1,
       money: s.money || 0,
       level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
@@ -3541,36 +3541,106 @@ async function presetAvImg(){
 function friendAvTap(raw,z,uid){
  return '<span role="button" tabindex="0" aria-label="Xem hồ sơ" title="Xem hồ sơ" style="cursor:pointer;display:inline-block;-webkit-tap-highlight-color:transparent" onclick="event.stopPropagation();friendProfile(\''+uid+'\')" onkeydown="if(event.key===\'Enter\')friendProfile(\''+uid+'\')">'+friendAvH(raw,z)+'</span>';
 }
+</script>
+<script>
+/* ===== V27: đồng bộ hồ sơ lên máy chủ + xem hồ sơ bạn bè giống hồ sơ của mình ===== */
+function buildProfileSnap(){
+ const o={},skip=new Set(['pf','led','rpt','cl','prev','cd','qc','bought','spent','wet','old','tut','snd','mus']);
+ for(const k of Object.keys(s)){
+  if(skip.has(k))continue;let v=s[k];
+  if(k=='bills')v=(v||[]).slice(0,12).map(b=>({nm:b.nm,pr:b.pr,xp:b.xp,tip:b.tip,run:b.run?1:0}));
+  else if(k=='rv')v=(v||[]).slice(0,12).map(r=>({st:r.st,p:r.p,t:r.t,u:r.u,d:r.d}));
+  try{const j=JSON.stringify(v);if(j===undefined||j.length>4000)continue}catch(e){continue}
+  o[k]=v}
+ o.bn=(s.bills||[]).length;
+ return o}
+function buildGav(){
+ const p=s.pf||{};
+ return 'gav:'+JSON.stringify({av:p.av||null,pre:p.pre||null,fr:p.fr||0,cv:(p.cv&&p.cvs)||null,afr:p.afr?1:0,nm:p.nm||null,bio:p.bio||null,col:p.col||null,
+  mu:(s.cd&&s.cd.m&&s.cd.mt)?{id:s.cd.mt.id,name:s.cd.mt.name,ar:s.cd.mt.ar,th:s.cd.mt.th,r:s.cd.l==2?1:0}:null,sn:buildProfileSnap()})}
+let LASTG='';
+async function syncProfile(force){
+ try{
+  if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||!s.pf)return;
+  const g=buildGav();if(!force&&g===LASTG)return;
+  const {error}=await supabaseClient.from('shop_public').upsert({user_id:currentUser.id,game_avatar:g,shop_name:s.pf.nm||s.name||'Tiệm hoa',day:s.day||1,money:s.money||0,level:lvOf(s.xp||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  if(!error)LASTG=g;else console.warn('sync profile',error)
+ }catch(e){console.warn(e)}}
+setInterval(()=>syncProfile(),60000);
+setTimeout(()=>syncProfile(),6000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)syncProfile()});
+addEventListener('pagehide',()=>syncProfile());
+
+/* ---- xem hồ sơ bạn bè ---- */
+let FPV=null;
+const withState=(fs,fn)=>{const old=s;s=fs;try{return fn()}finally{s=old}};
+function friendState(d){
+ const sn=d.sn||{},fs=Object.assign(def(),sn);
+ const bn=sn.bn||0,rec=sn.bills||[];
+ fs.bills=rec.concat(Array.from({length:Math.max(0,bn-rec.length)},()=>({nm:'',pr:0,xp:0,tip:0})));
+ fs.ac=sn.ac||{};fs.rv=sn.rv||[];
+ fs.pf={nm:d.nm||'Chủ tiệm',av:d.av||null,pre:d.pre||'cat',fr:d.fr||0,afr:d.afr?1:0,cv:d.cv||null,cvs:d.cv||null,bio:d.bio||'',col:d.col||null};
+ return fs}
+function fpTheme(col){
+ return '--pc:'+col+';--g2:'+col+';--g3:color-mix(in srgb,'+col+' 72%,#000);--g:color-mix(in srgb,'+col+' 30%,var(--card));--ln:color-mix(in srgb,'+col+' 26%,var(--card))'}
+const FPT=[['me','Tổng quan'],['pet','Pet'],['bills','Hóa đơn'],['ach','Thành tích'],['rev','Đánh giá'],['stat','Thống kê'],['decor','Nội thất & gian hàng']];
+function fpBody(k){
+ const F=FPV,fs=F.fs;
+ try{
+ if(k=='me'){
+  mdl();
+  const h=withState(fs,()=>{pfmModal();const m=document.querySelector('.ms');const r=m?m.innerHTML:'';mdl();return r});
+  const t=document.createElement('div');t.innerHTML=h;
+  const hero=t.firstElementChild,pad=t.children[1];
+  if(hero)hero.querySelectorAll('button').forEach(x=>x.remove());
+  const grid=pad&&pad.firstElementChild;
+  return '<div class=card style="padding:0;overflow:hidden">'+(hero?hero.outerHTML:'')+'<div style="padding:12px">'+(grid?grid.outerHTML:'')+'</div></div>'}
+ if(k=='pet'){
+  const pc=(t,c,f)=>c?'<div class=card style="text-align:center"><div>'+withState(fs,()=>f(c,'face',92))+'</div><b>'+esc(c.n||'')+'</b><div class=mut>'+t+'</div></div>':'';
+  return (pc('Mèo',fs.cat,catSVG)+pc('Chó',fs.dog,dogSVG))||'<div class=card><p class=mut>Chưa có thú cưng.</p></div>'}
+ if(k=='bills'){
+  const A=(F.d.sn&&F.d.sn.bills)||[],n=(F.d.sn&&F.d.sn.bn)||A.length;
+  return '<div class=card><div class=row><h3>Hóa đơn gần đây</h3><span class=mut>Tổng '+n+'</span></div>'+(A.length?A.map(b=>'<div class=row><span>'+esc(b.nm||'Khách')+'</span><b>'+(b.run?'Chạy mất':$((b.pr||0)+(b.xp||0)+(b.tip||0)))+'</b></div>').join(''):'<p class=mut>Chưa có hóa đơn.</p>')+'</div>'}
+ if(k=='ach'){
+  return '<div class=card>'+ACH.map(a=>{let d=false;try{d=!!a[2](fs)}catch(e){}const c=fs.ac&&fs.ac[a[0]];return '<div class=row><span>'+esc(a[1])+'</span><b class="'+(d||c?'':'mut')+'">'+(c?'✓ Đã nhận':d?'✓ Hoàn thành':'Chưa xong')+'</b></div>'}).join('')+'</div>'}
+ if(k=='rev'){
+  const A=fs.rv||[];
+  return '<div class=card><h3>Đánh giá gần đây</h3>'+(A.length?A.map(r=>'<div style="padding:8px 0;border-top:1px solid var(--ln)">'+stars(r.st||5)+' <span class=mut>'+esc(r.u||'Khách')+' · '+esc(r.p||'')+'</span><div>'+esc(r.t||'')+'</div></div>').join(''):'<p class=mut>Chưa có đánh giá.</p>')+'</div>'}
+ if(k=='stat'){
+  const l=lvOf(fs.xp||0),st=(l_,v)=>'<div class=card style="margin:0;padding:8px;text-align:center"><b>'+v+'</b><br><span class=mut>'+l_+'</span></div>';
+  const days=Math.max(1,(fs.day||1)-1);
+  return '<div class=card><h3>Thống kê</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
+   +st('Ngày kinh doanh',fs.day||1)+st('Khách đã phục vụ',fs.sv||0)+st('Tổng doanh thu',$(fs.rev||0))+st('Doanh thu / ngày',$((fs.rev||0)/days))
+   +st('Uy tín',(fs.rep||0).toFixed(1)+' ★')+st('Đánh giá 5 sao',fs.five||0)+'</div></div>'}
+ if(k=='decor'){
+  const sc=withState(fs,()=>scene(menu().map(i=>i.f.id).filter((v,i,a)=>a.indexOf(v)==i)));
+  return '<div class=card style="padding:0;overflow:hidden">'+sc+'</div>'+(fs.name?'<div class=card><div class=mut>Tên tiệm</div><b>'+esc(fs.name)+'</b></div>':'')}
+ }catch(e){console.warn('fpBody',k,e);return '<div class=card><p class=mut>Không hiển thị được phần này.</p></div>'}
+ return ''}
+function fpRender(k){
+ const F=FPV;if(!F)return;F.tab=k;
+ const col=/^#[0-9a-f]{6}$/i.test(F.d.col||'')?F.d.col:null;
+ const tabs=FPT.map(t=>'<button class="s '+(k==t[0]?'on2':'')+'" onclick="fpRender(\''+t[0]+'\')">'+t[1]+'</button>').join('');
+ const body=fpBody(k);
+ document.getElementById('modal').innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=pfw style="'+(col?fpTheme(col):'')+'">'
+  +'<div class=row style="margin:0 0 6px"><h3>Hồ sơ của '+esc(F.name)+(F.user?' <span class=mut style="font-size:.8rem">@'+esc(F.user)+'</span>':'')+'</h3><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>'
+  +'<div class=card style="padding:6px"><div class=row style="justify-content:flex-start;flex-wrap:wrap;margin:0">'+tabs+'</div></div>'
+  +body
+  +'<button class=p style="width:100%;margin-top:8px" onclick="mdl();visitFriend(\''+F.uid+'\')">Thăm tiệm</button>'
+  +'</div></div></div>'}
 async function friendProfile(uid){
  if(!currentUser)return toast('Hãy đăng nhập Discord');
- const m=document.getElementById('modal');
- m.innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><p class=mut style="text-align:center">Đang tải hồ sơ...</p></div></div>';
+ document.getElementById('modal').innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><p class=mut style="text-align:center">Đang tải hồ sơ...</p></div></div>';
  let shop=null,prof=null;
  try{
   shop=(await supabaseClient.from('shop_public').select('*').eq('user_id',uid).maybeSingle()).data;
   prof=(await supabaseClient.from('profiles').select('display_name, username').eq('id',uid).maybeSingle()).data;
  }catch(e){}
- if(!shop&&!prof){m.innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h3>Hồ sơ</h3><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><p class=mut>Không tải được hồ sơ người chơi này.</p></div></div>';return}
+ if(!shop&&!prof){document.getElementById('modal').innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h3>Hồ sơ</h3><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><p class=mut>Không tải được hồ sơ người chơi này.</p></div></div>';return}
  const d=parseGav(shop&&shop.game_avatar);
+ if(!d.sn)d.sn={day:shop&&shop.day||1,money:shop&&shop.money||0,xp:cum(Math.max(1,(shop&&shop.level)||1)),name:shop&&shop.shop_name||'Tiệm hoa'};
  const name=d.nm||(prof&&prof.display_name)||(shop&&shop.shop_name)||'Chủ tiệm';
- const lv=(shop&&shop.level)||1;
- let title='';try{title=ttl(lv)}catch(e){}
- const col=/^#[0-9a-f]{6}$/i.test(d.col||'')?d.col:'#4fb06f';
- const cover=d.cv?'<img src="'+esc(d.cv)+'" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:16px;display:block;margin-bottom:-44px">':'';
- const stat=(l,v)=>'<div class=card style="margin:0;text-align:center;padding:8px 4px"><b style="font-size:1.05rem">'+v+'</b><div class=mut style="font-size:.8rem">'+l+'</div></div>';
- m.innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=pfw style="--pc:'+col+'">'
-  +'<div class=row style="margin:0 0 6px"><h3>Hồ sơ bạn bè</h3><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>'
-  +cover
-  +'<div style="text-align:center;position:relative">'+friendAvH(shop&&shop.game_avatar,96)
-  +'<h2 style="margin:6px 0 0">'+esc(name)+'</h2>'
-  +(prof&&prof.username?'<div class=mut>@'+esc(prof.username)+'</div>':'')
-  +'<div class=mut style="margin-top:2px">Cấp '+lv+(title?' · '+esc(title):'')+'</div>'
-  +(d.bio?'<p style="margin:8px 4px 0">'+esc(d.bio)+'</p>':'')+'</div>'
-  +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0">'
-  +stat('Ngày',(shop&&shop.day)||'?')+stat('Cấp',lv)+stat('Tiền',shop?$(shop.money||0):'?')+'</div>'
-  +(shop&&shop.shop_name?'<div class=mut style="text-align:center;margin-bottom:8px">Tiệm: <b>'+esc(shop.shop_name)+'</b></div>':'')
-  +'<button class=p style="width:100%" onclick="mdl();visitFriend(\''+uid+'\')">Thăm tiệm</button>'
-  +'</div></div></div>';
-}
+ FPV={uid,d,fs:friendState(d),name,user:prof&&prof.username,tab:'me'};
+ fpRender('me')}
 </script>
 </body></html>

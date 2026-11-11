@@ -171,10 +171,13 @@ async function initAuth() {
     currentUser = session?.user || null;
     if (currentUser) await upsertProfile(currentUser);
   } catch(e) {}
-  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
-    if (currentUser) await upsertProfile(currentUser);
-    if (typeof R === 'function') R();
+    // Không gọi Supabase ngay trong callback (gây treo khóa đăng nhập) — đẩy ra sau
+    setTimeout(async () => {
+      try { if (currentUser) await upsertProfile(currentUser); } catch (e) {}
+      if (typeof R === 'function') R();
+    }, 0);
   });
 }
 
@@ -2593,12 +2596,22 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
     }catch(e){ return false; }
   }
 
+  // Đăng xuất an toàn: không chờ quá 1,5 giây, luôn xóa token cục bộ
+  function safeSignOut(){
+    return Promise.race([
+      Promise.resolve().then(function(){ return supabaseClient.auth.signOut({ scope: 'local' }); }).catch(function(){}),
+      new Promise(function(r){ setTimeout(r, 1500); })
+    ]).then(function(){
+      try{ Object.keys(localStorage).forEach(function(k){ if (/^sb-.*-auth-token/i.test(k)) localStorage.removeItem(k); }); }catch(e){}
+    });
+  }
+
   window.playNow = function(){
     window.DISCORD_OK = false;
     setMode('guest');
     const go = function(){ currentUser = null; if (typeof play === 'function') play(); };
     if (typeof currentUser !== 'undefined' && currentUser) {
-      supabaseClient.auth.signOut().then(go).catch(go);
+      safeSignOut().then(go, go);
     } else go();
   };
 
@@ -2620,13 +2633,13 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
     if (window.DISCORD_OK && window.CLOUD && typeof window.CLOUD.flush === 'function') {
       toast('Đang lưu tiến trình...');
       let saved = false;
-      try{ saved = await window.CLOUD.flush(); }catch(e){}
+      try{ saved = await Promise.race([window.CLOUD.flush(), new Promise(function(r){ setTimeout(function(){ r(false); }, 8000); })]); }catch(e){}
       if (!saved && !confirm('Chưa lưu được tiến trình lên tài khoản (có thể do mất mạng). Đăng xuất sẽ xóa tiến trình trên máy này. Vẫn đăng xuất?')) {
         window.__loggingOut = false;
         return;
       }
     }
-    try{ await supabaseClient.auth.signOut(); }catch(e){}
+    try{ await safeSignOut(); }catch(e){}
     currentUser = null;
     window.DISCORD_OK = false;
     setMode('guest');
@@ -2646,6 +2659,7 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
 
   // Menu 2 chế độ
   renderMenu = function(){
+    { const fn = document.getElementById('floatNotif'); if (fn) fn.remove(); }
     const p = hasProg();
     const logged = (typeof currentUser !== 'undefined' && currentUser && window.DISCORD_OK);
     const nm = logged ? (currentUser.user_metadata?.preferred_username || currentUser.user_metadata?.name || currentUser.email || 'Discord') : '';
@@ -2750,16 +2764,18 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
 
   // Lắng nghe thay đổi phiên
   try{
-    supabaseClient.auth.onAuthStateChange(async function(_e, session){
+    supabaseClient.auth.onAuthStateChange(function(_e, session){
       const user = session && session.user;
-      if (user) await onSession(user);
-      else {
-        window.DISCORD_OK = false;
-        if (!window.AUTH_READY) {
-          window.AUTH_READY = true;
-          if (typeof scr === 'undefined' || scr !== 'game') renderMenu();
+      setTimeout(async function(){
+        if (user) { try{ await onSession(user); }catch(e){ window.AUTH_READY = true; } }
+        else {
+          window.DISCORD_OK = false;
+          if (!window.AUTH_READY) {
+            window.AUTH_READY = true;
+            if (typeof scr === 'undefined' || scr !== 'game') renderMenu();
+          }
         }
-      }
+      }, 0);
     });
   }catch(e){}
 
@@ -3273,6 +3289,7 @@ h1,h2,h3,button,.b,.hand { font-weight: var(--fw); }
   let lastNotifId = null;
   function showFloatNotif(n) {
     if (!s.notifPop || !n || n.read) return;
+    if (typeof scr !== 'undefined' && scr !== 'game') return;
     if (n.id === lastNotifId) return;
     lastNotifId = n.id;
     let el = document.getElementById('floatNotif');

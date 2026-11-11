@@ -4831,12 +4831,10 @@ function feedCmHtml(pid){
   return `<div class=fcm><span style="line-height:0;flex:0 0 auto">${currentUser&&mine?avH(26):friendAvTap((FEED.pmap[c.user_id]||{}).gav,26,c.user_id)}</span><div class=fcb><b>${esc(w.name)}</b> ${esc(c.body)}<br><small>${feedTime(c.created_at)}</small></div>${mine||own?`<button class="s fcx" onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">✕</button>`:''}</div>`}).join('')
  +`<div class=row style="gap:6px;margin:6px 0 0"><input id="fci-${pid}" maxlength=300 placeholder="Viết bình luận..." style="flex:1;width:auto" onkeydown="if(event.key=='Enter')feedComment(${pid})"><button class=p onclick="feedComment(${pid})">Gửi</button></div>`}
 function feedPostHtml(p){
- const own=p.user_id===currentUser.id,w=feedWho(p.user_id),m=p.music||{};
- const hasClip=m&&+m.en>+m.st&&+m.st>=0;
- const chip=m&&m.id?clipChip({id:m.id,name:m.name,ar:m.ar,st:hasClip?+m.st:0,en:hasClip?+m.en:30}):'';
+ const own=p.user_id===currentUser.id,w=feedWho(p.user_id);
  const img=feedImgOk(p.image)?`<img class=fpimg src="${p.image}" alt="Danh thiếp" loading=lazy>`:'';
  const n=(FEED.cm[p.id]||[]).length;
- return `<div class="card fpost" id="fp-${p.id}"><div class=fph><span style="line-height:0;flex:0 0 auto">${w.av}</span><div class=fpn><b>${esc(w.name)}</b><small class=mut>${feedTime(p.created_at)}</small></div>${own?`<button class="s fcx" onclick="feedDelPost(${p.id})" aria-label="Xóa bài đăng">🗑</button>`:''}</div>${p.caption?`<p class=fpcap>${esc(p.caption)}</p>`:''}${img}${chip?`<div class=clipw>${chip}</div>`:''}<div class=fpa><button class="s ${(FEED.likes[p.id]||{}).me?'liked':''}" id="fl-${p.id}" onclick="feedLike(${p.id})">${feedLikeBtn(p.id)}</button><button class=s id="fcb-${p.id}" onclick="feedToggleCm(${p.id})">💬 <span>${n||''}</span></button></div><div id="fc-${p.id}" style="display:${FEED.open[p.id]?'block':'none'};margin-top:8px">${feedCmHtml(p.id)}</div></div>`}
+ return `<div class="card fpost" id="fp-${p.id}"><div class=fph><span style="line-height:0;flex:0 0 auto">${w.av}</span><div class=fpn><b>${esc(w.name)}</b><small class=mut>${feedTime(p.created_at)}</small></div>${own?`<button class="s fcx" onclick="feedDelPost(${p.id})" aria-label="Xóa bài đăng">🗑</button>`:''}</div>${p.caption?`<p class=fpcap>${esc(p.caption)}</p>`:''}${img}<div class=fpa><button class="s ${(FEED.likes[p.id]||{}).me?'liked':''}" id="fl-${p.id}" onclick="feedLike(${p.id})">${feedLikeBtn(p.id)}</button><button class=s id="fcb-${p.id}" onclick="feedToggleCm(${p.id})">💬 <span>${n||''}</span></button></div><div id="fc-${p.id}" style="display:${FEED.open[p.id]?'block':'none'};margin-top:8px">${feedCmHtml(p.id)}</div></div>`}
 function feedPaint(){
  const box=document.getElementById('feed-box');if(!box)return;
  const keep={};box.querySelectorAll('input[id^=fci-]').forEach(i=>{if(i.value)keep[i.id]=i.value});

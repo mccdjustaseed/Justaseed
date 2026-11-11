@@ -3706,7 +3706,7 @@ const G=id=>document.getElementById(id),
   qn=()=>{const a=qa();return a.length&&(s.qseen||'')===a.join(',')?0:a.length};
 let K='friends',OPEN=0,HB='',HH='';
 const unread=()=>(s.notifs||[]).filter(n=>!n.read).length;
-document.body.insertAdjacentHTML('beforeend',`<div id=sdh role=button aria-label="Mở Cộng đồng">${ic('chev',18)}<span id=sdb></span></div><div id=sdo></div><aside id=sd aria-hidden=true><div class=sdt><b>Cộng đồng</b><span id=sda></span><button class=s onclick="SD.close()" aria-label="Đóng">${ic('close',16)}</button></div><div id=sdtabs></div><div id=sdbody></div></aside>`);
+document.body.insertAdjacentHTML('beforeend',`<div id=sdh role=button aria-label="Mở Cộng đồng">${ic('chev',18)}<span id=sdb></span></div><div id=sdo></div><aside id=sd aria-hidden=true><div class=sdt><b>Cộng đồng <small style="font-weight:400;opacity:.6;font-size:.55em">v39</small></b><span id=sda></span><button class=s onclick="SD.close()" aria-label="Đóng">${ic('close',16)}</button></div><div id=sdtabs></div><div id=sdbody></div></aside>`);
 G('sdh').onclick=()=>SD.open();G('sdo').onclick=()=>SD.close();
 function head(){
  if(OPEN&&K=='quest'){const j=qa().join(',');if((s.qseen||'')!==j){s.qseen=j;try{save()}catch(e){}}}

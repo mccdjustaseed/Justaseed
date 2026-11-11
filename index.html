@@ -1059,7 +1059,7 @@ if(!ok)return `<div class=card>${hd}<div class=bub>Xin lỗi bạn nhé, hiện 
 if(!c.hd)return negCard(c,hd);
 const bs=bd.size,sel=o=>Object.values(o).reduce((a,b)=>a+b,0),xr=c.xt&&!c.xm,ch=(t,on)=>`<span class=chip style="${on?'background:var(--g2);color:#fff':''}">${on?'✓':'○'} ${t}</span>`,
 sum=ks.map(k=>ch(nm(k)+' '+(bd.fl[k]||0)+'/'+need[k],bd.fl[k]==need[k])).join('')+Object.keys(bd.fl).filter(k=>!need[k]).map(k=>`<span class=chip style="background:var(--bad);color:#fff">✗ ${nm(k)} ${bd.fl[k]}</span>`).join('')+ch('Giấy '+c.z,bs==c.z)+(c.ps?ch(PS[c.ps].n,bd.ps==c.ps):'')+(c.ask?ch('Quà',gc2()>0):'')+(xr?ch(nm(c.xt),bd.gift[c.xt]>0):''),
-tl=(a,lab,have,q,add,sub,col)=>`<div class="tl2${col?' hl':''}" ${col?`style="--wc:${col}"`:''}><button class=t ${have>q?'':'disabled'} onclick="${add}">${a}<b>${lab}</b><small>${q}/${have}</small></button>${q?`<button class=mn onclick="${sub}" aria-label="Bớt">−</button>`:''}</div>`,
+tl=(a,lab,have,q,add,sub,col)=>`<div class="tl2${col?' hl':''}" ${col?`style="--wc:${col}"`:''}><button class=t ${have>q?'':'disabled'} onclick="${add}">${a}<b>${lab}</b><small>${q}/${have}</small></button>${q?`<button class=mn onpointerup="${sub}" onclick="if(!event.detail){${sub}}" aria-label="Bớt">−</button>`:''}</div>`,
 hasW=c.xt||W.some(w=>s.st[w]>0),tabs=[['f','🌸 Hoa',sel(bd.fl)],['p','📜 Giấy',bs?1:0],['g','🎁 Quà',gc2()]].concat(hasW?[['x','☔ Đồ mưa nắng',(bd.gift.amua||0)+(bd.gift.du||0)]]:[]);if(!tabs.some(t=>t[0]==PT))PT='f';let pn='';
 if(PT=='f'){const L=F.filter(f=>(s.st[f.id]||0)>0);pn=L.length?`<div class=pk>${L.map(f=>tl(fw(f.id,34),f.n,s.st[f.id],bd.fl[f.id]||0,`addF('${f.id}')`,`subF('${f.id}')`,need[f.id]?FC[f.id]:'')).join('')}</div>`:'<p class=mut>Hết hoa.</p>'}
 else if(PT=='p')pn=`<div class=pk>${P.map(p=>`<div class="tl2${p.id==c.z?' hl':''}" style="--wc:${PC[p.id]}"><button class=t ${s.st[p.id]?'':'disabled'} style="${bs==p.id?'background:var(--pk)':''}" onclick="bd.size=bd.size=='${p.id}'?null:'${p.id}';R()">${wr(p.id,bd.ps)}<b>Giấy ${p.id}</b><small>${K[p.id]} bông · kho ${s.st[p.id]||0}</small></button></div>`).join('')}</div><div class=sec>Hoa văn</div><div class=strip>${Object.keys(PS).map(k=>`<button class="s ${bd.ps==k?'on2':''}${c.ps==k?' wp':''}" ${c.ps==k?`style="--wc:${PS[k].b}"`:''} onclick="bd.ps='${k}';R()">${wr('M',k)} ${PS[k].n}</button>`).join('')}</div>`;
@@ -1732,9 +1732,13 @@ return{make};
 
 const QRB={enc:u=>{let t='';for(let i=0;i<u.length;i+=0x8000)t+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(t).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')},dec:q=>{q=q.replace(/-/g,'+').replace(/_/g,'/');while(q.length%4)q+='=';const b=atob(q),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}};
 const qrPipe=async(u,C,f)=>new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new C(f))).arrayBuffer());
-function qrJson(){return JSON.stringify(s,function(k,v){if(this===s&&(k=='led'||k=='bills'||k=='rv'))return undefined;if(typeof v=='string'&&v.slice(0,5)=='data:')return undefined;return v})}
-async function qrPayload(){const u=new TextEncoder().encode(qrJson());let txt;try{if(!window.CompressionStream)throw 0;txt='JSA1:'+QRB.enc(await qrPipe(u,CompressionStream,'deflate-raw'))}catch(e){txt='JSA0:'+QRB.enc(u)}
- return{txt,q:QRG.make(Uint8Array.from(txt,c=>c.charCodeAt(0)),'M')}}
+function qrJson(lv){lv=lv||0;const DROP=['led','bills','rv'].concat(lv>=1?['notifs','forum','cam','rpt','prev']:[]);
+ return JSON.stringify(s,function(k,v){if(this===s&&DROP.includes(k))return undefined;if(typeof v=='string'&&v.slice(0,5)=='data:')return undefined;
+  if(lv>=2&&v&&typeof v=='object'&&!Array.isArray(v)&&k!='pr'&&k!=''){const o={};for(const q in v){if(v[q]!==0&&v[q]!==false&&v[q]!==null)o[q]=v[q]}return o}
+  return v})}
+async function qrPayload(){const enc=async u=>{try{if(!window.CompressionStream)throw 0;return 'JSA1:'+QRB.enc(await qrPipe(u,CompressionStream,'deflate-raw'))}catch(e){return 'JSA0:'+QRB.enc(u)}};
+ let last;for(const [lv,ec] of [[0,'M'],[0,'L'],[1,'L'],[2,'L']]){try{const txt=await enc(new TextEncoder().encode(qrJson(lv)));return{txt,q:QRG.make(Uint8Array.from(txt,c=>c.charCodeAt(0)),ec)}}catch(e){last=e}}
+ throw last}
 async function qrParse(txt){txt=(txt||'').trim();const tg=txt.slice(0,5);if(tg!='JSA1:'&&tg!='JSA0:')throw new Error('fmt');let u=QRB.dec(txt.slice(5));
  if(tg=='JSA1:'){if(!window.DecompressionStream)throw new Error('nodec');u=await qrPipe(u,DecompressionStream,'deflate-raw')}
  const o=JSON.parse(new TextDecoder().decode(u));if(!o||typeof o!='object'||typeof o.day!='number'||typeof o.money!='number'||!o.st||typeof o.st!='object')throw new Error('bad');return o}
@@ -2378,15 +2382,21 @@ Z.pull=async()=>{try{if(typeof currentUser=='undefined'||!currentUser||(s.pf&&s.
 if(typeof currentUser!='undefined')setTimeout(Z.push,4000);
 
 /* ---------- 4. WORKSHOP: kệ trưng bày + gian hàng ---------- */
-const FAM={cuc:'Tươi mát',hong:'Ngọt ngào',hd:'Trái cây',tul:'Tươi mát',oai:'Gỗ ấm',cc:'Cay nồng',dt:'Trái cây',cth:'Tươi mát',lily:'Ngọt ngào',sen:'Tươi mát',mdon:'Ngọt ngào',lan:'Gỗ ấm'},
+const FAM={cuc:'Tươi mát',hong:'Ngọt ngào',hd:'Trái cây',tul:'Tươi mát',oai:'Gỗ ấm',cc:'Cay nồng',dt:'Trái cây',cth:'Tươi mát',lily:'Ngọt ngào',sen:'Tươi mát',mdon:'Ngọt ngào',lan:'Gỗ ấm',adao:'Tươi mát',phg:'Trái cây',bl:'Gỗ ấm',vt:'Cay nồng',ct:'Tươi mát',cl:'Cay nồng',cde:'Trái cây',bcd:'Tươi mát',dao:'Ngọt ngào',mai:'Gỗ ấm',thuy:'Ngọt ngào',tc:'Gỗ ấm'},
  CN=['Cologne','Parfum','Extrait'],BOT=[8000,14000,22000],VS=[['Bình thấp',12000,1],['Giỏ mây',15000,1.05],['Hộp quà',20000,1.12],['Vòng hoa',25000,1.2]],CAP=12;
 let WF=[],WV=0,WP=[],WC=1;
+/* công thức nước hoa có sẵn (3 hương khác nhóm) + công thức riêng lưu trong s.rcp */
+const RCP=[['Vườn Xuân',['tul','hong','hd']],['Hoàng Hôn Ngọt',['hong','dt','oai']],['Rừng Ấm',['oai','cc','cuc']],['Sương Mai',['sen','lily','phg']],['Mật Hồng',['mdon','cth','vt']],['Nắng Mùa Hè',['hd','cuc','cc']],['Lavender Đêm',['oai','thuy','ct']],['Trà Hoa Thanh',['tc','cuc','dt']],['Tết Sum Vầy',['dao','vt','mai']],['Cánh Đồng Đà Lạt',['cuc','hd','cl']],['Hoàng Gia',['mdon','lan','sen']],['Thiên Đường Trắng',['lily','lan','adao']],['Anh Đào Tháng Ba',['adao','phg','hong']],['Đồng Cỏ Dại',['bcd','cde','cl']],['Hạ Đỏ',['phg','bl','thuy']],['Quý Phi',['mdon','tc','dt']],['Biển Xanh',['cth','cde','oai']],['Bình Minh',['dt','cc','tul']],['Khu Vườn Bí Mật',['lily','bl','tul']],['Hồng Trà',['hong','tc','cuc']]].map((r,i)=>({id:'r'+i,n:r[0],f:r[1]}));
+const rcAll=()=>RCP.concat(s.rcp||[]),rcKey=a=>a.slice().sort().join(),rcOf=a=>a.length==3?rcAll().find(r=>rcKey(r.f)==rcKey(a)):null;
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const ws=()=>{if(!s.ws)s.ws={fa:{xp:0,n:0},pf:{xp:0,n:0}};if(!s.shelf)s.shelf=[];if(!s.mk)s.mk={fa:1,pf:1};
  if(s.perf&&s.perf.length){s.perf.forEach(x=>s.shelf.push({id:x.id,t:'pf',n:x.n,q:x.q,p:x.p,on:0}));s.perf=[]}return s.ws};
 const wl=k=>1+Math.floor(Math.sqrt((ws()[k].xp||0)/25)),slots=()=>Math.min(6,3+Math.floor(L2()/5)),
  dem=t=>.4+.6*Math.max(0,Math.min(1,(s.mk||{})[t]??1)),val=x=>Math.round(x.p*dem(x.t)/1000)*1000;
 const pk=(a,id,m)=>{const i=a.indexOf(id);if(i>=0)a.splice(i,1);else if(a.length<m)a.push(id);else toast('Tối đa '+m+' loại')};
+Z.rc=id=>{const r=rcAll().find(x=>x.id==id);if(!r)return;if(WP.length==3&&rcKey(WP)==rcKey(r.f)){WP=[];R();return}const m=r.f.find(i=>!fl().some(f=>f.id==i));if(m)return toast('Chưa mở khóa '+nm(m));WP=r.f.slice();R()};
+Z.saveRc=()=>{if(WP.length<3)return toast('Chọn đủ 3 hương trước');const o=rcOf(WP);if(o)return toast('Đã có công thức này: '+o.n);const e=document.getElementById('rcn'),n=((e&&e.value)||'').trim().slice(0,24);if(!n)return toast('Hãy đặt tên cho công thức');s.rcp=s.rcp||[];if(s.rcp.length>=12)return toast('Tối đa 12 công thức riêng, hãy xóa bớt');s.rcp.push({id:uid(),n,f:WP.slice()});toast('Đã lưu công thức "'+n+'"');R()};
+Z.delRc=id=>{s.rcp=(s.rcp||[]).filter(r=>r.id!=id);R()};
 Z.tf=id=>{pk(WF,id,4);R()};Z.tp=id=>{pk(WP,id,3);R()};Z.vs=i=>{WV=i;R()};Z.c=c=>{WC=c;R()};
 Z.mkFa=()=>{ws();if(WF.length<2)return toast('Chọn 2 đến 4 loại hoa');if(s.shelf.length>=CAP)return toast('Kệ đầy ('+CAP+' món), hãy bán bớt');
  const v=VS[WV],m=WF.find(id=>(s.st[id]||0)<3);if(m)return toast('Thiếu '+nm(m)+' (cần 3 bông)');if(s.money<v[1])return toast('Không đủ tiền mua '+v[0]);
@@ -2398,7 +2408,7 @@ Z.mkPf=()=>{ws();if(WP.length<3)return toast('Chọn đủ 3 hương');if(s.shel
  const need=WC+1,m=WP.find(id=>(s.st[id]||0)<need);if(m)return toast('Thiếu '+nm(m)+' (cần '+need+' bông)');const bt=BOT[WC-1];if(s.money<bt)return toast('Không đủ tiền mua lọ');
  const mat=WP.reduce((a,id)=>a+C[id]*need,0)+bt;WP.forEach(id=>s.st[id]-=need);s.money-=bt;L('out','Workshop','Lọ nước hoa '+CN[WC-1],1,bt);
  const fams=new Set(WP.map(id=>FAM[id]||id)).size,Q=Math.min(100,Math.round(35+14*fams+6*wl('pf')+Math.random()*12)),p=Math.round(mat*(1.5+Q/100)/1000)*1000;
- s.shelf.push({id:uid(),t:'pf',n:`${CN[WC-1]} ${nm(WP[0])} & ${nm(WP[1])}`,q:Q,p,on:0,cl:WP.map(id=>FC[id]||'#b39ddb'),v:WC});
+ s.shelf.push({id:uid(),t:'pf',n:rcOf(WP)?`${CN[WC-1]} ${rcOf(WP).n}`:`${CN[WC-1]} ${nm(WP[0])} & ${nm(WP[1])}`,q:Q,p,on:0,cl:WP.map(id=>FC[id]||'#b39ddb'),v:WC});
  s.ws.pf.xp+=12+WC*4;s.ws.pf.n++;xp(8+WC*3);WP=[];toast(`Điều chế xong · chất lượng ${Q}/100 · đã lên kệ`);R()};
 Z.on=id=>{ws();const x=s.shelf.find(x=>x.id==id);if(!x)return;if(!x.on&&s.shelf.filter(y=>y.on).length>=slots())return toast('Gian hàng chỉ trưng bày tối đa '+slots()+' món');x.on=x.on?0:1;R()};
 Z.sell=id=>{ws();const i=s.shelf.findIndex(x=>x.id==id);if(i<0)return;const x=s.shelf[i],p=Math.round(val(x)*.7/1000)*1000;s.shelf.splice(i,1);s.mk[x.t]=Math.max(0,s.mk[x.t]-.08);s.money+=p;L('in','Workshop','Bán '+x.n,1,p);toast('+'+$(p));R()};
@@ -2409,12 +2419,15 @@ const wbar=k=>{const l=wl(k),a=25*(l-1)**2,b=25*l*l;return `<div class=bar><i st
  dm=t=>`<span class=chip>Nhu cầu ${Math.round(s.mk[t]*100)}% · giá x${dem(t).toFixed(2)}</span>`;
 const shelfRow=x=>`<div class=row><span>${x.t=='pf'?'🧴':'💐'} <b>${esc(x.n)}</b>${x.on?' <span class=tag style="background:var(--g3)">Gian hàng</span>':''}<br><span class=mut>Chất lượng ${x.q}/100 · giá ${$(val(x))}</span></span><span><button class="s ${x.on?'on2':''}" onclick="XB.on('${x.id}')">${x.on?'Cất lại':'Ra gian hàng'}</button> <button class=s onclick="XB.sell('${x.id}')">Bán ngay ${$(Math.round(val(x)*.7/1000)*1000)}</button></span></div>`;
 Z.shelfCard=()=>{ws();const on=s.shelf.filter(x=>x.on).length;return `<div class=card><div class=row><h3>🪴 Kệ trưng bày</h3><span class=mut>${s.shelf.length}/${CAP} món · ${on}/${slots()} ở gian hàng</span></div><p class=mut style="margin:0 0 4px">Món đưa ra gian hàng sẽ tự bán dần khi mở quầy, giá đủ 100%. Bán ngay chỉ được 70%.</p>${s.shelf.length?s.shelf.map(shelfRow).join(''):'<p class=mut style="margin:0">Kệ đang trống. Hãy cắm hoa hoặc điều chế nước hoa.</p>'}</div>`};
+const rcBtn=(r,my)=>{const ok=r.f.every(i=>fl().some(f=>f.id==i)),sel=WP.length==3&&rcKey(WP)==rcKey(r.f);return `<button class="s ${sel?'on2':''}" ${ok?'':'style="opacity:.5"'} onclick="XB.rc('${r.id}')"><b>${esc(r.n)}</b> <span style="display:inline-flex;vertical-align:middle">${r.f.map(i=>fw(i,16)).join('')}</span></button>`};
+const rcUI=()=>{const mine=s.rcp||[];return `<p class=mut style="margin:6px 0 2px">Công thức có sẵn (chạm để chọn nhanh 3 hương, mờ = chưa mở khóa hoa)</p><div class=strip2 style="max-height:132px;overflow-y:auto;padding:2px 0">${RCP.map(r=>rcBtn(r)).join('')}</div>${mine.length?`<p class=mut style="margin:6px 0 2px">Công thức của bạn</p><div class=strip2 style="max-height:100px;overflow-y:auto;padding:2px 0">${mine.map(r=>rcBtn(r)+`<button class=s onclick="XB.delRc('${r.id}')" aria-label="Xóa công thức" title="Xóa">✕</button>`).join('')}</div>`:''}`};
+const rcSave=()=>{if(WP.length!=3)return '';const o=rcOf(WP);return o?`<p class=mut style="margin:2px 0">Công thức: <b>${esc(o.n)}</b></p>`:`<div class=row style="margin:4px 0"><input id=rcn maxlength=24 placeholder="Tên công thức riêng" style="flex:1;min-width:120px;width:auto"><button class=s onclick="XB.saveRc()">💾 Lưu công thức</button></div>`};
 V.ws=()=>{ws();const lv=L2(),have=fl().filter(f=>(s.st[f.id]||0)>0);
  const chips=(a,fn)=>have.length?`<div class=strip2>${have.map(f=>`<button class="s ${a.includes(f.id)?'on2':''}" onclick="XB.${fn}('${f.id}')">${fw(f.id,20)} ${f.n} <b>${s.st[f.id]}</b></button>`).join('')}</div>`:'<p class=mut>Kho đang trống, hãy nhập hoa trước.</p>';
  const fm=WF.reduce((a,id)=>a+C[id]*3,0)+VS[WV][1],pm=WP.reduce((a,id)=>a+C[id]*(WC+1),0)+BOT[WC-1];
  return `<div class=card><h3>🎓 Workshop</h3><p class=mut style="margin:0">Không giới hạn số lần. Tác phẩm lên kệ, đưa ra gian hàng để bán dần. Làm nhiều một loại thì nhu cầu giảm, giá giảm theo, hồi dần mỗi ngày.</p></div>
  <div class=card><div class=row><h3>💐 Cắm hoa</h3><span>${dm('fa')} <b>Cấp ${wl('fa')}</b></span></div>${wbar('fa')}${lv<2?'<p class=mut>Mở khóa ở cấp độ 2.</p>':`<p class=mut style="margin:6px 0 2px">1. Chọn 2–4 loại hoa (mỗi loại 3 bông)</p>${chips(WF,'tf')}<p class=mut style="margin:6px 0 2px">2. Chọn kiểu cắm</p><div class=strip2>${VS.map((v,i)=>`<button class="s ${WV==i?'on2':''}" onclick="XB.vs(${i})">${v[0]} <span class=mut>${$(v[1])}</span></button>`).join('')}</div><div class=row><span class=mut>Chi phí vật liệu ~${$(fm)}</span><button class=p ${WF.length<2?'disabled':''} onclick="XB.mkFa()">Cắm hoa</button></div>`}</div>
- <div class=card><div class=row><h3>🧪 Điều chế nước hoa</h3><span>${dm('pf')} <b>Cấp ${wl('pf')}</b></span></div>${wbar('pf')}${lv<4?'<p class=mut>Mở khóa ở cấp độ 4.</p>':`<p class=mut style="margin:6px 0 2px">1. Chọn đúng 3 hương (khác nhóm thì chất lượng cao hơn)</p>${chips(WP,'tp')}${WP.length?`<p class=mut style="margin:2px 0">${WP.map(id=>nm(id)+' · '+FAM[id]).join(' | ')}</p>`:''}<div class=row><span>2. Nồng độ</span><span>${CN.map((c,i)=>`<button class="s ${WC==i+1?'on2':''}" onclick="XB.c(${i+1})">${c}</button>`).join(' ')}</span></div><div class=row><span class=mut>Cần ${WC+1} bông mỗi hương · ~${$(pm)}</span><button class=p ${WP.length<3?'disabled':''} onclick="XB.mkPf()">Điều chế</button></div>`}</div>`+Z.shelfCard()};
+ <div class=card><div class=row><h3>🧪 Điều chế nước hoa</h3><span>${dm('pf')} <b>Cấp ${wl('pf')}</b></span></div>${wbar('pf')}${lv<4?'<p class=mut>Mở khóa ở cấp độ 4.</p>':`${rcUI()}<p class=mut style="margin:6px 0 2px">1. Hoặc tự chọn đúng 3 hương (khác nhóm thì chất lượng cao hơn)</p>${chips(WP,'tp')}${WP.length?`<p class=mut style="margin:2px 0">${WP.map(id=>nm(id)+' · '+FAM[id]).join(' | ')}</p>`:''}${rcSave()}<div class=row><span>2. Nồng độ</span><span>${CN.map((c,i)=>`<button class="s ${WC==i+1?'on2':''}" onclick="XB.c(${i+1})">${c}</button>`).join(' ')}</span></div><div class=row><span class=mut>Cần ${WC+1} bông mỗi hương · ~${$(pm)}</span><button class=p ${WP.length<3?'disabled':''} onclick="XB.mkPf()">Điều chế</button></div>`}</div>`+Z.shelfCard()};
 {const o=V.sty;V.sty=()=>o()+Z.shelfCard()}
 
 /* ---------- 5. CHỐNG LẠM PHÁT ---------- */
@@ -3066,7 +3079,7 @@ setInterval(()=>{
 /* ---- vuốt phải để mở, vuốt trái để đóng ---- */
 let X0=0,Y0=0,OK=0;
 const scrollX=e=>{for(;e&&e!==document.body;e=e.parentElement){if(e.scrollWidth>e.clientWidth+4&&/auto|scroll/.test(getComputedStyle(e).overflowX))return 1}return 0};
-addEventListener('touchstart',e=>{const t=e.touches[0],el=e.target;X0=t.clientX;Y0=t.clientY;OK=e.touches.length==1&&!el.closest('input,textarea,select,#menu,#modal,#tutw')&&(OPEN?!!el.closest('#sd,#sdo'):!scrollX(el))},{passive:true});
+addEventListener('touchstart',e=>{const t=e.touches[0],el=e.target;X0=t.clientX;Y0=t.clientY;OK=e.touches.length==1&&!el.closest('input,textarea,select,#menu,#modal,#tutw')&&(OPEN?(!!el.closest('#sd,#sdo')&&!el.closest('#sdtabs')&&!scrollX(el)):!scrollX(el))},{passive:true});
 addEventListener('touchend',e=>{if(!OK||scr!='game')return;const t=e.changedTouches[0],dx=t.clientX-X0,dy=t.clientY-Y0;
  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;
  if(!OPEN&&dx>0)SD.open();else if(OPEN&&dx<0)SD.close()},{passive:true});
@@ -3364,7 +3377,7 @@ function advance(c){
   else if(xrOf(c)&&!(bd.gift[c.xt]>0))PT='x';
  }
 }
-const chip=(done,dot,txt,act)=>`<button class="nc ${done?'ok':''}" onclick="${act}"><i style="background:${dot}"></i>${done?'✓ ':''}${txt}</button>`;
+const chip=(done,dot,txt,act)=>`<button class="nc ${done?'ok':''}" tabindex=-1 aria-disabled=true style="pointer-events:none;cursor:default"><i style="background:${dot}"></i>${done?'✓ ':''}${txt}</button>`;
 const hudHTML=()=>{
  const w=WX[s.wx]||WX.sun;
  return `<div class=hud><b class=clk id=clk>${clk()+(brk()?' ☕ Nghỉ':'')}</b><span class=wx title="${w.n}">${w.i} ${SE[season()].i}</span><b class=rev>${$(live.rev)}</b><span class=sp></span><button class=pzb onclick="togglePause()" aria-label="Tạm dừng" title="Tạm dừng"><i></i><i></i></button><button class=s onclick="SL.menu()">📋 Menu</button><button class=s onclick="closeEarly()">Đóng sớm</button></div>`;
@@ -3407,7 +3420,7 @@ function ticketHTML(c){
  if(xr)parts.push(chip(bd.gift[c.xt]>0,'#5aa9e6',esc(nm(c.xt)),`SL.ext('${c.xt}')`));
  return `<div class=tk>${head}<div class=need>${parts.join('')}</div></div>`;
 }
-const tl=(ico,lab,have,q,add,sub,col)=>`<div class=stl><button class="tile ${col?'need':''} ${q?'sel':''}" ${col?`style="--wc:${col}"`:''} ${have>q?'':'disabled'} onclick="${add}">${q?`<span class=qn>${q}</span>`:''}${ico}<b>${esc(lab)}</b><small>${q}/${have}</small></button>${q?`<button class=mn onclick="${sub}" aria-label="Bớt">−</button>`:''}</div>`;
+const tl=(ico,lab,have,q,add,sub,col)=>`<div class=stl><button class="tile ${col?'need':''} ${q?'sel':''}" ${col?`style="--wc:${col}"`:''} ${have>q?'':'disabled'} onpointerup="${add}" onclick="if(!event.detail){${add}}">${q?`<span class=qn>${q}</span>`:''}${ico}<b>${esc(lab)}</b><small>${q}/${have}</small></button>${q?`<button class=mn onpointerup="${sub}" onclick="if(!event.detail){${sub}}" aria-label="Bớt">−</button>`:''}</div>`;
 function pickerHTML(c){
  if(!c||c.big||!c.hd)return '';
  const nd=needOf(c),xr=xrOf(c);
@@ -3432,7 +3445,7 @@ function barHTML(c){
  const nd=needOf(c),xr=xrOf(c);
  if(!((s.st[c.z]||0)>=1)||!Object.keys(nd).every(k=>(s.st[k]||0)>=nd[k]))return '';
  const rdy=flowersDone(c)&&bd.size==c.z&&(!c.ps||bd.ps==c.ps)&&(!c.ask||gc2()>0)&&(!xr||bd.gift[c.xt]>0);
- return `<button class=s onclick="SL.reset()" aria-label="Làm lại" title="Làm lại">${ic('undo')}</button><button class=s onclick="SL.quick()" title="Tự điền đúng theo đơn">⚡ Điền nhanh</button><button class="p go ${rdy?'rdy':''}" onclick="give(${c.id})">${ic('bill')} Giao hàng</button>`;
+ return `<button class=s onclick="SL.reset()" aria-label="Làm lại" title="Làm lại">${ic('undo')}</button><button class=s ${(live&&live.qk||0)>=3?'disabled':''} onclick="SL.quick()" title="Tự điền đúng theo đơn (tối đa 3 lần mỗi lần mở gian hàng)">⚡ Điền nhanh (${Math.max(0,3-(live&&live.qk||0))})</button><button class="p go ${rdy?'rdy':''}" onclick="give(${c.id})">${ic('bill')} Giao hàng</button>`;
 }
 function sellHTML(){
  const c=ensureCur();
@@ -3463,6 +3476,7 @@ const SL=window.SL={
  /* điền đúng theo đơn: hoa, giấy, hoa văn, đồ khách mua thêm, và 1 quà rẻ nhất nếu khách xin */
  quick(){
   const c=curC();if(!c||c.big||!c.hd)return;
+  if(!live)return;if((live.qk||0)>=3){toast('Điền nhanh chỉ dùng tối đa 3 lần mỗi lần mở gian hàng');return}live.qk=(live.qk||0)+1;
   const nd=needOf(c);bd=nb();
   Object.keys(nd).forEach(k=>{const n=Math.min(nd[k],s.st[k]||0);if(n)bd.fl[k]=n});
   if((s.st[c.z]||0)>0)bd.size=c.z;
@@ -3642,5 +3656,97 @@ async function friendProfile(uid){
  const name=d.nm||(prof&&prof.display_name)||(shop&&shop.shop_name)||'Chủ tiệm';
  FPV={uid,d,fs:friendState(d),name,user:prof&&prof.username,tab:'me'};
  fpRender('me')}
+</script>
+
+<style>#toast{width:max-content;max-width:86vw;left:50%;right:auto;bottom:78px;padding:6px 14px;border-radius:12px;font-size:13px!important;line-height:1.35;text-align:center;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.18);opacity:.94;pointer-events:none}</style>
+<script>
+/* ===== V28: Menu hôm nay dạng bảng menu trang trí ===== */
+(function(){
+const css=`
+.vbrd{position:relative;border-radius:22px;padding:14px 12px 12px;border:3px solid var(--g2);outline:3px solid var(--pk);outline-offset:3px;margin:6px 4px;background:var(--card) radial-gradient(var(--ln) 1.2px,transparent 1.3px) 0 0/16px 16px;overflow:hidden}
+.vbrd .vbcn{position:absolute;width:64px;height:64px;pointer-events:none;opacity:.95}
+.vbrd .vbcn.a{left:-4px;top:-4px}.vbrd .vbcn.b{right:-4px;top:-4px;transform:scaleX(-1)}.vbrd .vbcn.c{left:-4px;bottom:-4px;transform:scaleY(-1)}.vbrd .vbcn.d{right:-4px;bottom:-4px;transform:scale(-1)}
+.vbrd .vbtt{text-align:center;position:relative;margin:0 0 8px}
+.vbrd .vbtt small{display:block;letter-spacing:4px;font-size:.7rem;color:var(--mut);text-transform:uppercase}
+.vbrd .vbtt b{display:block;font:italic 700 1.9rem/1.15 Georgia,'Times New Roman',serif;color:var(--g3);text-shadow:2px 2px 0 var(--pk)}
+.vbrd .vbtt .vbpill{display:inline-block;margin-top:4px;background:#e0567f;color:#fff;border-radius:99px;padding:2px 14px;font-size:.8rem;font-weight:700;letter-spacing:1px}
+.vbrd .vbhd,.vbrd .vbrw{display:grid;grid-template-columns:34px 1fr repeat(3,minmax(50px,64px));align-items:center;gap:2px}
+.vbrd .vbhd{border-bottom:3px double var(--g2);padding:0 6px 3px;margin-top:6px;position:relative}
+.vbrd .vbhd b{text-align:center;font-size:.95rem;color:var(--g3);line-height:1}
+.vbrd .vbhd b em{display:block;font:normal .6rem/1.2 Onest,sans-serif;color:var(--mut)}
+.vbrd .vbrw{padding:4px 6px;border-bottom:2px dotted var(--ln);position:relative}.vbrd .vbrw:last-of-type{border:0}
+.vbrd .vbnm{font-weight:700;font-size:.95rem;line-height:1.15;padding-left:4px}
+.vbrd .vbpr{text-align:center;font-weight:700;color:#c43a66;font-size:.98rem;line-height:1.05}
+.vbrd .vbpr small{display:block;font-size:.58rem;font-weight:400;color:var(--mut)}
+.vbrd .vbpr.x{color:var(--ln);font-weight:400}
+.vbrd .vbft{text-align:center;color:var(--mut);font-size:.72rem;margin:8px 0 0;position:relative}
+.vbrd .vbem{text-align:center;color:var(--mut);padding:10px 8px;position:relative}
+:root[data-theme=dark] .vbrd .vbpr{color:#ff8fb0}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .vbrd .vbpr{color:#ff8fb0}}
+`;
+const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+const fl5=(n,pc,cc,r)=>{let o='';for(let i=0;i<n;i++)o+='<ellipse cx="0" cy="-'+r+'" rx="'+(r*.55)+'" ry="'+(r*.85)+'" transform="rotate('+(i*360/n)+')"/>';return '<g fill="'+pc+'" stroke="'+cc+'" stroke-width="1">'+o+'</g><circle r="'+(r*.45)+'" fill="'+cc+'"/>'};
+const corner='<svg viewBox="0 0 64 64"><path d="M3 62C3 30 18 8 62 3" fill="none" stroke="#4f9d63" stroke-width="2" stroke-linecap="round"/><g fill="#6cc07a" stroke="#3f8452" stroke-width=".7"><ellipse cx="12" cy="38" rx="6" ry="2.6" transform="rotate(-62 12 38)"/><ellipse cx="22" cy="22" rx="6" ry="2.6" transform="rotate(-40 22 22)"/><ellipse cx="40" cy="10" rx="6" ry="2.6" transform="rotate(-15 40 10)"/></g><g transform="translate(15 15)">'+fl5(6,'#ff9ec7','#e0538f',6)+'</g><g transform="translate(40 8) scale(.8)">'+fl5(5,'#ffffff','#f2a33a',5)+'</g><g transform="translate(8 40) scale(.8)">'+fl5(5,'#c9a7f0','#8f4fb3',5)+'</g></svg>';
+const vbcn=['a','b','c','d'].map(k=>'<i class="vbcn '+k+'">'+corner+'</i>').join('');
+const pr=v=>v%1000==0?(v/1000)+'k':$(v);
+window.menuBoard=function(m){
+ if(!m.length)return '<div class=vbrd>'+vbcn+'<div class=vbtt><small>✿ Justaseed ✿</small><b>Menu hôm nay</b></div><p class=vbem>Chưa có món. Cần đủ hoa (S=3, M=5, L=10 bông) và giấy gói.</p></div>';
+ const g=[];m.forEach(i=>{let x=g.find(y=>y.f.id==i.f.id);if(!x)g.push(x={f:i.f,z:{}});x.z[i.p.id]=i});
+ const rows=g.map(x=>'<div class=vbrw><span>'+fw(x.f.id,28)+'</span><span class=vbnm>'+x.f.n+'</span>'+['S','M','L'].map(z=>{const i=x.z[z];return i?'<span class=vbpr>'+pr(price(x.f.id,z))+'<small>còn '+i.n+'</small></span>':'<span class="vbpr x">–</span>'}).join('')+'</div>').join('');
+ return '<div class=vbrd>'+vbcn+'<div class=vbtt><small>✿ Justaseed ✿</small><b>Menu hôm nay</b><span class=vbpill>'+m.length+' MÓN</span></div><div class=vbhd><span></span><span></span><b>S<em>3 bông</em></b><b>M<em>5 bông</em></b><b>L<em>10 bông</em></b></div>'+rows+'<p class=vbft>Giá theo nghìn đồng (k) · Khách có thể gọi bó mix 2 loại hoa</p></div>';
+};
+let MBF=0;
+window.menuBox=function(){const m=menu();
+ if(MBF)return '<div class=card>'+menuBoard(m)+'</div>';
+ const o=!s.mnc;
+ return '<div class=card style="padding:8px"><div class=row style="margin:0 4px 4px"><span class=mut>'+m.length+' món trong menu</span><button class=s onclick="s.mnc=!s.mnc;R()">'+(o?'Thu gọn ▴':'Mở ▾')+'</button></div>'+(o?menuBoard(m):'')+'</div>'};
+if(typeof V!='undefined'&&V.buy){const ob=V.buy;V.buy=function(){MBF=1;try{return ob.apply(this,arguments).replace('<details class=card><summary>','<details class=card open><summary>')}finally{MBF=0}}}
+if(window.SL)SL.menu=function(){document.getElementById('modal').innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row style="justify-content:flex-end;margin:0"><button class=s onclick=mdl() aria-label="Đóng">✕</button></div>'+menuBoard(menu())+'</div></div>'};
+})();
+</script>
+<script>
+/* V28: tab Giá bán xuống cuối thanh tab */
+(function(){const fix=()=>{const i=TABS.findIndex(x=>x[0]=='price');if(i>=0&&i!==TABS.length-1){const x=TABS.splice(i,1)[0];TABS.push(x)}};fix();const o=R;R=function(){fix();return o.apply(this,arguments)}})();
+</script>
+<script>
+/* ===== V28: đồng bộ tiến trình với tài khoản Discord (bảng Supabase game_saves) ===== */
+(function(){
+const CS={uid:null,ready:0,last:'',t:0,off:0,busy:0,warned:0,syncing:0,retry:0};
+const cj=()=>JSON.stringify(s,(k,v)=>typeof v=='string'&&v.slice(0,5)=='data:'?undefined:v);
+const enc=async str=>{const u=new TextEncoder().encode(str);try{if(!window.CompressionStream)throw 0;return 'JSA1:'+QRB.enc(await qrPipe(u,CompressionStream,'deflate-raw'))}catch(e){return 'JSA0:'+QRB.enc(u)}};
+const warn=m=>{if(!CS.warned){CS.warned=1;toast(m)}};
+const bad=e=>e&&(e.code=='42P01'||e.code=='PGRST205'||/game_saves|schema cache/i.test(e.message||''));
+async function up(force){
+ if(!currentUser||!CS.ready||CS.busy||CS.off||CS.uid!=currentUser.id)return;
+ const j=cj();if(!force&&j===CS.last)return;
+ CS.busy=1;
+ try{const code=await enc(j),r=await supabaseClient.from('game_saves').upsert({user_id:currentUser.id,data:code,xp:Math.round(s.xp||0),day:s.day||1,money:Math.round(s.money||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  if(r&&r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: thiếu bảng game_saves trên Supabase')}}else{CS.last=j;CS.t=Date.now()}}catch(e){}
+ CS.busy=0}
+async function sync(){
+ if(!currentUser)return;const uid=currentUser.id;CS.uid=uid;CS.ready=0;
+ let row=null;
+ try{const r=await supabaseClient.from('game_saves').select('data,xp,day,money').eq('user_id',uid).maybeSingle();
+  if(r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: thiếu bảng game_saves trên Supabase')}else{CS.uid=null;CS.retry=Date.now()}return}
+  row=r.data}catch(e){CS.uid=null;CS.retry=Date.now();return}
+ if(!currentUser||currentUser.id!=uid)return;
+ if(row&&row.data){
+  const lx=s.xp||0,ld=s.day||1,cx=row.xp||0,cd=row.day||1;
+  if(cx>lx||(cx==lx&&cd>ld)){
+   try{const o=await qrParse(row.data);try{localStorage.setItem('jas2_bak',JSON.stringify(s))}catch(e){}
+    QRO=o;qrDo();save();CS.last=cj();CS.ready=1;CS.t=Date.now();toast('☁️ Đã khôi phục tiến trình từ tài khoản Discord');return}
+   catch(e){CS.off=1;warn('Không đọc được bản lưu đám mây, vẫn giữ tiến trình trong máy');return}
+  }
+ }
+ CS.ready=1;await up(true);if(!row)toast('☁️ Đã bật lưu tiến trình lên tài khoản Discord')}
+setInterval(()=>{
+ if(!currentUser){CS.uid=null;CS.ready=0;CS.off=0;return}
+ if(CS.off)return;
+ if(CS.uid!=currentUser.id&&!CS.syncing&&Date.now()-CS.retry>15000){CS.syncing=1;sync().finally(()=>CS.syncing=0);return}
+ if(CS.ready&&Date.now()-CS.t>20000)up()},3000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden'){try{save()}catch(e){}up()}});
+addEventListener('pagehide',()=>{up()});
+window.CLOUD=CS;
+})();
 </script>
 </body></html>

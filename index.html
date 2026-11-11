@@ -183,14 +183,25 @@ async function loginDiscord() {
     provider: 'discord',
     options: { redirectTo: window.location.href.split('#')[0].split('?')[0] }
   });
-  if (error) toast('Lỗi đăng nhập: ' + error.message);
+  if (error) toast('Lỗi liên kết: ' + error.message);
 }
 
 async function logoutDiscord() {
   await supabaseClient.auth.signOut();
   currentUser = null;
-  toast('Đã đăng xuất');
-  if (typeof R === 'function') R();
+  // Xóa toàn bộ tiến trình local khi hủy liên kết
+  try {
+    if (typeof live !== 'undefined' && live && live.iv) clearInterval(live.iv);
+  } catch (e) {}
+  try { live = null; cur = null; CART = {}; pop = ''; } catch (e) {}
+  try { s = def(); } catch (e) {}
+  try {
+    Object.keys(localStorage).forEach(k => {
+      if (!/^sb-|supabase/i.test(k)) localStorage.removeItem(k);
+    });
+  } catch (e) {}
+  toast('Đã hủy liên kết và xóa dữ liệu local. Liên kết lại Discord để khôi phục tiến trình.');
+  setTimeout(() => location.reload(), 900);
 }
 
 initAuth();
@@ -262,7 +273,7 @@ async function removeFriend(id) {
 
 
 async function uploadCardToWall() {
-  if (!currentUser) return toast('Hãy đăng nhập Discord');
+  if (!currentUser) return toast('Hãy liên kết Discord');
   const img = document.getElementById('cpv');
   if (!img || !img.src) return toast('Chưa có card. Hãy tạo card visit trước');
   toast('Đang đăng...');
@@ -381,7 +392,7 @@ function toggleReplyBox(rootId) {
 }
 
 async function sendWallReply(rootId, ownerId) {
-  if (!currentUser) return toast('Hãy đăng nhập');
+  if (!currentUser) return toast('Hãy liên kết Discord');
   const input = document.getElementById('ri-' + rootId);
   const text = input ? input.value.trim() : '';
   if (!text) return toast('Nhập nội dung');
@@ -397,7 +408,7 @@ async function sendWallReply(rootId, ownerId) {
 }
 
 async function viewMyWall() {
-  if (!currentUser) return toast('Hãy đăng nhập');
+  if (!currentUser) return toast('Hãy liên kết Discord');
   const t = await loadWallThread(currentUser.id, 20);
   let html = `<div class=card>
     <div class=row><h3>📝 Tường của tôi</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>`;
@@ -405,6 +416,40 @@ async function viewMyWall() {
   else html += wallThreadsHtml(t, currentUser.id);
   html += '</div>';
   document.getElementById('friend-content').innerHTML = html;
+}
+
+async function viewMyPostedCard() {
+  if (!currentUser) return toast('Hãy liên kết Discord');
+  const box = document.getElementById('friend-content');
+  if (box) box.innerHTML = '<p class=mut>Đang tải...</p>';
+  const { data: shop, error } = await supabaseClient.from('shop_public')
+    .select('card_image, shop_name, day, money, level, updated_at')
+    .eq('user_id', currentUser.id).maybeSingle();
+  let html = `<div class=card>
+    <div class=row><h3>🖼️ Ảnh tôi đã đăng lên tường</h3><button class=s onclick="tab='friends';R()">← Quay lại</button></div>`;
+  if (error) {
+    html += '<p class=mut>Không tải được ảnh: ' + esc(error.message) + '</p>';
+  } else if (!shop || !shop.card_image) {
+    html += '<p class=mut>Bạn chưa đăng ảnh nào. Vào <b>Hồ sơ → Card visit</b>, tạo card rồi bấm "📌 Đăng danh thiếp lên tường".</p>';
+  } else {
+    const when = shop.updated_at ? new Date(shop.updated_at).toLocaleString('vi-VN') : '';
+    html += `<img id="my-posted-card" src="${shop.card_image}" style="width:100%;border-radius:16px;display:block;margin:8px 0" alt="Danh thiếp đã đăng">
+      <p class=mut>${esc(shop.shop_name || 'Tiệm hoa')} · Ngày ${shop.day || '?'} · Tiền ${$(shop.money || 0)} · Cấp ${shop.level || '?'}${when ? '<br>Đăng lúc ' + esc(when) : ''}</p>
+      <p class=mut style="font-size:.8rem">Giữ lâu vào ảnh để lưu nếu nút bên dưới không hoạt động.</p>
+      <button class=p onclick="saveMyPostedCard()">Lưu ảnh về máy</button>`;
+  }
+  html += '</div>';
+  if (box) box.innerHTML = html;
+}
+function saveMyPostedCard() {
+  const img = document.getElementById('my-posted-card');
+  if (!img) return;
+  const a = document.createElement('a');
+  a.href = img.src;
+  a.download = 'danh-thiep-justaseed.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 function parseGav(raw) {
@@ -447,7 +492,7 @@ function vinylTap() {
   if (c && c.id === VMU.id) MU.tog(); else MU.playTrack(VMU);
 }
 async function visitFriend(friendId) {
-  if (!currentUser) return toast('Hãy đăng nhập');
+  if (!currentUser) return toast('Hãy liên kết Discord');
   const { data: shop } = await supabaseClient.from('shop_public').select('*').eq('user_id', friendId).maybeSingle();
   const { data: profile } = await supabaseClient.from('profiles').select('display_name, username').eq('id', friendId).maybeSingle();
   const wt = await loadWallThread(friendId, 15);
@@ -740,8 +785,8 @@ friends() {
   if (!currentUser) {
     return `<div class=card>
       <h3>Kết bạn</h3>
-      <p class=mut>Đăng nhập bằng Discord để kết bạn với người chơi khác.</p>
-      <button class=p onclick="loginDiscord()">Đăng nhập Discord</button>
+      <p class=mut>Đăng nhập Discord (tài khoản đã đăng ký) để kết bạn và tự động lưu tiến trình.</p>
+      <button class=p onclick="loginWithDiscord()">Đăng nhập Discord</button>
     </div>`;
   }
   const display = currentUser.user_metadata?.full_name 
@@ -757,9 +802,9 @@ friends() {
   return `<div class=card>
     <div class=row>
       <span>Xin chào ${nameHtml}</span>
-      <button class=s onclick="logoutDiscord()">Đăng xuất</button>
+      <button class=s onclick="logoutToMenu()">Đăng xuất</button>
     </div>
-    <button class=s style="width:100%;margin:6px 0" onclick="viewMyWall()">📝 Xem tường của tôi</button>
+    <div class=row style="margin:6px 0"><button class=s style="flex:1" onclick="viewMyWall()">📝 Xem tường của tôi</button><button class=s style="flex:1" onclick="viewMyPostedCard()">🖼️ Ảnh tôi đã đăng</button></div>
     <div class=row>
       <input id="friend-search" placeholder="Nhập Discord username..." style="flex:1;width:auto" onkeydown="if(event.key=='Enter')sendFriendByName()">
       <button class=p onclick="sendFriendByName()">Gửi lời mời</button>
@@ -767,7 +812,14 @@ friends() {
     <div id="friend-content"><p class=mut>Đang tải...</p></div>
   </div>`;
 },
-guide(){return `<div class=card><ol><li><b>Nhập hàng:</b> chọn nhà cung cấp, thêm hoa, giấy, quà vào giỏ. Kiểm tra danh sách, số lượng và số tiền rồi bấm "Xác nhận mua" thì tiền mới bị trừ. Suất có hạn, hoa dư sẽ hỏng.</li><li><b>Giá bán:</b> mặc định = vốn + 215%, có thể chỉnh từng size, xem vốn và lời.</li><li><b>Quầy:</b> chạm khách, mặc cả, rồi chọn theo thứ tự: <span class="tag tf">hoa</span> → <span class="tag tp">giấy gói</span> → <span class="tag tg">quà</span>. Món khách cần được viền màu. Quà tặng bao nhiêu loại, bao nhiêu cái cũng được.</li><li>Sai loại hoa, size giấy hoặc số bông: nguyên liệu bị bỏ, làm lại và bị trừ điểm.</li><li><b>Túi đồ:</b> xem tồn kho và hạn dùng (hoa dư hỏng khoảng 60% qua đêm). <b>Mèo:</b> vuốt ve, cho ăn, mua và mặc phụ kiện. Khách đến theo từng đợt (1–3 người) trong ngày 9:00–22:00, có thể chọn 4 hoặc 8 phút. Một số khách có yêu cầu giấy gói theo hoa văn.</li><li>Khách VIP boa 5-20%. Khách hết kiên nhẫn sẽ bỏ đi.</li><li><b>Đánh giá:</b> chia 2 kênh Google Map và Fanpage, bạn tự viết phản hồi cho từng đánh giá.</li><li><b>Thống kê:</b> xem thu chi chi tiết theo ngày, tuần, tháng.</li><li>Chi phí cố định mỗi ngày: thuê mặt bằng ${$(RENT)} + điện nước ${$(UTIL)}.</li></ol><button class=p onclick="startTut()">Xem lại hướng dẫn từng bước</button></div>`},
+guide(){return `<div class=card><h3>🌱 Bắt đầu nhanh</h3><p class=mut style="margin:0 0 6px">Mỗi ngày gồm 2 giai đoạn: <b>chuẩn bị</b> (nhập hàng, chỉnh giá) rồi <b>mở cửa</b> (bán hàng cho khách). Hết ngày bạn nhận kết quả, trả chi phí cố định và bắt đầu ngày mới.</p><ol><li>Vào <b>Nhập hàng</b> mua nguyên liệu.</li><li>Vào <b>Giá bán</b> kiểm tra giá.</li><li>Mở cửa, sang <b>Quầy</b> phục vụ khách.</li><li>Xem <b>Đánh giá</b>, <b>Thống kê</b>, làm <b>Nhiệm vụ</b> rồi <b>Nâng cấp</b> tiệm.</li></ol></div>
+<div class=card><h3>🛒 Nhập hàng &amp; Giá bán</h3><ul><li><b>Nhập hàng:</b> chọn nhà cung cấp, thêm hoa, giấy, quà vào giỏ. Kiểm tra danh sách, số lượng và số tiền rồi bấm "Xác nhận mua" thì tiền mới bị trừ. Suất có hạn.</li><li>Hoa dư không bán hết sẽ hỏng dần (khoảng 60% hỏng qua đêm), nên đừng nhập quá nhiều.</li><li><b>Giá bán:</b> mặc định = vốn + 215%. Bạn chỉnh được từng size, xem vốn và lời ngay bên cạnh. Giá cao lời nhiều nhưng khách dễ mặc cả hoặc bỏ đi.</li></ul></div>
+<div class=card><h3>💐 Phục vụ khách ở Quầy</h3><ol><li>Khách đến theo từng đợt (1–3 người) trong ngày từ 9:00 đến 22:00. Bạn có thể chọn ngày dài 4 hoặc 8 phút.</li><li>Chạm vào khách để xem yêu cầu, rồi mặc cả nếu cần.</li><li>Chọn theo thứ tự: <span class="tag tf">hoa</span> → <span class="tag tp">giấy gói</span> → <span class="tag tg">quà</span>. Món khách cần được viền màu. Quà tặng bao nhiêu loại, bao nhiêu cái cũng được.</li><li>Một số khách yêu cầu giấy gói theo hoa văn riêng.</li></ol><p class=mut style="margin:6px 0 0"><b>Lưu ý:</b> sai loại hoa, size giấy hoặc số bông thì nguyên liệu bị bỏ, bạn phải làm lại và bị trừ điểm. Khách hết kiên nhẫn sẽ bỏ đi. Khách VIP boa 5–20%.</p></div>
+<div class=card><h3>🎒 Túi đồ, Pet &amp; Nội thất</h3><ul><li><b>Túi đồ:</b> xem tồn kho và hạn dùng của từng nguyên liệu.</li><li><b>Pet:</b> vuốt ve, cho ăn, mua và mặc phụ kiện cho thú cưng của tiệm. Bạn cũng có thể chạm vào mèo ở màn hình chính.</li><li><b>Nội thất:</b> mua và sắp xếp đồ trang trí để tiệm thêm đẹp.</li><li><b>Gian hàng:</b> tùy chỉnh diện mạo gian hàng của bạn, bạn bè sẽ thấy khi ghé thăm.</li></ul></div>
+<div class=card><h3>⭐ Đánh giá, Hóa đơn &amp; Thống kê</h3><ul><li><b>Đánh giá:</b> chia 2 kênh Google Map và Fanpage. Bạn tự viết phản hồi cho từng đánh giá.</li><li><b>Hóa đơn:</b> lịch sử thu chi từng khoản.</li><li><b>Thống kê:</b> xem thu chi chi tiết theo ngày, tuần, tháng.</li><li><b>Chi phí cố định mỗi ngày:</b> thuê mặt bằng ${$(RENT)} + điện nước ${$(UTIL)}. Hãy đảm bảo doanh thu đủ bù khoản này.</li></ul></div>
+<div class=card><h3>🏆 Nhiệm vụ, Thành tích &amp; Nâng cấp</h3><ul><li><b>Nhiệm vụ:</b> hoàn thành mục tiêu (phục vụ khách, đạt 5 sao, doanh thu tích lũy...) rồi bấm nhận thưởng tiền.</li><li><b>Thành tích:</b> huy hiệu mở khóa khi bạn đạt các cột mốc.</li><li><b>Nâng cấp:</b> nâng cấp quầy (tối đa cấp 5) và mở khóa loại hoa mới bằng tiền để bán được nhiều loại hơn.</li></ul></div>
+<div class=card><h3>👥 Hồ sơ, Bạn bè &amp; Lưu tiến trình</h3><ul><li><b>Hồ sơ:</b> bấm avatar trên thanh đầu để đổi ảnh, tên, màu chủ đề, làm card visit và xem level.</li><li><b>Bạn bè:</b> đăng nhập Discord để kết bạn bằng username, xem hồ sơ và gian hàng của nhau.</li><li><b>Chơi ngay:</b> tiến trình chỉ lưu trên máy này. Bạn có thể sao lưu bằng <b>mã</b> hoặc <b>QR</b> rồi khôi phục bằng "Khôi phục bằng mã / QR" ở màn hình chính.</li><li><b>Đăng nhập Discord:</b> tiến trình tự động lưu lên tài khoản và khôi phục khi bạn đăng nhập lại ở thiết bị khác. Chưa có tài khoản thì bấm "Ấn vào đây" để đăng ký.</li><li>Đăng xuất sẽ xóa dữ liệu trên máy, nên hãy đảm bảo tiến trình đã được lưu.</li></ul></div>
+<div class=card><h3>💡 Mẹo</h3><ul><li>Nhập vừa đủ để hạn chế hoa hỏng, nhất là khi chưa biết lượng khách.</li><li>Xem kỹ yêu cầu khách trước khi chọn nguyên liệu để tránh bị trừ điểm.</li><li>Trả lời đánh giá đều đặn để giữ tiệm có tiếng tốt.</li><li>Đổi ngôn ngữ và chế độ tối trong <b>Cài đặt</b>.</li></ul>${document.body.classList.contains('m')?'':'<button class=p onclick="startTut()">Xem lại hướng dẫn từng bước</button>'}</div>`},
 save(){return `<div class=card><button class=p onclick="pop=btoa(unescape(encodeURIComponent(JSON.stringify(s))));R()">Tạo mã lưu</button><br><textarea id=cd style="width:100%;height:90px;margin:8px 0">${pop}</textarea><button class=s onclick="load()">Khôi phục từ mã</button> <button class=s onclick="restart()">Chơi lại</button></div>`}};
 function claimQ(i){s.cl[i]=1;s.money+=Q[i][2];L('in','Thưởng nhiệm vụ',Q[i][0],1,Q[i][2]);beep(800);R()}
 function buyUp(c){if(s.up>=5||s.money<c)return;s.money-=c;s.up++;L('out','Nâng cấp','Quầy xịn cấp '+s.up,1,c);R()}
@@ -962,7 +1014,7 @@ I.play='M7 4l13 8-13 8z';I.bag='M6 8h12l1 12H5zM9 8a3 3 0 016 0';I.cat='M5 4l4 4
 const hasProg=()=>s.day>1||s.sv>0||s.rev>0||s.led.length>0||Object.keys(s.st).length>0;
 function renderMenu(){const p=hasProg();document.getElementById('menu').innerHTML=`<svg class=mbg viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice"><circle cx=320 cy=110 r=70 style="fill:var(--sun)" opacity=.35 /><circle cx=320 cy=110 r=24 style="fill:var(--sun)"/><g class=cl><ellipse cx=80 cy=120 rx=44 ry=15 fill=#fff opacity=.85 /><ellipse cx=110 cy=108 rx=28 ry=14 fill=#fff opacity=.85 /></g><g class="cl d2"><ellipse cx=250 cy=200 rx=36 ry=12 fill=#fff opacity=.7 /><ellipse cx=272 cy=191 rx=22 ry=11 fill=#fff opacity=.7 /></g><path d="M0 620Q100 560 210 610T400 590V800H0z" style="fill:var(--h1);opacity:.7"/><path d="M0 690Q120 650 230 690T400 675V800H0z" style="fill:var(--h1)"/><path d="M0 740Q140 710 260 745T400 730V800H0z" style="fill:color-mix(in srgb,var(--h1) 78%,#1b4a2a)"/><rect x=40 y=640 width=8 height=50 fill="#8a5a30"/><circle cx=44 cy=625 r=28 fill="#6cc07a"/><rect x=352 y=630 width=8 height=60 fill="#8a5a30"/><circle cx=356 cy=612 r=32 fill="#58ad69"/></svg><div class=mc><div class=bq><span onclick=petCat()>${catSVG(s.cat,'full',84)}</span>${['tul','hong','hd','cuc','oai'].map((id,i)=>`<span class=sway style="animation-delay:${i*.4}s">${fw(id,i==2?68:52)}</span>`).join('')}</div><h1>Justaseed</h1>${p?`<span class=balp>${$(s.money)}</span>`:''}<p class=hand style="margin:0">Tiệm hoa nhỏ, giấc mơ lớn</p><button class="p big" onclick="play()">${ic('play',20)} Chơi${p?' tiếp':''}</button>${p?`<span class=mut>Ngày ${s.day}</span>`:''}<button class="s big" onclick="pfm()">${avH(26)} Hồ sơ</button><button class="s big" onclick="mdl('g')">${ic('book',20)} Hướng dẫn</button><button class="s big ${MSO?'on2':''}" onclick="mdl('s')">${ic('gear',20)} Cài đặt</button>${MSO?`<div class=card style="width:100%;margin:0"><div class=row><span>Âm thanh</span><button class="s ${s.snd?'on2':''}" onclick="tgS('snd')">${s.snd?'Bật':'Tắt'}</button></div><div class=row><span>Nhạc nền</span><button class="s ${s.mus?'on2':''}" onclick="tgS('mus')">${s.mus?'Bật':'Tắt'}</button></div><div class=row><span>Chế độ tối</span><button class="s ${s.dark?'on2':''}" onclick="tgS('dark',event)">${s.dark?'Bật':'Tắt'}</button></div>${langUI()}${bgUI()}<button class="s" style="width:100%" onclick="mdl('r')">${ic('save',18)} Khôi phục tiến trình</button></div>`:''}</div>`}
 function mdl0(k){const m=document.getElementById('modal');if(!k){m.innerHTML='';return}
-const h=k=='g'?`<div class=row><h2>Hướng dẫn</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>${V.guide()}`:`<div class=row><h2>Khôi phục tiến trình</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><div class=card><p class=mut style="margin-top:0">Dán mã lưu (tạo ở tab Lưu trong game) vào ô bên dưới.</p><textarea id=cd2 style="width:100%;height:110px" placeholder="Dán mã lưu..."></textarea><div class=row><button class=p onclick="load('cd2')">Khôi phục</button></div></div>`;
+const h=k=='g'?`<div class=row><h2>Hướng dẫn</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>${V.guide()}`:`<div class=row><h2>Khôi phục tiến trình</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><div class=card><p class=mut style="margin-top:0">Chế độ Chơi ngay chỉ khôi phục thủ công. Dán mã lưu hoặc dùng nút Quét QR bên dưới.</p><textarea id=cd2 style="width:100%;height:110px" placeholder="Dán mã lưu..."></textarea><div class=row><button class=p onclick="load('cd2')">Khôi phục</button></div></div>`;
 m.innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms>${h}</div></div>`}
 function play(){scr='game';LT='';document.body.classList.remove('m');if(s.ph=='open'&&live&&!live.iv)live.iv=setInterval(tick,1000);R()}
 function goMenu(){if(live&&live.iv){clearInterval(live.iv);live.iv=null}scr='menu';document.body.classList.add('m');mdl();renderMenu();save()}
@@ -1766,7 +1818,7 @@ function qrUI(){const sc=document.querySelector('.ms'),tp=sc?sc.scrollTop:0;$q('
 function qrSet(k,v){QO[k]=v;s.qc={...QO};save();qrUI()}
 
 async function sendQrToDiscord() {
-  if (!currentUser) return toast('Hãy đăng nhập Discord trước');
+  if (!currentUser) return toast('Hãy liên kết Discord trước');
   if (!QCV) return toast('Chưa có ảnh QR');
   toast('Đang gửi...');
   try {
@@ -2444,7 +2496,179 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
 {const o=V.home;V.home=function(){return o.apply(this,arguments)+Z.policy()}}
 })();
 </script>
-</body></html>
+
+<script>
+/* ===== V29: 2 chế độ - Chơi ngay (local) / Discord (tự động lưu) ===== */
+(function(){
+  const MODE_KEY = 'jsMode';
+  const INTENT_KEY = 'jsAuthIntent';
+  window.DISCORD_OK = false;
+
+  function setMode(m){ try{ localStorage.setItem(MODE_KEY, m); }catch(e){} }
+  function getMode(){ try{ return localStorage.getItem(MODE_KEY) || 'guest'; }catch(e){ return 'guest'; } }
+
+  async function hasAccount(uid){
+    try{
+      const r = await supabaseClient.from('game_saves').select('user_id').eq('user_id', uid).maybeSingle();
+      if (r && r.error) {
+        const m = (r.error.message || '') + (r.error.code || '');
+        if (/42P01|PGRST205|game_saves|schema cache/i.test(m)) {
+          toast('Chưa tạo được bảng game_saves trên Supabase. Hãy chạy SQL tạo bảng trước.');
+        }
+        return false;
+      }
+      return !!(r && r.data);
+    }catch(e){ return false; }
+  }
+
+  window.playNow = function(){
+    window.DISCORD_OK = false;
+    setMode('guest');
+    const go = function(){ currentUser = null; if (typeof play === 'function') play(); };
+    if (typeof currentUser !== 'undefined' && currentUser) {
+      supabaseClient.auth.signOut().then(go).catch(go);
+    } else go();
+  };
+
+  window.loginWithDiscord = function(){
+    try{ localStorage.setItem(INTENT_KEY, 'login'); }catch(e){}
+    if (typeof loginDiscord === 'function') loginDiscord();
+  };
+
+  window.registerWithDiscord = function(){
+    try{ localStorage.setItem(INTENT_KEY, 'register'); }catch(e){}
+    if (typeof loginDiscord === 'function') loginDiscord();
+  };
+
+  window.logoutToMenu = async function(){
+    try{ await supabaseClient.auth.signOut(); }catch(e){}
+    currentUser = null;
+    window.DISCORD_OK = false;
+    setMode('guest');
+    try{ if (typeof live !== 'undefined' && live && live.iv) clearInterval(live.iv); }catch(e){}
+    try{ live = null; cur = null; CART = {}; pop = ''; }catch(e){}
+    try{ s = def(); }catch(e){}
+    try{
+      Object.keys(localStorage).forEach(function(k){
+        if (!/^sb-|supabase|jsMode|jsAuthIntent/i.test(k)) localStorage.removeItem(k);
+      });
+    }catch(e){}
+    toast('Đã đăng xuất. Dữ liệu local đã xóa. Đăng nhập Discord để khôi phục tiến trình.');
+    setTimeout(function(){ location.reload(); }, 800);
+  };
+
+  // Menu 2 chế độ
+  renderMenu = function(){
+    const p = hasProg();
+    const logged = (typeof currentUser !== 'undefined' && currentUser && window.DISCORD_OK);
+    const nm = logged ? (currentUser.user_metadata?.preferred_username || currentUser.user_metadata?.name || currentUser.email || 'Discord') : '';
+    const waiting = !logged && !window.AUTH_READY && getMode() === 'discord';
+    const status = waiting
+      ? '<p class=mut style="margin:6px 0 2px">⏳ Đang kiểm tra tài khoản...</p>'
+      : logged
+      ? '<p class=mut style="margin:6px 0 2px">☁️ Đã đăng nhập <b>@'+esc(nm)+'</b><br>Tiến trình tự động lưu lên Discord</p>'
+      : '<p class=mut style="margin:6px 0 2px">Chế độ <b>Chơi ngay</b> · chỉ lưu trên máy này<br>Khôi phục thủ công bằng <b>mã</b> hoặc <b>QR</b></p>';
+
+    const buttons = waiting ? '' : logged
+      ? '<button class="p big" onclick="play()">'+ic('play',20)+' Chơi'+(p?' tiếp':'')+'</button>'
+        +(p?'<span class=mut>Ngày '+s.day+'</span>':'')
+        +'<button class="s big" onclick="logoutToMenu()">Đăng xuất Discord</button>'
+      : '<button class="p big" onclick="playNow()">'+ic('play',20)+' Chơi ngay</button>'
+        +'<button class="s big" onclick="loginWithDiscord()">Đăng nhập Discord</button>'
+        +'<p class=mut style="font-size:.78rem;margin:4px 0 0;line-height:1.35">Chưa có tài khoản? <a href="#" onclick="registerWithDiscord();return false" style="color:inherit;font-weight:700;text-decoration:underline">Ấn vào đây</a> để đăng ký.</p>';
+
+    const restoreBtn = '<button class="s" style="width:100%;margin-top:6px" onclick="mdl(\'r\')">'+ic('save',18)+' Khôi phục bằng mã / QR</button>';
+
+    document.getElementById('menu').innerHTML =
+      '<svg class=mbg viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice"><circle cx=320 cy=110 r=70 style="fill:var(--sun)" opacity=.35 /><circle cx=320 cy=110 r=24 style="fill:var(--sun)"/><g class=cl><ellipse cx=80 cy=120 rx=44 ry=15 fill=#fff opacity=.85 /><ellipse cx=110 cy=108 rx=28 ry=14 fill=#fff opacity=.85 /></g><g class="cl d2"><ellipse cx=250 cy=200 rx=36 ry=12 fill=#fff opacity=.7 /><ellipse cx=272 cy=191 rx=22 ry=11 fill=#fff opacity=.7 /></g><path d="M0 620Q100 560 210 610T400 590V800H0z" style="fill:var(--h1);opacity:.7"/><path d="M0 690Q120 650 230 690T400 675V800H0z" style="fill:var(--h1)"/><path d="M0 740Q140 710 260 745T400 730V800H0z" style="fill:color-mix(in srgb,var(--h1) 78%,#1b4a2a)"/><rect x=40 y=640 width=8 height=50 fill="#8a5a30"/><circle cx=44 cy=625 r=28 fill="#6cc07a"/><rect x=352 y=630 width=8 height=60 fill="#8a5a30"/><circle cx=356 cy=612 r=32 fill="#58ad69"/></svg>'
+      +'<div class=mc>'
+      +'<div class=bq><span onclick=petCat()>'+catSVG(s.cat,'full',84)+'</span>'+['tul','hong','hd','cuc','oai'].map((id,i)=>'<span class=sway style="animation-delay:'+(i*.4)+'s">'+fw(id,i==2?68:52)+'</span>').join('')+'</div>'
+      +'<h1>Justaseed</h1>'
+      +(p?'<span class=balp>'+$(s.money)+'</span>':'')
+      +'<p class=hand style="margin:0">Tiệm hoa nhỏ, giấc mơ lớn</p>'
+      +status
+      +buttons
+      +restoreBtn
+      +'<button class="s big" onclick="mdl(\'g\')">'+ic('book',20)+' Hướng dẫn</button>'
+      +'<button class="s big '+(MSO?'on2':'')+'" onclick="mdl(\'s\')">'+ic('gear',20)+' Cài đặt</button>'
+      +(MSO?'<div class=card style="width:100%;margin:0"><div class=row><span>Âm thanh</span><button class="s '+(s.snd?'on2':'')+'" onclick="tgS(\'snd\')">'+(s.snd?'Bật':'Tắt')+'</button></div><div class=row><span>Nhạc nền</span><button class="s '+(s.mus?'on2':'')+'" onclick="tgS(\'mus\')">'+(s.mus?'Bật':'Tắt')+'</button></div><div class=row><span>Chế độ tối</span><button class="s '+(s.dark?'on2':'')+'" onclick="tgS(\'dark\',event)">'+(s.dark?'Bật':'Tắt')+'</button></div>'+langUI()+bgUI()+'</div>':'')
+      +'</div>';
+  };
+
+  // Hiện ngay menu mới, không chờ 1 giây như trước
+  window.AUTH_READY = false;
+  if (typeof scr === 'undefined' || scr !== 'game') renderMenu();
+  setTimeout(function(){
+    if (window.AUTH_READY) return;
+    window.AUTH_READY = true;
+    if (typeof scr === 'undefined' || scr !== 'game') renderMenu();
+  }, 4000);
+
+  // Xử lý sau khi Discord OAuth trả về
+  async function onSession(user){
+    if (!user) { window.DISCORD_OK = false; return; }
+    currentUser = user;
+    let intent = null;
+    try{ intent = localStorage.getItem(INTENT_KEY); localStorage.removeItem(INTENT_KEY); }catch(e){}
+
+    const exists = await hasAccount(user.id);
+    window.AUTH_READY = true;
+
+    if (intent === 'register') {
+      try{ await upsertProfile(user); }catch(e){}
+      window.DISCORD_OK = true;
+      setMode('discord');
+      toast(exists ? 'Tài khoản đã tồn tại, đã đăng nhập.' : 'Đã tạo tài khoản Discord. Tiến trình sẽ được lưu tự động.');
+      if (typeof scr !== 'undefined' && scr === 'game' && typeof R === 'function') R();
+      else if (typeof renderMenu === 'function') renderMenu();
+      // Kích hoạt đồng bộ đám mây
+      setTimeout(function(){ try{ if (window.CLOUD && !window.CLOUD.off) window.CLOUD.ready = 0; }catch(e){} }, 500);
+      return;
+    }
+
+    // Đăng nhập hoặc phiên cũ
+    if (!exists) {
+      try{ await supabaseClient.auth.signOut(); }catch(e){}
+      currentUser = null;
+      window.DISCORD_OK = false;
+      setMode('guest');
+      toast('Tài khoản Discord này chưa đăng ký trong game. Hãy chọn "Đăng ký bằng Discord".');
+      if (typeof renderMenu === 'function') renderMenu();
+      return;
+    }
+
+    window.DISCORD_OK = true;
+    setMode('discord');
+    if (typeof scr !== 'undefined' && scr !== 'game' && typeof renderMenu === 'function') renderMenu();
+  }
+
+  // Lắng nghe thay đổi phiên
+  try{
+    supabaseClient.auth.onAuthStateChange(async function(_e, session){
+      const user = session && session.user;
+      if (user) await onSession(user);
+      else {
+        window.DISCORD_OK = false;
+        if (!window.AUTH_READY) {
+          window.AUTH_READY = true;
+          if (typeof scr === 'undefined' || scr !== 'game') renderMenu();
+        }
+      }
+    });
+  }catch(e){}
+
+  // Kiểm tra phiên hiện tại khi tải trang
+  setTimeout(async function(){
+    if (typeof currentUser !== 'undefined' && currentUser) await onSession(currentUser);
+    else if (getMode() !== 'discord') {
+      window.AUTH_READY = true;
+      if (typeof renderMenu === 'function' && typeof scr !== 'undefined' && scr !== 'game') renderMenu();
+    }
+  }, 1000);
+})();
+</script>
+
+
 
 <style>
 /* ===== V21: Beta lock, Menu arrow, Forum, Notifications, Dev ===== */
@@ -2862,7 +3086,7 @@ nav button.locked span { position: relative; }
   if (typeof R === 'function' && scr === 'game') setTimeout(R, 100);
 })();
 </script>
-</body></html>
+
 
 <style>
 /* ===== V22: Font size/weight + red dot + floating notifs ===== */
@@ -3049,8 +3273,8 @@ document.body.insertAdjacentHTML('beforeend',`<div id=sdh role=button aria-label
 G('sdh').onclick=()=>SD.open();G('sdo').onclick=()=>SD.close();
 function head(){
  const n=unread(),u=typeof currentUser!='undefined'&&currentUser,
-  nm=u?(currentUser.user_metadata?.preferred_username||currentUser.user_metadata?.name||currentUser.user_metadata?.full_name||'Đã đăng nhập'):'';
- const a=u?`<span class=mut style="font-size:.82rem">@${esc(nm)}</span>`:`<button class=p style="padding:5px 10px;font-size:.85rem" onclick="loginDiscord()">Đăng nhập</button>`;
+  nm=u?(currentUser.user_metadata?.preferred_username||currentUser.user_metadata?.name||currentUser.user_metadata?.full_name||'Đã liên kết'):'';
+ const a=u?`<span class=mut style="font-size:.82rem">@${esc(nm)}</span>`:`<button class=p style="padding:5px 10px;font-size:.85rem" onclick="loginWithDiscord()">Đăng nhập</button>`;
  if(G('sda').dataset.k!=a){G('sda').innerHTML=a;G('sda').dataset.k=a}
  const t=TS.map(x=>`<button class="${K==x[0]?'on':''}" onclick="SD.go('${x[0]}')">${ic(x[1],20)}<span>${x[2]}</span>${(x[0]=='notif'?n:x[0]=='quest'?qn():0)?`<b class=bd>${x[0]=='notif'?n:qn()}</b>`:''}</button>`).join('');
  if(HH!=t){G('sdtabs').innerHTML=t;HH=t}
@@ -3643,7 +3867,7 @@ function fpRender(k){
   +'<button class=p style="width:100%;margin-top:8px" onclick="mdl();visitFriend(\''+F.uid+'\')">Thăm tiệm</button>'
   +'</div></div></div>'}
 async function friendProfile(uid){
- if(!currentUser)return toast('Hãy đăng nhập Discord');
+ if(!currentUser)return toast('Hãy liên kết Discord');
  document.getElementById('modal').innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><p class=mut style="text-align:center">Đang tải hồ sơ...</p></div></div>';
  let shop=null,prof=null;
  try{
@@ -3717,14 +3941,14 @@ const enc=async str=>{const u=new TextEncoder().encode(str);try{if(!window.Compr
 const warn=m=>{if(!CS.warned){CS.warned=1;toast(m)}};
 const bad=e=>e&&(e.code=='42P01'||e.code=='PGRST205'||/game_saves|schema cache/i.test(e.message||''));
 async function up(force){
- if(!currentUser||!CS.ready||CS.busy||CS.off||CS.uid!=currentUser.id)return;
+ if(!window.DISCORD_OK||!currentUser||!CS.ready||CS.busy||CS.off||CS.uid!=currentUser.id)return;
  const j=cj();if(!force&&j===CS.last)return;
  CS.busy=1;
  try{const code=await enc(j),r=await supabaseClient.from('game_saves').upsert({user_id:currentUser.id,data:code,xp:Math.round(s.xp||0),day:s.day||1,money:Math.round(s.money||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
   if(r&&r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: thiếu bảng game_saves trên Supabase')}}else{CS.last=j;CS.t=Date.now()}}catch(e){}
  CS.busy=0}
 async function sync(){
- if(!currentUser)return;const uid=currentUser.id;CS.uid=uid;CS.ready=0;
+ if(!window.DISCORD_OK||!currentUser)return;const uid=currentUser.id;CS.uid=uid;CS.ready=0;
  let row=null;
  try{const r=await supabaseClient.from('game_saves').select('data,xp,day,money').eq('user_id',uid).maybeSingle();
   if(r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: thiếu bảng game_saves trên Supabase')}else{CS.uid=null;CS.retry=Date.now()}return}
@@ -3740,7 +3964,7 @@ async function sync(){
  }
  CS.ready=1;await up(true);if(!row)toast('☁️ Đã bật lưu tiến trình lên tài khoản Discord')}
 setInterval(()=>{
- if(!currentUser){CS.uid=null;CS.ready=0;CS.off=0;return}
+ if(!window.DISCORD_OK||!currentUser){CS.uid=null;CS.ready=0;CS.off=0;return}
  if(CS.off)return;
  if(CS.uid!=currentUser.id&&!CS.syncing&&Date.now()-CS.retry>15000){CS.syncing=1;sync().finally(()=>CS.syncing=0);return}
  if(CS.ready&&Date.now()-CS.t>20000)up()},3000);

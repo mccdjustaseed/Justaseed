@@ -5739,7 +5739,7 @@ const fm=n=>Number(n||0).toLocaleString('vi-VN');
 const ago=t=>{if(!t)return'—';const m=Math.max(0,Math.round((Date.now()-new Date(t))/60000));return m<60?m+' phút trước':m<1440?Math.round(m/60)+' giờ trước':Math.round(m/1440)+' ngày trước'};
 const me=()=>typeof currentUser!='undefined'&&currentUser?currentUser:null;
 const redraw=()=>{try{if(typeof scr!='undefined'&&scr=='game')R()}catch(e){}};
-const DIAG=1; /* đặt 0 khi xong để tab Quản trị chỉ hiện cho admin */
+const DIAG=0; /* đặt 0 khi xong để tab Quản trị chỉ hiện cho admin */
 const setNote=n=>{if(A.note!==n){A.note=n;try{softR()}catch(e){}}};
 const addTab=()=>{if(!TABS.some(t=>t[0]=='adm'))TABS.splice(1,0,['adm','gear','Quản trị'])};
 async function chk(){

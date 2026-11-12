@@ -6004,11 +6004,10 @@ window.AD={
 })();
 </script>
 <style>
-/* ===== ĐỌC SÁCH (Gutendex / Wikisource) ===== */
+/* ===== ĐỌC SÁCH (Wikisource nhiều ngôn ngữ) ===== */
 .bkx-r{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--ln)}
 .bkx-r:first-child{border-top:0}
 .bkx-c{flex:0 0 46px;height:66px;border-radius:6px;background:var(--g);display:grid;place-items:center;font-size:1.3rem;overflow:hidden}
-.bkx-c img{width:100%;height:100%;object-fit:cover}
 .bkx-i{flex:1;min-width:0}
 .bkx-i b{display:block;font-size:.92rem;line-height:1.25;overflow-wrap:anywhere}
 .bkx-i small{color:var(--mut);display:block;overflow-wrap:anywhere}
@@ -6017,14 +6016,28 @@ window.AD={
 .bkx-ti{flex:1;min-width:0;font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bkx-rg{width:100%;accent-color:var(--g2)}
 .bkx-toc{display:block;width:100%;text-align:left;margin:3px 0}
-.bkx-src{display:flex;gap:6px;margin:6px 0}.bkx-src button{flex:1}
 .bkx-ch{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
+/* lật trang: bản sao trang đang đọc lật quanh gáy sách (nằm ngoài ngăn nên không bị vẽ lại giữa chừng) */
+.bkx-fl{position:fixed;z-index:50;perspective:1400px;pointer-events:none}
+.bkx-fp{position:absolute!important;inset:0;margin:0!important;box-sizing:border-box;overflow:hidden;transform-origin:left center;backface-visibility:hidden;will-change:transform}
+.bkx-out .bkx-fp{animation:bkxo .5s cubic-bezier(.5,0,.75,.45) forwards}
+.bkx-in .bkx-fp{animation:bkxi .5s cubic-bezier(.25,.6,.4,1) forwards}
+@keyframes bkxo{0%{transform:rotateY(0);box-shadow:0 0 0 rgba(0,0,0,0)}55%{box-shadow:14px 0 30px rgba(0,0,0,.3)}100%{transform:rotateY(-110deg);opacity:0;box-shadow:0 0 0 rgba(0,0,0,0)}}
+@keyframes bkxi{0%{transform:rotateY(-110deg);opacity:0}35%{opacity:1;box-shadow:14px 0 30px rgba(0,0,0,.3)}100%{transform:rotateY(0);opacity:1;box-shadow:0 0 0 rgba(0,0,0,0)}}
+@media(prefers-reduced-motion:reduce){.bkx-fl{display:none}}
+/* ngăn Cộng đồng: mở toàn màn hình, nội dung căn giữa (tối đa 640px trên màn rộng) */
+#sd{width:100%;max-width:none;border-radius:0;box-shadow:none}
+#sd>.sdt{width:min(100%,640px);margin:0 auto;box-sizing:border-box}
+#sd>#sdtabs{width:min(calc(100% - 24px),616px);margin:4px auto;box-sizing:border-box}
+#sd>#sdbody{width:min(100%,640px);margin:0 auto;box-sizing:border-box}
 </style>
 <script>
 (()=>{
-const LS='jsBook',$e=id=>document.getElementById(id),LIM=1800,BR='\u0001',WS='https://vi.wikisource.org/w/api.php';
-const RDR=window.RDR={q:'',sq:'',lang:'',res:[],next:{},busy:0,err:'',warn:'',map:{},cur:null,pages:[],pg:0,ld:0,lerr:'',fs:1.05,lib:[],cache:{},auto:0};
-try{const j=JSON.parse(localStorage.getItem(LS)||'{}');if(Array.isArray(j.lib))RDR.lib=j.lib;if(j.fs)RDR.fs=j.fs;if(j.lang!=null)RDR.lang=j.lang}catch(e){}
+const LS='jsBook',$e=id=>document.getElementById(id),LIM=1800,BR='\u0001';
+const wsApi=l=>'https://'+(l||'vi')+'.wikisource.org/w/api.php';
+/* LƯU Ý: game đã có biến toàn cục BK (lời thoại khách), nên đối tượng sách dùng tên RDR */
+const RDR=window.RDR={q:'',sq:'',lang:'',res:[],next:{},busy:0,err:'',warn:'',why:'',map:{},cur:null,pages:[],pg:0,ld:0,lerr:'',fs:1.05,lib:[],cache:{},diagTxt:''};
+try{const j=JSON.parse(localStorage.getItem(LS)||'{}');if(Array.isArray(j.lib))RDR.lib=j.lib.filter(x=>x&&x.src=='ws');if(j.fs)RDR.fs=j.fs;if(j.lang!=null)RDR.lang=j.lang}catch(e){}
 const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({lib:RDR.lib.slice(0,30),fs:RDR.fs,lang:RDR.lang}))}catch(e){}};
 I.book='M4 4h6a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-6a3 3 0 00-3 3v13a2 2 0 012-2h7z';
 /* tab Sách nằm trong ngăn Cộng đồng (vuốt phải), không còn trên thanh tab chính */
@@ -6034,37 +6047,24 @@ I.book='M4 4h6a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-6a3 3 0 00-3 3v13a2 2 0 012-
  try{const o=R;R=function(){if(tab=='book'&&window.SD){tab='home';SD.open('book')}return o.apply(this,arguments)}}catch(e){}}
 const toTop=()=>{scrollTo(0,0);const sb=$e('sdbody');if(sb)sb.scrollTop=0};
 
-const LANGS=[['','Mọi ngôn ngữ'],['vi','Tiếng Việt'],['en','Tiếng Anh'],['fr','Tiếng Pháp'],['de','Tiếng Đức'],['es','Tiếng Tây Ban Nha'],['zh','Tiếng Trung']];
-const CHIPS=['Truyện Kiều','Tắt đèn','Nam Cao','Nguyễn Du','Hồ Chí Minh','Truyện ngắn','Thơ'];
-const authorOf=a=>{if(!a||!a.length)return 'Khuyết danh';const n=a[0].name||'';const m=n.split(', ');return m.length==2?m[1]+' '+m[0]:n};
-const txtOf=f=>{f=f||{};let k=Object.keys(f).find(x=>/^text\/plain/.test(x));if(k)return{url:f[k],html:0};k=Object.keys(f).find(x=>/^text\/html/.test(x));return k?{url:f[k],html:1}:null};
-const wkey=t=>'w_'+encodeURIComponent(t).replace(/'/g,'%27');
+const ALL=['vi','en','fr','de'];
+const LANGS=[['','Tất cả (Việt, Anh, Pháp, Đức)'],['vi','Tiếng Việt'],['en','Tiếng Anh'],['fr','Tiếng Pháp'],['de','Tiếng Đức'],['es','Tiếng Tây Ban Nha'],['zh','Tiếng Trung']];
+const CH={vi:['Truyện Kiều','Tắt đèn','Nam Cao','Nguyễn Du','Hồ Chí Minh','Truyện ngắn','Thơ'],en:['Pride and Prejudice','Sherlock Holmes','Frankenstein','Shakespeare','Alice in Wonderland'],fr:['Les Misérables','Victor Hugo','Molière','Jules Verne'],de:['Faust','Goethe','Märchen','Kafka'],es:['Don Quijote','Cervantes'],zh:['红楼梦','三国演义','论语']};
+const chips=()=>RDR.lang?(CH[RDR.lang]||[]):CH.vi.slice(0,4).concat(CH.en.slice(0,2));
+const wkey=(l,t)=>'w'+l+'_'+encodeURIComponent(t).replace(/'/g,'%27');
 const plain=h=>{try{return new DOMParser().parseFromString(h,'text/html').body.textContent}catch(e){return String(h).replace(/<[^>]+>/g,'')}};
+const wUrl=(l,t)=>'https://'+l+'.wikisource.org/wiki/'+encodeURI(t.replace(/ /g,'_'));
 
-/* ---- tải dữ liệu: thử trực tiếp, nếu bị chặn CORS thì qua proxy ---- */
+/* ---- tải dữ liệu ---- */
 async function tryFetch(u,ms){const ac=new AbortController(),t=setTimeout(()=>ac.abort(),ms||15000);
  try{const r=await fetch(u,{signal:ac.signal});if(!r.ok)throw new Error('HTTP '+r.status);return r}
  catch(e){throw new Error(e&&e.name=='AbortError'?'quá thời gian chờ':/^HTTP/.test(e&&e.message)?e.message:'bị chặn hoặc không kết nối được')}
  finally{clearTimeout(t)}}
-async function getText(u,alts){
- const base=alts&&alts[0]?alts[0]:u;
- const tries=[u].concat(alts||[]).concat(['https://api.allorigins.win/raw?url='+encodeURIComponent(base),'https://cors.isomorphic-git.org/'+base,'https://corsproxy.io/?url='+encodeURIComponent(base)]);
- let err;for(const x of tries){try{const r=await tryFetch(x,20000),t=await r.text();if(t&&t.length>500)return t}catch(e){err=e}}
- throw err||new Error('fail')}
 async function getJson(u){
- const tries=[[u,20000],['https://api.allorigins.win/raw?url='+encodeURIComponent(u),12000],['https://cors.isomorphic-git.org/'+u,12000],['https://corsproxy.io/?url='+encodeURIComponent(u),12000]];
- const errs=[];
- for(const [x,ms] of tries){try{return await(await tryFetch(x,ms)).json()}catch(e){errs.push(e.message||'lỗi')}}
- throw new Error(errs[0]+(errs.length>1?' (qua proxy: '+errs[errs.length-1]+')':''))}
+ let err;for(let i=0;i<2;i++){try{return await(await tryFetch(u,20000)).json()}catch(e){err=e}}
+ throw err}
+
 /* ---- xử lý văn bản ---- */
-function strip(t){
- t=t.replace(/\r/g,'');
- const a=t.search(/\*\*\* ?START OF (THE|THIS) PROJECT GUTENBERG[^\n]*/i);if(a>=0){const n=t.indexOf('\n',a);t=n>=0?t.slice(n+1):t}
- const z=t.search(/\*\*\* ?END OF (THE|THIS) PROJECT GUTENBERG/i);if(z>0)t=t.slice(0,z);
- return t}
-function htmlToText(h){try{const d=new DOMParser().parseFromString(h,'text/html');d.querySelectorAll('script,style').forEach(x=>x.remove());
- const ps=[...d.body.querySelectorAll('h1,h2,h3,h4,p')].map(x=>x.textContent.replace(/\s+/g,' ').trim()).filter(Boolean);
- return ps.length?ps.join('\n\n'):d.body.textContent}catch(e){return h.replace(/<[^>]+>/g,' ')}}
 function paginate(t){
  const ps=t.split(/\n\s*\n/).map(p=>p.replace(/\s*\n\s*/g,' ').replace(/[ \t]+/g,' ').replace(/^[ \u0001]+|[ \u0001]+$/g,'')).filter(Boolean);
  const pages=[];let cur=[],n=0;
@@ -6075,8 +6075,6 @@ function paginate(t){
   if(n&&n+p.length>LIM)flush();
   cur.push(p);n+=p.length}
  flush();return pages}
-
-/* ---- Wikisource ---- */
 function wsExtract(html,title,detect){
  const d=new DOMParser().parseFromString(html,'text/html');
  d.querySelectorAll('script,style,.mw-editsection,.noprint,.ws-noexport,.toc,#toc,.navbox,.metadata,sup.reference,.mw-references-wrap,.printfooter,.mw-empty-elt,.pagenum').forEach(x=>x.remove());
@@ -6090,60 +6088,53 @@ function wsExtract(html,title,detect){
  if(parts&&(parts.length>=3||(parts.length==2&&txt.length<4000))&&txt.length<8000)return{root:title,parts,pages:[]};
  const pages=paginate(txt);if(!pages.length)throw new Error('empty');
  return{root:title,parts:null,pages}}
-async function wsLoad(title,detect){
- const k='ws:'+title+(detect?'':'#p');if(RDR.cache[k])return RDR.cache[k];
- const j=await getJson(WS+'?action=parse&page='+encodeURIComponent(title)+'&prop=text&redirects=1&disableeditsection=1&disablelimitreport=1&format=json&formatversion=2&origin=*');
+async function wsLoad(l,title,detect){
+ const k='ws:'+l+':'+title+(detect?'':'#p');if(RDR.cache[k])return RDR.cache[k];
+ const j=await getJson(wsApi(l)+'?action=parse&page='+encodeURIComponent(title)+'&prop=text&redirects=1&disableeditsection=1&disablelimitreport=1&format=json&formatversion=2&origin=*');
  if(j.error||!j.parse||!j.parse.text)throw new Error('no page');
  const r=wsExtract(j.parse.text,j.parse.title||title,detect);RDR.cache[k]=r;return r}
-async function pgLoad(id,b){
- const k='pg:'+id;if(RDR.cache[k])return RDR.cache[k];
- let t=await getText(b.url,b.html?[]:['https://www.gutenberg.org/cache/epub/'+id+'/pg'+id+'.txt']);
- t=b.html?htmlToText(t):strip(t);
- const pages=paginate(t);if(!pages.length)throw new Error('empty');
- return RDR.cache[k]={pages}}
-RDR._strip=strip;RDR._pag=paginate;RDR._ws=wsExtract;
+RDR._pag=paginate;RDR._ws=wsExtract;
 
 /* ---- thư viện cá nhân (tiến độ đọc) ---- */
 const inLib=id=>RDR.lib.find(x=>x.id==id);
 function touch(){const c=RDR.cur;if(!c)return;let e=inLib(c.id);if(!e){e={id:c.id};RDR.lib.unshift(e)}
- Object.assign(e,{src:c.src,wt:c.wt,title:c.title,author:c.author,cover:c.cover,url:c.url,html:c.html,t:Date.now()});
+ Object.assign(e,{src:'ws',wl:c.wl,wt:c.wt,title:c.title,t:Date.now()});
  if(c.parts){e.ps=c.parts.map(x=>x.slice(c.wt.length+1));if(c.part>=0){e.part=c.part;e.pg=RDR.pg}}
  else{e.pg=RDR.pg;e.total=RDR.pages.length}
  RDR.lib=[e].concat(RDR.lib.filter(x=>x!==e));sv()}
 const prog=e=>e.ps?(e.part>=0?'chương '+(e.part+1)+'/'+e.ps.length:e.ps.length+' chương'):'trang '+((e.pg||0)+1)+'/'+(e.total||'?');
 
 /* ---- giao diện ---- */
-const coverH=b=>`<div class="bkx-c">${b.cover?`<img src="${esc(b.cover)}" alt="" loading="lazy" onerror="this.remove()">`:'📖'}</div>`;
 const idq=id=>`'${esc(id)}'`;
-const hasMore=()=>!!(RDR.next&&(RDR.next.pg||RDR.next.ws));
-const srcTag=b=>b.src=='ws'?'🇻🇳 Wikisource':'🌍 Gutenberg';
+const hasMore=()=>Object.keys(RDR.next).some(k=>RDR.next[k]);
 function resH(){
  const wy=RDR.why?`<br><small>Chi tiết: ${esc(RDR.why)}</small>`:'';
  const warn=RDR.warn?`<p class="mut">⚠️ ${esc(RDR.warn)}${wy}</p>`:'';
- if(RDR.err){const qq=encodeURIComponent((RDR.q||'').trim());return `<p class="mut">⚠️ ${esc(RDR.err)}${wy}</p><div class="row"><button class="s" onclick="RDR.search()">Thử lại</button><button class="s" onclick="RDR.diag()">🔧 Kiểm tra kết nối</button></div><p class="mut" style="font-size:.8rem">Hoặc tìm trực tiếp trên trình duyệt: <a target="_blank" rel="noopener" href="https://vi.wikisource.org/w/index.php?search=${qq}">Wikisource</a> · <a target="_blank" rel="noopener" href="https://www.gutenberg.org/ebooks/search/?query=${qq}">Gutenberg</a></p>`}
- if(!RDR.res.length)return warn+(RDR.busy?'<p class="mut">Đang tải…</p>':'<p class="mut">Không tìm thấy sách nào.</p>');
+ if(RDR.err)return `<p class="mut">⚠️ ${esc(RDR.err)}${wy}</p><div class="row"><button class="s" onclick="RDR.search()">Thử lại</button><button class="s" onclick="RDR.diag()">🔧 Kiểm tra kết nối</button></div>`;
+ if(!RDR.res.length){
+  if(RDR.busy)return '<p class="mut">Đang tìm…</p>';
+  if(!RDR.sq)return `<p class="mut">Nhập tên tác phẩm hoặc tác giả, hoặc thử gợi ý:</p><div class="bkx-ch">${chips().map(c=>`<button class="s" onclick="RDR.quick('${esc(c)}')">${esc(c)}</button>`).join('')}</div>`;
+  return warn+'<p class="mut">Không tìm thấy kết quả nào.</p>'}
  return warn+RDR.res.map(b=>{const e=inLib(b.id);
-  return `<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${srcTag(b)}${b.src=='ws'?(b.snippet?' · '+esc(b.snippet):''):' · '+esc(b.author)+(b.lang?' · '+esc(b.lang):'')}</small><div class="row" style="margin-top:4px"><button class="${e?'s':'p'}" ${b.noText?'disabled':''} onclick="RDR.open(${idq(b.id)})">${b.noText?'Không có bản đọc':e?'Đọc tiếp · '+prog(e):'Đọc'}</button></div></div></div>`}).join('')
+  return `<div class="bkx-r"><div class="bkx-c">📖</div><div class="bkx-i"><b>${esc(b.title)}</b><small>Wikisource · ${esc(b.wl.toUpperCase())}${b.snippet?' · '+esc(b.snippet):''}</small><div class="row" style="margin-top:4px"><button class="${e?'s':'p'}" onclick="RDR.open(${idq(b.id)})">${e?'Đọc tiếp · '+prog(e):'Đọc'}</button></div></div></div>`}).join('')
   +(hasMore()?`<div class="row"><button class="s" ${RDR.busy?'disabled':''} onclick="RDR.search(1)">${RDR.busy?'Đang tải…':'Xem thêm'}</button></div>`:'')}
 function resUI(){const e=$e('bkres');if(e)e.innerHTML=resH()}
 function libH(){
  if(!RDR.lib.length)return '';
- return `<div class="card"><h3>📖 Đang đọc</h3>${RDR.lib.slice(0,6).map(b=>`<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${b.src=='ws'?'Wikisource':esc(b.author||'')} · ${prog(b)}</small><div class="row" style="margin-top:4px"><button class="p" onclick="RDR.open(${idq(b.id)})">Đọc tiếp</button><button class="s" onclick="RDR.rm(${idq(b.id)})" aria-label="Xóa khỏi danh sách">✕</button></div></div></div>`).join('')}</div>`}
+ return `<div class="card"><h3>📖 Đang đọc</h3>${RDR.lib.slice(0,6).map(b=>`<div class="bkx-r"><div class="bkx-c">📖</div><div class="bkx-i"><b>${esc(b.title)}</b><small>Wikisource · ${esc((b.wl||'vi').toUpperCase())} · ${prog(b)}</small><div class="row" style="margin-top:4px"><button class="p" onclick="RDR.open(${idq(b.id)})">Đọc tiếp</button><button class="s" onclick="RDR.rm(${idq(b.id)})" aria-label="Xóa khỏi danh sách">✕</button></div></div></div>`).join('')}</div>`}
 function homeH(){
  return libH()+`<div class="card"><h3>📚 Đọc sách miễn phí</h3>
- <p class="mut">Tìm một lần trên cả Wikisource (văn học Việt Nam) và Project Gutenberg (sách nước ngoài thuộc phạm vi công cộng). Tiến độ đọc được lưu trên máy này.</p>
- <div class="row" style="flex-wrap:nowrap"><input id="bkq" style="flex:1;width:auto;min-width:0" placeholder="Tên sách hoặc tác giả" value="${esc(RDR.q)}" oninput="RDR.q=this.value" onkeydown="if(event.key=='Enter')RDR.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="RDR.search()">Tìm</button></div>
+ <p class="mut">Tìm trên Wikisource, thư viện mở của Wikimedia: văn học Việt Nam và sách kinh điển nhiều thứ tiếng. Tiến độ đọc được lưu trên máy này.</p>
+ <div class="row" style="flex-wrap:nowrap"><input id="bkq" style="flex:1;width:auto;min-width:0" placeholder="Tên tác phẩm hoặc tác giả" value="${esc(RDR.q)}" oninput="RDR.q=this.value" onkeydown="if(event.key=='Enter')RDR.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="RDR.search()">Tìm</button></div>
  <div class="row"><select onchange="RDR.setLang(this.value)" style="flex:1;width:auto">${LANGS.map(l=>`<option value="${l[0]}" ${RDR.lang==l[0]?'selected':''}>${l[1]}</option>`).join('')}</select></div>
- ${RDR.sq?'':`<p class="mut" style="margin:4px 0">Gợi ý văn học Việt Nam:</p><div class="bkx-ch">${CHIPS.map(c=>`<button class="s" onclick="RDR.quick('${esc(c)}')">${esc(c)}</button>`).join('')}</div>`}
- ${RDR.res.length?`<p class="mut" style="margin:4px 0">${RDR.sq?'Kết quả cho “'+esc(RDR.sq)+'”':'Sách nước ngoài được tải nhiều nhất'}</p>`:''}
+ ${RDR.res.length&&RDR.sq?`<p class="mut" style="margin:4px 0">Kết quả cho “${esc(RDR.sq)}”</p>`:''}
  <div id="bkres">${resH()}</div>
  <div class="row"><button class="s" onclick="RDR.diag()">🔧 Kiểm tra kết nối</button></div>${RDR.diagTxt?`<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.72rem;margin:6px 0 0">${esc(RDR.diagTxt)}</pre>`:''}</div>`}
 function readerH(){
  const c=RDR.cur,n=RDR.pages.length,P=c.parts,e=inLib(c.id);
  const sub=P&&c.part>=0?`<small class="mut" style="display:block;overflow-wrap:anywhere">${esc(P[c.part].slice(c.wt.length+1))}</small>`:'';
  const top=`<div class="card"><div class="row" style="flex-wrap:nowrap"><button class="s bk" onclick="RDR.close()">← Thư viện</button><span class="bkx-ti">${esc(c.title)}</span></div>${sub}</div>`;
- const link=c.src=='ws'?'https://vi.wikisource.org/wiki/'+encodeURI((P&&c.part>=0?P[c.part]:c.wt||c.title).replace(/ /g,'_')):'https://www.gutenberg.org/ebooks/'+c.id;
- const open=`<a class="s" style="text-decoration:none;padding:8px 12px" target="_blank" rel="noopener" href="${esc(link)}">Mở trang gốc</a>`;
+ const open=`<a class="s" style="text-decoration:none;padding:8px 12px" target="_blank" rel="noopener" href="${esc(wUrl(c.wl,P&&c.part>=0?P[c.part]:c.wt||c.title))}">Mở trang gốc</a>`;
  if(RDR.ld)return top+`<div class="card"><p class="mut">⏳ Đang tải nội dung…</p></div>`;
  if(RDR.lerr)return top+`<div class="card"><p class="mut">⚠️ ${esc(RDR.lerr)}</p><div class="row"><button class="p" onclick="RDR.retry()">Thử lại</button>${open}${P?'<button class="s" onclick="RDR.toc()">☰ Mục lục</button>':''}</div></div>`;
  if(P&&c.part<0){const lp=e&&e.part>=0?e.part:-1;
@@ -6154,88 +6145,89 @@ function readerH(){
  <div class="card bkx-pg" style="font-size:${RDR.fs}rem">${pg.map(p=>`<p>${esc(p).replace(/\u0001/g,'<br>')}</p>`).join('')}</div>
  <div class="card"><input class="bkx-rg" type="range" min="1" max="${n}" value="${RDR.pg+1}" onchange="RDR.go(this.value-1,1)" aria-label="Chọn trang">
  <div class="row" style="flex-wrap:nowrap"><button class="s" style="flex:1" ${RDR.pg<=0&&firstP?'disabled':''} onclick="RDR.go(RDR.pg-1,1)">‹ ${RDR.pg<=0&&P?'Phần trước':'Trước'}</button><button class="p" style="flex:1" ${RDR.pg>=n-1&&lastP?'disabled':''} onclick="RDR.go(RDR.pg+1,1)">${RDR.pg>=n-1&&P?'Phần sau':'Sau'} ›</button></div>
- <p class="mut" style="font-size:.75rem;text-align:center;margin:6px 0 0">Nguồn: ${c.src=='ws'?'Wikisource (CC BY-SA)':'Project Gutenberg'} · ${open}</p></div>`}
+ <p class="mut" style="font-size:.75rem;text-align:center;margin:6px 0 0">Nguồn: Wikisource (CC BY-SA) · ${open}</p></div>`}
+function flipClone(el,r,dir){
+ const o=document.createElement('div');o.className='bkx-fl '+(dir>0?'bkx-out':'bkx-in');
+ o.style.cssText='left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px';
+ const c=el.cloneNode(true);c.classList.add('bkx-fp');c.removeAttribute('id');o.appendChild(c);document.body.appendChild(o);
+ setTimeout(()=>o.remove(),600)}
+/* dir>0: trang hiện tại lật sang trái để lộ trang sau; dir<0: trang trước lật từ trái về */
+function flip(dir,swap){
+ const q='#bkroot .bkx-pg',el=document.querySelector(q);
+ if(!el||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)){swap();return}
+ toTop();
+ if(dir>0)flipClone(el,el.getBoundingClientRect(),1);
+ swap();
+ if(dir<0){const ne=document.querySelector(q);if(ne)flipClone(ne,ne.getBoundingClientRect(),-1)}}
 function draw(){const e=$e('bkroot');if(e)e.innerHTML=RDR.cur?readerH():homeH()}
 
-V.book=()=>{
- if(!RDR.cur&&!RDR.res.length&&!RDR.busy&&!RDR.err&&!RDR.auto){RDR.auto=1;setTimeout(()=>RDR.search(),0)}
- return `<div id="bkroot">${RDR.cur?readerH():homeH()}</div>`};
+V.book=()=>`<div id="bkroot">${RDR.cur?readerH():homeH()}</div>`;
 
 Object.assign(RDR,{
  async search(more){
   if(RDR.busy)return;
-  const q=(RDR.q||'').trim(),L=RDR.lang,nx=RDR.next||{};
-  const wsU=q=>WS+'?action=query&list=search&srsearch='+encodeURIComponent(q)+'&srnamespace=0&srlimit=15&sroffset=0&format=json&formatversion=2&origin=*';
-  let pgU=null,wsX=null;
-  if(more){pgU=nx.pg||null;wsX=nx.ws||null}
-  else{RDR.res=[];RDR.sq=q;
-   const p=new URLSearchParams();if(q)p.set('search',q);if(L)p.set('languages',L);pgU='https://gutendex.com/books/?'+p;
-   wsX=q&&(!L||L=='vi')?wsU(q):null}
-  if(!pgU&&!wsX)return;
+  const q=(RDR.q||'').trim(),L=RDR.lang;let jobs;
+  if(more)jobs=Object.keys(RDR.next).filter(l=>RDR.next[l]).map(l=>[l,RDR.next[l]]);
+  else{if(!q)return toast('Nhập tên tác phẩm hoặc tác giả để tìm');
+   RDR.res=[];RDR.sq=q;
+   jobs=(L?[L]:ALL).map(l=>[l,wsApi(l)+'?action=query&list=search&srsearch='+encodeURIComponent(q)+'&srnamespace=0&srlimit=12&sroffset=0&format=json&formatversion=2&origin=*'])}
+  if(!jobs.length)return;
   RDR.busy=1;RDR.err='';RDR.warn='';RDR.why='';RDR.next={};resUI();
-  const jobs=[pgU?getJson(pgU):Promise.resolve(null),wsX?getJson(wsX):Promise.resolve(null)];
-  const [rp,rw]=await Promise.allSettled(jobs);
-  const A=[],B=[];let fail=0;const why=[];
-  if(rw.status=='fulfilled'&&rw.value){const j=rw.value;
-   if(j.error){fail++;why.push('Wikisource: API báo lỗi')}else{
-    ((j.query&&j.query.search)||[]).forEach(r=>{A.push({id:wkey(r.title),src:'ws',wt:r.title,title:r.title,author:'',lang:'vi',cover:'',snippet:plain(r.snippet||'').replace(/\s+/g,' ').trim()})});
-    if(j.continue&&j.continue.sroffset!=null)RDR.next.ws=wsX.replace(/sroffset=\d+/,'sroffset='+j.continue.sroffset)}}
-  else if(rw.status=='rejected'){fail++;why.push('Wikisource: '+((rw.reason&&rw.reason.message)||'lỗi'))}
-  if(rp.status=='fulfilled'&&rp.value){const j=rp.value;
-   (j.results||[]).forEach(r=>{const t=txtOf(r.formats);B.push({id:String(r.id),src:'pg',title:r.title,author:authorOf(r.authors),lang:(r.languages||[]).join(', '),cover:(r.formats||{})['image/jpeg']||'',url:t&&t.url,html:t?t.html:0,noText:!t})});
-   RDR.next.pg=j.next||null}
-  else if(rp.status=='rejected'){fail++;why.push('Gutenberg: '+((rp.reason&&rp.reason.message)||'lỗi'))}
-  /* xen kẽ: Wikisource trước, rồi Gutenberg */
-  for(let i=0;i<Math.max(A.length,B.length);i++)[A[i],B[i]].forEach(b=>{if(b){RDR.map[b.id]=b;if(!RDR.res.some(x=>x.id==b.id))RDR.res.push(b)}});
-  const tried=(pgU?1:0)+(wsX?1:0);
-  if(fail&&fail>=tried)RDR.err='Không tải được danh sách sách. Bạn thử lại nhé.';
-  else if(fail)RDR.warn='Một nguồn tạm thời không tải được, kết quả có thể thiếu.';
+  const rs=await Promise.allSettled(jobs.map(j=>getJson(j[1])));
+  const lists=[];let fail=0;const why=[];
+  rs.forEach((r,i)=>{const l=jobs[i][0];
+   if(r.status=='fulfilled'&&r.value&&!r.value.error){const j=r.value;
+    lists.push(((j.query&&j.query.search)||[]).map(x=>({id:wkey(l,x.title),src:'ws',wl:l,wt:x.title,title:x.title,snippet:plain(x.snippet||'').replace(/\s+/g,' ').trim()})));
+    if(j.continue&&j.continue.sroffset!=null)RDR.next[l]=jobs[i][1].replace(/sroffset=\d+/,'sroffset='+j.continue.sroffset)}
+   else{fail++;why.push(l.toUpperCase()+': '+(r.status=='rejected'?(r.reason&&r.reason.message)||'lỗi':'API báo lỗi'))}});
+  for(let i=0;i<12;i++)lists.forEach(a=>{const b=a[i];if(b){RDR.map[b.id]=b;if(!RDR.res.some(x=>x.id==b.id))RDR.res.push(b)}});
+  if(fail>=jobs.length)RDR.err='Không tải được kết quả. Bạn thử lại nhé.';
+  else if(fail)RDR.warn='Một số ngôn ngữ chưa tải được, kết quả có thể thiếu.';
   RDR.why=why.join(' · ');
   RDR.busy=0;draw()},
  quick(t){RDR.q=t;RDR.search()},
- setLang(v){RDR.lang=v;sv();RDR.busy=0;RDR.search()},
+ setLang(v){RDR.lang=v;sv();RDR.busy=0;if((RDR.q||'').trim())RDR.search();else draw()},
  async open(id){
   const b=RDR.map[id]||inLib(id);if(!b)return;
-  const ws=b.src=='ws';if(!ws&&!b.url)return toast('Sách này không có bản đọc trực tuyến');
-  const e=inLib(id),c=RDR.cur={id:b.id,src:ws?'ws':'pg',title:b.title,author:b.author||'',cover:b.cover,url:b.url,html:b.html,wt:b.wt,parts:null,part:-1};
+  const e=inLib(id),c=RDR.cur={id:b.id,title:b.title,wl:b.wl||'vi',wt:b.wt,parts:null,part:-1};
   RDR.pg=e&&e.pg||0;RDR.pages=[];RDR.lerr='';
-  if(ws&&e&&e.ps&&e.part>=0){c.parts=e.ps.map(x=>b.wt+'/'+x);return RDR.part(e.part,e.pg)}
+  if(e&&e.ps&&e.part>=0){c.parts=e.ps.map(x=>b.wt+'/'+x);return RDR.part(e.part,e.pg)}
   RDR.ld=1;draw();toTop();
   try{
-   const r=ws?await wsLoad(b.wt,1):await pgLoad(b.id,b);
+   const r=await wsLoad(c.wl,b.wt,1);
    if(RDR.cur!==c)return;
    if(r.root)c.wt=r.root;
    if(r.parts){c.parts=r.parts;c.part=-1}else{RDR.pages=r.pages;RDR.pg=Math.max(0,Math.min(RDR.pg,r.pages.length-1))}
    RDR.ld=0;touch()
-  }catch(er){if(RDR.cur!==c)return;RDR.ld=0;RDR.lerr=ws?'Không tải được tác phẩm này từ Wikisource (mạng hoặc trang không có nội dung).':'Không tải được nội dung sách (mạng hoặc nguồn đang chặn). Bạn thử lại hoặc mở trang gốc.'}
+  }catch(er){if(RDR.cur!==c)return;RDR.ld=0;RDR.lerr='Không tải được tác phẩm này từ Wikisource (mạng hoặc trang không có nội dung).'}
   draw()},
  async part(i,pg){
   const c=RDR.cur;if(!c||!c.parts||!c.parts[i])return;
   c.part=i;RDR.pg=pg||0;RDR.pages=[];RDR.lerr='';RDR.ld=1;draw();toTop();
-  try{const r=await wsLoad(c.parts[i],0);if(RDR.cur!==c||c.part!==i)return;
+  try{const r=await wsLoad(c.wl,c.parts[i],0);if(RDR.cur!==c||c.part!==i)return;
    RDR.pages=r.pages;RDR.pg=pg<0?r.pages.length-1:Math.max(0,Math.min(pg||0,r.pages.length-1));RDR.ld=0;touch()}
   catch(e){if(RDR.cur!==c||c.part!==i)return;RDR.ld=0;RDR.lerr='Không tải được phần này từ Wikisource.'}
   draw()},
  toc(){const c=RDR.cur;if(!c||!c.parts)return;c.part=-1;RDR.lerr='';RDR.ld=0;draw();toTop()},
  retry(){const c=RDR.cur;if(!c)return;if(c.parts&&c.part>=0)RDR.part(c.part,RDR.pg);else RDR.open(c.id)},
  close(){RDR.cur=null;draw();toTop()},
- go(i,top){const c=RDR.cur;if(!c||!RDR.pages.length)return;i=i|0;
+ go(i,top){const c=RDR.cur;if(!c||!RDR.pages.length||RDR.ld)return;i=i|0;
   if(i>=RDR.pages.length){if(c.parts&&c.part<c.parts.length-1)return RDR.part(c.part+1,0);i=RDR.pages.length-1}
   if(i<0){if(c.parts&&c.part>0)return RDR.part(c.part-1,-1);i=0}
-  RDR.pg=i;touch();draw();if(top)toTop()},
+  const dir=i>RDR.pg?1:i<RDR.pg?-1:0;
+  const apply=()=>{RDR.pg=i;touch();draw();if(top)toTop()};
+  if(dir)flip(dir,apply);else apply()},
  font(d){RDR.fs=Math.max(.8,Math.min(1.8,+(RDR.fs+d*.1).toFixed(2)));sv();draw()},
  rm(id){RDR.lib=RDR.lib.filter(x=>x.id!=id);sv();draw()}
 });
 async function probe(n,u){const t0=Date.now();try{const r=await tryFetch(u,10000);await r.text();return n+': ✅ '+(Date.now()-t0)+'ms'}catch(e){return n+': ❌ '+e.message}}
 RDR.diag=async()=>{
  RDR.diagTxt='Đang kiểm tra (tối đa ~10 giây)…';draw();
- const g='https://gutendex.com/books/?ids=84';
  const L=await Promise.all([
-  probe('Wikisource API',WS+'?action=query&meta=siteinfo&format=json&origin=*'),
-  probe('Gutendex (trực tiếp)',g),
-  probe('File sách Gutenberg (trực tiếp)','https://www.gutenberg.org/cache/epub/84/pg84.txt'),
-  probe('Proxy allorigins','https://api.allorigins.win/raw?url='+encodeURIComponent(g)),
-  probe('Proxy isomorphic-git','https://cors.isomorphic-git.org/'+g),
+  probe('Wikisource VI',wsApi('vi')+'?action=query&meta=siteinfo&format=json&origin=*'),
+  probe('Wikisource EN',wsApi('en')+'?action=query&meta=siteinfo&format=json&origin=*'),
+  probe('Wikisource FR',wsApi('fr')+'?action=query&meta=siteinfo&format=json&origin=*'),
+  probe('Wikisource DE',wsApi('de')+'?action=query&meta=siteinfo&format=json&origin=*'),
   probe('Mạng chung (api.github.com)','https://api.github.com/zen')]);
  let o='';try{o=location.protocol+'//'+(location.host||'(mở từ file)')}catch(e){}
  RDR.diagTxt='Trang: '+o+' · online='+(navigator.onLine)+'\n'+L.join('\n');draw()};

@@ -1703,6 +1703,25 @@ async function imgBill(id){const b=(s.bills||[]).find(x=>x.id==id);if(!b)return;
 async function imgDay(){if(!s.rpt)return;await fontsOK2();shOpen(dayCv(s.rpt),'justaseed-ngay-'+(s.rpt.d||s.day-1)+'.png','Ảnh tổng kết ngày');
 try{const rw=[...document.querySelectorAll('#modal .ms > .row')].pop();if(rw){rw.insertAdjacentHTML('beforebegin',`<div class=sec>Chú thích khi đăng (không bắt buộc)</div><div class=row><input maxlength=200 placeholder="Viết vài dòng cho bài đăng..." value="${esc(FEEDCAP||'')}" oninput="FEEDCAP=this.value" style="width:100%"></div>`);rw.insertAdjacentHTML('beforeend','<button class=p onclick="postDayToFeed()">📌 Đăng lên bảng tin</button><button class=p onclick="shareDayToDiscord()">💬 Chia sẻ lên Discord</button>')}}catch(e){console.error(e)}}
 
+async function summaryAvatarB64() {
+  try {
+    const S = 256, R = 96, c = S / 2, p = s.pf || {};
+    const cv = document.createElement('canvas');
+    cv.width = S; cv.height = S;
+    const x = cv.getContext('2d');
+    let im = null;
+    if (p.av) im = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = p.av; });
+    if (!im) im = await presetAvImg();
+    x.save();
+    x.beginPath(); x.arc(c, c, R, 0, 7);
+    x.fillStyle = '#e8f5ea'; x.fill(); x.clip();
+    if (im) { const m = Math.min(im.width, im.height); x.drawImage(im, 0, 0, m, m, c - R, c - R, 2 * R, 2 * R); }
+    x.restore();
+    drawFrame(x, c, c, R);
+    return cv.toDataURL('image/png');
+  } catch (e) { console.error(e); return null; }
+}
+
 async function shareDayToDiscord() {
   if (!currentUser) return toast('Hãy đăng nhập Discord trước');
   if (!SHC) return toast('Chưa có ảnh tổng kết');
@@ -1723,6 +1742,7 @@ async function shareDayToDiscord() {
       owner_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'Chủ shop',
       caption: caption || null,
       theme_color: (s.pf && /^#[0-9a-f]{6}$/i.test(s.pf.col || '')) ? s.pf.col : '#4fb06f',
+      avatar: await summaryAvatarB64(),
       created_at: new Date().toISOString()
     });
     if (error) throw error;

@@ -5253,12 +5253,16 @@ cardMusic=function(){
 .fcm .fcb{min-width:0;flex:1;line-height:1.3;overflow-wrap:anywhere}
 .fcm small{color:var(--mut)}
 .fcx{padding:2px 8px!important;font-size:.75rem!important;opacity:.7}
+.fcm.fcr{margin-left:30px}
 .fsetup{border:2px dashed var(--ln);border-radius:16px;padding:12px;margin:8px 0}
 </style>
 <script>
 /* ===== V38: BẢNG TIN: đăng danh thiếp lên tường dạng news feed, có thả tim + bình luận ===== */
 let FEEDMODE='list',FEEDCAP='';
-const FEED={posts:[],likes:{},cm:{},pmap:{},open:{},ids:[],t:0,more:false,busy:0,err:''};
+const FEED={posts:[],likes:{},cm:{},pmap:{},open:{},rp:{},ids:[],t:0,more:false,busy:0,err:''};
+/* trả lời bình luận: lưu trong body dạng "↩<id bình luận gốc>|nội dung" (không cần đổi CSDL) */
+const CMRE=/^↩(\d+)\|/;
+const cmParse=b=>{b=String(b||'');const m=CMRE.exec(b);return m?{pa:+m[1],t:b.slice(m[0].length)}:{pa:0,t:b}};
 const FEED_PAGE=8;
 const feedMissing=e=>!!e&&(e.code=='42P01'||e.code=='PGRST205'||/does not exist|schema cache|Could not find the table/i.test(e.message||''));
 function feedTime(d){
@@ -5291,12 +5295,20 @@ function feedWho(uid){
 function feedLikeBtn(pid){
  const L=FEED.likes[pid]||{n:0,me:0};
  return `<span class=fhe>${L.me?'❤️':'🤍'}</span><span>${L.n||''}</span>`}
+function feedCmItem(pid,c,rep,own,uid,byId){
+ const w=feedWho(c.user_id),mine=c.user_id===uid,p=cmParse(c.body),pc=p.pa&&byId[p.pa];
+ const tag=pc?`<span class=mut>↪ ${esc(feedWho(pc.user_id).name)}</span> `:'';
+ return `<div class="fcm${rep?' fcr':''}" id="fcm-${c.id}"><span style="line-height:0;flex:0 0 auto">${currentUser&&mine?avH(rep?22:26):friendAvTap((FEED.pmap[c.user_id]||{}).gav,rep?22:26,c.user_id)}</span><div class=fcb><b>${esc(w.name)}</b> ${tag}${esc(p.t)}<br><small>${feedTime(c.created_at)}</small> <button class="s fcx" onclick="feedReply(${pid},${c.id})">Trả lời</button></div>${mine||own?`<button class="s fcx" onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">✕</button>`:''}</div>`}
 function feedCmHtml(pid){
  const uid=currentUser.id,own=(FEED.posts.find(p=>p.id===pid)||{}).user_id===uid;
- const a=FEED.cm[pid]||[];
- return a.map(c=>{const w=feedWho(c.user_id),mine=c.user_id===uid;
-  return `<div class=fcm id="fcm-${c.id}"><span style="line-height:0;flex:0 0 auto">${currentUser&&mine?avH(26):friendAvTap((FEED.pmap[c.user_id]||{}).gav,26,c.user_id)}</span><div class=fcb><b>${esc(w.name)}</b> ${esc(c.body)}<br><small>${feedTime(c.created_at)}</small></div>${mine||own?`<button class="s fcx" onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">✕</button>`:''}</div>`}).join('')
- +`<div class=row style="gap:6px;margin:6px 0 0"><input id="fci-${pid}" maxlength=300 placeholder="Viết bình luận..." style="flex:1;width:auto" onkeydown="if(event.key=='Enter')feedComment(${pid})"><button class=p onclick="feedComment(${pid})">Gửi</button></div>`}
+ const a=FEED.cm[pid]||[],byId={};a.forEach(c=>byId[c.id]=c);
+ const rootOf=c=>{let n=0;while(n++<20){const pa=cmParse(c.body).pa,pc=pa&&byId[pa];if(!pc)return c;c=pc}return c};
+ const kids={},roots=[];
+ a.forEach(c=>{const r=rootOf(c);if(r.id===c.id)roots.push(c);else(kids[r.id]=kids[r.id]||[]).push(c)});
+ const rp=FEED.rp[pid],rc=rp&&byId[rp];if(rp&&!rc)FEED.rp[pid]=0;
+ return roots.map(c=>feedCmItem(pid,c,0,own,uid,byId)+(kids[c.id]||[]).map(k=>feedCmItem(pid,k,1,own,uid,byId)).join('')).join('')
+ +(rc?`<div class=mut style="margin:6px 0 0;font-size:.8rem">Đang trả lời <b>${esc(feedWho(rc.user_id).name)}</b> <button class="s fcx" onclick="feedReplyCancel(${pid})">Hủy</button></div>`:'')
+ +`<div class=row style="gap:6px;margin:6px 0 0"><input id="fci-${pid}" maxlength=280 placeholder="${rc?'Viết trả lời...':'Viết bình luận...'}" style="flex:1;width:auto" onkeydown="if(event.key=='Enter')feedComment(${pid})"><button class=p onclick="feedComment(${pid})">Gửi</button></div>`}
 function feedPostHtml(p){
  const own=p.user_id===currentUser.id,w=feedWho(p.user_id);
  const img=feedImgOk(p.image)?`<img class=fpimg src="${p.image}" alt="Danh thiếp" loading=lazy>`:'';
@@ -5380,11 +5392,16 @@ async function feedComment(pid){
  const i=document.getElementById('fci-'+pid),v=i?i.value.replace(/\s+/g,' ').trim().slice(0,300):'';
  if(!v)return toast('Nhập nội dung');
  if(i)i.disabled=true;FEED.lk=Date.now();
- const {data,error}=await supabaseClient.from('feed_comments').insert({post_id:pid,user_id:currentUser.id,body:v}).select('id, post_id, user_id, body, created_at').single();
+ const rp=FEED.rp[pid]&&(FEED.cm[pid]||[]).some(c=>c.id===FEED.rp[pid])?FEED.rp[pid]:0;
+ const {data,error}=await supabaseClient.from('feed_comments').insert({post_id:pid,user_id:currentUser.id,body:(rp?'↩'+rp+'|':'')+v}).select('id, post_id, user_id, body, created_at').single();
  if(error){if(i)i.disabled=false;return toast('Lỗi: '+error.message)}
- FEED.lk=Date.now();(FEED.cm[pid]=FEED.cm[pid]||[]).push(data);FEED.open[pid]=true;
+ FEED.lk=Date.now();(FEED.cm[pid]=FEED.cm[pid]||[]).push(data);FEED.open[pid]=true;FEED.rp[pid]=0;
  if(i)i.value='';feedCmRefresh(pid);
  const n=document.getElementById('fci-'+pid);if(n)n.focus()}
+function feedReply(pid,cid){
+ FEED.rp[pid]=cid;FEED.open[pid]=true;feedCmRefresh(pid);
+ const i=document.getElementById('fci-'+pid);if(i)i.focus()}
+function feedReplyCancel(pid){FEED.rp[pid]=0;feedCmRefresh(pid)}
 async function feedDelCm(pid,cid){
  FEED.lk=Date.now();
  const {error}=await supabaseClient.from('feed_comments').delete().eq('id',cid);
@@ -5549,7 +5566,7 @@ async function nxNames(ids){
   (data||[]).forEach(p=>NX.names[p.id]=p)}catch(e){}
  need.forEach(u=>{if(!NX.names[u])NX.names[u]={}})}
 const nxName=u=>{const p=NX.names[u]||{};return p.display_name||p.username||'Một người chơi'};
-const nxSnip=x=>{x=String(x||'').replace(/\s+/g,' ').trim();return x.length>40?x.slice(0,40)+'…':x};
+const nxSnip=x=>{x=cmParse(x).t;x=String(x||'').replace(/\s+/g,' ').trim();return x.length>40?x.slice(0,40)+'…':x};
 
 NX.check=async function(){
  if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||NX.busy)return;
@@ -5598,10 +5615,11 @@ NX.check=async function(){
   }catch(e){}
 
   /* D) bảng tin: tim + bình luận trên bài của mình */
+  const mpSet=new Set();
   try{
    const {data:mp,error}=await sb.from('feed_posts').select('id').eq('user_id',me).order('created_at',{ascending:false}).limit(40);
    if(!error&&mp&&mp.length){
-    const ids=mp.map(p=>p.id);
+    const ids=mp.map(p=>p.id);ids.forEach(i=>mpSet.add(i));
     const [lk,cm]=await Promise.all([
      sb.from('feed_likes').select('*').in('post_id',ids).neq('user_id',me).limit(200),
      sb.from('feed_comments').select('id, post_id, user_id, body, created_at').in('post_id',ids).neq('user_id',me).order('created_at',{ascending:false}).limit(60)]);
@@ -5610,6 +5628,18 @@ NX.check=async function(){
      text:nxName(r.user_id)+' đã thả tim bài đăng bảng tin của bạn'})));
     if(!cm.error)take('fc',(cm.data||[]).map(c=>({key:'fc:'+c.id,type:'feed',time:c.created_at,tgt:{k:'feed',pid:c.post_id,cid:c.id},
      text:nxName(c.user_id)+' đã bình luận bài đăng bảng tin của bạn: “'+nxSnip(c.body)+'”'})))}
+  }catch(e){}
+
+  /* E) có người trả lời bình luận của mình (ở bài của người khác) */
+  try{
+   const [mine,rp]=await Promise.all([
+    sb.from('feed_comments').select('id').eq('user_id',me).order('created_at',{ascending:false}).limit(100),
+    sb.from('feed_comments').select('id, post_id, user_id, body, created_at').like('body','↩%').neq('user_id',me).order('created_at',{ascending:false}).limit(100)]);
+   if(!mine.error&&!rp.error){
+    const mi=new Set((mine.data||[]).map(c=>c.id)),rs=(rp.data||[]).filter(c=>mi.has(cmParse(c.body).pa)&&!mpSet.has(c.post_id));
+    await nxNames(rs.map(r=>r.user_id));
+    take('fr',rs.map(c=>({key:'fr:'+c.id,type:'feed',time:c.created_at,tgt:{k:'feed',pid:c.post_id,cid:c.id},
+     text:nxName(c.user_id)+' đã trả lời bình luận của bạn: “'+nxSnip(c.body)+'”'})))}
   }catch(e){}
 
   fresh.sort((a,b)=>new Date(a.time)-new Date(b.time));
@@ -5920,7 +5950,7 @@ const grantsH=()=>`<div class=card><div class=strip2><button class=s onclick="AD
 
 const adminsH=()=>`<div class=card><h3>Thêm quản trị viên</h3><div class=row style="margin:0"><input id=adnew placeholder="Dán User ID..." style="flex:1;width:auto;min-width:0"><button class=p onclick="AD.addAdmin(document.getElementById('adnew').value)">Thêm</button></div></div>`+(A.admins==null?LOAD:(A.admins.map(a=>`<div class=card><div class=row style="margin:0">${nameBtn(a.user_id,A.names[a.user_id])}${me()&&a.user_id==me().id?'<span class=tag>Bạn</span>':'<button class=s onclick="AD.delAdmin(\''+a.user_id+'\')">Gỡ</button>'}</div><div class=mut style="word-break:break-all">${E(a.user_id)}</div></div>`).join('')||EMPTY('Không có.')));
 
-const viewH=()=>{const p=A.sel,me_=me()&&p.id===me().id;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b>${p.ban?'<span class=tag style="background:#d9534f">Đã khóa</span>':''}${p.admin?'<span class=tag>Admin</span>':''}<button class=s onclick="AD.back()">← Quay lại</button></div><div class=mut>@${E(p.username||'—')}</div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div>${p.ban&&p.reason?'<div class=mut>Lý do khóa: '+E(p.reason)+'</div>':''}<div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button>${me_?'':`<button class=s onclick="${p.admin?`AD.delAdmin('${p.id}')`:`AD.addAdmin('${p.id}')`}">${p.admin?'Gỡ admin':'🛡 Cấp admin'}</button>`}</div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Bình luận</h3>${rowsH(A.cmts,r=>r.body||'','AD.delCmt')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
+const viewH=()=>{const p=A.sel,me_=me()&&p.id===me().id;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b>${p.ban?'<span class=tag style="background:#d9534f">Đã khóa</span>':''}${p.admin?'<span class=tag>Admin</span>':''}<button class=s onclick="AD.back()">← Quay lại</button></div><div class=mut>@${E(p.username||'—')}</div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div>${p.ban&&p.reason?'<div class=mut>Lý do khóa: '+E(p.reason)+'</div>':''}<div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button>${me_?'':`<button class=s onclick="${p.admin?`AD.delAdmin('${p.id}')`:`AD.addAdmin('${p.id}')`}">${p.admin?'Gỡ admin':'🛡 Cấp admin'}</button>`}</div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Bình luận</h3>${rowsH(A.cmts,r=>cmParse(r.body).t||'','AD.delCmt')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
 
 const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['admins','🛡 Quản trị viên',adminsH]];
 V.adm=()=>{
@@ -6331,4 +6361,75 @@ window.MB={clear(){cache={};persist();tried.clear()}};
 })();
 
 </script>
+
+<script>
+/* ===== v12: ảnh bill + ảnh tổng kết giống giao diện trong game (theo giao diện đang dùng), có nút đăng lên bảng tin ===== */
+(()=>{
+const HAND='"Patrick Hand",cursive',BAL='"Baloo 2",sans-serif',ON='Onest,sans-serif',W=760,S=1.5,PAD=30,X0=80,X1=W-80;
+const TH=()=>{const cs=getComputedStyle(document.documentElement),g=(k,d)=>(cs.getPropertyValue(k)||'').trim()||d;
+ return{bg:g('--bg','#e3f5de'),card:g('--card','#fffdf7'),ink:g('--ink','#244033'),mut:g('--mut','#678a73'),ln:g('--ln','#d5ebd3'),g:g('--g','#bfe8c6'),g2:g('--g2','#4fb06f'),g3:g('--g3','#388a55'),bad:g('--bad','#d9534f')}};
+const mk=H=>{const c=document.createElement('canvas');c.width=W*S;c.height=Math.ceil(H*S);const x=c.getContext('2d');x.scale(S,S);return[c,x]};
+const dl=(x,y,T)=>{x.save();x.setLineDash([9,8]);x.strokeStyle=T.g;x.lineWidth=3;x.beginPath();x.moveTo(X0,y);x.lineTo(X1,y);x.stroke();x.restore()};
+const wrap=(x,t,w)=>{const o=[];let cur='';String(t).split(' ').forEach(wd=>{const nx=cur?cur+' '+wd:wd;if(cur&&x.measureText(nx).width>w){o.push(cur);cur=wd}else cur=nx});if(cur)o.push(cur);return o};
+function render(fn){
+ const T=TH(),m=mk(10)[1],H=Math.ceil(fn(m,T)+36+PAD),[c,x]=mk(H);
+ x.fillStyle=T.bg;x.fillRect(0,0,W,H);
+ rrCv(x,PAD,PAD,W-2*PAD,H-2*PAD,34);x.fillStyle=T.card;x.fill();
+ x.save();x.setLineDash([12,9]);x.strokeStyle=T.g;x.lineWidth=3;x.stroke();x.restore();
+ fn(x,T);return c}
+const head=(x,T,sub)=>{x.textAlign='center';x.fillStyle=T.ink;x.font='54px '+HAND;x.fillText(s.name,W/2,125,580);x.fillStyle=T.mut;x.font='600 30px '+ON;x.fillText(sub,W/2,178);dl(x,212,T);return 212};
+const stars=(x,T,y,n)=>{x.font='38px '+ON;const a='★'.repeat(n),b='☆'.repeat(5-n),tx=' · '+n+' sao',wa=x.measureText(a).width,wb=x.measureText(b).width;x.font='30px '+ON;const wt=x.measureText(tx).width;
+ let px=W/2-(wa+wb+wt)/2;x.textAlign='left';x.font='38px '+ON;x.fillStyle='#f5b942';x.fillText(a,px,y);px+=wa;x.fillStyle=T.ln;x.fillText(b,px,y);px+=wb;x.font='30px '+ON;x.fillStyle=T.mut;x.fillText(tx,px,y)};
+const billFn=b=>(x,T)=>{
+ const L=billLines(b);let y=head(x,T,'Ngày '+b.d+(b.t?' · '+b.t:''));
+ y+=64;x.textAlign='left';x.fillStyle=T.ink;x.font='600 36px '+ON;x.fillText('Khách: '+b.nm+(b.vip?' 👑':''),X0,y,600);
+ y+=34;dl(x,y,T);
+ y+=48;x.font='600 26px '+ON;x.fillStyle=T.mut;
+ x.textAlign='left';x.fillText('Sản phẩm',X0,y);x.textAlign='right';x.fillText('Giá',450,y);x.textAlign='center';x.fillText('SL',505,y);x.textAlign='right';x.fillText('Thành tiền',X1,y);
+ y+=12;x.strokeStyle=T.ln;x.lineWidth=2;[[X0,300],[320,450],[480,530],[550,X1]].forEach(s2=>{x.beginPath();x.moveTo(s2[0],y);x.lineTo(s2[1],y);x.stroke()});
+ y+=44;x.font='30px '+ON;x.fillStyle=T.ink;
+ L.forEach(l=>{const nl=wrap(x,l[0],215);x.textAlign='right';x.fillText($(l[1]),450,y,150);x.textAlign='center';x.fillText(l[2],505,y);x.textAlign='right';x.fillText($(l[3]),X1,y,140);
+  x.textAlign='left';nl.forEach((t,i)=>x.fillText(t,X0,y+i*38,215));y+=Math.max(1,nl.length)*38+14});
+ y-=22;dl(x,y,T);y+=62;
+ if(b.tip){x.font='30px '+ON;x.fillStyle=T.ink;x.textAlign='left';x.fillText('Tiền boa',X0,y);x.textAlign='right';x.fillText('+'+$(b.tip),X1,y);y+=56}
+ x.font='700 48px '+BAL;x.fillStyle=T.ink;x.textAlign='left';x.fillText('Tổng cộng',X0,y);
+ x.textAlign='right';x.fillStyle=b.run?T.bad:T.g3;x.fillText(b.run?'0đ':$(b.pr+b.xp+b.tip),X1,y,360);
+ y+=64;
+ if(b.run){x.textAlign='center';x.fillStyle=T.mut;x.font='30px '+ON;x.fillText('Khách quỵt tiền',W/2,y)}else stars(x,T,y,Math.max(0,Math.min(5,b.st|0)));
+ return y+10};
+const dayFn=r=>(x,T)=>{
+ const rows=[['Chi phí nhập hàng',-(r.buy||0)],['Thuê mặt bằng',-(r.rent||0)],['Điện + nước',-(r.util||0)]];
+ let y=head(x,T,'Tổng kết ngày '+(r.d||s.day-1));
+ y+=64;x.textAlign='center';x.fillStyle=T.mut;x.font='600 30px '+ON;x.fillText('Doanh thu',W/2,y);
+ y+=96;x.fillStyle=T.g2;x.font='700 96px '+BAL;x.fillText($(r.rev),W/2,y,600);
+ y+=40;dl(x,y,T);y+=60;x.font='30px '+ON;x.fillStyle=T.ink;
+ rows.forEach(l=>{x.textAlign='left';x.fillText(l[0],X0,y);x.textAlign='right';x.fillText($(l[1]),X1,y);y+=54});
+ y-=30;dl(x,y,T);y+=66;
+ x.font='700 48px '+BAL;x.textAlign='left';x.fillStyle=T.ink;x.fillText('Lợi nhuận',X0,y);x.textAlign='right';x.fillStyle=r.pf>=0?T.g3:T.bad;x.fillText($(r.pf),X1,y,360);
+ y+=66;x.textAlign='center';x.fillStyle=T.mut;x.font='30px '+ON;x.fillText('Phục vụ '+(r.n||0)+' khách · '+(r.lost||0)+' khách bỏ đi',W/2,y,600);
+ return y+10};
+billCv=b=>render(billFn(b));
+dayCv=r=>render(dayFn(r));
+const fl=()=>Promise.all(['700 40px "Baloo 2"','28px Onest','600 28px Onest','54px "Patrick Hand"'].map(f=>document.fonts.load(f))).catch(()=>{});
+imgBill=async function(id){const b=(s.bills||[]).find(x=>x.id==id);if(!b)return;await fl();shOpen(billCv(b),'justaseed-bill-'+b.id+'.png','Ảnh hóa đơn')};
+imgDay=async function(){if(!s.rpt)return;await fl();shOpen(dayCv(s.rpt),'justaseed-ngay-'+(s.rpt.d||s.day-1)+'.png','Ảnh tổng kết ngày')};
+
+/* ---- đăng ảnh lên bảng tin ---- */
+let POSTING=0;
+{const o=shOpen;shOpen=function(cv,name,title){o(cv,name,title);const m=document.querySelector('#modal .ms');
+ if(m)m.insertAdjacentHTML('beforeend',`<div class=sec>Chú thích khi đăng (không bắt buộc)</div><div class=row><input id=shcap maxlength=200 placeholder="Viết vài dòng cho bài đăng..." style="width:100%"></div><div class=row><button class=p id=shpost onclick="shPost()">📌 Đăng lên bảng tin</button></div>`)}}
+window.shPost=async function(){
+ if(typeof currentUser==='undefined'||!currentUser)return toast('Hãy liên kết Discord');
+ if(!SHC||POSTING)return;POSTING=1;const bt=document.getElementById('shpost');if(bt)bt.disabled=true;
+ try{
+  const jpg=await feedJpeg(SHC.toDataURL('image/png')),cap=((document.getElementById('shcap')||{}).value||'').trim().slice(0,200);
+  const {error}=await supabaseClient.from('feed_posts').insert({user_id:currentUser.id,image:await feedUp(jpg),caption:cap||null,music:null});
+  if(error){toast(feedMissing(error)?'Bảng tin chưa bật: cần chạy file justaseed-feed.sql':'Đăng bảng tin lỗi: '+error.message);return}
+  FEED.t=0;FEEDMODE='feed';toast('Đã đăng lên bảng tin!');
+  try{mdl();SD.open('friends')}catch(e){}
+ }catch(e){toast('Lỗi: '+(e.message||e));console.error(e)}
+ finally{POSTING=0;if(bt)bt.disabled=false}};
+})();
+</script>
+
 </body></html>

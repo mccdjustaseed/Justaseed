@@ -157,6 +157,13 @@ function discordNames(user) {
   return { username, display };
 }
 
+// Huy hiệu tick xanh: tài khoản đã đăng nhập Discord
+function vBadge(sz) {
+  sz = sz || 18;
+  return '<span class="vbadge" role="img" title="Đã đăng nhập Discord" aria-label="Đã đăng nhập Discord" style="display:inline-flex;vertical-align:-3px;margin-left:5px;line-height:0;flex:0 0 auto"><svg width="' + sz + '" height="' + sz + '" viewBox="0 0 24 24" aria-hidden="true"><path fill="#1d9bf0" d="M22.5 12l-2.4-2.7.3-3.6-3.5-.8-1.9-3.1L11.7 3 8.5 1.5 6.6 4.6l-3.5.8.3 3.6L1 12l2.4 2.7-.3 3.6 3.5.8 1.9 3.1 3.2-1.5 3.2 1.5 1.9-3.1 3.5-.8-.3-3.6z"/><path d="M7.6 12.4l3 3 5.8-6.2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+}
+function selfVerified() { return !!(typeof currentUser !== 'undefined' && currentUser && window.DISCORD_OK); }
+
 async function upsertProfile(user, onlyIfChanged) {
   if (!user) return;
   const meta = user.user_metadata || {};
@@ -781,7 +788,7 @@ async function visitFriend(friendId) {
     : `<canvas id="visit-card" width="360" height="200" style="width:100%;border-radius:16px;margin:8px 0;background:#fff"></canvas>`;
   const avHtml = friendAvTap(shop?.game_avatar, 40, friendId);
   let html = `<div class=card>
-    <div class=row><h3 style="display:flex;align-items:center;gap:8px"><span style="position:relative;display:inline-block;line-height:0">${avHtml}<i class="pdot" data-pres="${friendId}"></i></span> <span>${esc(dname)}<br><small class="mut ptxt" data-pt="${friendId}" style="font-weight:400">Offline</small></span></h3><button class="s bk" onclick="tab='friends';R()">← Quay lại</button></div>
+    <div class=row><h3 style="display:flex;align-items:center;gap:8px"><span style="position:relative;display:inline-block;line-height:0">${avHtml}<i class="pdot" data-pres="${friendId}"></i></span> <span>${esc(dname)}${profile ? vBadge(16) : ''}<br><small class="mut ptxt" data-pt="${friendId}" style="font-weight:400">Offline</small></span></h3><button class="s bk" onclick="tab='friends';R()">← Quay lại</button></div>
     ${cardHtml}
     <p class=mut>Ngày ${shop?.day || '?'} · Tiền ${$(shop?.money || 0)} · Cấp ${shop?.level || '?'}</p>
     <div class=row style="margin-top:8px">
@@ -1610,7 +1617,7 @@ return `<clipPath id=ocl><rect width=400 height=152 /></clipPath><g clip-path="u
 {const o=scene;scene=function(fs){let t=o(fs);if(0){const i=t.lastIndexOf('</svg>');if(i>0)t=t.slice(0,i)+ownerSVG()+t.slice(i)}return t}}
 /* hồ sơ mới */
 window.pfmModal=function(){const p=s.pf,l=lvOf(s.xp||0),a=cum(l),b=cum(l+1),pc=Math.min(100,((s.xp||0)-a)/(b-a)*100),st=[['📅','Ngày',s.day],['🧑','Khách',s.sv],['💰','Doanh thu',$(s.rev)],['⭐','Uy tín',s.rep.toFixed(1)],['🧾','Hóa đơn',billN()],['🏅','5 sao',s.five]],bt=(on,c,t)=>`<button class="s ${on?'on2':''}" onclick="${c}">${t}</button>`;
-$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms style="padding:0"><div style="background:linear-gradient(160deg,var(--g),var(--card));padding:18px 16px 12px;text-align:center;position:relative;border-radius:inherit"><button class=s style="position:absolute;right:10px;top:10px" onclick=mdl()>✕</button>${avH(108)}<h2 style="margin:8px 0 0">${esc(p.nm)}</h2><span class=mut>${ttl(l)}${p.bio?' · '+esc(p.bio):''}</span><div style="margin:10px auto 0;max-width:280px"><div class=row style="margin:0"><b>Cấp ${l}</b><span class=mut>${(s.xp||0)-a}/${b-a} XP</span></div><div style="height:10px;border-radius:9px;background:var(--card);overflow:hidden"><i style="display:block;height:100%;width:${pc}%;background:var(--g2)"></i></div></div></div><div style="padding:12px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${st.map(x=>`<div class=card style="margin:0;padding:8px;text-align:center"><div>${x[0]}</div><b>${x[2]}</b><br><span class=mut>${x[1]}</span></div>`).join('')}</div>
+$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms style="padding:0"><div style="background:linear-gradient(160deg,var(--g),var(--card));padding:18px 16px 12px;text-align:center;position:relative;border-radius:inherit"><button class=s style="position:absolute;right:10px;top:10px" onclick=mdl()>✕</button>${avH(108)}<h2 style="margin:8px 0 0">${esc(p.nm)}${(window.__pfmV!==undefined?window.__pfmV:selfVerified())?vBadge(22):''}</h2><span class=mut>${ttl(l)}${p.bio?' · '+esc(p.bio):''}</span><div style="margin:10px auto 0;max-width:280px"><div class=row style="margin:0"><b>Cấp ${l}</b><span class=mut>${(s.xp||0)-a}/${b-a} XP</span></div><div style="height:10px;border-radius:9px;background:var(--card);overflow:hidden"><i style="display:block;height:100%;width:${pc}%;background:var(--g2)"></i></div></div></div><div style="padding:12px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${st.map(x=>`<div class=card style="margin:0;padding:8px;text-align:center"><div>${x[0]}</div><b>${x[2]}</b><br><span class=mut>${x[1]}</span></div>`).join('')}</div>
 <div class=card><h3>Ảnh đại diện</h3><div class=row style="justify-content:flex-start"><label class=lb>Đổi ảnh<input type=file accept="image/*" hidden onchange="avUp(this)"></label>${p.av?`<button class=s onclick="s.pf.av=null;save();if(scr=='game')R();pfm()">Xóa ảnh</button>`:''}</div><div class=row style="justify-content:flex-start">${Object.keys(PEM).map(k=>bt(!p.av&&p.pre==k,`setPf('${k}')`,PEM[k])).join('')}</div><div class=row>Tên <input value="${esc(p.nm)}" onchange="s.pf.nm=this.value||'Chủ tiệm';save();pfm()"></div><div class=row>Giới thiệu <input value="${esc(p.bio||'')}" placeholder="Viết vài dòng..." onchange="s.pf.bio=this.value;save();pfm()"></div></div>
 
 <div class=card><h3>Khung avatar</h3><div class=row style="justify-content:flex-start">${FRM.map((f,i)=>`<button class="s ${(p.fr||0)==i?'on2':''}" ${f.a&&!p.afr?'disabled':''} onclick="setFr(${i})">${f.n}${f.a&&!p.afr?' 🔒':''}</button>`).join('')}</div></div>
@@ -4266,7 +4273,7 @@ function fpBody(k){
  try{
  if(k=='me'){
   mdl();
-  const h=withState(fs,()=>{pfmModal();const m=document.querySelector('.ms');const r=m?m.innerHTML:'';mdl();return r});
+  window.__pfmV=!!F.verified;let h;try{h=withState(fs,()=>{pfmModal();const m=document.querySelector('.ms');const r=m?m.innerHTML:'';mdl();return r})}finally{window.__pfmV=undefined}
   const t=document.createElement('div');t.innerHTML=h;
   const hero=t.firstElementChild,pad=t.children[1];
   if(hero)hero.querySelectorAll('button').forEach(x=>x.remove());
@@ -4300,7 +4307,7 @@ function fpRender(k){
  const tabs=FPT.map(t=>'<button class="s '+(k==t[0]?'on2':'')+'" onclick="fpRender(\''+t[0]+'\')">'+t[1]+'</button>').join('');
  const body=fpBody(k);
  document.getElementById('modal').innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=pfw style="'+(col?fpTheme(col):'')+'">'
-  +'<div class=row style="margin:0 0 6px"><h3>Hồ sơ của '+esc(F.name)+(F.user?' <span class=mut style="font-size:.8rem">@'+esc(F.user)+'</span>':'')+'</h3><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>'
+  +'<div class=row style="margin:0 0 6px"><h3>Hồ sơ của '+esc(F.name)+(k!='me'&&F.verified?vBadge(16):'')+(F.user?' <span class=mut style="font-size:.8rem">@'+esc(F.user)+'</span>':'')+'</h3><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>'
   +'<div class=card style="padding:6px"><div class=row style="justify-content:flex-start;flex-wrap:wrap;margin:0">'+tabs+'</div></div>'
   +body
   +'<button class=p style="width:100%;margin-top:8px" onclick="mdl();visitFriend(\''+F.uid+'\')">Thăm tiệm</button>'
@@ -4317,7 +4324,7 @@ async function friendProfile(uid){
  const d=parseGav(shop&&shop.game_avatar);
  if(!d.sn)d.sn={day:shop&&shop.day||1,money:shop&&shop.money||0,xp:cum(Math.max(1,(shop&&shop.level)||1)),name:shop&&shop.shop_name||'Tiệm hoa'};
  const name=(prof&&prof.display_name)||(prof&&prof.username)||d.nm||(shop&&shop.shop_name)||'Chủ tiệm';
- FPV={uid,d,fs:friendState(d),name,user:prof&&prof.username,tab:'me'};
+ FPV={uid,d,fs:friendState(d),name,user:prof&&prof.username,verified:!!prof,tab:'me'};
  fpRender('me')}
 </script>
 

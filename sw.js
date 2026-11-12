@@ -8,7 +8,7 @@ self.addEventListener('push',e=>{
     const cl=await self.clients.matchAll({type:'window',includeUncontrolled:true});
     if(cl.some(c=>c.visibilityState==='visible'))return; /* đang mở game thì không cần báo */
     await self.registration.showNotification(d.title||'Justaseed',{
-      body:d.body||'',tag:d.tag||'justaseed',icon:d.icon||'icon-192.png',
+      body:d.body||'',tag:d.tag||'justaseed',icon:d.icon||'IMG_0914.jpeg',
       data:{url:d.url||self.registration.scope}
     });
   })());

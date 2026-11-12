@@ -6234,6 +6234,11 @@ const keysOf=a=>a.map(e=>e.k);
 const isOn=()=>lget(LSO)=='1'&&pool().length>0,model=()=>lget(LSM)||CFG.model;
 const usable=e=>!e.bad&&Date.now()>(e.cd||0)&&(e.d!=day()||(e.n||0)<CFG.dayMax);
 const cur=()=>pool().find(usable);
+/* xoay vòng: mỗi lần gọi lấy khóa kế tiếp còn dùng được (bỏ qua khóa nghỉ/lỗi/hết lượt ngày); 1 khóa thì như cũ */
+let rr=0;
+const nextKey=()=>{const a=pool(),n=a.length;for(let i=0;i<n;i++){const j=(rr+i)%n;if(usable(a[j])){rr=(j+1)%n;return a[j]}}return null};
+/* nhiều khóa thì giãn cách ngắn hơn (mỗi khóa vẫn cách nhau >= gapMs khi có <=3 khóa), tối thiểu 1200ms */
+const gapNow=()=>{const n=pool().filter(usable).length;return n>1?Math.max(1200,Math.round(CFG.gapMs/n)):CFG.gapMs};
 const mut=(k,f)=>{const a=pool(),e=a.find(x=>x.k==k);if(e){f(e);pset(a)}};
 
 /* ---- tiện ích ---- */
@@ -6273,8 +6278,8 @@ function call(prompt,max){
  const run=async()=>{try{
   for(let t=0;t<12;t++){
    if(!ready())return null;
-   const k=cur().k;
-   const w=last+CFG.gapMs-Date.now();if(w>0)await new Promise(r=>setTimeout(r,w));
+   const w=last+gapNow()-Date.now();if(w>0)await new Promise(r=>setTimeout(r,w));
+   const ke=nextKey();if(!ke)return null;const k=ke.k;
    last=Date.now();mut(k,x=>{if(x.d!=day()){x.d=day();x.n=0}x.n=(x.n||0)+1});
    const gc={temperature:1,maxOutputTokens:max||400,responseMimeType:'application/json'};
    if(/2\.5/.test(model()))gc.thinkingConfig={thinkingBudget:0};

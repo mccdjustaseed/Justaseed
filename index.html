@@ -3081,7 +3081,19 @@ async function pollGifts(man){if(GP){if(man)toast('Đang kiểm tra quà...');re
    save();const last=got[got.length-1][1];toast('🎁 '+last.gf+' tặng bạn '+last.n+(got.length>1?' (+'+(got.length-1)+' quà nữa)':''));const sel=typeof sellingNow=='function'&&sellingNow();if(!sel&&!$q('modal').innerHTML&&!ED)Z.recv(last.id);softR()}else if(man)toast(ids.length?'Quà đang chờ vì túi workshop đầy':'Chưa có quà mới gửi tới bạn')
  }catch(e){if(man)toast('Lỗi nhận quà: '+(e&&e.message||e))}GP=0}
 Z.poll=man=>pollGifts(man);
-setInterval(pollGifts,20000);setTimeout(pollGifts,4000);
+setInterval(pollGifts,60000);setTimeout(pollGifts,4000); /* dự phòng; nhận quà chính qua Realtime bên dưới */
+let RT=null,RTU=null;
+const gGo=()=>{if(GP)return setTimeout(gGo,1500);pollGifts()};
+function gRT(){
+ try{
+  const ok=typeof currentUser!='undefined'&&currentUser&&window.DISCORD_OK&&typeof supabaseClient!='undefined'&&supabaseClient&&typeof supabaseClient.channel=='function';
+  if(!ok){if(RT){try{supabaseClient.removeChannel(RT)}catch(e){}RT=null;RTU=null}return}
+  if(RT&&RTU===currentUser.id)return;
+  if(RT){try{supabaseClient.removeChannel(RT)}catch(e){}RT=null}
+  RTU=currentUser.id;
+  RT=supabaseClient.channel('gifts-'+RTU).on('postgres_changes',{event:'INSERT',schema:'public',table:'wall_messages',filter:'to_user=eq.'+RTU},pl=>{const m=pl&&pl.new&&pl.new.message;if(m==null||String(m).startsWith('JSGIFT1:'))gGo()}).subscribe(st=>{if(st=='SUBSCRIBED')gGo()})
+ }catch(e){RT=null;RTU=null}}
+setInterval(gRT,3000);setTimeout(gRT,1500);
 {const o=window.loadWallThread;if(typeof o=='function')window.loadWallThread=async function(){const r=await o.apply(this,arguments),f=m=>!String(m.message||'').startsWith('JSGIFT1:');r.roots=r.roots.filter(f);r.replies=r.replies.filter(f);return r}}
 
 /* ----- giao diện từng bàn workshop ----- */

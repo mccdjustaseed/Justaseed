@@ -3706,7 +3706,7 @@ const G=id=>document.getElementById(id),
   qn=()=>{const a=qa();return a.length&&(s.qseen||'')===a.join(',')?0:a.length};
 let K='friends',OPEN=0,HB='',HH='';
 const unread=()=>(s.notifs||[]).filter(n=>!n.read).length;
-document.body.insertAdjacentHTML('beforeend',`<div id=sdh role=button aria-label="Mở Cộng đồng">${ic('chev',18)}<span id=sdb></span></div><div id=sdo></div><aside id=sd aria-hidden=true><div class=sdt><b>Cộng đồng <small style="font-weight:400;opacity:.6;font-size:.55em">v41</small></b><span id=sda></span><button class=s onclick="SD.close()" aria-label="Đóng">${ic('close',16)}</button></div><div id=sdtabs></div><div id=sdbody></div></aside>`);
+document.body.insertAdjacentHTML('beforeend',`<div id=sdh role=button aria-label="Mở Cộng đồng">${ic('chev',18)}<span id=sdb></span></div><div id=sdo></div><aside id=sd aria-hidden=true><div class=sdt><b>Cộng đồng <small style="font-weight:400;opacity:.6;font-size:.55em">v42</small></b><span id=sda></span><button class=s onclick="SD.close()" aria-label="Đóng">${ic('close',16)}</button></div><div id=sdtabs></div><div id=sdbody></div></aside>`);
 G('sdh').onclick=()=>SD.open();G('sdo').onclick=()=>SD.close();
 function head(){
  if(OPEN&&K=='quest'){const j=qa().join(',');if((s.qseen||'')!==j){s.qseen=j;try{save()}catch(e){}}}
@@ -5323,6 +5323,64 @@ async function feedPostNow(){
  FEED.lk=Date.now();FEED.t=0;
  toast('Đã đăng lên bảng tin!');
  await feedLoad()}
+</script>
+
+<script>
+/* ===== V42: xem bài đăng bảng tin của một người (hồ sơ của mình + hồ sơ bạn bè) ===== */
+const UPC={},UPL={},UPB={};
+function upostCard(p,c,own){
+ const L=c.l[p.id]||0,M=c.m[p.id]||0;
+ const img=feedImgOk(p.image)?`<img class=fpimg src="${p.image}" alt="Ảnh bài đăng" loading=lazy>`:'';
+ return `<div class="card fpost"><div class=fph><div class=fpn><small class=mut>${feedTime(p.created_at)}</small></div>${own?`<button class="s fcx" onclick="upostDel(${p.id})" aria-label="Xóa bài đăng">🗑</button>`:''}</div>${p.caption?`<p class=fpcap>${esc(p.caption)}</p>`:''}${img}<div class=fpa><span class=chip>❤️ ${L}</span><span class=chip>💬 ${M}</span><button class=s style="margin-left:auto" onclick="upostOpen(${p.id})">Xem &amp; bình luận</button></div></div>`}
+function upostHtml(uid){
+ const c=UPC[uid];
+ setTimeout(()=>upostLoad(uid),0);
+ return `<div id="upost-box" data-u="${uid}">${c?c.html:'<div class=card><p class=mut style="margin:0">Đang tải bài đăng...</p></div>'}</div>`}
+async function upostLoad(uid,force){
+ const box=document.getElementById('upost-box');
+ if(!box||box.dataset.u!==uid||UPB[uid])return;
+ const c=UPC[uid];if(c&&!force&&Date.now()-c.t<20000)return;
+ UPB[uid]=1;
+ try{
+  const own=!!(currentUser&&uid===currentUser.id),lim=UPL[uid]||10;
+  const {data:ps,error}=await supabaseClient.from('feed_posts').select('id, user_id, image, caption, created_at').eq('user_id',uid).order('created_at',{ascending:false}).limit(lim+1);
+  let html;
+  if(error){
+   html=feedMissing(error)
+    ?'<div class=fsetup><b>Bảng tin chưa được bật</b><p class=mut style="margin:4px 0 0">Cần chạy file justaseed-feed.sql một lần trong Supabase.</p></div>'
+    :`<div class=fsetup><b>Không tải được bài đăng</b><p class=mut style="margin:4px 0 0">${esc(error.message||'')}</p></div>`}
+  else{
+   const all=ps||[],more=all.length>lim,list=all.slice(0,lim),ids=list.map(p=>p.id),cn={l:{},m:{}};
+   if(ids.length){
+    const [lk,cm]=await Promise.all([
+     supabaseClient.from('feed_likes').select('post_id').in('post_id',ids),
+     supabaseClient.from('feed_comments').select('post_id').in('post_id',ids)]);
+    (lk.data||[]).forEach(r=>cn.l[r.post_id]=(cn.l[r.post_id]||0)+1);
+    (cm.data||[]).forEach(r=>cn.m[r.post_id]=(cn.m[r.post_id]||0)+1)}
+   html=list.length
+    ?list.map(p=>upostCard(p,cn,own)).join('')+(more?`<button class=s style="width:100%;margin:6px 0" onclick="upostMore('${uid}')">Xem thêm</button>`:'')
+    :`<div class=card><p class=mut style="margin:0">${own?'Bạn chưa đăng bài nào lên bảng tin. Hãy viết gì đó ở tab Bảng tin.':'Người này chưa đăng bài nào lên bảng tin.'}</p></div>`}
+  UPC[uid]={t:Date.now(),html};
+  const b2=document.getElementById('upost-box');
+  if(b2&&b2.dataset.u===uid)b2.innerHTML=html;
+ }catch(e){console.warn(e)}
+ finally{UPB[uid]=0}}
+function upostMore(uid){UPL[uid]=(UPL[uid]||10)+10;upostLoad(uid,true)}
+function upostOpen(pid){try{mdl()}catch(e){}nxGo({k:'feed',pid})}
+async function upostDel(pid){
+ if(!confirm('Xóa bài đăng này?'))return;
+ const {error}=await supabaseClient.from('feed_posts').delete().eq('id',pid);
+ if(error)return toast('Lỗi: '+error.message);
+ FEED.posts=FEED.posts.filter(p=>p.id!==pid);
+ toast('Đã xóa bài đăng');
+ if(currentUser){delete UPC[currentUser.id];upostLoad(currentUser.id,true)}}
+
+/* tab "Bài đăng" trong hồ sơ của mình */
+V.posts=()=>currentUser?upostHtml(currentUser.id):'<div class=card><p class=mut style="margin:0">Hãy liên kết Discord để xem bài đăng của bạn.</p></div>';
+PFT.splice(1,0,['posts','Bài đăng']);
+/* tab "Bài đăng" trong hồ sơ bạn bè */
+FPT.splice(1,0,['posts','Bài đăng']);
+{const o=fpBody;fpBody=function(k){if(k=='posts')return upostHtml(FPV.uid);return o.apply(this,arguments)}}
 </script>
 
 </body></html>

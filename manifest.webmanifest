@@ -1,1 +1,30 @@
-{"name":"Justaseed – Shop hoa","short_name":"Justaseed","start_url":".","scope":".","display":"standalone","background_color":"#e3f5de","theme_color":"#388a55","lang":"vi"}
+{
+  "name": "Justaseed – Shop hoa",
+  "short_name": "Justaseed",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#e3f5de",
+  "theme_color": "#388a55",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

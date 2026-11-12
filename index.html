@@ -1763,12 +1763,13 @@ const IDRE=/^[\w-]{11}$/;
 const KEY='AIzaSyB7AxXmftO434HSxB28HtIN36g0ud57EN4';
 const MS=window.MS={key:KEY,mc:0,msg:'',fav:[],qo:1,fo:1,q:[],now:null,hist:[],rep:0,res:[],qry:'',busy:0,err:'',playing:0,pos:0,dur:0,evT:0,want:0,show:0,seeking:0,rate:1,ap:1,movie:0};
 try{const j=JSON.parse(localStorage.getItem(LS)||'{}');['q','now','hist','rep','fav','qo','fo','mc','rate','ap','sd'].forEach(k=>{if(j[k]!=null)MS[k]=j[k]})}catch(e){}
+try{const j=JSON.parse(localStorage.getItem(LS)||'{}');if(j.rs&&j.now&&Date.now()-(+j.rsT||0)<216e5){MS.pos=+j.pos||0;MS.arm=1;MS.rsLoad=1}}catch(e){}
 /* bỏ các bài cũ lưu từ Spotify (id dài 22 ký tự) */
 if(!Array.isArray(MS.q))MS.q=[];if(!Array.isArray(MS.hist))MS.hist=[];
 if(!Array.isArray(MS.fav))MS.fav=[];MS.fav=MS.fav.filter(t=>t&&IDRE.test(t.id));if(MS.qo==null)MS.qo=1;if(MS.fo==null)MS.fo=1;MS.ap=MS.ap==null?1:(MS.ap?1:0);MS.movie=0;MS.sd=MS.sd===-1?-1:1;
 MS.q=MS.q.filter(t=>t&&IDRE.test(t.id));MS.hist=MS.hist.filter(t=>t&&IDRE.test(t.id));
 if(MS.now&&!IDRE.test(MS.now.id))MS.now=null;
-const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep,fav:MS.fav,qo:MS.qo,fo:MS.fo,mc:MS.mc,rate:MS.rate,ap:MS.ap,sd:MS.sd}))}catch(e){}};
+const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({q:MS.q,now:MS.now,hist:MS.hist.slice(-30),rep:MS.rep,fav:MS.fav,qo:MS.qo,fo:MS.fo,mc:MS.mc,rate:MS.rate,ap:MS.ap,sd:MS.sd,rs:MS.rs?1:0,rsT:Date.now(),pos:Math.round(MS.pos||0)}))}catch(e){}};
 const fm=ms=>{ms=Math.max(0,Math.round((ms||0)/1000));return Math.floor(ms/60)+':'+String(ms%60).padStart(2,'0')};
 
 /* ---------- icon + tab ---------- */
@@ -1831,7 +1832,7 @@ async function search(raw){
 
 /* ---------- trình phát (YouTube IFrame Player API) ---------- */
 let ctl=null,ctlP=null,apiP=null,loaded='',kid=0,ending=0,dk=-1,miniSig='';
-let hidT=0,errN=0,aut=0,dtT=0,dtS=0,msId='',sil=null,silUrl='';
+let stAt=0,hidT=0,errN=0,aut=0,dtT=0,dtS=0,msId='',sil=null,silUrl='';
 function loadApi(){
  if(apiP)return apiP;
  apiP=new Promise((res,rej)=>{
@@ -1847,7 +1848,7 @@ function ensureCtl(id,auto){
  if(ctl)return Promise.resolve(ctl);if(ctlP)return ctlP;
  ctlP=loadApi().then(Y=>new Promise(res=>{
   const p=new Y.Player('spEl',{width:'100%',height:'100%',videoId:id,
-   playerVars:{playsinline:1,rel:0,modestbranding:1,autoplay:auto?1:0},
+   playerVars:{playsinline:1,rel:0,modestbranding:1,autoplay:auto?1:0,start:stAt||0},
    events:{onReady:()=>{ctl=p;loaded=id;res(p)},onStateChange:onSt,onError:onErr}})
  })).catch(e=>{ctlP=null;throw e});
  return ctlP}
@@ -1859,15 +1860,15 @@ function kick(c){
   n++;if(n<6)setTimeout(f,n<3?700:1500);
   else if(!document.hidden){MS.show=1;ui();toast('Trình duyệt chặn tự phát — hãy bấm Play trong khung YouTube')}};
  setTimeout(f,250)}
-function go(t){
- MS.now=t;MS.ended=0;MS.pos=0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
+function go(t,at){
+ stAt=at>2000?Math.floor(at/1000):0;MS.now=t;MS.ended=0;MS.pos=at||0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
  sv();ui();
- const fin=c=>{if(loaded!==t.id){loaded=t.id;try{c.loadVideoById(t.id)}catch(e){}}kick(c)};
+ const fin=c=>{if(loaded!==t.id){loaded=t.id;try{c.loadVideoById(at>2000?{videoId:t.id,startSeconds:Math.floor(at/1000)}:t.id)}catch(e){}}kick(c)};
  if(ctl)fin(ctl);else ensureCtl(t.id,1).then(fin).catch(e=>{MS.want=0;ui();toast(e.message||'Không phát được')})}
 function onSt(e){
  const st=e&&e.data;
  if(st===1){
-  errN=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
+  errN=0;MS.arm=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
   try{MS.pos=ctl.getCurrentTime()*1000;const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(x){}
   ui();duck()}
  else if(st===2){
@@ -2067,15 +2068,26 @@ function bg(){try{if(sil&&!sil.paused)sil.pause()}catch(e){}mediaSess()}
 function bgStop(){
  try{if(MS.now&&(MS.playing||MS.want)){MS.rs=1;MS.pos=est();MS.evT=Date.now();MS.want=0;kid++;MS.playing=0;try{ctl&&ctl.pauseVideo()}catch(e){}try{ui()}catch(e){}}}catch(e){}
  try{duck()}catch(e){}try{clearInterval(MT)}catch(e){}
- try{if(AC&&AC.state=='running')AC.suspend()}catch(e){}}
+ try{if(AC&&AC.state=='running')AC.suspend()}catch(e){}
+ try{sv()}catch(e){}}
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){hidT=Date.now();bgStop();return}
  hidT=0;
  try{if(AC&&AC.state=='suspended')AC.resume()}catch(e){}
- try{if(MS.rs&&MS.now){MS.rs=0;MS.want=1;if(ctl&&loaded===MS.now.id){try{ctl.playVideo()}catch(e){}kick(ctl)}else go(MS.now)}
+ try{if(MS.rs&&MS.now){MS.rs=0;MS.arm=1;MS.want=1;if(ctl&&loaded===MS.now.id){try{ctl.playVideo()}catch(e){}kick(ctl)}else go(MS.now)}
  else if(!MS.playing&&!MS.want&&s&&s.mus&&scr=='game')music()}catch(e){}
  tickUI(est());mediaSess()});
 addEventListener('pagehide',()=>{hidT=Date.now();bgStop()});
+/* v55: nhạc KHÔNG chạy nền (ẩn/tắt màn hình/thoát web là dừng). Quay lại web: tự phát tiếp; nếu trình duyệt chặn thì chạm vào màn hình là phát tiếp */
+function rsTry(e){
+ if(!MS.arm||!MS.now)return;
+ if(MS.playing){MS.arm=0;return}
+ if(e&&e.target&&e.target.closest&&e.target.closest('[onclick*="MU."]'))return;
+ MS.arm=0;MS.rs=0;MS.want=1;
+ if(ctl&&loaded===MS.now.id){try{ctl.playVideo()}catch(x){}kick(ctl)}else go(MS.now,MS.rsLoad?MS.pos:0);
+ MS.rsLoad=0}
+['pointerdown','touchend','click','keydown'].forEach(n=>addEventListener(n,rsTry,{capture:true,passive:true}));
+setTimeout(()=>{if(MS.arm&&!MS.playing&&scr=='game')toast('🎵 Chạm vào màn hình để nghe tiếp bài đang dở')},3500);
 
 /* ---------- khởi tạo ---------- */
 document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></div><div id="spEmb"><div id="spEl"></div><button id="spX" aria-label="Quay lại nghe nhạc" onclick="MU.movie(0)">✕</button></div>');

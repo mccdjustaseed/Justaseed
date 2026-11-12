@@ -5252,7 +5252,9 @@ cardMusic=function(){
 .fcl{display:flex;flex-direction:column;gap:12px;max-height:420px;overflow-y:auto;padding:2px 0}
 .fch{font-size:.8rem;color:var(--mut);margin:0 0 8px;padding-top:8px;border-top:1px solid var(--ln)}
 .fcm{display:flex;gap:8px;align-items:flex-start}
-.fcm .fcw{min-width:0;flex:0 1 auto;max-width:calc(100% - 36px - 38px)}
+.fcm .fcw{min-width:0;flex:0 1 auto;max-width:calc(100% - 36px)}
+.fcm .fcrow{display:flex;align-items:center;gap:6px}
+.fcm .fcrow .fcb{min-width:0;flex:0 1 auto}
 .fcm .fcb{background:var(--g);border-radius:16px;padding:6px 12px;line-height:1.35;overflow-wrap:anywhere}
 .fcm .fcb b{display:block;font-size:.92rem;font-weight:700}
 .fcm .fcn{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
@@ -5271,15 +5273,15 @@ cardMusic=function(){
 .fcm.fcrp .fcb{padding:5px 11px}
 .fcm.fcrp .fcb b{font-size:.86rem}
 .fcm.fcrp .fctx{font-size:.78rem}
-.fcm .fcrt{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:30px;padding-top:2px}
+.fcm .fcrt{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto;width:24px}
 .fcrt .fcah{position:relative;display:inline-block;line-height:0;animation:fcfloat 3.2s ease-in-out infinite}
-.fcrt .fcah i{position:absolute;right:-5px;bottom:-4px;font-style:normal;font-size:11px;line-height:1;animation:fcbeat 1.9s ease-in-out infinite;filter:drop-shadow(0 0 2px #fff)}
+.fcrt .fcah i{position:absolute;right:-4px;bottom:-3px;font-style:normal;font-size:9px;line-height:1;animation:fcbeat 1.9s ease-in-out infinite;filter:drop-shadow(0 0 2px #fff)}
 @keyframes fcbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.3)}30%{transform:scale(1)}45%{transform:scale(1.18)}60%{transform:scale(1)}}
 @keyframes fcfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
-.fcrt .fclk{display:flex!important;align-items:center;justify-content:center;width:28px!important;height:28px!important;min-height:0!important;padding:0!important;margin:0!important;border:2px solid var(--ln)!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;font-size:.8rem!important;line-height:1;cursor:pointer}
+.fcrt .fclk{display:flex!important;align-items:center;justify-content:center;width:22px!important;height:22px!important;min-height:0!important;padding:0!important;margin:0!important;border:1.5px solid var(--ln)!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;font-size:.62rem!important;line-height:1;cursor:pointer}
 .fcrt .fclk.on{border-color:#e0446f!important;background:color-mix(in srgb,#e0446f 12%,transparent)!important}
 .fcrt .fclk.on .fhe{animation:fpop .35s ease}
-.fcrt .fcn2{font-size:.68rem;color:var(--mut);line-height:1;margin-top:-3px}
+.fcrt .fcn2{font-size:.6rem;color:var(--mut);line-height:1;margin-top:-2px}
 @media(prefers-reduced-motion:reduce){.fcrt .fcah,.fcrt .fcah i,.fcrt .fclk.on .fhe{animation:none}}
 .fcm.nglow{padding-left:6px;padding-right:6px}
 .fce{margin:4px 0 8px;text-align:center;font-size:.85rem}
@@ -5350,6 +5352,7 @@ async function feedClLike(pid,cid){
  if(r.error&&r.error.code!='23505'){
   const b=FEED.cl[cid]||[];FEED.cl[cid]=was?b.concat(uid):b.filter(u=>u!==uid);feedCmRefresh(pid);
   if(feedMissing(r.error)){FEED.clErr=1;toast('Cần chạy file justaseed-comment-likes.sql trong Supabase để bật tim bình luận')}
+  else if(/permission denied/i.test(r.error.message||''))toast('Thiếu quyền bảng tim bình luận: hãy chạy lại file justaseed-comment-likes.sql trong Supabase')
   else toast('Lỗi: '+r.error.message)}}
 
 /* ---- dựng HTML ---- */
@@ -5366,10 +5369,10 @@ function feedCmHtml(pid){
  const roots=[],kids={};
  a.forEach(c=>{if(!par(c))roots.push(c);else{const r=rootOf(c);(kids[r.id]=kids[r.id]||[]).push(c)}});
  const item=(c,isRp,hasKids)=>{const w=feedWho(c.user_id),mine=c.user_id===uid,p=feedCmParse(c),pau=!!pOwner&&c.user_id===pOwner,
-   cl=FEED.cl[c.id]||[],lm=cl.includes(uid),au=!!pOwner&&cl.includes(pOwner),z=isRp?20:22;
+   cl=FEED.cl[c.id]||[],lm=cl.includes(uid),au=!!pOwner&&cl.includes(pOwner),z=isRp?16:18;
   const auH=au?`<span class=fcah title="Tác giả đã thả tim"><span style="line-height:0">${feedAvOf(pOwner,z)}</span><i>❤️</i></span>`:'';
   const lkH=FEED.clErr?'':`<button class="s fclk${lm?' on':''}" onclick="feedClLike(${pid},${c.id})" aria-label="Thả tim bình luận"><span class=fhe>${lm?'❤️':'🤍'}</span></button>${cl.length?`<small class=fcn2>${cl.length}</small>`:''}`;
-  return `<div class="fcm${isRp?' fcrp':''}" id="fcm-${c.id}"><span class=fcav><span style="line-height:0">${currentUser&&mine?avH(isRp?24:28):friendAvTap((FEED.pmap[c.user_id]||{}).gav,isRp?24:28,c.user_id)}</span>${hasKids?'<i></i>':''}</span><div class=fcw><div class=fcb><div class=fcn><b>${esc(w.name)}</b>${pau?'<small class=fcau>• Tác Giả</small>':''}</div><div class=fctx>${esc(p.text)}</div></div><div class=fcm2><span>${feedTime(c.created_at)}</span><button class=s onclick="feedReplyTo(${pid},${c.id})">Trả lời</button>${mine||own?`<button class=s onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">Xóa</button>`:''}</div></div><div class=fcrt>${auH}${lkH}</div></div>`};
+  return `<div class="fcm${isRp?' fcrp':''}" id="fcm-${c.id}"><span class=fcav><span style="line-height:0">${currentUser&&mine?avH(isRp?24:28):friendAvTap((FEED.pmap[c.user_id]||{}).gav,isRp?24:28,c.user_id)}</span>${hasKids?'<i></i>':''}</span><div class=fcw><div class=fcrow><div class=fcb><div class=fcn><b>${esc(w.name)}</b>${pau?'<small class=fcau>• Tác Giả</small>':''}</div><div class=fctx>${esc(p.text)}</div></div><div class=fcrt>${auH}${lkH}</div></div><div class=fcm2><span>${feedTime(c.created_at)}</span><button class=s onclick="feedReplyTo(${pid},${c.id})">Trả lời</button>${mine||own?`<button class=s onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">Xóa</button>`:''}</div></div></div>`};
  const list=roots.map(c=>`<div class=fct>${item(c,false,!!(kids[c.id]||[]).length)}${(kids[c.id]||[]).length?`<div class=fcr>${kids[c.id].map(k=>item(k,true)).join('')}</div>`:''}</div>`).join('');
  const rp=(FEED.rp||{})[pid],rc=rp&&byId[rp];
  const banner=rc?`<div class=fcbn><span>Đang trả lời <b>${esc(feedWho(rc.user_id).name)}</b></span><button class=s onclick="feedReplyTo(${pid},0)" aria-label="Hủy trả lời">✕</button></div>`:'';

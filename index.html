@@ -5739,14 +5739,22 @@ const fm=n=>Number(n||0).toLocaleString('vi-VN');
 const ago=t=>{if(!t)return'—';const m=Math.max(0,Math.round((Date.now()-new Date(t))/60000));return m<60?m+' phút trước':m<1440?Math.round(m/60)+' giờ trước':Math.round(m/1440)+' ngày trước'};
 const me=()=>typeof currentUser!='undefined'&&currentUser?currentUser:null;
 const redraw=()=>{try{if(typeof scr!='undefined'&&scr=='game')R()}catch(e){}};
+const DIAG=1; /* đặt 0 khi xong để tab Quản trị chỉ hiện cho admin */
+const setNote=n=>{if(A.note!==n){A.note=n;try{softR()}catch(e){}}};
+const addTab=()=>{if(!TABS.some(t=>t[0]=='adm'))TABS.splice(1,0,['adm','gear','Quản trị'])};
 async function chk(){
  const u=me();
- if(!u||!window.DISCORD_OK||!sb()){const i=TABS.findIndex(t=>t[0]=='adm');if(i>=0)TABS.splice(i,1);A.uid=null;A.ok=0;return}
+ if(DIAG)addTab();
+ if(!u||!window.DISCORD_OK||!sb()){
+  if(!DIAG){const i=TABS.findIndex(t=>t[0]=='adm');if(i>=0)TABS.splice(i,1)}
+  A.uid=null;A.ok=0;
+  setNote('Chưa đăng nhập Discord (đang ở chế độ khách). Hãy thoát ra menu, đăng nhập bằng Discord rồi vào game. [đăng nhập='+(u?'có':'không')+', DISCORD_OK='+(window.DISCORD_OK?'true':'false')+', supabase='+(sb()?'có':'không')+']');
+  return}
  if(A.uid===u.id)return;A.uid=u.id;A.ok=0;
  try{const r=await sb().from('admins').select('user_id').eq('user_id',u.id).maybeSingle();
-  if(r&&r.error){A.uid=null;console.warn('[admin] không đọc được bảng admins:',r.error.message||r.error);return}
-  if(r&&r.data){A.ok=1;if(!TABS.some(t=>t[0]=='adm'))TABS.splice(1,0,['adm','gear','Quản trị']);try{softR()}catch(e){}}
-  else console.warn('[admin] user_id',u.id,'chưa có trong bảng admins')}catch(e){A.uid=null}}
+  if(r&&r.error){A.uid=null;setNote('Lỗi đọc bảng admins: '+(r.error.message||r.error)+'. Có thể chưa chạy file SQL quản trị hoặc thiếu policy cho phép đọc.\nUser ID của bạn: '+u.id);return}
+  if(r&&r.data){A.ok=1;addTab();setNote('OK');try{softR()}catch(e){}}
+  else setNote('Đọc được bảng admins nhưng KHÔNG có dòng nào cho tài khoản này (hoặc RLS chặn đọc). Hãy thêm user_id này vào bảng admins:\n'+u.id)}catch(e){A.uid=null;setNote('Lỗi: '+e.message)}}
 setInterval(chk,5000);
 /* khóa tài khoản */
 let BN=0;
@@ -5774,7 +5782,7 @@ const listH=()=>A.busy&&!A.list?'<div class=card><p class=mut style="margin:0">�
 const rowsH=(a,cap,del)=>a==null?'<p class=mut style="margin:0">Đang tải...</p>':a.length?a.map(r=>`<div class=row><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${E(cap(r))}</span><button class=s onclick="${del}(${+r.id})" aria-label="Xóa">🗑</button></div>`).join(''):'<p class=mut style="margin:0">Không có.</p>';
 const viewH=()=>{const p=A.sel;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b><button class=s onclick="AD.back()">← Danh sách</button></div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div><div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button></div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
 V.adm=()=>{
- if(!A.ok)return '<div class=card><p class=mut style="margin:0">Bạn không có quyền quản trị.</p></div>';
+ if(!A.ok)return '<div class=card><h3>🛡 Quản trị — chẩn đoán</h3><p class=mut style="margin:0;white-space:pre-wrap;word-break:break-all">'+E(A.note||'Đang kiểm tra...')+'</p></div>';
  if(A.list===null&&!A.busy)setTimeout(()=>AD.find(''),0);
  return `<div class=card><h3>🛡 Quản trị</h3><div class=row style="margin:0"><input id=adq value="${E(A.q)}" placeholder="Tìm theo tên..." style="flex:1;width:auto" onkeydown="if(event.key=='Enter')AD.find()"><button class=p onclick="AD.find()">Tìm</button></div></div>${A.sel?viewH():listH()}`};
 const fail=(e,m)=>toast(m||('Lỗi: '+((e&&e.message)||e)));

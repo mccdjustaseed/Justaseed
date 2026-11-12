@@ -6095,5 +6095,306 @@ function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))
    return `<div class=row><span>Thông báo</span><button class="s ${st=='on'?'on2':''}" onclick="JSN.toggle()">${lb}</button></div>${hint}`},
   toggle:async()=>{try{if(on())await disable();else await enable()}catch(e){}mdl('s')}};
 })();
+
+<script>
+/* ===== GEMINI + MUSICBRAINZ INTEGRATION ===== */
+(function(){
+  // ---- CẤU HÌNH ----
+  // Dán API key Gemini (AI Studio) vào đây, hoặc để trống để chỉ dùng fallback offline.
+  // Khuyến nghị production: đưa key vào Supabase Edge Function, client gọi edge function.
+  const GEMINI_API_KEY = (localStorage.getItem('jsGeminiKey') || '').trim();
+  const GEMINI_MODEL = 'gemini-2.0-flash';
+  const GEMINI_URL = (key) => `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+
+  // MusicBrainz không cần key; bắt buộc User-Agent rõ ràng
+  const MB_UA = 'JustaseedFlowerShop/1.0 (https://justaseed.local; contact@example.com)';
+  const MB_SEARCH = 'https://musicbrainz.org/ws/2/recording';
+
+  const cache = { review: {}, nego: {}, mb: {} };
+  const hasGemini = () => !!(GEMINI_API_KEY && GEMINI_API_KEY.length > 20);
+
+  async function geminiText(prompt, maxTokens){
+    if(!hasGemini()) return null;
+    try{
+      const r = await fetch(GEMINI_URL(GEMINI_API_KEY), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: maxTokens || 120,
+            topP: 0.95
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' }
+          ]
+        })
+      });
+      if(!r.ok){ console.warn('[Gemini]', r.status, await r.text().catch(()=>'')); return null; }
+      const j = await r.json();
+      const t = (((j.candidates||[])[0]||{}).content||{}).parts;
+      const text = (t||[]).map(p=>p.text||'').join('').trim();
+      return text || null;
+    }catch(e){ console.warn('[Gemini]', e); return null; }
+  }
+
+  // ---- ĐÁNH GIÁ KHÁCH HÀNG ----
+  function reviewContext(st){
+    const flower = (typeof LS!=='undefined' && LS) ? LS : '';
+    const seasonName = (typeof SE!=='undefined' && typeof season==='function') ? (SE[season()]||{}).n : '';
+    const wx = (s && s.wx) || '';
+    const pets = ((s.dog&&s.dog.bond)||0)+((s.cat&&s.cat.bond)||0);
+    const furn = Object.keys((s&&s.fo)||{}).length;
+    const bits = [];
+    if(flower) bits.push('bó hoa: '+flower);
+    if(seasonName) bits.push('mùa '+seasonName);
+    if(wx==='rain') bits.push('trời mưa');
+    if(wx==='sun') bits.push('trời nắng');
+    if(pets>20) bits.push('có thú cưng dễ thương');
+    if(furn>=3) bits.push('decor đẹp');
+    return bits.join(', ') || 'tiệm hoa nhỏ';
+  }
+
+  async function genReview(st){
+    st = Math.max(1, Math.min(5, st|0));
+    const ctx = reviewContext(st);
+    const key = st+'|'+ctx;
+    if(cache.review[key]) return cache.review[key];
+    const prompt =
+`Bạn là khách hàng Việt Nam vừa mua hoa tại tiệm hoa tên "${(s&&s.name)||'Justaseed'}".
+Viết ĐÚNG 1 câu đánh giá ngắn (tối đa 28 từ), giọng tự nhiên, đời thường, không emoji quá nhiều.
+Số sao: ${st}/5.
+Bối cảnh (có thể nhắc nhẹ nếu hợp): ${ctx}.
+Chỉ trả về nội dung đánh giá, không số sao, không dấu ngoặc kép, không giải thích.`;
+    const t = await geminiText(prompt, 80);
+    if(t){
+      const clean = t.replace(/^["“]|["”]$/g,'').replace(/\n+/g,' ').trim().slice(0,160);
+      if(clean.length>8){ cache.review[key]=clean; return clean; }
+    }
+    return null;
+  }
+
+  // Hook vào hàm review hiện có (phiên bản sau cùng trong file)
+  const _review = typeof review === 'function' ? review : null;
+  if(_review){
+    window.review = function(st, look){
+      const st2 = Math.max(1, Math.min(5, st|0));
+      // Gọi bản gốc ngay (dùng fallback RV2) để UI không bị delay
+      _review(st2, look);
+      // Nếu có Gemini: bất đồng bộ thay thế nội dung review mới nhất
+      if(hasGemini() && s && Array.isArray(s.rv) && s.rv[0] && s.rv[0].st===st2){
+        const id = s.rv[0].id;
+        genReview(st2).then(txt=>{
+          if(!txt) return;
+          const r = (s.rv||[]).find(x=>x.id===id);
+          if(r){ r.t = txt; r.ai = 1; try{ if(typeof R==='function' && tab==='rev') R(); }catch(e){} }
+        });
+      }
+    };
+  }
+
+  // ---- ĐÀM PHÁN (câu mặc cả) ----
+  async function genNegoLine(c){
+    if(!c) return null;
+    const flower = (typeof nm==='function' ? nm(c.f) : c.f) || 'hoa';
+    const size = c.z || 'M';
+    const offer = (typeof $==='function' ? $(c.offer) : c.offer);
+    const list = (typeof $==='function' ? $(c.pr) : c.pr);
+    const nt = c.nt || 'gia';
+    const persona = {
+      gia: 'khách bình thường, lịch sự',
+      sv: 'sinh viên, đang tiết kiệm',
+      me: 'mua tặng mẹ / người thân',
+      qt: 'khách quen, thân mật',
+      gap: 'đang vội, muốn chốt nhanh'
+    }[nt] || 'khách hàng';
+    const key = [nt, flower, size, c.offer].join('|');
+    if(cache.nego[key]) return cache.nego[key].replace('{p}', '<b>'+offer+'</b>');
+
+    const prompt =
+`Viết 1 câu mặc cả ngắn của khách hàng Việt Nam tại tiệm hoa.
+Tính cách: ${persona}.
+Đang mua: bó ${flower} size ${size}.
+Giá niêm yết: ${list}. Khách muốn trả: ${offer}.
+Giọng tự nhiên, thân thiện hoặc hơi nài nỉ, tối đa 22 từ.
+Chèn đúng chuỗi {p} tại chỗ muốn hiện số tiền khách trả (ví dụ: "bớt còn {p} nha").
+Chỉ trả về câu nói, không giải thích, không dấu ngoặc kép.`;
+    const t = await geminiText(prompt, 70);
+    if(t && t.includes('{p}')){
+      const clean = t.replace(/^["“]|["”]$/g,'').replace(/\n+/g,' ').trim().slice(0,120);
+      cache.nego[key] = clean;
+      return clean.replace('{p}', '<b>'+offer+'</b>');
+    }
+    // Nếu model quên {p}, tự gắn
+    if(t){
+      const clean = t.replace(/^["“]|["”]$/g,'').trim().slice(0,100);
+      const withP = clean.includes(String(c.offer)) ? clean : (clean + ' Còn {p} được không?');
+      cache.nego[key] = withP.includes('{p}') ? withP : (withP + ' {p}');
+      return cache.nego[key].replace('{p}', '<b>'+offer+'</b>');
+    }
+    return null;
+  }
+
+  // Khi spawn khách mặc cả: pre-generate câu nói
+  const _spawn = typeof spawn === 'function' ? spawn : null;
+  if(_spawn){
+    window.spawn = function(){
+      const before = live && live.cs ? live.cs.length : 0;
+      _spawn.apply(this, arguments);
+      if(!hasGemini() || !live || !live.cs) return;
+      live.cs.slice(before).forEach(c=>{
+        if(c.hd || c.big) return; // không mặc cả
+        genNegoLine(c).then(line=>{
+          if(line){ c.say = line.replace(/<[^>]+>/g,''); c.line = line; }
+          try{ if(typeof R==='function' && cur===c.id) R(); }catch(e){}
+        });
+      });
+    };
+  }
+
+  // ---- MUSICBRAINZ ----
+  async function mbSearch(query){
+    const q = String(query||'').trim();
+    if(!q || q.length < 2) return null;
+    if(cache.mb[q]) return cache.mb[q];
+    try{
+      const url = MB_SEARCH + '?query=' + encodeURIComponent(q) + '&fmt=json&limit=5';
+      const r = await fetch(url, { headers: { 'User-Agent': MB_UA, 'Accept': 'application/json' } });
+      if(!r.ok) return null;
+      const j = await r.json();
+      const recs = j.recordings || [];
+      if(!recs.length) return null;
+      const best = recs[0];
+      const artist = ((best['artist-credit']||[])[0]||{}).name || ((best['artist-credit']||[]).map(a=>a.name||(a.artist&&a.artist.name)).filter(Boolean).join(', ')) || '';
+      const album = ((best.releases||[])[0]||{}).title || '';
+      const year = (((best.releases||[])[0]||{})['date']||'').slice(0,4) || '';
+      const info = {
+        title: best.title || q,
+        artist: artist,
+        album: album,
+        year: year,
+        length: best.length ? Math.round(best.length/1000) : null,
+        score: best.score
+      };
+      cache.mb[q] = info;
+      return info;
+    }catch(e){ console.warn('[MusicBrainz]', e); return null; }
+  }
+
+  // Làm giàu thông tin khi mở đĩa than / vinylInfo
+  const _vinylInfo = typeof vinylInfo === 'function' ? vinylInfo : null;
+  if(_vinylInfo){
+    window.vinylInfo = function(){
+      _vinylInfo.apply(this, arguments);
+      const m = typeof VMU !== 'undefined' ? VMU : null;
+      if(!m || !m.id) return;
+      const q = [m.name, m.ar].filter(Boolean).join(' ').trim() || m.name;
+      if(!q) return;
+      mbSearch(q).then(info=>{
+        if(!info) return;
+        if(info.title) m.name = info.title;
+        if(info.artist) m.ar = info.artist;
+        m.mb = info;
+        try{ if(typeof vinylInfoRender==='function' && document.getElementById('vinfo')) vinylInfoRender(); }catch(e){}
+        // Cập nhật modal nếu đang mở
+        const box = document.getElementById('vinfo');
+        if(box){
+          const extra = [];
+          if(info.album) extra.push(info.album);
+          if(info.year) extra.push(info.year);
+          if(info.length) extra.push(Math.floor(info.length/60)+':'+String(info.length%60).padStart(2,'0'));
+          if(extra.length){
+            let el = box.querySelector('.mb-meta');
+            if(!el){
+              el = document.createElement('p');
+              el.className = 'mut mb-meta';
+              el.style.margin = '4px 0 0';
+              const sub = box.querySelector('.row + div, .mut');
+              (sub && sub.parentNode ? sub.parentNode : box).appendChild(el);
+            }
+            el.textContent = extra.join(' · ') + ' · MusicBrainz';
+          }
+        }
+      });
+    };
+  }
+
+  // ---- UI nhập key trên điện thoại (Cài đặt) ----
+  function geminiCardHtml(){
+    const on = hasGemini();
+    const masked = on ? '••••' + (localStorage.getItem('jsGeminiKey')||'').slice(-4) : '';
+    return `<div class=card id=gemini-card>
+      <h3>🤖 AI Gemini (đánh giá & mặc cả)</h3>
+      <p class=mut style="margin:0 0 8px">Dán API key từ Google AI Studio. Không bắt buộc — không có key game vẫn chạy bình thường.</p>
+      <div class=row style="margin:0 0 6px"><span>Trạng thái</span><b class="${on?'ok':'mut'}">${on?'Đã bật '+masked:'Chưa bật'}</b></div>
+      <input id=gemKey type=password inputmode=text autocomplete=off placeholder="Dán key AIza... vào đây" style="width:100%;margin:4px 0 8px">
+      <div class=row style="justify-content:flex-start;flex-wrap:wrap;gap:6px">
+        <button class=p onclick="JAI.saveFromUI()">Lưu key</button>
+        <button class=s onclick="JAI.clearKey()">Xóa key</button>
+        <button class=s onclick="JAI.testReview()">Thử đánh giá</button>
+        <button class=s onclick="JAI.testNego()">Thử mặc cả</button>
+      </div>
+      <p class=mut style="margin:8px 0 0;font-size:.82rem">Lấy key miễn phí: mở trình duyệt → aistudio.google.com/apikey → Create API key → copy → dán vào ô trên.</p>
+    </div>`;
+  }
+
+  function injectSettings(){
+    try{
+      const ms = document.querySelector('#modal .ms');
+      if(!ms || ms.querySelector('#gemini-card')) return;
+      const h2 = ms.querySelector('h2');
+      if(!h2 || h2.textContent.trim() !== 'Cài đặt') return;
+      // chèn sau card đầu (âm thanh / thông báo)
+      const firstCard = ms.querySelector('.card');
+      if(firstCard) firstCard.insertAdjacentHTML('afterend', geminiCardHtml());
+      else ms.insertAdjacentHTML('beforeend', geminiCardHtml());
+    }catch(e){ console.warn(e); }
+  }
+
+  window.JAI = {
+    setKey(k){
+      k = String(k||'').trim();
+      try{ localStorage.setItem('jsGeminiKey', k); }catch(e){}
+      toast(k ? 'Đã lưu Gemini API key' : 'Đã xóa Gemini API key');
+    },
+    saveFromUI(){
+      const el = document.getElementById('gemKey');
+      const k = el ? el.value.trim() : '';
+      if(!k){ toast('Hãy dán key vào ô trước'); return; }
+      if(!/^AIza[0-9A-Za-z_-]{20,}$/.test(k) && k.length < 25){
+        if(!confirm('Key không giống định dạng AIza... thường thấy. Vẫn lưu?')) return;
+      }
+      this.setKey(k);
+      if(el) el.value = '';
+      try{ mdl('s'); }catch(e){}
+    },
+    clearKey(){
+      this.setKey('');
+      try{ mdl('s'); }catch(e){}
+    },
+    hasKey: hasGemini,
+    testReview: ()=>genReview(5).then(t=>{ toast(t || 'Không tạo được — kiểm tra key / mạng'); return t; }),
+    testNego: ()=>genNegoLine({f:'hong',z:'M',pr:20000,offer:16000,nt:'sv',hd:0}).then(t=>{ toast(t ? t.replace(/<[^>]+>/g,'') : 'Không tạo được — kiểm tra key / mạng'); return t; }),
+    mb: mbSearch
+  };
+
+  // Hook mdl để hiện card Gemini trong Cài đặt
+  if(typeof window.mdl === 'function'){
+    const _mdl = window.mdl;
+    window.mdl = function(k){
+      const r = _mdl.apply(this, arguments);
+      if(k === 's') setTimeout(injectSettings, 0);
+      return r;
+    };
+  }
+
+  console.info('[Justaseed] Gemini + MusicBrainz sẵn sàng. Vào Cài đặt để dán API key trên điện thoại.');
+})();
+
+</script>
 </script>
 </body></html>

@@ -1207,7 +1207,7 @@ V.bag=()=>{const sec=(t,a)=>{const r=a.filter(x=>(s.st[x.id]||0)>0);return `<div
 return sec('Hoa',fl())+sec('Giấy gói',P)+sec('Quà tặng',G)+'<p class=mut>Hoa dư hỏng khoảng 60% qua đêm, giấy và quà giữ được lâu.</p>'};
 /* ===== THỜI GIAN & ĐỢT KHÁCH ===== */
 const brk=()=>false;const clk=()=>{const m=Math.min(780,Math.floor(live.t/live.len*780));return String(9+Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
-function openDay(){CART={};s.ph='open';const L0=s.len||240;
+function openDay(){CART={};s.ph='open';let L0=s.len||240;if(L0==1800&&lvOf(s.xp||0)<20){L0=900;s.len=900}
 live={cs:[],sp:0,tot:9999,t:0,n:0,rev:0,lost:0,id:0,dec:0,last:0,len:L0,nx:2};cur=null;bd=nb();live.iv=setInterval(tick,1000);R()}
 function tick(){live.t++;let ch=0;if(!live.cs.length&&!brk()&&menu().length){if(!live.nx)live.nx=live.t+3+Math.floor(Math.random()*4);if(live.t>=live.nx){const k=1+Math.floor(Math.random()*3);for(let i=0;i<k;i++)spawn();live.nx=0;ch=1}}
 const ck=document.getElementById('clk');if(ck)ck.textContent=clk()+(brk()?' ☕ Nghỉ':'');
@@ -1483,6 +1483,9 @@ return `<div class=card><div class=row><span>${bt('a','Tất cả ('+A.length+')
 TABS.splice(TABS.findIndex(t=>t[0]=='rev')+1,0,['bills','bill','Hóa đơn']);
 /* 15 phút */
 {const o=V.shop;V.shop=function(){return o().replace('8 phút</button>',`8 phút</button> <button class="s ${s.len==900?'on2':''}" onclick="s.len=900;R()">15 phút</button>`)}}
+/* v56: mở gian hàng 30 phút, mở khóa ở level 20 */
+{const o=V.shop;V.shop=function(){const h=o();if(s.ph!='prep')return h;const ok=lvOf(s.xp||0)>=20;
+ return h.replace('15 phút</button>','15 phút</button> '+(ok?`<button class="s ${s.len==1800?'on2':''}" onclick="s.len=1800;R()">30 phút</button>`:`<button class=s disabled title="Đạt level 20 để mở khóa">🔒 30 phút · Lv 20</button>`))}}
 /* hồ sơ + level */
 const PEM={cat:'🐱',dog:'🐶',tul:'🌷',hong:'🌹',hd:'🌻',oai:'💜',cuc:'🌼',sen:'🪷'};
 function avH(z){const p=s.pf,l=lvOf(s.xp||0);let i;if(p.av)i=`<img src="${p.av}" alt="" style="width:100%;height:100%;object-fit:cover">`;else if(p.pre=='cat')i=catSVG(s.cat,'face',z*.9);else if(p.pre=='dog')i=dogSVG(s.dog,'face',z*.9);else i=fw(p.pre,z*.8);return `<span style="display:inline-grid;place-items:center;width:${z}px;height:${z}px;border-radius:50%;overflow:hidden;background:var(--g);border:3px solid ${frc(l)};flex:0 0 auto;vertical-align:middle">${i}</span>`}
@@ -3708,15 +3711,25 @@ nav button.locked span { position: relative; }
     if (!s.fsr.cache) s.fsr.cache = {};
     return s.fsr;
   }
+  /* chỉ những loại hoa đã mở khóa ở phần Nâng cấp mới tìm được */
+  const fsrList = () => F.filter(f => !f.u || (s.un && s.un[f.id]));
   function fsrBar(st) {
-    if (!FSEL || st.done[FSEL] || !F.some(f => f.id === FSEL)) FSEL = (F.find(f => !st.done[f.id]) || {}).id || null;
-    const all = F.every(f => st.done[f.id]);
-    const opts = F.map(f => `<option value="${f.id}" ${st.done[f.id] ? 'disabled' : ''} ${f.id === FSEL ? 'selected' : ''}>${esc(f.n)}${st.done[f.id] ? ' (đã mua)' : ''}</option>`).join('');
+    const FL = fsrList();
+    if (!FSEL || st.done[FSEL] || !FL.some(f => f.id === FSEL)) FSEL = (FL.find(f => !st.done[f.id]) || {}).id || null;
+    const all = FL.every(f => st.done[f.id]);
+    const pend = FL.filter(f => !st.done[f.id]);
+    const lv = typeof lvOf === 'function' ? lvOf(s.xp || 0) : 1;
+    const buyAll = lv >= 10
+      ? `<button class="s" onclick="forumBuyAll()" ${pend.length ? '' : 'disabled'}>🛒 Mua hết (${pend.length} loại)</button>`
+      : `<button class="s" disabled title="Đạt level 10 để mở khóa">🔒 Mua hết · Lv 10</button>`;
+    const opts = FL.map(f => `<option value="${f.id}" ${st.done[f.id] ? 'disabled' : ''} ${f.id === FSEL ? 'selected' : ''}>${esc(f.n)}${st.done[f.id] ? ' (đã mua)' : ''}</option>`).join('');
     const doneNames = F.filter(f => st.done[f.id]).map(f => esc(f.n)).join(', ');
     return `<div class="card"><h3>🔎 Tìm hoa cần mua</h3>
       <p class="mut">Chọn loại hoa để xem những người đang bán với nhiều mức giá khác nhau. Mỗi loại hoa chỉ được mua qua tìm kiếm 1 lần mỗi ngày: sau khi mua, loại hoa đó bị khóa đến hết ngày (Ngày ${st.d}).</p>
       <div class="row"><select id="fsel" onchange="forumPick(this.value)" style="flex:1;width:auto" ${all ? 'disabled' : ''}>${opts}</select>
       <button class="p" onclick="forumSearch()" ${all ? 'disabled' : ''}>Tìm</button></div>
+      <div class="row">${buyAll}</div>
+      <p class="mut">Loại hoa chưa mở khóa ở tab Nâng cấp sẽ không tìm được.</p>
       ${doneNames ? `<p class="mut">🔒 Đã mua hôm nay: ${doneNames}</p>` : ''}
       ${all ? '<p class="mut">Hôm nay bạn đã mua hết mọi loại hoa qua tìm kiếm. Hãy quay lại vào ngày mai!</p>' : ''}</div>`;
   }
@@ -3740,7 +3753,9 @@ nav button.locked span { position: relative; }
   function fsrResults(st) {
     const c = st.cur, market = marketPrice(c.fid);
     let html = fsrBar(st) + `<div class="card"><div class="row"><h3>${art(c.fid)} ${esc(nm(c.fid))}</h3><button class="s bk" onclick="forumHome()">← Về trang chủ Diễn đàn</button></div>
-      <p class="mut">${c.list.length} người đang bán · Giá thị trường ~${$(market)}/bông. Sau khi bạn mua, nếu rời trang này hoặc tìm loại khác thì hoa này sẽ bị khóa đến hết ngày.</p></div>`;
+      <p class="mut">${c.list.length} người đang bán · Giá thị trường ~${$(market)}/bông. Sau khi bạn mua, nếu rời trang này hoặc tìm loại khác thì hoa này sẽ bị khóa đến hết ngày.</p>
+      ${(() => { const rem = c.list.filter(p => !p.sold); const q = rem.reduce((a, p) => a + p.qty, 0), tt = rem.reduce((a, p) => a + p.total, 0);
+        return `<div class="row"><button class="p" onclick="forumBuyAllSellers()" ${rem.length ? '' : 'disabled'}>🛒 Mua hết của tất cả người bán${rem.length ? ' (' + q + ' bông · ' + $(tt) + ')' : ''}</button></div>`; })()}</div>`;
     c.list.forEach((p, i) => {
       const pct = Math.round((p.unitPrice / market - 1) * 100);
       const tag = pct <= -25 ? '📉 Rất rẻ' : pct < 0 ? '📉 Rẻ hơn TT' : pct <= 20 ? '⚖️ Gần giá TT' : '📈 Cao hơn TT';
@@ -3759,7 +3774,7 @@ nav button.locked span { position: relative; }
     const st = fsrState();
     const sel = document.getElementById('fsel');
     const fid = (sel && sel.value) || FSEL;
-    if (!fid || !F.some(f => f.id === fid)) return toast('Hãy chọn loại hoa');
+    if (!fid || !fsrList().some(f => f.id === fid)) return toast('Hãy chọn loại hoa (loại chưa mở khóa ở Nâng cấp sẽ không tìm được)');
     if (st.done[fid]) return toast('Hôm nay bạn đã mua ' + nm(fid) + ' qua tìm kiếm rồi, mai hãy thử lại');
     // Chưa mua thì chưa khóa; tìm lại sẽ thấy đúng danh sách cũ (không đổi giá bằng cách tìm lại)
     if (!st.cache[fid]) st.cache[fid] = genSearchListings(fid);
@@ -3767,6 +3782,56 @@ nav button.locked span { position: relative; }
     FSEL = null;
     save();
     try { document.activeElement && document.activeElement.blur(); } catch (e) {}
+    R();
+  };
+  window.forumBuyAll = function () {
+    if ((typeof lvOf === 'function' ? lvOf(s.xp || 0) : 1) < 10) return toast('Cần đạt level 10 để dùng Mua hết');
+    const st = fsrState();
+    const pend = fsrList().filter(f => !st.done[f.id]);
+    if (!pend.length) return toast('Hôm nay bạn đã mua hết mọi loại hoa qua tìm kiếm');
+    const plan = pend.map(f => {
+      if (!st.cache[f.id]) st.cache[f.id] = genSearchListings(f.id);
+      const l = st.cache[f.id].filter(p => !p.sold);          // đã sắp xếp theo giá tăng dần
+      const safe = l.filter(p => p.rating >= 3);
+      const pick = (safe.length ? safe : l)[0];
+      return pick ? { f, pick } : null;
+    }).filter(Boolean);
+    if (!plan.length) return;
+    const tot = plan.reduce((a, x) => a + x.pick.total, 0);
+    if (!confirm('Mua hết ' + plan.length + ' loại hoa: mỗi loại chọn người bán rẻ nhất có uy tín từ 3★ trở lên.\nTổng khoảng ' + $(tot) + '. Mỗi loại sẽ bị khóa đến hết ngày. Tiếp tục?')) { save(); return; }
+    let ok = 0, scam = 0, skip = 0, spent = 0;
+    plan.forEach(({ f, pick }) => {
+      if (!s.dev && s.money < pick.total) { skip++; return; }
+      if (!s.dev) s.money -= pick.total;
+      if (pick.scam) { scam++; L('out', 'Diễn đàn', 'Bị lừa đảo', 1, pick.total); }
+      else { s.st[f.id] = (s.st[f.id] || 0) + pick.qty; L('in', 'Diễn đàn', 'Mua ' + nm(f.id), pick.qty, pick.total); ok++; }
+      spent += pick.total; pick.sold = true; st.done[f.id] = 1;
+    });
+    st.cur = null;
+    save();
+    toast('🛒 Đã mua ' + ok + ' loại' + (scam ? ', bị lừa ' + scam : '') + (skip ? ', thiếu tiền bỏ qua ' + skip : '') + ' · chi ' + $(s.dev ? 0 : spent));
+    R();
+  };
+  /* Mua hết loại hoa đang tìm từ TẤT CẢ người bán trong danh sách (rẻ nhất trước) */
+  window.forumBuyAllSellers = function () {
+    const st = fsrState(), c = st.cur;
+    if (!c) return;
+    const rem = c.list.filter(p => !p.sold);
+    if (!rem.length) return toast('Bạn đã mua hết của mọi người bán rồi');
+    const tot = rem.reduce((a, p) => a + p.total, 0), qty = rem.reduce((a, p) => a + p.qty, 0);
+    const risky = rem.filter(p => p.rating <= 2).length;
+    if (!confirm('Mua hết ' + qty + ' bông ' + nm(c.fid) + ' của ' + rem.length + ' người bán.\nTổng ' + $(tot) + (!s.dev && s.money < tot ? ' (bạn chưa đủ tiền cho tất cả, sẽ mua từ người rẻ nhất tới khi hết tiền)' : '') + '.' + (risky ? '\n⚠️ Có ' + risky + ' người uy tín thấp (≤2★), có thể bị lừa.' : '') + '\nLoại hoa này sẽ bị khóa đến hết ngày. Tiếp tục?')) return;
+    let ok = 0, scam = 0, skip = 0, bought = 0, spent = 0;
+    rem.forEach(p => {
+      if (!s.dev && s.money < p.total) { skip++; return; }
+      if (!s.dev) s.money -= p.total;
+      if (p.scam) { scam++; L('out', 'Diễn đàn', 'Bị lừa đảo', 1, p.total); }
+      else { s.st[c.fid] = (s.st[c.fid] || 0) + p.qty; L('in', 'Diễn đàn', 'Mua ' + nm(c.fid), p.qty, p.total); ok++; bought += p.qty; }
+      spent += p.total; p.sold = true;
+    });
+    if (ok + scam) st.done[c.fid] = 1;  // đã mua: khóa loại hoa này đến hết ngày
+    save();
+    toast('🛒 Mua ' + bought + ' bông ' + nm(c.fid) + ' từ ' + ok + ' người' + (scam ? ', bị lừa ' + scam : '') + (skip ? ', thiếu tiền bỏ qua ' + skip : '') + ' · chi ' + $(s.dev ? 0 : spent));
     R();
   };
   window.forumHome = function () {
@@ -4239,10 +4304,10 @@ const shelfSVG=()=>{
 @keyframes rdp{50%{transform:scale(1.3)}}
 @media(prefers-reduced-motion:reduce){#nbell .rdot{animation:none}}
 
-/* thanh tab: 7 nút vừa một hàng */
-nav.fx{gap:2px;padding:5px 4px}
-nav.fx button{flex:1 1 0;min-width:0;padding:5px 1px}
-nav.fx button span{font-size:.58rem;white-space:nowrap}
+/* thanh tab: trượt ngang, mỗi nút giữ kích thước riêng (không ép dồn khi thêm tab mới) */
+nav.fx{gap:4px;padding:5px 6px;overflow-x:auto;overflow-y:hidden}
+nav.fx button{flex:1 0 auto;min-width:58px;padding:5px 8px}
+nav.fx button span{font-size:.62rem;white-space:nowrap}
 
 /* ngăn thông báo */
 .nts{display:flex;flex-direction:column;gap:6px}

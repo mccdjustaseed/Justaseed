@@ -3074,17 +3074,18 @@ const clean=(p,from)=>{try{const i=p&&p.it;if(!i||!TY[i.t])return null;const t=i
 Z.recv=id=>{const x=findIt(id);if(!x)return;const big=(x.t=='sh'||x.t=='ar')&&x.im?`<img src="${dim(x)}" alt="" style="width:100%;max-width:240px;border-radius:14px;display:block;margin:6px auto;box-shadow:0 0 0 2px var(--ln)">`:'';
  MD(`<div class=row><h2>🎁 Quà từ ${esc(x.gf||'bạn bè')}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${big}${icon(x,big?90:160)}<br><b>${esc(x.n)}</b><br><span class=mut>${TY[x.t].n} · chất lượng ${x.q}/100 · làm bởi ${esc(x.cr||'bạn bè')}</span></div>${x.gm?`<div class=bub style="margin:8px 0">${esc(x.gm)}</div>`:''}<p class=mut style="text-align:center;margin:8px 0">Giá trị khi bán: <b>${$(val(x))}</b> (đã +30% nhờ là quà tặng)</p><div class=row><button class=p onclick="XB.on('${x.id}');mdl()">Trưng lên kệ để bán</button><button class=s onclick="mdl()">Giữ ở túi đồ</button></div>`)};
 let GP=0,GW=0;
-async function pollGifts(){if(GP||typeof scr=='undefined'||scr!='game'||typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined'||typeof s=='undefined')return;GP=1;
+async function pollGifts(man){if(GP){if(man)toast('Đang kiểm tra quà...');return}if(typeof scr=='undefined'||scr!='game'||typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined'||typeof s=='undefined')return;GP=1;
  try{ws();const r=await supabaseClient.from('wall_messages').select('id').eq('to_user',currentUser.id).like('message','JSGIFT1:%').order('created_at',{ascending:false}).limit(30);
-  const ids=((r&&r.data)||[]).map(m=>m.id).filter(i=>!s.wsGot.includes(i)).reverse(),got=[];
+  if(r&&r.error){if(man)toast('Không đọc được quà: '+(r.error.message||'lỗi'));GP=0;return}const ids=((r&&r.data)||[]).map(m=>m.id).filter(i=>!s.wsGot.includes(i)).reverse(),got=[];
   for(const id of ids){if(s.shelf.length+s.wq.length>=CAP2){if(!GW){GW=1;toast('🎁 Có quà đang chờ nhưng túi workshop đầy')}break}GW=0;
-   const q=await supabaseClient.from('wall_messages').select('id,message,from_user').eq('id',id).maybeSingle(),row=q&&q.data;s.wsGot.push(id);if(!row)continue;
+   const q=await supabaseClient.from('wall_messages').select('id,message,from_user').eq('id',id).maybeSingle(),row=q&&q.data;if(q&&q.error){if(man)toast('Không mở được quà: '+(q.error.message||'lỗi'));break}s.wsGot.push(id);if(!row)continue;
    let p=null;try{p=JSON.parse(String(row.message).slice(7))}catch(e){}const it=clean(p);if(!it)continue;s.shelf.push(it);got.push([id,it]);
    try{supabaseClient.from('wall_messages').delete().eq('id',id).then(()=>{},()=>{})}catch(e){}}
   if(s.wsGot.length>300)s.wsGot=s.wsGot.slice(-300);
   if(got.length){s.notifs=s.notifs||[];got.forEach(([id,it])=>{s.notifs=s.notifs.filter(n=>!(n.type=='wall'&&n.id==id));s.notifs.unshift({type:'wall',id,text:'🎁 '+it.gf+' tặng bạn "'+it.n+'". Xem ở Túi đồ workshop.',time:new Date().toISOString(),read:false})});
-   save();const last=got[got.length-1][1];toast('🎁 '+last.gf+' tặng bạn '+last.n+(got.length>1?' (+'+(got.length-1)+' quà nữa)':''));if(!$q('modal').innerHTML&&!ED)Z.recv(last.id);R()}
- }catch(e){}GP=0}
+   save();const last=got[got.length-1][1];toast('🎁 '+last.gf+' tặng bạn '+last.n+(got.length>1?' (+'+(got.length-1)+' quà nữa)':''));if(!$q('modal').innerHTML&&!ED)Z.recv(last.id);R()}else if(man)toast(ids.length?'Quà đang chờ vì túi workshop đầy':'Chưa có quà mới gửi tới bạn')
+ }catch(e){if(man)toast('Lỗi nhận quà: '+(e&&e.message||e))}GP=0}
+Z.poll=man=>pollGifts(man);
 setInterval(pollGifts,20000);setTimeout(pollGifts,4000);
 {const o=window.loadWallThread;if(typeof o=='function')window.loadWallThread=async function(){const r=await o.apply(this,arguments),f=m=>!String(m.message||'').startsWith('JSGIFT1:');r.roots=r.roots.filter(f);r.replies=r.replies.filter(f);return r}}
 
@@ -3119,7 +3120,7 @@ sh(){const d=W.sh,mat=TEE[d.ty][1],cu=d.pre<0;
 pf(){const lv=L2(),have=fl().filter(f=>(s.st[f.id]||0)>0),pm=WP.reduce((a,id)=>a+C[id]*(WC+1),0)+BOT[WC-1];
  return hdr('pf')+(lk('pf')||`${rcUI()}<p class=mut style="margin:6px 0 2px">1. Hoặc tự chọn đúng 3 hương (khác nhóm thì chất lượng cao hơn)</p>${have.length?`<div class=strip2>${have.map(f=>`<button class="s ${WP.includes(f.id)?'on2':''}" onclick="XB.tp('${f.id}')">${fw(f.id,20)} ${f.n} <b>${s.st[f.id]}</b></button>`).join('')}</div>`:'<p class=mut>Kho đang trống, hãy nhập hoa trước.</p>'}${WP.length?`<p class=mut style="margin:2px 0">${WP.map(id=>nm(id)+' · '+FAM[id]).join(' | ')}</p>`:''}${rcSave()}<div class=row><span>2. Nồng độ</span><span>${CN.map((c,i)=>`<button class="s ${WC==i+1?'on2':''}" onclick="XB.c(${i+1})">${c}</button>`).join(' ')}</span></div>${pv({t:'pf',cl:WP.map(id=>FC[id]||'#b39ddb'),v:WC})}${mkBtn('pf','Cần '+(WC+1)+' bông mỗi hương · ~'+$(pm),pdur(WC),WP.length<3)}`)}};
 V.ws=()=>{ws();const t=W.t,lv=L2();
- return `<div class=card><h3>🎓 Workshop</h3><p class=mut style="margin:0">Chọn mô hình rồi làm sản phẩm (mỗi bàn làm 1 mẻ một lúc, vẫn chạy khi bạn thoát game). Thành phẩm vào Túi đồ: trưng lên kệ để bán, tặng bạn bè hoặc chụp ảnh khoe. Làm nhiều một loại thì nhu cầu giảm, giá giảm theo, hồi dần mỗi ngày.</p></div>${Z.jobCard()}<div class=card style="padding:8px"><div class=strip2 style="margin:0">${TK.map(k=>`<button class="s ${t==k?'on2':''}" onclick="XB.tb('${k}')">${TY[k].e} ${TY[k].n}${lv<TY[k].lv?' 🔒':''}</button>`).join('')}</div></div><div class=card>${BUILD[t]()}</div>${Z.shelfCard()}`};
+ return `<div class=card><h3>🎓 Workshop</h3><p class=mut style="margin:0">Chọn mô hình rồi làm sản phẩm (mỗi bàn làm 1 mẻ một lúc, vẫn chạy khi bạn thoát game). Thành phẩm vào Túi đồ: trưng lên kệ để bán, tặng bạn bè hoặc chụp ảnh khoe. Làm nhiều một loại thì nhu cầu giảm, giá giảm theo, hồi dần mỗi ngày.</p><div class=row style="margin-top:6px"><span class=mut>🎁 Quà bạn bè tặng sẽ vào Túi đồ bên dưới.</span><button class=s onclick="XB.poll(1)">Kiểm tra quà</button></div></div>${Z.jobCard()}<div class=card style="padding:8px"><div class=strip2 style="margin:0">${TK.map(k=>`<button class="s ${t==k?'on2':''}" onclick="XB.tb('${k}')">${TY[k].e} ${TY[k].n}${lv<TY[k].lv?' 🔒':''}</button>`).join('')}</div></div><div class=card>${BUILD[t]()}</div>${Z.shelfCard()}`};
 {const o=V.sty;V.sty=()=>o()+Z.shelfCard()}
 {const o=V.bag;V.bag=function(){return o.apply(this,arguments)+Z.shelfCard()}}
 /* CSS trình vẽ */

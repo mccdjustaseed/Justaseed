@@ -6023,9 +6023,9 @@ window.AD={
 <script>
 (()=>{
 const LS='jsBook',$e=id=>document.getElementById(id),LIM=1800,BR='\u0001',WS='https://vi.wikisource.org/w/api.php';
-const BK=window.BK={q:'',sq:'',lang:'',res:[],next:{},busy:0,err:'',warn:'',map:{},cur:null,pages:[],pg:0,ld:0,lerr:'',fs:1.05,lib:[],cache:{},auto:0};
-try{const j=JSON.parse(localStorage.getItem(LS)||'{}');if(Array.isArray(j.lib))BK.lib=j.lib;if(j.fs)BK.fs=j.fs;if(j.lang!=null)BK.lang=j.lang}catch(e){}
-const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({lib:BK.lib.slice(0,30),fs:BK.fs,lang:BK.lang}))}catch(e){}};
+const RDR=window.RDR={q:'',sq:'',lang:'',res:[],next:{},busy:0,err:'',warn:'',map:{},cur:null,pages:[],pg:0,ld:0,lerr:'',fs:1.05,lib:[],cache:{},auto:0};
+try{const j=JSON.parse(localStorage.getItem(LS)||'{}');if(Array.isArray(j.lib))RDR.lib=j.lib;if(j.fs)RDR.fs=j.fs;if(j.lang!=null)RDR.lang=j.lang}catch(e){}
+const sv=()=>{try{localStorage.setItem(LS,JSON.stringify({lib:RDR.lib.slice(0,30),fs:RDR.fs,lang:RDR.lang}))}catch(e){}};
 I.book='M4 4h6a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-6a3 3 0 00-3 3v13a2 2 0 012-2h7z';
 /* tab Sách nằm trong ngăn Cộng đồng (vuốt phải), không còn trên thanh tab chính */
 {const i=TABS.findIndex(t=>t[0]=='book');if(i>=0)TABS.splice(i,1);
@@ -6091,144 +6091,144 @@ function wsExtract(html,title,detect){
  const pages=paginate(txt);if(!pages.length)throw new Error('empty');
  return{root:title,parts:null,pages}}
 async function wsLoad(title,detect){
- const k='ws:'+title+(detect?'':'#p');if(BK.cache[k])return BK.cache[k];
+ const k='ws:'+title+(detect?'':'#p');if(RDR.cache[k])return RDR.cache[k];
  const j=await getJson(WS+'?action=parse&page='+encodeURIComponent(title)+'&prop=text&redirects=1&disableeditsection=1&disablelimitreport=1&format=json&formatversion=2&origin=*');
  if(j.error||!j.parse||!j.parse.text)throw new Error('no page');
- const r=wsExtract(j.parse.text,j.parse.title||title,detect);BK.cache[k]=r;return r}
+ const r=wsExtract(j.parse.text,j.parse.title||title,detect);RDR.cache[k]=r;return r}
 async function pgLoad(id,b){
- const k='pg:'+id;if(BK.cache[k])return BK.cache[k];
+ const k='pg:'+id;if(RDR.cache[k])return RDR.cache[k];
  let t=await getText(b.url,b.html?[]:['https://www.gutenberg.org/cache/epub/'+id+'/pg'+id+'.txt']);
  t=b.html?htmlToText(t):strip(t);
  const pages=paginate(t);if(!pages.length)throw new Error('empty');
- return BK.cache[k]={pages}}
-BK._strip=strip;BK._pag=paginate;BK._ws=wsExtract;
+ return RDR.cache[k]={pages}}
+RDR._strip=strip;RDR._pag=paginate;RDR._ws=wsExtract;
 
 /* ---- thư viện cá nhân (tiến độ đọc) ---- */
-const inLib=id=>BK.lib.find(x=>x.id==id);
-function touch(){const c=BK.cur;if(!c)return;let e=inLib(c.id);if(!e){e={id:c.id};BK.lib.unshift(e)}
+const inLib=id=>RDR.lib.find(x=>x.id==id);
+function touch(){const c=RDR.cur;if(!c)return;let e=inLib(c.id);if(!e){e={id:c.id};RDR.lib.unshift(e)}
  Object.assign(e,{src:c.src,wt:c.wt,title:c.title,author:c.author,cover:c.cover,url:c.url,html:c.html,t:Date.now()});
- if(c.parts){e.ps=c.parts.map(x=>x.slice(c.wt.length+1));if(c.part>=0){e.part=c.part;e.pg=BK.pg}}
- else{e.pg=BK.pg;e.total=BK.pages.length}
- BK.lib=[e].concat(BK.lib.filter(x=>x!==e));sv()}
+ if(c.parts){e.ps=c.parts.map(x=>x.slice(c.wt.length+1));if(c.part>=0){e.part=c.part;e.pg=RDR.pg}}
+ else{e.pg=RDR.pg;e.total=RDR.pages.length}
+ RDR.lib=[e].concat(RDR.lib.filter(x=>x!==e));sv()}
 const prog=e=>e.ps?(e.part>=0?'chương '+(e.part+1)+'/'+e.ps.length:e.ps.length+' chương'):'trang '+((e.pg||0)+1)+'/'+(e.total||'?');
 
 /* ---- giao diện ---- */
 const coverH=b=>`<div class="bkx-c">${b.cover?`<img src="${esc(b.cover)}" alt="" loading="lazy" onerror="this.remove()">`:'📖'}</div>`;
 const idq=id=>`'${esc(id)}'`;
-const hasMore=()=>!!(BK.next&&(BK.next.pg||BK.next.ws));
+const hasMore=()=>!!(RDR.next&&(RDR.next.pg||RDR.next.ws));
 const srcTag=b=>b.src=='ws'?'🇻🇳 Wikisource':'🌍 Gutenberg';
 function resH(){
- const wy=BK.why?`<br><small>Chi tiết: ${esc(BK.why)}</small>`:'';
- const warn=BK.warn?`<p class="mut">⚠️ ${esc(BK.warn)}${wy}</p>`:'';
- if(BK.err){const qq=encodeURIComponent((BK.q||'').trim());return `<p class="mut">⚠️ ${esc(BK.err)}${wy}</p><div class="row"><button class="s" onclick="BK.search()">Thử lại</button><button class="s" onclick="BK.diag()">🔧 Kiểm tra kết nối</button></div><p class="mut" style="font-size:.8rem">Hoặc tìm trực tiếp trên trình duyệt: <a target="_blank" rel="noopener" href="https://vi.wikisource.org/w/index.php?search=${qq}">Wikisource</a> · <a target="_blank" rel="noopener" href="https://www.gutenberg.org/ebooks/search/?query=${qq}">Gutenberg</a></p>`}
- if(!BK.res.length)return warn+(BK.busy?'<p class="mut">Đang tải…</p>':'<p class="mut">Không tìm thấy sách nào.</p>');
- return warn+BK.res.map(b=>{const e=inLib(b.id);
-  return `<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${srcTag(b)}${b.src=='ws'?(b.snippet?' · '+esc(b.snippet):''):' · '+esc(b.author)+(b.lang?' · '+esc(b.lang):'')}</small><div class="row" style="margin-top:4px"><button class="${e?'s':'p'}" ${b.noText?'disabled':''} onclick="BK.open(${idq(b.id)})">${b.noText?'Không có bản đọc':e?'Đọc tiếp · '+prog(e):'Đọc'}</button></div></div></div>`}).join('')
-  +(hasMore()?`<div class="row"><button class="s" ${BK.busy?'disabled':''} onclick="BK.search(1)">${BK.busy?'Đang tải…':'Xem thêm'}</button></div>`:'')}
+ const wy=RDR.why?`<br><small>Chi tiết: ${esc(RDR.why)}</small>`:'';
+ const warn=RDR.warn?`<p class="mut">⚠️ ${esc(RDR.warn)}${wy}</p>`:'';
+ if(RDR.err){const qq=encodeURIComponent((RDR.q||'').trim());return `<p class="mut">⚠️ ${esc(RDR.err)}${wy}</p><div class="row"><button class="s" onclick="RDR.search()">Thử lại</button><button class="s" onclick="RDR.diag()">🔧 Kiểm tra kết nối</button></div><p class="mut" style="font-size:.8rem">Hoặc tìm trực tiếp trên trình duyệt: <a target="_blank" rel="noopener" href="https://vi.wikisource.org/w/index.php?search=${qq}">Wikisource</a> · <a target="_blank" rel="noopener" href="https://www.gutenberg.org/ebooks/search/?query=${qq}">Gutenberg</a></p>`}
+ if(!RDR.res.length)return warn+(RDR.busy?'<p class="mut">Đang tải…</p>':'<p class="mut">Không tìm thấy sách nào.</p>');
+ return warn+RDR.res.map(b=>{const e=inLib(b.id);
+  return `<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${srcTag(b)}${b.src=='ws'?(b.snippet?' · '+esc(b.snippet):''):' · '+esc(b.author)+(b.lang?' · '+esc(b.lang):'')}</small><div class="row" style="margin-top:4px"><button class="${e?'s':'p'}" ${b.noText?'disabled':''} onclick="RDR.open(${idq(b.id)})">${b.noText?'Không có bản đọc':e?'Đọc tiếp · '+prog(e):'Đọc'}</button></div></div></div>`}).join('')
+  +(hasMore()?`<div class="row"><button class="s" ${RDR.busy?'disabled':''} onclick="RDR.search(1)">${RDR.busy?'Đang tải…':'Xem thêm'}</button></div>`:'')}
 function resUI(){const e=$e('bkres');if(e)e.innerHTML=resH()}
 function libH(){
- if(!BK.lib.length)return '';
- return `<div class="card"><h3>📖 Đang đọc</h3>${BK.lib.slice(0,6).map(b=>`<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${b.src=='ws'?'Wikisource':esc(b.author||'')} · ${prog(b)}</small><div class="row" style="margin-top:4px"><button class="p" onclick="BK.open(${idq(b.id)})">Đọc tiếp</button><button class="s" onclick="BK.rm(${idq(b.id)})" aria-label="Xóa khỏi danh sách">✕</button></div></div></div>`).join('')}</div>`}
+ if(!RDR.lib.length)return '';
+ return `<div class="card"><h3>📖 Đang đọc</h3>${RDR.lib.slice(0,6).map(b=>`<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${b.src=='ws'?'Wikisource':esc(b.author||'')} · ${prog(b)}</small><div class="row" style="margin-top:4px"><button class="p" onclick="RDR.open(${idq(b.id)})">Đọc tiếp</button><button class="s" onclick="RDR.rm(${idq(b.id)})" aria-label="Xóa khỏi danh sách">✕</button></div></div></div>`).join('')}</div>`}
 function homeH(){
  return libH()+`<div class="card"><h3>📚 Đọc sách miễn phí</h3>
  <p class="mut">Tìm một lần trên cả Wikisource (văn học Việt Nam) và Project Gutenberg (sách nước ngoài thuộc phạm vi công cộng). Tiến độ đọc được lưu trên máy này.</p>
- <div class="row" style="flex-wrap:nowrap"><input id="bkq" style="flex:1;width:auto;min-width:0" placeholder="Tên sách hoặc tác giả" value="${esc(BK.q)}" oninput="BK.q=this.value" onkeydown="if(event.key=='Enter')BK.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="BK.search()">Tìm</button></div>
- <div class="row"><select onchange="BK.setLang(this.value)" style="flex:1;width:auto">${LANGS.map(l=>`<option value="${l[0]}" ${BK.lang==l[0]?'selected':''}>${l[1]}</option>`).join('')}</select></div>
- ${BK.sq?'':`<p class="mut" style="margin:4px 0">Gợi ý văn học Việt Nam:</p><div class="bkx-ch">${CHIPS.map(c=>`<button class="s" onclick="BK.quick('${esc(c)}')">${esc(c)}</button>`).join('')}</div>`}
- ${BK.res.length?`<p class="mut" style="margin:4px 0">${BK.sq?'Kết quả cho “'+esc(BK.sq)+'”':'Sách nước ngoài được tải nhiều nhất'}</p>`:''}
+ <div class="row" style="flex-wrap:nowrap"><input id="bkq" style="flex:1;width:auto;min-width:0" placeholder="Tên sách hoặc tác giả" value="${esc(RDR.q)}" oninput="RDR.q=this.value" onkeydown="if(event.key=='Enter')RDR.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="RDR.search()">Tìm</button></div>
+ <div class="row"><select onchange="RDR.setLang(this.value)" style="flex:1;width:auto">${LANGS.map(l=>`<option value="${l[0]}" ${RDR.lang==l[0]?'selected':''}>${l[1]}</option>`).join('')}</select></div>
+ ${RDR.sq?'':`<p class="mut" style="margin:4px 0">Gợi ý văn học Việt Nam:</p><div class="bkx-ch">${CHIPS.map(c=>`<button class="s" onclick="RDR.quick('${esc(c)}')">${esc(c)}</button>`).join('')}</div>`}
+ ${RDR.res.length?`<p class="mut" style="margin:4px 0">${RDR.sq?'Kết quả cho “'+esc(RDR.sq)+'”':'Sách nước ngoài được tải nhiều nhất'}</p>`:''}
  <div id="bkres">${resH()}</div>
- <div class="row"><button class="s" onclick="BK.diag()">🔧 Kiểm tra kết nối</button></div>${BK.diagTxt?`<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.72rem;margin:6px 0 0">${esc(BK.diagTxt)}</pre>`:''}</div>`}
+ <div class="row"><button class="s" onclick="RDR.diag()">🔧 Kiểm tra kết nối</button></div>${RDR.diagTxt?`<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.72rem;margin:6px 0 0">${esc(RDR.diagTxt)}</pre>`:''}</div>`}
 function readerH(){
- const c=BK.cur,n=BK.pages.length,P=c.parts,e=inLib(c.id);
+ const c=RDR.cur,n=RDR.pages.length,P=c.parts,e=inLib(c.id);
  const sub=P&&c.part>=0?`<small class="mut" style="display:block;overflow-wrap:anywhere">${esc(P[c.part].slice(c.wt.length+1))}</small>`:'';
- const top=`<div class="card"><div class="row" style="flex-wrap:nowrap"><button class="s bk" onclick="BK.close()">← Thư viện</button><span class="bkx-ti">${esc(c.title)}</span></div>${sub}</div>`;
+ const top=`<div class="card"><div class="row" style="flex-wrap:nowrap"><button class="s bk" onclick="RDR.close()">← Thư viện</button><span class="bkx-ti">${esc(c.title)}</span></div>${sub}</div>`;
  const link=c.src=='ws'?'https://vi.wikisource.org/wiki/'+encodeURI((P&&c.part>=0?P[c.part]:c.wt||c.title).replace(/ /g,'_')):'https://www.gutenberg.org/ebooks/'+c.id;
  const open=`<a class="s" style="text-decoration:none;padding:8px 12px" target="_blank" rel="noopener" href="${esc(link)}">Mở trang gốc</a>`;
- if(BK.ld)return top+`<div class="card"><p class="mut">⏳ Đang tải nội dung…</p></div>`;
- if(BK.lerr)return top+`<div class="card"><p class="mut">⚠️ ${esc(BK.lerr)}</p><div class="row"><button class="p" onclick="BK.retry()">Thử lại</button>${open}${P?'<button class="s" onclick="BK.toc()">☰ Mục lục</button>':''}</div></div>`;
+ if(RDR.ld)return top+`<div class="card"><p class="mut">⏳ Đang tải nội dung…</p></div>`;
+ if(RDR.lerr)return top+`<div class="card"><p class="mut">⚠️ ${esc(RDR.lerr)}</p><div class="row"><button class="p" onclick="RDR.retry()">Thử lại</button>${open}${P?'<button class="s" onclick="RDR.toc()">☰ Mục lục</button>':''}</div></div>`;
  if(P&&c.part<0){const lp=e&&e.part>=0?e.part:-1;
-  return top+`<div class="card"><h3>☰ Mục lục (${P.length} phần)</h3>${lp>=0?`<div class="row"><button class="p" onclick="BK.part(${lp},${e.pg||0})">Đọc tiếp: ${esc(P[lp].slice(c.wt.length+1))}</button></div>`:''}
-  ${P.map((p,i)=>`<button class="${i==lp?'p':'s'} bkx-toc" onclick="BK.part(${i},0)">${esc(p.slice(c.wt.length+1))}</button>`).join('')}</div>`}
- const pg=BK.pages[BK.pg]||[],lastP=!P||c.part>=P.length-1,firstP=!P||c.part<=0;
- return top+`<div class="card"><div class="row" style="flex-wrap:nowrap"><button class="s" onclick="BK.font(-1)" aria-label="Giảm cỡ chữ">A−</button><button class="s" onclick="BK.font(1)" aria-label="Tăng cỡ chữ">A+</button>${P?'<button class="s" onclick="BK.toc()">☰ Mục lục</button>':''}<span class="mut" style="flex:1;text-align:right;font-size:.82rem">${P?'Phần '+(c.part+1)+'/'+P.length+' · ':''}Tr. ${BK.pg+1}/${n}</span></div></div>
- <div class="card bkx-pg" style="font-size:${BK.fs}rem">${pg.map(p=>`<p>${esc(p).replace(/\u0001/g,'<br>')}</p>`).join('')}</div>
- <div class="card"><input class="bkx-rg" type="range" min="1" max="${n}" value="${BK.pg+1}" onchange="BK.go(this.value-1,1)" aria-label="Chọn trang">
- <div class="row" style="flex-wrap:nowrap"><button class="s" style="flex:1" ${BK.pg<=0&&firstP?'disabled':''} onclick="BK.go(BK.pg-1,1)">‹ ${BK.pg<=0&&P?'Phần trước':'Trước'}</button><button class="p" style="flex:1" ${BK.pg>=n-1&&lastP?'disabled':''} onclick="BK.go(BK.pg+1,1)">${BK.pg>=n-1&&P?'Phần sau':'Sau'} ›</button></div>
+  return top+`<div class="card"><h3>☰ Mục lục (${P.length} phần)</h3>${lp>=0?`<div class="row"><button class="p" onclick="RDR.part(${lp},${e.pg||0})">Đọc tiếp: ${esc(P[lp].slice(c.wt.length+1))}</button></div>`:''}
+  ${P.map((p,i)=>`<button class="${i==lp?'p':'s'} bkx-toc" onclick="RDR.part(${i},0)">${esc(p.slice(c.wt.length+1))}</button>`).join('')}</div>`}
+ const pg=RDR.pages[RDR.pg]||[],lastP=!P||c.part>=P.length-1,firstP=!P||c.part<=0;
+ return top+`<div class="card"><div class="row" style="flex-wrap:nowrap"><button class="s" onclick="RDR.font(-1)" aria-label="Giảm cỡ chữ">A−</button><button class="s" onclick="RDR.font(1)" aria-label="Tăng cỡ chữ">A+</button>${P?'<button class="s" onclick="RDR.toc()">☰ Mục lục</button>':''}<span class="mut" style="flex:1;text-align:right;font-size:.82rem">${P?'Phần '+(c.part+1)+'/'+P.length+' · ':''}Tr. ${RDR.pg+1}/${n}</span></div></div>
+ <div class="card bkx-pg" style="font-size:${RDR.fs}rem">${pg.map(p=>`<p>${esc(p).replace(/\u0001/g,'<br>')}</p>`).join('')}</div>
+ <div class="card"><input class="bkx-rg" type="range" min="1" max="${n}" value="${RDR.pg+1}" onchange="RDR.go(this.value-1,1)" aria-label="Chọn trang">
+ <div class="row" style="flex-wrap:nowrap"><button class="s" style="flex:1" ${RDR.pg<=0&&firstP?'disabled':''} onclick="RDR.go(RDR.pg-1,1)">‹ ${RDR.pg<=0&&P?'Phần trước':'Trước'}</button><button class="p" style="flex:1" ${RDR.pg>=n-1&&lastP?'disabled':''} onclick="RDR.go(RDR.pg+1,1)">${RDR.pg>=n-1&&P?'Phần sau':'Sau'} ›</button></div>
  <p class="mut" style="font-size:.75rem;text-align:center;margin:6px 0 0">Nguồn: ${c.src=='ws'?'Wikisource (CC BY-SA)':'Project Gutenberg'} · ${open}</p></div>`}
-function draw(){const e=$e('bkroot');if(e)e.innerHTML=BK.cur?readerH():homeH()}
+function draw(){const e=$e('bkroot');if(e)e.innerHTML=RDR.cur?readerH():homeH()}
 
 V.book=()=>{
- if(!BK.cur&&!BK.res.length&&!BK.busy&&!BK.err&&!BK.auto){BK.auto=1;setTimeout(()=>BK.search(),0)}
- return `<div id="bkroot">${BK.cur?readerH():homeH()}</div>`};
+ if(!RDR.cur&&!RDR.res.length&&!RDR.busy&&!RDR.err&&!RDR.auto){RDR.auto=1;setTimeout(()=>RDR.search(),0)}
+ return `<div id="bkroot">${RDR.cur?readerH():homeH()}</div>`};
 
-Object.assign(BK,{
+Object.assign(RDR,{
  async search(more){
-  if(BK.busy)return;
-  const q=(BK.q||'').trim(),L=BK.lang,nx=BK.next||{};
+  if(RDR.busy)return;
+  const q=(RDR.q||'').trim(),L=RDR.lang,nx=RDR.next||{};
   const wsU=q=>WS+'?action=query&list=search&srsearch='+encodeURIComponent(q)+'&srnamespace=0&srlimit=15&sroffset=0&format=json&formatversion=2&origin=*';
   let pgU=null,wsX=null;
   if(more){pgU=nx.pg||null;wsX=nx.ws||null}
-  else{BK.res=[];BK.sq=q;
+  else{RDR.res=[];RDR.sq=q;
    const p=new URLSearchParams();if(q)p.set('search',q);if(L)p.set('languages',L);pgU='https://gutendex.com/books/?'+p;
    wsX=q&&(!L||L=='vi')?wsU(q):null}
   if(!pgU&&!wsX)return;
-  BK.busy=1;BK.err='';BK.warn='';BK.why='';BK.next={};resUI();
+  RDR.busy=1;RDR.err='';RDR.warn='';RDR.why='';RDR.next={};resUI();
   const jobs=[pgU?getJson(pgU):Promise.resolve(null),wsX?getJson(wsX):Promise.resolve(null)];
   const [rp,rw]=await Promise.allSettled(jobs);
   const A=[],B=[];let fail=0;const why=[];
   if(rw.status=='fulfilled'&&rw.value){const j=rw.value;
    if(j.error){fail++;why.push('Wikisource: API báo lỗi')}else{
     ((j.query&&j.query.search)||[]).forEach(r=>{A.push({id:wkey(r.title),src:'ws',wt:r.title,title:r.title,author:'',lang:'vi',cover:'',snippet:plain(r.snippet||'').replace(/\s+/g,' ').trim()})});
-    if(j.continue&&j.continue.sroffset!=null)BK.next.ws=wsX.replace(/sroffset=\d+/,'sroffset='+j.continue.sroffset)}}
+    if(j.continue&&j.continue.sroffset!=null)RDR.next.ws=wsX.replace(/sroffset=\d+/,'sroffset='+j.continue.sroffset)}}
   else if(rw.status=='rejected'){fail++;why.push('Wikisource: '+((rw.reason&&rw.reason.message)||'lỗi'))}
   if(rp.status=='fulfilled'&&rp.value){const j=rp.value;
    (j.results||[]).forEach(r=>{const t=txtOf(r.formats);B.push({id:String(r.id),src:'pg',title:r.title,author:authorOf(r.authors),lang:(r.languages||[]).join(', '),cover:(r.formats||{})['image/jpeg']||'',url:t&&t.url,html:t?t.html:0,noText:!t})});
-   BK.next.pg=j.next||null}
+   RDR.next.pg=j.next||null}
   else if(rp.status=='rejected'){fail++;why.push('Gutenberg: '+((rp.reason&&rp.reason.message)||'lỗi'))}
   /* xen kẽ: Wikisource trước, rồi Gutenberg */
-  for(let i=0;i<Math.max(A.length,B.length);i++)[A[i],B[i]].forEach(b=>{if(b){BK.map[b.id]=b;if(!BK.res.some(x=>x.id==b.id))BK.res.push(b)}});
+  for(let i=0;i<Math.max(A.length,B.length);i++)[A[i],B[i]].forEach(b=>{if(b){RDR.map[b.id]=b;if(!RDR.res.some(x=>x.id==b.id))RDR.res.push(b)}});
   const tried=(pgU?1:0)+(wsX?1:0);
-  if(fail&&fail>=tried)BK.err='Không tải được danh sách sách. Bạn thử lại nhé.';
-  else if(fail)BK.warn='Một nguồn tạm thời không tải được, kết quả có thể thiếu.';
-  BK.why=why.join(' · ');
-  BK.busy=0;draw()},
- quick(t){BK.q=t;BK.search()},
- setLang(v){BK.lang=v;sv();BK.busy=0;BK.search()},
+  if(fail&&fail>=tried)RDR.err='Không tải được danh sách sách. Bạn thử lại nhé.';
+  else if(fail)RDR.warn='Một nguồn tạm thời không tải được, kết quả có thể thiếu.';
+  RDR.why=why.join(' · ');
+  RDR.busy=0;draw()},
+ quick(t){RDR.q=t;RDR.search()},
+ setLang(v){RDR.lang=v;sv();RDR.busy=0;RDR.search()},
  async open(id){
-  const b=BK.map[id]||inLib(id);if(!b)return;
+  const b=RDR.map[id]||inLib(id);if(!b)return;
   const ws=b.src=='ws';if(!ws&&!b.url)return toast('Sách này không có bản đọc trực tuyến');
-  const e=inLib(id),c=BK.cur={id:b.id,src:ws?'ws':'pg',title:b.title,author:b.author||'',cover:b.cover,url:b.url,html:b.html,wt:b.wt,parts:null,part:-1};
-  BK.pg=e&&e.pg||0;BK.pages=[];BK.lerr='';
-  if(ws&&e&&e.ps&&e.part>=0){c.parts=e.ps.map(x=>b.wt+'/'+x);return BK.part(e.part,e.pg)}
-  BK.ld=1;draw();toTop();
+  const e=inLib(id),c=RDR.cur={id:b.id,src:ws?'ws':'pg',title:b.title,author:b.author||'',cover:b.cover,url:b.url,html:b.html,wt:b.wt,parts:null,part:-1};
+  RDR.pg=e&&e.pg||0;RDR.pages=[];RDR.lerr='';
+  if(ws&&e&&e.ps&&e.part>=0){c.parts=e.ps.map(x=>b.wt+'/'+x);return RDR.part(e.part,e.pg)}
+  RDR.ld=1;draw();toTop();
   try{
    const r=ws?await wsLoad(b.wt,1):await pgLoad(b.id,b);
-   if(BK.cur!==c)return;
+   if(RDR.cur!==c)return;
    if(r.root)c.wt=r.root;
-   if(r.parts){c.parts=r.parts;c.part=-1}else{BK.pages=r.pages;BK.pg=Math.max(0,Math.min(BK.pg,r.pages.length-1))}
-   BK.ld=0;touch()
-  }catch(er){if(BK.cur!==c)return;BK.ld=0;BK.lerr=ws?'Không tải được tác phẩm này từ Wikisource (mạng hoặc trang không có nội dung).':'Không tải được nội dung sách (mạng hoặc nguồn đang chặn). Bạn thử lại hoặc mở trang gốc.'}
+   if(r.parts){c.parts=r.parts;c.part=-1}else{RDR.pages=r.pages;RDR.pg=Math.max(0,Math.min(RDR.pg,r.pages.length-1))}
+   RDR.ld=0;touch()
+  }catch(er){if(RDR.cur!==c)return;RDR.ld=0;RDR.lerr=ws?'Không tải được tác phẩm này từ Wikisource (mạng hoặc trang không có nội dung).':'Không tải được nội dung sách (mạng hoặc nguồn đang chặn). Bạn thử lại hoặc mở trang gốc.'}
   draw()},
  async part(i,pg){
-  const c=BK.cur;if(!c||!c.parts||!c.parts[i])return;
-  c.part=i;BK.pg=pg||0;BK.pages=[];BK.lerr='';BK.ld=1;draw();toTop();
-  try{const r=await wsLoad(c.parts[i],0);if(BK.cur!==c||c.part!==i)return;
-   BK.pages=r.pages;BK.pg=pg<0?r.pages.length-1:Math.max(0,Math.min(pg||0,r.pages.length-1));BK.ld=0;touch()}
-  catch(e){if(BK.cur!==c||c.part!==i)return;BK.ld=0;BK.lerr='Không tải được phần này từ Wikisource.'}
+  const c=RDR.cur;if(!c||!c.parts||!c.parts[i])return;
+  c.part=i;RDR.pg=pg||0;RDR.pages=[];RDR.lerr='';RDR.ld=1;draw();toTop();
+  try{const r=await wsLoad(c.parts[i],0);if(RDR.cur!==c||c.part!==i)return;
+   RDR.pages=r.pages;RDR.pg=pg<0?r.pages.length-1:Math.max(0,Math.min(pg||0,r.pages.length-1));RDR.ld=0;touch()}
+  catch(e){if(RDR.cur!==c||c.part!==i)return;RDR.ld=0;RDR.lerr='Không tải được phần này từ Wikisource.'}
   draw()},
- toc(){const c=BK.cur;if(!c||!c.parts)return;c.part=-1;BK.lerr='';BK.ld=0;draw();toTop()},
- retry(){const c=BK.cur;if(!c)return;if(c.parts&&c.part>=0)BK.part(c.part,BK.pg);else BK.open(c.id)},
- close(){BK.cur=null;draw();toTop()},
- go(i,top){const c=BK.cur;if(!c||!BK.pages.length)return;i=i|0;
-  if(i>=BK.pages.length){if(c.parts&&c.part<c.parts.length-1)return BK.part(c.part+1,0);i=BK.pages.length-1}
-  if(i<0){if(c.parts&&c.part>0)return BK.part(c.part-1,-1);i=0}
-  BK.pg=i;touch();draw();if(top)toTop()},
- font(d){BK.fs=Math.max(.8,Math.min(1.8,+(BK.fs+d*.1).toFixed(2)));sv();draw()},
- rm(id){BK.lib=BK.lib.filter(x=>x.id!=id);sv();draw()}
+ toc(){const c=RDR.cur;if(!c||!c.parts)return;c.part=-1;RDR.lerr='';RDR.ld=0;draw();toTop()},
+ retry(){const c=RDR.cur;if(!c)return;if(c.parts&&c.part>=0)RDR.part(c.part,RDR.pg);else RDR.open(c.id)},
+ close(){RDR.cur=null;draw();toTop()},
+ go(i,top){const c=RDR.cur;if(!c||!RDR.pages.length)return;i=i|0;
+  if(i>=RDR.pages.length){if(c.parts&&c.part<c.parts.length-1)return RDR.part(c.part+1,0);i=RDR.pages.length-1}
+  if(i<0){if(c.parts&&c.part>0)return RDR.part(c.part-1,-1);i=0}
+  RDR.pg=i;touch();draw();if(top)toTop()},
+ font(d){RDR.fs=Math.max(.8,Math.min(1.8,+(RDR.fs+d*.1).toFixed(2)));sv();draw()},
+ rm(id){RDR.lib=RDR.lib.filter(x=>x.id!=id);sv();draw()}
 });
 async function probe(n,u){const t0=Date.now();try{const r=await tryFetch(u,10000);await r.text();return n+': ✅ '+(Date.now()-t0)+'ms'}catch(e){return n+': ❌ '+e.message}}
-BK.diag=async()=>{
- BK.diagTxt='Đang kiểm tra (tối đa ~10 giây)…';draw();
+RDR.diag=async()=>{
+ RDR.diagTxt='Đang kiểm tra (tối đa ~10 giây)…';draw();
  const g='https://gutendex.com/books/?ids=84';
  const L=await Promise.all([
   probe('Wikisource API',WS+'?action=query&meta=siteinfo&format=json&origin=*'),
@@ -6238,9 +6238,9 @@ BK.diag=async()=>{
   probe('Proxy isomorphic-git','https://cors.isomorphic-git.org/'+g),
   probe('Mạng chung (api.github.com)','https://api.github.com/zen')]);
  let o='';try{o=location.protocol+'//'+(location.host||'(mở từ file)')}catch(e){}
- BK.diagTxt='Trang: '+o+' · online='+(navigator.onLine)+'\n'+L.join('\n');draw()};
-document.addEventListener('keydown',e=>{if(!$e('bkroot')||!BK.cur||BK.ld||/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||''))return;
- if(e.key=='ArrowRight')BK.go(BK.pg+1,1);else if(e.key=='ArrowLeft')BK.go(BK.pg-1,1)});
+ RDR.diagTxt='Trang: '+o+' · online='+(navigator.onLine)+'\n'+L.join('\n');draw()};
+document.addEventListener('keydown',e=>{if(!$e('bkroot')||!RDR.cur||RDR.ld||/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||''))return;
+ if(e.key=='ArrowRight')RDR.go(RDR.pg+1,1);else if(e.key=='ArrowLeft')RDR.go(RDR.pg-1,1)});
 })();
 </script>
 </body></html>

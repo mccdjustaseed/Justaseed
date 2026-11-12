@@ -5744,7 +5744,9 @@ async function chk(){
  if(!u||!window.DISCORD_OK||!sb()){const i=TABS.findIndex(t=>t[0]=='adm');if(i>=0)TABS.splice(i,1);A.uid=null;A.ok=0;return}
  if(A.uid===u.id)return;A.uid=u.id;A.ok=0;
  try{const r=await sb().from('admins').select('user_id').eq('user_id',u.id).maybeSingle();
-  if(r&&r.data){A.ok=1;if(!TABS.some(t=>t[0]=='adm'))TABS.push(['adm','gear','Quản trị']);try{softR()}catch(e){}}}catch(e){}}
+  if(r&&r.error){A.uid=null;console.warn('[admin] không đọc được bảng admins:',r.error.message||r.error);return}
+  if(r&&r.data){A.ok=1;if(!TABS.some(t=>t[0]=='adm'))TABS.splice(1,0,['adm','gear','Quản trị']);try{softR()}catch(e){}}
+  else console.warn('[admin] user_id',u.id,'chưa có trong bảng admins')}catch(e){A.uid=null}}
 setInterval(chk,5000);
 /* khóa tài khoản */
 let BN=0;

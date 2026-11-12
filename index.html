@@ -6048,11 +6048,11 @@ async function tryFetch(u,ms){const ac=new AbortController(),t=setTimeout(()=>ac
  finally{clearTimeout(t)}}
 async function getText(u,alts){
  const base=alts&&alts[0]?alts[0]:u;
- const tries=[u].concat(alts||[]).concat(['https://corsproxy.io/?url='+encodeURIComponent(base),'https://api.allorigins.win/raw?url='+encodeURIComponent(base)]);
+ const tries=[u].concat(alts||[]).concat(['https://api.allorigins.win/raw?url='+encodeURIComponent(base),'https://cors.isomorphic-git.org/'+base,'https://corsproxy.io/?url='+encodeURIComponent(base)]);
  let err;for(const x of tries){try{const r=await tryFetch(x,20000),t=await r.text();if(t&&t.length>500)return t}catch(e){err=e}}
  throw err||new Error('fail')}
 async function getJson(u){
- const tries=[[u,20000],['https://api.allorigins.win/raw?url='+encodeURIComponent(u),12000],['https://corsproxy.io/?url='+encodeURIComponent(u),12000]];
+ const tries=[[u,20000],['https://api.allorigins.win/raw?url='+encodeURIComponent(u),12000],['https://cors.isomorphic-git.org/'+u,12000],['https://corsproxy.io/?url='+encodeURIComponent(u),12000]];
  const errs=[];
  for(const [x,ms] of tries){try{return await(await tryFetch(x,ms)).json()}catch(e){errs.push(e.message||'lỗi')}}
  throw new Error(errs[0]+(errs.length>1?' (qua proxy: '+errs[errs.length-1]+')':''))}
@@ -6120,7 +6120,7 @@ const srcTag=b=>b.src=='ws'?'🇻🇳 Wikisource':'🌍 Gutenberg';
 function resH(){
  const wy=BK.why?`<br><small>Chi tiết: ${esc(BK.why)}</small>`:'';
  const warn=BK.warn?`<p class="mut">⚠️ ${esc(BK.warn)}${wy}</p>`:'';
- if(BK.err)return `<p class="mut">⚠️ ${esc(BK.err)}${wy}</p><div class="row"><button class="s" onclick="BK.search()">Thử lại</button></div>`;
+ if(BK.err){const qq=encodeURIComponent((BK.q||'').trim());return `<p class="mut">⚠️ ${esc(BK.err)}${wy}</p><div class="row"><button class="s" onclick="BK.search()">Thử lại</button><button class="s" onclick="BK.diag()">🔧 Kiểm tra kết nối</button></div><p class="mut" style="font-size:.8rem">Hoặc tìm trực tiếp trên trình duyệt: <a target="_blank" rel="noopener" href="https://vi.wikisource.org/w/index.php?search=${qq}">Wikisource</a> · <a target="_blank" rel="noopener" href="https://www.gutenberg.org/ebooks/search/?query=${qq}">Gutenberg</a></p>`}
  if(!BK.res.length)return warn+(BK.busy?'<p class="mut">Đang tải…</p>':'<p class="mut">Không tìm thấy sách nào.</p>');
  return warn+BK.res.map(b=>{const e=inLib(b.id);
   return `<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${srcTag(b)}${b.src=='ws'?(b.snippet?' · '+esc(b.snippet):''):' · '+esc(b.author)+(b.lang?' · '+esc(b.lang):'')}</small><div class="row" style="margin-top:4px"><button class="${e?'s':'p'}" ${b.noText?'disabled':''} onclick="BK.open(${idq(b.id)})">${b.noText?'Không có bản đọc':e?'Đọc tiếp · '+prog(e):'Đọc'}</button></div></div></div>`}).join('')
@@ -6136,7 +6136,8 @@ function homeH(){
  <div class="row"><select onchange="BK.setLang(this.value)" style="flex:1;width:auto">${LANGS.map(l=>`<option value="${l[0]}" ${BK.lang==l[0]?'selected':''}>${l[1]}</option>`).join('')}</select></div>
  ${BK.sq?'':`<p class="mut" style="margin:4px 0">Gợi ý văn học Việt Nam:</p><div class="bkx-ch">${CHIPS.map(c=>`<button class="s" onclick="BK.quick('${esc(c)}')">${esc(c)}</button>`).join('')}</div>`}
  ${BK.res.length?`<p class="mut" style="margin:4px 0">${BK.sq?'Kết quả cho “'+esc(BK.sq)+'”':'Sách nước ngoài được tải nhiều nhất'}</p>`:''}
- <div id="bkres">${resH()}</div></div>`}
+ <div id="bkres">${resH()}</div>
+ <div class="row"><button class="s" onclick="BK.diag()">🔧 Kiểm tra kết nối</button></div>${BK.diagTxt?`<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.72rem;margin:6px 0 0">${esc(BK.diagTxt)}</pre>`:''}</div>`}
 function readerH(){
  const c=BK.cur,n=BK.pages.length,P=c.parts,e=inLib(c.id);
  const sub=P&&c.part>=0?`<small class="mut" style="display:block;overflow-wrap:anywhere">${esc(P[c.part].slice(c.wt.length+1))}</small>`:'';
@@ -6225,6 +6226,19 @@ Object.assign(BK,{
  font(d){BK.fs=Math.max(.8,Math.min(1.8,+(BK.fs+d*.1).toFixed(2)));sv();draw()},
  rm(id){BK.lib=BK.lib.filter(x=>x.id!=id);sv();draw()}
 });
+async function probe(n,u){const t0=Date.now();try{const r=await tryFetch(u,10000);await r.text();return n+': ✅ '+(Date.now()-t0)+'ms'}catch(e){return n+': ❌ '+e.message}}
+BK.diag=async()=>{
+ BK.diagTxt='Đang kiểm tra (tối đa ~10 giây)…';draw();
+ const g='https://gutendex.com/books/?ids=84';
+ const L=await Promise.all([
+  probe('Wikisource API',WS+'?action=query&meta=siteinfo&format=json&origin=*'),
+  probe('Gutendex (trực tiếp)',g),
+  probe('File sách Gutenberg (trực tiếp)','https://www.gutenberg.org/cache/epub/84/pg84.txt'),
+  probe('Proxy allorigins','https://api.allorigins.win/raw?url='+encodeURIComponent(g)),
+  probe('Proxy isomorphic-git','https://cors.isomorphic-git.org/'+g),
+  probe('Mạng chung (api.github.com)','https://api.github.com/zen')]);
+ let o='';try{o=location.protocol+'//'+(location.host||'(mở từ file)')}catch(e){}
+ BK.diagTxt='Trang: '+o+' · online='+(navigator.onLine)+'\n'+L.join('\n');draw()};
 document.addEventListener('keydown',e=>{if(!$e('bkroot')||!BK.cur||BK.ld||/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||''))return;
  if(e.key=='ArrowRight')BK.go(BK.pg+1,1);else if(e.key=='ArrowLeft')BK.go(BK.pg-1,1)});
 })();

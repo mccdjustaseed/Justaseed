@@ -6042,16 +6042,20 @@ const wkey=t=>'w_'+encodeURIComponent(t).replace(/'/g,'%27');
 const plain=h=>{try{return new DOMParser().parseFromString(h,'text/html').body.textContent}catch(e){return String(h).replace(/<[^>]+>/g,'')}};
 
 /* ---- tải dữ liệu: thử trực tiếp, nếu bị chặn CORS thì qua proxy ---- */
-async function tryFetch(u,ms){const ac=new AbortController(),t=setTimeout(()=>ac.abort(),ms||15000);try{const r=await fetch(u,{signal:ac.signal});if(!r.ok)throw new Error('HTTP '+r.status);return r}finally{clearTimeout(t)}}
+async function tryFetch(u,ms){const ac=new AbortController(),t=setTimeout(()=>ac.abort(),ms||15000);
+ try{const r=await fetch(u,{signal:ac.signal});if(!r.ok)throw new Error('HTTP '+r.status);return r}
+ catch(e){throw new Error(e&&e.name=='AbortError'?'quá thời gian chờ':/^HTTP/.test(e&&e.message)?e.message:'bị chặn hoặc không kết nối được')}
+ finally{clearTimeout(t)}}
 async function getText(u,alts){
  const base=alts&&alts[0]?alts[0]:u;
  const tries=[u].concat(alts||[]).concat(['https://corsproxy.io/?url='+encodeURIComponent(base),'https://api.allorigins.win/raw?url='+encodeURIComponent(base)]);
  let err;for(const x of tries){try{const r=await tryFetch(x,20000),t=await r.text();if(t&&t.length>500)return t}catch(e){err=e}}
  throw err||new Error('fail')}
 async function getJson(u){
- const tries=[u,'https://corsproxy.io/?url='+encodeURIComponent(u)];let err;
- for(const x of tries){try{return await(await tryFetch(x,15000)).json()}catch(e){err=e}}throw err}
-
+ const tries=[[u,20000],['https://api.allorigins.win/raw?url='+encodeURIComponent(u),12000],['https://corsproxy.io/?url='+encodeURIComponent(u),12000]];
+ const errs=[];
+ for(const [x,ms] of tries){try{return await(await tryFetch(x,ms)).json()}catch(e){errs.push(e.message||'lỗi')}}
+ throw new Error(errs[0]+(errs.length>1?' (qua proxy: '+errs[errs.length-1]+')':''))}
 /* ---- xử lý văn bản ---- */
 function strip(t){
  t=t.replace(/\r/g,'');
@@ -6114,8 +6118,9 @@ const idq=id=>`'${esc(id)}'`;
 const hasMore=()=>!!(BK.next&&(BK.next.pg||BK.next.ws));
 const srcTag=b=>b.src=='ws'?'🇻🇳 Wikisource':'🌍 Gutenberg';
 function resH(){
- const warn=BK.warn?`<p class="mut">⚠️ ${esc(BK.warn)}</p>`:'';
- if(BK.err)return `<p class="mut">⚠️ ${esc(BK.err)}</p><div class="row"><button class="s" onclick="BK.search()">Thử lại</button></div>`;
+ const wy=BK.why?`<br><small>Chi tiết: ${esc(BK.why)}</small>`:'';
+ const warn=BK.warn?`<p class="mut">⚠️ ${esc(BK.warn)}${wy}</p>`:'';
+ if(BK.err)return `<p class="mut">⚠️ ${esc(BK.err)}${wy}</p><div class="row"><button class="s" onclick="BK.search()">Thử lại</button></div>`;
  if(!BK.res.length)return warn+(BK.busy?'<p class="mut">Đang tải…</p>':'<p class="mut">Không tìm thấy sách nào.</p>');
  return warn+BK.res.map(b=>{const e=inLib(b.id);
   return `<div class="bkx-r">${coverH(b)}<div class="bkx-i"><b>${esc(b.title)}</b><small>${srcTag(b)}${b.src=='ws'?(b.snippet?' · '+esc(b.snippet):''):' · '+esc(b.author)+(b.lang?' · '+esc(b.lang):'')}</small><div class="row" style="margin-top:4px"><button class="${e?'s':'p'}" ${b.noText?'disabled':''} onclick="BK.open(${idq(b.id)})">${b.noText?'Không có bản đọc':e?'Đọc tiếp · '+prog(e):'Đọc'}</button></div></div></div>`}).join('')
@@ -6166,24 +6171,25 @@ Object.assign(BK,{
    const p=new URLSearchParams();if(q)p.set('search',q);if(L)p.set('languages',L);pgU='https://gutendex.com/books/?'+p;
    wsX=q&&(!L||L=='vi')?wsU(q):null}
   if(!pgU&&!wsX)return;
-  BK.busy=1;BK.err='';BK.warn='';BK.next={};resUI();
+  BK.busy=1;BK.err='';BK.warn='';BK.why='';BK.next={};resUI();
   const jobs=[pgU?getJson(pgU):Promise.resolve(null),wsX?getJson(wsX):Promise.resolve(null)];
   const [rp,rw]=await Promise.allSettled(jobs);
-  const A=[],B=[];let fail=0;
+  const A=[],B=[];let fail=0;const why=[];
   if(rw.status=='fulfilled'&&rw.value){const j=rw.value;
-   if(j.error)fail++;else{
+   if(j.error){fail++;why.push('Wikisource: API báo lỗi')}else{
     ((j.query&&j.query.search)||[]).forEach(r=>{A.push({id:wkey(r.title),src:'ws',wt:r.title,title:r.title,author:'',lang:'vi',cover:'',snippet:plain(r.snippet||'').replace(/\s+/g,' ').trim()})});
     if(j.continue&&j.continue.sroffset!=null)BK.next.ws=wsX.replace(/sroffset=\d+/,'sroffset='+j.continue.sroffset)}}
-  else if(rw.status=='rejected')fail++;
+  else if(rw.status=='rejected'){fail++;why.push('Wikisource: '+((rw.reason&&rw.reason.message)||'lỗi'))}
   if(rp.status=='fulfilled'&&rp.value){const j=rp.value;
    (j.results||[]).forEach(r=>{const t=txtOf(r.formats);B.push({id:String(r.id),src:'pg',title:r.title,author:authorOf(r.authors),lang:(r.languages||[]).join(', '),cover:(r.formats||{})['image/jpeg']||'',url:t&&t.url,html:t?t.html:0,noText:!t})});
    BK.next.pg=j.next||null}
-  else if(rp.status=='rejected')fail++;
+  else if(rp.status=='rejected'){fail++;why.push('Gutenberg: '+((rp.reason&&rp.reason.message)||'lỗi'))}
   /* xen kẽ: Wikisource trước, rồi Gutenberg */
   for(let i=0;i<Math.max(A.length,B.length);i++)[A[i],B[i]].forEach(b=>{if(b){BK.map[b.id]=b;if(!BK.res.some(x=>x.id==b.id))BK.res.push(b)}});
   const tried=(pgU?1:0)+(wsX?1:0);
-  if(fail&&fail>=tried)BK.err='Không tải được danh sách sách (kiểm tra mạng). Bạn thử lại nhé.';
+  if(fail&&fail>=tried)BK.err='Không tải được danh sách sách. Bạn thử lại nhé.';
   else if(fail)BK.warn='Một nguồn tạm thời không tải được, kết quả có thể thiếu.';
+  BK.why=why.join(' · ');
   BK.busy=0;draw()},
  quick(t){BK.q=t;BK.search()},
  setLang(v){BK.lang=v;sv();BK.busy=0;BK.search()},

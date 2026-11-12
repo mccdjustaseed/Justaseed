@@ -1664,7 +1664,10 @@ try{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download
 async function shShare(){const b=await shBlob(),f=new File([b],SHCN,{type:'image/png'});try{if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:'Justaseed'});else if(navigator.share)await navigator.share({title:'Justaseed',text:'Justaseed · '+s.name});else toast('Thiết bị chưa hỗ trợ chia sẻ, hãy dùng Lưu ảnh hoặc Sao chép')}catch(e){}}
 async function shCopy(){try{await navigator.clipboard.write([new ClipboardItem({'image/png':await shBlob()})]);toast('Đã sao chép ảnh')}catch(e){toast('Không sao chép được, hãy giữ lâu vào ảnh')}}
 const rrCv=(x,a,b,w,h,q)=>{x.beginPath();x.roundRect?x.roundRect(a,b,w,h,q):x.rect(a,b,w,h)};
-function paperC(W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#bfe9fb');g.addColorStop(1,'#e3f5de');x.fillStyle=g;x.fillRect(0,0,W,H);x.fillStyle='#fffdf7';rrCv(x,40,40,W-80,H-80,28);x.fill();x.textAlign='center';x.fillStyle='#244033';x.font='700 44px "Baloo 2",sans-serif';x.fillText(s.name,W/2,115,560);x.fillStyle='#678a73';x.font='28px Onest,sans-serif';return[c,x]}
+function paperC(W,H,K){K=K||{a:'#bfe9fb',b:'#e3f5de',p:'#fffdf7',d:'#244033',m:'#678a73'};const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,K.a);g.addColorStop(1,K.b);x.fillStyle=g;x.fillRect(0,0,W,H);x.fillStyle=K.p;rrCv(x,40,40,W-80,H-80,28);x.fill();x.textAlign='center';x.fillStyle=K.d;x.font='700 44px "Baloo 2",sans-serif';x.fillText(s.name,W/2,115,560);x.fillStyle=K.m;x.font='28px Onest,sans-serif';return[c,x]}
+function mixC(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),A=p(a),B=p(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+/* bảng màu theo màu chủ đề của người chơi (s.pf.col) */
+function themeK(){const c=(s.pf&&/^#[0-9a-f]{6}$/i.test(s.pf.col||''))?s.pf.col:'#4fb06f';return{a:mixC(c,'#ffffff',.72),b:mixC(c,'#ffffff',.9),p:mixC(c,'#ffffff',.97),box:mixC(c,'#ffffff',.84),d:mixC(c,'#000000',.68),m:mixC(c,'#000000',.38),q:mixC(c,'#000000',.25)}}
 const dashL=(x,y,W)=>{x.setLineDash([8,8]);x.strokeStyle='#bfe8c6';x.lineWidth=3;x.beginPath();x.moveTo(80,y);x.lineTo(W-80,y);x.stroke();x.setLineDash([])};
 function billCv(b){const it=b.all?['Toàn bộ hàng trong quầy']:[...b.fl.map(a=>nm(a[0])+' × '+a[1]),'Giấy '+b.z+(b.ps&&b.ps!='kr'&&PS[b.ps]?' '+PS[b.ps].n:''),...(b.gift||[]).map(a=>nm(a[0])+' × '+a[1]),...(b.xt?[nm(b.xt)]:[])],ln=[['Giá bán',$(b.pr)]];if(b.xp)ln.push(['Đồ mưa nắng','+'+$(b.xp)]);if(b.tip)ln.push(['Tiền boa','+'+$(b.tip)]);
 const W=720,[c,x]=paperC(W,290+it.length*48+36+ln.length*50+190);x.fillText(`HÓA ĐƠN · Ngày ${b.d}${b.t?' · '+b.t:''}`,W/2,160);dashL(x,190,W);x.textAlign='left';x.fillStyle='#244033';x.font='600 30px Onest,sans-serif';x.fillText('Khách: '+b.nm+(b.vip?' 👑':''),80,240,560);let y=290;x.font='28px Onest,sans-serif';it.forEach(t=>{x.fillText(t,80,y,560);y+=48});dashL(x,y-12,W);y+=38;
@@ -3176,22 +3179,22 @@ Z.photo=async(id,o)=>{const x=findIt(id);if(!x)return;WPI=id;
  toast('Đang tạo ảnh...');try{
  const mt=x.mt?'Nguyên liệu: '+x.mt:'',stars='★'.repeat(Math.max(1,Math.round(x.q/20))),mk='Làm bởi '+(x.cr||s.name)+(x.gf?' · 🎁 quà từ '+x.gf:'');
  let im=null;
- if(o=='h'){const Wd=1600,Ht=900,[c,g]=paperC(Wd,Ht),cx=1160;g.textAlign='center';
-  g.fillStyle='#eaf6e6';rrCv(g,90,160,560,630,40);g.fill();
+ if(o=='h'){const Wd=1600,Ht=900,K=themeK(),[c,g]=paperC(Wd,Ht,K),cx=1160;g.textAlign='center';
+  g.fillStyle=K.box;rrCv(g,90,160,560,630,40);g.fill();
   try{im=await svgImg(x)}catch(e){}if(im){const h=500,w=h*640/742;g.drawImage(im,90+(560-w)/2,160+(630-h)/2,w,h)}
-  g.fillStyle='#678a73';g.font='30px Onest,sans-serif';g.fillText('✿ Workshop · '+TY[x.t].n+' ✿',cx,170,700);
-  g.fillStyle='#244033';g.font='700 56px "Baloo 2",sans-serif';let y=wrapT(g,x.n,cx,270,700,64,2)+10;
-  g.fillStyle='#388a55';g.font='600 34px Onest,sans-serif';g.fillText('Chất lượng '+x.q+'/100 '+stars,cx,y,700);y+=60;
-  if(mt){g.fillStyle='#244033';g.font='28px Onest,sans-serif';y=wrapT(g,mt,cx,y,700,40,4)+10}
-  g.fillStyle='#678a73';g.font='30px Onest,sans-serif';g.fillText(mk,cx,y,700);g.fillText('Justaseed · Workshop',cx,840);
+  g.fillStyle=K.m;g.font='30px Onest,sans-serif';g.fillText('✿ Workshop · '+TY[x.t].n+' ✿',cx,170,700);
+  g.fillStyle=K.d;g.font='700 56px "Baloo 2",sans-serif';let y=wrapT(g,x.n,cx,270,700,64,2)+10;
+  g.fillStyle=K.q;g.font='600 34px Onest,sans-serif';g.fillText('Chất lượng '+x.q+'/100 '+stars,cx,y,700);y+=60;
+  if(mt){g.fillStyle=K.d;g.font='28px Onest,sans-serif';y=wrapT(g,mt,cx,y,700,40,4)+10}
+  g.fillStyle=K.m;g.font='30px Onest,sans-serif';g.fillText(mk,cx,y,700);g.fillText('Justaseed · Workshop',cx,840);
   shOpen(c,'justaseed-workshop-ngang-'+x.id+'.png','📸 Ảnh khoe');wsPostUI();return}
- const Wd=1080,Ht=mt?1460:1350,[c,g]=paperC(Wd,Ht);g.textAlign='center';g.fillStyle='#678a73';g.font='30px Onest,sans-serif';g.fillText('✿ Workshop · '+TY[x.t].n+' ✿',Wd/2,170);
- g.fillStyle='#eaf6e6';rrCv(g,150,210,780,820,40);g.fill();
+ const Wd=1080,Ht=mt?1460:1350,K=themeK(),[c,g]=paperC(Wd,Ht,K);g.textAlign='center';g.fillStyle=K.m;g.font='30px Onest,sans-serif';g.fillText('✿ Workshop · '+TY[x.t].n+' ✿',Wd/2,170);
+ g.fillStyle=K.box;rrCv(g,150,210,780,820,40);g.fill();
  try{im=await svgImg(x)}catch(e){}if(im)g.drawImage(im,220,230,640,742);
- g.fillStyle='#244033';g.font='700 56px "Baloo 2",sans-serif';g.fillText(x.n,Wd/2,1110,880);
- g.fillStyle='#388a55';g.font='600 34px Onest,sans-serif';g.fillText('Chất lượng '+x.q+'/100 '+stars,Wd/2,1165);
- let y=1215;if(mt){g.fillStyle='#244033';g.font='28px Onest,sans-serif';y=wrapT(g,mt,Wd/2,1212,880,38,3)+4}
- g.fillStyle='#678a73';g.font='30px Onest,sans-serif';g.fillText(mk,Wd/2,y,880);g.fillText('Justaseed · Workshop',Wd/2,y+60);
+ g.fillStyle=K.d;g.font='700 56px "Baloo 2",sans-serif';g.fillText(x.n,Wd/2,1110,880);
+ g.fillStyle=K.q;g.font='600 34px Onest,sans-serif';g.fillText('Chất lượng '+x.q+'/100 '+stars,Wd/2,1165);
+ let y=1215;if(mt){g.fillStyle=K.d;g.font='28px Onest,sans-serif';y=wrapT(g,mt,Wd/2,1212,880,38,3)+4}
+ g.fillStyle=K.m;g.font='30px Onest,sans-serif';g.fillText(mk,Wd/2,y,880);g.fillText('Justaseed · Workshop',Wd/2,y+60);
  shOpen(c,'justaseed-workshop-'+x.id+'.png','📸 Ảnh khoe');wsPostUI()}catch(e){toast('Không tạo được ảnh trên thiết bị này')}};
 
 /* ----- tặng bạn bè ----- */

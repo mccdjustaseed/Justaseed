@@ -6036,7 +6036,8 @@ window.AD={
 </script>
 <script>
 /* ===== v58: Supabase Storage cho ảnh bảng tin + thông báo (Notifications / Web Push) ===== */
-const VAPID_PUBLIC_KEY=''; /* dán khóa công khai VAPID vào đây để bật Web Push khi đã đóng game (xem HUONG-DAN-v58.md) */
+let VAPID_PUBLIC_KEY=''; /* khóa công khai VAPID: đọc từ file push-config.json cạnh file game (xem HUONG-DAN-v58.md), hoặc dán trực tiếp vào đây */
+try{fetch('push-config.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j.vapid=='string'&&j.vapid.length>40)VAPID_PUBLIC_KEY=j.vapid.trim()}).catch(()=>{})}catch(e){}
 const FEEDPFX=()=>SUPABASE_URL+'/storage/v1/object/public/feed/';
 async function feedUp(dataUrl){try{
  if(typeof currentUser=='undefined'||!currentUser||typeof dataUrl!='string'||dataUrl.slice(0,5)!='data:')return dataUrl;
@@ -6057,11 +6058,11 @@ function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))
   try{REG=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;return REG}catch(e){REGF=1;return null}}
  async function show(title,body,tag){if(!on()||!document.hidden)return;
   try{const o={body:String(body||'').slice(0,160),tag:tag||'js',icon:'icon-192.png'},r=await reg();if(r&&r.showNotification)return r.showNotification(title,o);new Notification(title,o)}catch(e){}}
- async function subscribe(){if(!VAPID_PUBLIC_KEY||typeof currentUser=='undefined'||!currentUser)return false;
-  const r=await reg();if(!r||!r.pushManager)return false;
+ async function subscribe(){window.__pe='';if(!VAPID_PUBLIC_KEY){window.__pe='chưa đọc được khóa từ push-config.json';return false}if(typeof currentUser=='undefined'||!currentUser){window.__pe='chưa đăng nhập';return false}
+  const r=await reg();if(!r||!r.pushManager){window.__pe='không đăng ký được sw.js hoặc thiếu pushManager';return false}
   try{let sub=await r.pushManager.getSubscription();if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC_KEY)});
    const j=sub.toJSON(),q=await supabaseClient.from('push_subs').upsert({user_id:currentUser.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,ua:navigator.userAgent.slice(0,120)},{onConflict:'endpoint'});
-   if(q&&q.error)throw q.error;PUSHOK=1;return true}catch(e){return false}}
+   if(q&&q.error)throw q.error;PUSHOK=1;return true}catch(e){window.__pe=String((e&&(e.name||e.code))||'')+' '+String((e&&e.message)||e);return false}}
  async function enable(){if(!sup()){toast('Trình duyệt chưa hỗ trợ thông báo. Trên iPhone hãy thêm game vào Màn hình chính trước');return false}
   let p=Notification.permission;if(p=='default')p=await Notification.requestPermission();
   if(p!='granted'){toast('Thông báo đang bị chặn, hãy bật lại trong cài đặt trình duyệt');return false}
@@ -6090,7 +6091,7 @@ function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))
  window.JSN={show,sync,pushOk:()=>PUSHOK,
   done:(t,name)=>{if(!PUSHOK)show('🎓 Workshop xong rồi','Hoàn thành: '+name,'ws-'+t)},
   row:()=>{const st=!sup()?'off':Notification.permission=='denied'?'blocked':on()?'on':'off',lb=st=='on'?'Bật':st=='blocked'?'Bị chặn':'Tắt';
-   const hint=st=='on'?`<p class=mut style="margin:0 0 6px">${PUSHOK?'Báo workshop xong và quà bạn bè, kể cả khi đã đóng game.':'Báo khi game đang mở ở nền. Muốn báo cả khi đã đóng game, cần cấu hình Web Push.'}</p>`:'';
+   const hint=st=='on'?`<p class=mut style="margin:0 0 6px">${PUSHOK?'Báo workshop xong và quà bạn bè, kể cả khi đã đóng game.':'Báo khi game đang mở ở nền. Muốn báo cả khi đã đóng game, cần cấu hình Web Push. [Lỗi: '+(window.__pe||'chưa thử đăng ký, đóng mở lại game')+']'}</p>`:'';
    return `<div class=row><span>Thông báo</span><button class="s ${st=='on'?'on2':''}" onclick="JSN.toggle()">${lb}</button></div>${hint}`},
   toggle:async()=>{try{if(on())await disable();else await enable()}catch(e){}mdl('s')}};
 })();

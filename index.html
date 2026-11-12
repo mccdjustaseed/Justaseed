@@ -1722,6 +1722,7 @@ async function shareDayToDiscord() {
       shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
       owner_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'Chủ shop',
       caption: caption || null,
+      theme_color: (s.pf && /^#[0-9a-f]{6}$/i.test(s.pf.col || '')) ? s.pf.col : '#4fb06f',
       created_at: new Date().toISOString()
     });
     if (error) throw error;

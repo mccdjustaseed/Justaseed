@@ -190,7 +190,7 @@ async function upsertProfile(user, onlyIfChanged) {
     if (typeof s !== 'undefined') {
       await supabaseClient.from('shop_public').upsert({
         user_id: user.id,
-        shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
+        shop_name: s.name || 'Tiệm hoa',
         day: s.day || 1,
         money: s.money || 0,
         level: typeof lvOf === 'function' ? lvOf(s.xp||0) : 1,
@@ -361,7 +361,7 @@ async function uploadCardToWall() {
     const { error } = await supabaseClient.from('shop_public').upsert({
       user_id: currentUser.id,
       card_image: b64,
-      shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
+      shop_name: s.name || 'Tiệm hoa',
       game_avatar: buildGav(),
       day: s.day || 1,
       money: s.money || 0,
@@ -1551,7 +1551,7 @@ x.beginPath();x.arc(vx,vy,R*.06,0,7);x.fillStyle='#f4f4f4';x.fill();x.beginPath(
 }catch(e){}}
 return c}
 function cardDraw(){try{CVS=drawCard();$q('cpv').src=CVS.toDataURL('image/png')}catch(e){toast('Không tạo được ảnh trên thiết bị này')}}
-function cardUI(){const sc=document.querySelector('.ms'),tp=sc?sc.scrollTop:0;$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>Card visit</h2><button class=s onclick=mdl()>✕</button></div><img id=cpv style="width:100%;border-radius:16px" alt="Card visit"><div class=sec>Mẫu: ${CTP[CO.t][0]}</div><div class=row style="justify-content:flex-start">${CTP.map((t,i)=>`<button class="s ${CO.t==i?'on2':''}" style="width:36px;height:36px;padding:0;background:linear-gradient(135deg,${t[1]},${t[2]})" onclick="cardSet('t',${i})" aria-label="${t[0]}"></button>`).join('')}</div><div class=sec>Bố cục</div><div class=row style="justify-content:flex-start">${['Doanh thu','Hồ sơ','Danh thiếp'].map((n,i)=>`<button class="s ${CO.l==i?'on2':''}" onclick="cardSet('l',${i})">${n}</button>`).join('')}<button class="s ${CO.p?'on2':''}" onclick="cardSet('p',${CO.p?0:1})">Hiện profile</button></div><div class=sec>Đĩa nhạc</div><div class=row style="justify-content:flex-start"><button class="s ${CO.m?'on2':''}" onclick="cardMusic()">${CO.m?'💿 Gỡ đĩa than':'🎵 Thêm bài đang nghe vào card'}</button></div><p class=mut>Nếu nút Lưu không hoạt động, giữ lâu vào ảnh để lưu.</p><div class=row><button class=p onclick=saveCard()>Lưu ảnh</button><button class=s onclick=shareCard()>Chia sẻ</button><button class=s onclick=copyCard()>Sao chép</button><button class=p onclick="uploadCardToWall()">📌 Đăng lên tường</button></div></div></div>`;cardDraw();const n=document.querySelector('.ms');if(n)n.scrollTop=tp}
+function cardUI(){const sc=document.querySelector('.ms'),tp=sc?sc.scrollTop:0;$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>Card visit</h2><button class=s onclick=mdl()>✕</button></div><img id=cpv style="width:100%;border-radius:16px" alt="Card visit"><div class=sec>Mẫu: ${CTP[CO.t][0]}</div><div class=row style="justify-content:flex-start">${CTP.map((t,i)=>`<button class="s ${CO.t==i?'on2':''}" style="width:36px;height:36px;padding:0;background:linear-gradient(135deg,${t[1]},${t[2]})" onclick="cardSet('t',${i})" aria-label="${t[0]}"></button>`).join('')}</div><div class=sec>Bố cục</div><div class=row style="justify-content:flex-start">${['Doanh thu','Hồ sơ','Danh thiếp'].map((n,i)=>`<button class="s ${CO.l==i?'on2':''}" onclick="cardSet('l',${i})">${n}</button>`).join('')}<button class="s ${CO.p?'on2':''}" onclick="cardSet('p',${CO.p?0:1})">Hiện profile</button></div><div class=sec>Đĩa nhạc</div><div class=row style="justify-content:flex-start"><button class="s ${CO.m?'on2':''}" onclick="cardMusic()">${CO.m?'💿 Gỡ đĩa than':'🎵 Thêm bài đang nghe vào card'}</button></div><p class=mut>Nếu nút Lưu không hoạt động, giữ lâu vào ảnh để lưu.</p><div class=row><button class=p onclick=saveCard()>Lưu ảnh</button><button class=s onclick=shareCard()>Chia sẻ</button><button class=s onclick=copyCard()>Sao chép</button><button class=p onclick="uploadCardToWall()">📌 Đăng lên tường</button><button class=s onclick="sendCardToDiscord()">💬 Gửi Discord</button></div></div></div>`;cardDraw();const n=document.querySelector('.ms');if(n)n.scrollTop=tp}
 function cardSet(k,v){CO[k]=v;s.cd={...CO};save();cardUI()}
 async function mkCard(){toast('Đang tạo card...');CO=Object.assign({t:0,l:0,p:1},s.cd||{});try{NOSIGN=1;const pr=sceneImg();NOSIGN=0;CIM=await pr}catch(e){NOSIGN=0;CIM=null}CAV=null;if(s.pf.av)CAV=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=s.pf.av});if(!CAV)CAV=await presetAvImg();try{await Promise.all(['700 40px "Baloo 2"','40px Onest','40px "'+SFN[s.sf||0]+'"'].map(f=>document.fonts.load(f)))}catch(e){}await cardLoadMi();await cardLoadCv();cardUI()}
 async function saveCard(){if(!CVS)return;const b=await new Promise(r=>CVS.toBlob(r,'image/png'));if(!b)return toast('Không tạo được ảnh');try{const d=window.claude&&claude.use?await claude.use('downloads'):null;if(d){await d.save({filename:'justaseed-card.png',data:b});toast('Đã lưu ảnh');return}}catch(e){if(e&&e.code=='declined')return}
@@ -1742,7 +1742,7 @@ async function shareDayToDiscord() {
       discord_id: discordId,
       image: b64,
       day: s.day - 1,
-      shop_name: s.pf?.nm || s.name || 'Tiệm hoa',
+      shop_name: s.name || 'Tiệm hoa',
       owner_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'Chủ shop',
       caption: caption || null,
       theme_color: (s.pf && /^#[0-9a-f]{6}$/i.test(s.pf.col || '')) ? s.pf.col : '#4fb06f',
@@ -3147,10 +3147,20 @@ const wrapT=(g,t,x,y,mw,lh,mx)=>{const w=String(t).split(' ');let ln='',n=0;for(
  if(ln){let c=0;while(g.measureText(ln).width>mw&&ln.length>3){ln=ln.slice(0,-2);c=1}g.fillText(c?ln.trimEnd()+'…':ln,x,y);y+=lh}return y};
 
 /* ----- v57: đăng ảnh khoe lên bảng tin ----- */
-let WPC='',WPB=0;
+let WPC='',WPB=0,WPI=null,WDB=0;
 const wsPostUI=()=>{const m=document.querySelector('#modal .ms');if(!m)return;WPC='';
- m.insertAdjacentHTML('beforeend',`<div class=card style="margin-top:8px"><b>📰 Đăng lên bảng tin</b><textarea id=wpc maxlength=300 rows=2 placeholder="Viết vài dòng cho bài đăng (không bắt buộc)..." style="width:100%;resize:vertical;margin:6px 0" oninput="XB.wpc(this.value)"></textarea><button class=p style="width:100%" id=wpb onclick="XB.wpost()">📰 Đăng ảnh này</button></div>`)};
+ m.insertAdjacentHTML('beforeend',`<div class=card style="margin-top:8px"><b>📰 Đăng lên bảng tin</b><textarea id=wpc maxlength=300 rows=2 placeholder="Viết vài dòng cho bài đăng (không bắt buộc)..." style="width:100%;resize:vertical;margin:6px 0" oninput="XB.wpc(this.value)"></textarea><button class=p style="width:100%" id=wpb onclick="XB.wpost()">📰 Đăng ảnh này</button><button class=s style="width:100%;margin-top:6px" id=wdb onclick="XB.wdisc()">💬 Gửi lên Discord</button></div>`)};
 Z.wpc=v=>{WPC=String(v).slice(0,300)};
+Z.wdisc=async()=>{if(WDB)return;const x=findIt(WPI);if(!x)return toast('Không tìm thấy món này');if(typeof SHC=='undefined'||!SHC)return toast('Chưa có ảnh để gửi');
+ WDB=1;const b=document.getElementById('wdb');if(b){b.disabled=true;b.textContent='Đang gửi...'}
+ try{const me=dcMyId(),mine=!x.gf&&(!x.cr||x.cr==crn()),ty=TY[x.t]||{};
+  const ok=await dcSend('workshop',SHC.toDataURL('image/png'),{name:String(x.n||'').slice(0,60),type:ty.n||'',emoji:ty.e||'🎁',quality:x.q|0,materials:String(x.mt||'').slice(0,300),scent:String(x.sc||'').slice(0,80),value:val(x)|0,
+   maker_name:String(x.cr||crn()).slice(0,40),maker_id:dcSnow(x.crd)||(mine?me:null),
+   gifter_name:x.gf?String(x.gf).slice(0,40):null,gifter_id:x.gf?dcSnow(x.gfd):null,gift_msg:String(x.gm||'').slice(0,80),
+   shop_name:String(s.name||'Tiệm hoa').slice(0,60),caption:String(WPC||'').replace(/[ \t]+/g,' ').trim().slice(0,300)},true);
+  if(ok)toast('Đã gửi yêu cầu. Bot sẽ đăng lên Discord trong giây lát!')
+ }catch(e){toast('Không gửi được: '+(e&&e.message||e))}
+ WDB=0;const b2=document.getElementById('wdb');if(b2){b2.disabled=false;b2.textContent='💬 Gửi lên Discord'}};
 Z.wpost=async()=>{if(WPB)return;if(typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined')return toast('Hãy liên kết Discord để đăng bài');if(typeof SHC=='undefined'||!SHC)return toast('Chưa có ảnh để đăng');
  WPB=1;const b=document.getElementById('wpb');if(b){b.disabled=true;b.textContent='Đang đăng...'}
  let done=0;
@@ -3161,7 +3171,7 @@ Z.wpost=async()=>{if(WPB)return;if(typeof currentUser=='undefined'||!currentUser
   else{done=1;try{FEED.t=0;FEED.lk=Date.now()}catch(e){}toast('Đã đăng lên bảng tin!');mdl()}
  }catch(e){toast('Không đăng được: '+(e&&e.message||e))}
  WPB=0;if(!done){const b2=document.getElementById('wpb');if(b2){b2.disabled=false;b2.textContent='📰 Đăng ảnh này'}}};
-Z.photo=async(id,o)=>{const x=findIt(id);if(!x)return;
+Z.photo=async(id,o)=>{const x=findIt(id);if(!x)return;WPI=id;
  if(!o)return MD(`<div class=row><h2>📸 Ảnh khoe</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><p class=mut>Chọn kiểu ảnh</p><div class=strip2><button class=p onclick="XB.photo('${id}','v')">▯ Ảnh dọc</button><button class=p onclick="XB.photo('${id}','h')">▭ Ảnh ngang</button></div>`);
  toast('Đang tạo ảnh...');try{
  const mt=x.mt?'Nguyên liệu: '+x.mt:'',stars='★'.repeat(Math.max(1,Math.round(x.q/20))),mk='Làm bởi '+(x.cr||s.name)+(x.gf?' · 🎁 quà từ '+x.gf:'');
@@ -3200,7 +3210,7 @@ Z.gift=async id=>{ws();const x=findIt(id);if(!x)return;if(typeof currentUser=='u
   if(!GS||GS.id!==id)return;GS.list=ids.map(i=>({id:i,name:(pm[i]&&(pm[i].display_name||pm[i].username))||'Người chơi'}))}catch(e){if(GS)GS.list=[]}
  if(GS){GS.load=0;if($q('modal').querySelector('#gmsg')||$q('modal').innerHTML)MD(gHtml())}};
 Z.send=async()=>{const g=GS;if(!g||!g.to||g.busy)return;const x=findIt(g.id);if(!x)return mdl();g.busy=1;
- const pay={v:1,fn:crn(),msg:(g.msg||'').slice(0,80),it:{t:x.t,n:x.n,q:x.q,p:x.p,cl:x.cl||[],v:x.v||0,ex:x.ex||0,sc:x.sc||'',mt:x.mt||'',im:x.im||'',cr:x.cr||crn()}},msg='JSGIFT1:'+JSON.stringify(pay);
+ const pay={v:1,fn:crn(),fd:(dcMyId()||''),msg:(g.msg||'').slice(0,80),it:{crd:(x.crd||((!x.gf&&(!x.cr||x.cr==crn()))?(dcMyId()||''):'')),t:x.t,n:x.n,q:x.q,p:x.p,cl:x.cl||[],v:x.v||0,ex:x.ex||0,sc:x.sc||'',mt:x.mt||'',im:x.im||'',cr:x.cr||crn()}},msg='JSGIFT1:'+JSON.stringify(pay);
  if(msg.length>450000){g.busy=0;return toast('Món quá nặng để tặng')}
  let err=null;try{const r=await supabaseClient.from('wall_messages').insert({from_user:currentUser.id,to_user:g.to,message:msg});err=r&&r.error}catch(e){err=e}
  if(err){g.busy=0;return toast('Không gửi được quà: '+(err.message||'lỗi mạng'))}
@@ -3210,7 +3220,7 @@ Z.send=async()=>{const g=GS;if(!g||!g.to||g.busy)return;const x=findIt(g.id);if(
 const hexOk=/^#[0-9a-f]{3,8}$/i,imOk=/^image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
 const clean=(p,from)=>{try{const i=p&&p.it;if(!i||!TY[i.t])return null;const t=i.t,n=String(i.n||'').slice(0,40);if(!n)return null;
  const cl=(Array.isArray(i.cl)?i.cl:[]).slice(0,12).filter(c=>typeof c=='string'&&hexOk.test(c)),im=typeof i.im=='string'&&i.im.length<350000&&imOk.test(i.im)?i.im:'';
- return{id:uid(),t,n,q:Math.max(0,Math.min(100,Math.round(+i.q||0))),p:Math.max(1000,Math.min(PMAX[t],Math.round(+i.p||1000))),on:0,cl,v:Math.max(0,Math.min(5,i.v|0)),ex:Math.max(0,Math.min(5,i.ex|0)),sc:String(i.sc||'').slice(0,60),mt:String(i.mt||'').slice(0,160),im,cr:String(i.cr||'').slice(0,30),gf:String(p.fn||from||'Bạn bè').slice(0,30),gm:String(p.msg||'').slice(0,80)}}catch(e){return null}};
+ return{id:uid(),t,n,q:Math.max(0,Math.min(100,Math.round(+i.q||0))),p:Math.max(1000,Math.min(PMAX[t],Math.round(+i.p||1000))),on:0,cl,v:Math.max(0,Math.min(5,i.v|0)),ex:Math.max(0,Math.min(5,i.ex|0)),sc:String(i.sc||'').slice(0,60),mt:String(i.mt||'').slice(0,160),im,cr:String(i.cr||'').slice(0,30),crd:dcSnow(i.crd)||'',gfd:dcSnow(p.fd)||'',gf:String(p.fn||from||'Bạn bè').slice(0,30),gm:String(p.msg||'').slice(0,80)}}catch(e){return null}};
 Z.recv=id=>{const x=findIt(id);if(!x)return;const big=(x.t=='sh'||x.t=='ar')&&x.im?`<img src="${dim(x)}" alt="" style="width:100%;max-width:240px;border-radius:14px;display:block;margin:6px auto;box-shadow:0 0 0 2px var(--ln)">`:'';
  MD(`<div class=row><h2>🎁 Quà từ ${esc(x.gf||'bạn bè')}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${big}${icon(x,big?90:160)}<br><b>${esc(x.n)}</b><br><span class=mut>${TY[x.t].n} · chất lượng ${x.q}/100 · làm bởi ${esc(x.cr||'bạn bè')}</span></div>${x.gm?`<div class=bub style="margin:8px 0">${esc(x.gm)}</div>`:''}<p class=mut style="text-align:center;margin:8px 0">Giá trị khi bán: <b>${$(val(x))}</b> (đã +30% nhờ là quà tặng)</p><div class=row><button class=p onclick="XB.on('${x.id}');mdl()">Trưng lên kệ để bán</button><button class=s onclick="mdl()">Giữ ở túi đồ</button></div>`)};
 let GP=0,GW=0;
@@ -4796,7 +4806,7 @@ async function syncProfile(force){
  try{
   if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||!s.pf)return;
   const g=buildGav();if(!force&&g===LASTG)return;
-  const {error}=await supabaseClient.from('shop_public').upsert({user_id:currentUser.id,game_avatar:g,shop_name:s.pf.nm||s.name||'Tiệm hoa',day:s.day||1,money:s.money||0,level:lvOf(s.xp||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  const {error}=await supabaseClient.from('shop_public').upsert({user_id:currentUser.id,game_avatar:g,shop_name:s.name||'Tiệm hoa',day:s.day||1,money:s.money||0,level:lvOf(s.xp||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
   if(!error)LASTG=g;else console.warn('sync profile',error)
  }catch(e){console.warn(e)}}
 setInterval(()=>syncProfile(),60000);
@@ -5611,7 +5621,7 @@ uploadCardToWall=async function(){
    i.onload=()=>{c.width=i.width;c.height=i.height;c.getContext('2d').drawImage(i,0,0);res(c.toDataURL('image/png'))};
    i.onerror=rej;i.src=img.src});
   const {error}=await supabaseClient.from('shop_public').upsert({
-   user_id:currentUser.id,card_image:b64,shop_name:(s.pf&&s.pf.nm)||s.name||'Tiệm hoa',game_avatar:buildGav(),
+   user_id:currentUser.id,card_image:b64,shop_name:s.name||'Tiệm hoa',game_avatar:buildGav(),
    day:s.day||1,money:s.money||0,level:typeof lvOf==='function'?lvOf(s.xp||0):1,updated_at:new Date().toISOString()},{onConflict:'user_id'});
   if(error)throw error;
   window.__postedCache=null;
@@ -6612,5 +6622,30 @@ window.MB={clear(){cache={};persist();tried.clear()}};
 .rvw button.s.on2{background:color-mix(in srgb,var(--g2) 28%,var(--card));border-color:var(--g2)}
 .rvw button.s{border-color:color-mix(in srgb,var(--g2) 40%,var(--ln))}
 </style>
+
+<script>
+/* ===== Gửi workshop / danh thiếp lên Discord (bảng discord_shares) ===== */
+function dcMyId(){const u=typeof currentUser!='undefined'&&currentUser;return u?(u.user_metadata&&u.user_metadata.provider_id)||(u.identities&&u.identities[0]&&u.identities[0].id)||(u.user_metadata&&u.user_metadata.sub)||null:null}
+function dcSnow(v){return /^\d{5,25}$/.test(String(v||''))?String(v):null}
+async function dcSend(kind,image,payload,withAvatar){
+  if(typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined'){toast('Hãy đăng nhập Discord trước');return false}
+  if(Date.now()-(window.__dcLast||0)<15000){toast('Bạn gửi hơi nhanh, đợi vài giây nhé');return false}
+  window.__dcLast=Date.now();
+  let avatar=null;if(withAvatar){try{avatar=await summaryAvatarB64()}catch(e){}}
+  const {error}=await supabaseClient.from('discord_shares').insert({user_id:currentUser.id,discord_id:dcMyId(),kind,image,avatar,payload,created_at:new Date().toISOString()});
+  if(error){window.__dcLast=0;toast('Lỗi: '+(error.message||error));return false}
+  return true}
+async function sendCardToDiscord(){
+  const img=document.getElementById('cpv');
+  if(!img||!img.src)return toast('Chưa có card. Hãy tạo card visit trước');
+  toast('Đang gửi lên Discord...');
+  try{
+    const b64=img.src.startsWith('data:')?img.src:await new Promise((res,rej)=>{const c=document.createElement('canvas'),i=new Image();i.crossOrigin='anonymous';i.onload=()=>{c.width=i.width;c.height=i.height;c.getContext('2d').drawImage(i,0,0);res(c.toDataURL('image/png'))};i.onerror=rej;i.src=img.src});
+    const ok=await dcSend('card',b64,{shop_name:String(s.name||'Tiệm hoa').slice(0,60)},false);
+    if(ok)toast('Đã gửi yêu cầu. Bot sẽ đăng danh thiếp lên Discord trong giây lát!')
+  }catch(e){toast('Không gửi được: '+(e&&e.message||e))}}
+/* đóng dấu Discord ID người làm lên món mới */
+{const oj=XB.job;XB.job=function(t,sec,it){try{if(it&&!it.crd)it.crd=dcMyId()||''}catch(e){}return oj.apply(this,arguments)}}
+</script>
 
 </body></html>

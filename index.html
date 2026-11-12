@@ -6223,40 +6223,77 @@ const CFG={
  negRate:.5,          /* tỉ lệ khách mặc cả được Gemini viết lời thoại */
  rvRate:{5:.15,4:.15,3:.3,2:.5,1:.6} /* tỉ lệ khách chịu viết đánh giá, theo số sao; khách không viết vẫn tính vào uy tín */
 };
-const LSK='jsGemKey',LSO='jsGemOn',LSA='jsGemAcc';
+const LSK='jsGemKey',LSO='jsGemOn',LSA='jsGemAcc',LSM='jsGemModel',LSAOFF='jsGemAccOff';
 const lget=k=>{try{return localStorage.getItem(k)||''}catch(e){return''}},lset=(k,v)=>{try{v==null||v===''?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
-const key=()=>lget(LSK),isOn=()=>lget(LSO)=='1'&&!!key(),model=()=>CFG.model;
+const LSP='jsGemKeys',MAXK=10;
+/* nhiều khóa: lưu dạng danh sách [{k,n,d,cd,bad}] (n/d = số lượt hôm nay, cd = nghỉ tới lúc, bad = khóa bị Google từ chối); dùng lần lượt từ trên xuống */
+const pget=()=>{try{const j=JSON.parse(lget(LSP)||'[]');return Array.isArray(j)?j.filter(x=>x&&typeof x.k=='string'&&x.k):[]}catch(e){return[]}};
+const pset=a=>{try{a&&a.length?localStorage.setItem(LSP,JSON.stringify(a)):localStorage.removeItem(LSP)}catch(e){}};
+const pool=()=>{let a=pget();if(!a.length&&lget(LSP)===''){const o=lget(LSK);if(o){a=[{k:o}];pset(a);lset(LSK,'')}}return a};
+const keysOf=a=>a.map(e=>e.k);
+const isOn=()=>lget(LSO)=='1'&&pool().length>0,model=()=>lget(LSM)||CFG.model;
+const usable=e=>!e.bad&&Date.now()>(e.cd||0)&&(e.d!=day()||(e.n||0)<CFG.dayMax);
+const cur=()=>pool().find(usable);
+const mut=(k,f)=>{const a=pool(),e=a.find(x=>x.k==k);if(e){f(e);pset(a)}};
 
 /* ---- tiện ích ---- */
 const E=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cl=(x,n)=>String(x==null?'':x).replace(/[<>]/g,'').replace(/\s+/g,' ').trim().slice(0,n||160);
 const pb=x=>Math.max(.05,Math.min(.95,x));
 const day=()=>new Date().toLocaleDateString('en-CA'),QK='jsGemQ';
-const qget=()=>{try{const j=JSON.parse(localStorage.getItem(QK)||'{}');return j.d==day()?j:{d:day(),n:0}}catch(e){return{d:day(),n:0}}};
-const qadd=()=>{try{const j=qget();j.n++;localStorage.setItem(QK,JSON.stringify(j))}catch(e){}};
+const qget=()=>({d:day(),n:pool().reduce((t,e)=>t+(e.d==day()?(e.n||0):0),0)});
 let coolUntil=0,fails=0,last=0,chain=Promise.resolve(),pend=0;
-const ready=()=>isOn()&&Date.now()>coolUntil&&qget().n<CFG.dayMax;
+const ready=()=>isOn()&&Date.now()>coolUntil&&!!cur();
 const bad=()=>{if(++fails>=3){coolUntil=Date.now()+3e5;fails=0}};
+
+/* ---- kiểm tra khóa: gọi thẳng (không qua hàng đợi), phân biệt sai khóa / hết hạn mức / lỗi mạng / model không có; tự thử model dự phòng ---- */
+const MODELS=['gemini-2.5-flash','gemini-flash-latest','gemini-2.5-flash-lite'];
+async function probe(k){
+ let last={s:'other'};
+ for(const m of [model()].concat(MODELS.filter(x=>x!==model()))){
+  const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);
+  try{
+   const gc={maxOutputTokens:20};if(/2\.5/.test(m))gc.thinkingConfig={thinkingBudget:0};
+   const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':k},body:JSON.stringify({contents:[{parts:[{text:'Say OK'}]}],generationConfig:gc}),signal:ac.signal});
+   if(r.ok){lset(LSM,m==CFG.model?'':m);return{s:'ok',m}}
+   let msg='';try{const j=await r.json();msg=String((j&&j.error&&j.error.message)||'')}catch(e){}
+   console.warn('[gemini] kiểm tra khóa',m,r.status,msg);
+   if(r.status==429)return{s:'quota',st:429,msg};
+   if(r.status==401||r.status==403||(r.status==400&&/api.?key/i.test(msg)))return{s:'invalid',st:r.status,msg};
+   last={s:'other',st:r.status,msg}
+  }catch(e){return{s:'net',msg:String(e&&e.message||e)}}
+  finally{clearTimeout(tm)}
+ }
+ return last}
 
 /* ---- gọi Gemini: xếp hàng, giãn cách, giới hạn ngày, tự nghỉ khi lỗi/429, hết giờ thì bỏ ---- */
 function call(prompt,max){
  if(!ready()||pend>=4)return Promise.resolve(null);
  pend++;
  const run=async()=>{try{
-  if(!ready())return null;
-  const w=last+CFG.gapMs-Date.now();if(w>0)await new Promise(r=>setTimeout(r,w));
-  last=Date.now();qadd();
-  const gc={temperature:1,maxOutputTokens:max||400,responseMimeType:'application/json'};
-  if(/2\.5/.test(model()))gc.thinkingConfig={thinkingBudget:0};
-  const body={contents:[{parts:[{text:prompt}]}],generationConfig:gc},ac=new AbortController(),tm=setTimeout(()=>ac.abort(),9000);
-  let r;
-  try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model())+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key()},body:JSON.stringify(body),signal:ac.signal})}
-  finally{clearTimeout(tm)}
-  if(r.status==429){coolUntil=Date.now()+6e5;return null}
-  if(!r.ok){bad();return null}
-  const j=await r.json(),p=j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts;
-  const tx=(p||[]).map(x=>x.text||'').join('');fails=0;
-  return JSON.parse(tx.replace(/```json|```/g,'').trim())
+  for(let t=0;t<12;t++){
+   if(!ready())return null;
+   const k=cur().k;
+   const w=last+CFG.gapMs-Date.now();if(w>0)await new Promise(r=>setTimeout(r,w));
+   last=Date.now();mut(k,x=>{if(x.d!=day()){x.d=day();x.n=0}x.n=(x.n||0)+1});
+   const gc={temperature:1,maxOutputTokens:max||400,responseMimeType:'application/json'};
+   if(/2\.5/.test(model()))gc.thinkingConfig={thinkingBudget:0};
+   const body={contents:[{parts:[{text:prompt}]}],generationConfig:gc},ac=new AbortController(),tm=setTimeout(()=>ac.abort(),9000);
+   let r;
+   try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model())+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':k},body:JSON.stringify(body),signal:ac.signal})}
+   finally{clearTimeout(tm)}
+   if(!r.ok){
+    let msg='';try{msg=String(((await r.json()).error||{}).message||'')}catch(x){}
+    /* hết hạn mức: cho khóa này nghỉ rồi thử ngay khóa kế tiếp */
+    if(r.status==429){const dl=/PerDay|per day|daily/i.test(msg);mut(k,x=>{x.cd=Date.now()+(dl?72e5:6e5)});last=0;continue}
+    /* khóa bị từ chối: đánh dấu lỗi rồi thử khóa kế tiếp */
+    if(r.status==401||r.status==403||(r.status==400&&/api.?key/i.test(msg))){mut(k,x=>{x.bad=1});last=0;continue}
+    console.warn('[gemini] HTTP',r.status,msg);bad();return null}
+   const j=await r.json(),p=j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts;
+   const tx=(p||[]).map(x=>x.text||'').join('');fails=0;
+   return JSON.parse(tx.replace(/```json|```/g,'').trim())
+  }
+  return null
  }catch(e){bad();return null}finally{pend--}};
  const p=chain.then(run);chain=p.then(()=>{},()=>{});return p}
 
@@ -6345,19 +6382,28 @@ const mask=k=>k?'••••'+E(k.slice(-4)):'';
 const logged=()=>typeof currentUser!='undefined'&&!!currentUser&&!!window.DISCORD_OK&&typeof supabaseClient!='undefined'&&!!supabaseClient;
 const accOn=()=>lget(LSA)=='1';
 /* bảng Supabase user_ai_keys (xem file SQL kèm theo); chỉ chủ tài khoản đọc/ghi được nhờ RLS */
-async function accSave(k){try{const r=await supabaseClient.from('user_ai_keys').upsert({user_id:currentUser.id,gemini_key:k,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(r&&r.error)throw r.error;return true}catch(e){console.warn('[gemini] lưu khóa lên tài khoản lỗi:',e&&e.message||e);return false}}
-async function accGet(){try{const r=await supabaseClient.from('user_ai_keys').select('gemini_key').eq('user_id',currentUser.id).maybeSingle();if(r&&r.error)throw r.error;return r&&r.data&&typeof r.data.gemini_key=='string'?r.data.gemini_key:''}catch(e){console.warn('[gemini] đọc khóa từ tài khoản lỗi:',e&&e.message||e);return null}}
+async function accSave(a){try{const v=a.length==1?a[0]:JSON.stringify(a);const r=await supabaseClient.from('user_ai_keys').upsert({user_id:currentUser.id,gemini_key:v,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(r&&r.error)throw r.error;return true}catch(e){console.warn('[gemini] lưu khóa lên tài khoản lỗi:',e&&e.message||e);return false}}
+/* cột gemini_key có thể là 1 khóa (bản cũ) hoặc mảng JSON nhiều khóa */
+const keysFrom=t=>{t=String(t||'').trim();if(!t)return[];let a;if(t[0]=='['){try{a=JSON.parse(t)}catch(e){a=[]}}else a=t.split(/[\s,;]+/);return[...new Set((Array.isArray(a)?a:[]).filter(x=>typeof x=='string').map(x=>x.trim()).filter(x=>x.length>=20&&!/\s/.test(x)))]};
+async function accGet(){try{const r=await supabaseClient.from('user_ai_keys').select('gemini_key').eq('user_id',currentUser.id).maybeSingle();if(r&&r.error)throw r.error;return keysFrom(r&&r.data&&r.data.gemini_key)}catch(e){console.warn('[gemini] đọc khóa từ tài khoản lỗi:',e&&e.message||e);return null}}
 async function accDel(){try{const r=await supabaseClient.from('user_ai_keys').delete().eq('user_id',currentUser.id);return !(r&&r.error)}catch(e){return false}}
 /* đăng nhập Discord xong: nếu máy chưa có khóa thì lấy từ tài khoản về */
 let PU=null;
-async function pull(){if(!logged())return;const k=await accGet();if(!k||k.length<20)return;
- if(!key()){lset(LSK,k);lset(LSO,'1');lset(LSA,'1');coolUntil=0;fails=0;toast('Đã lấy khóa Gemini từ tài khoản, AI đang bật');refresh()}
- else if(key()===k&&!accOn()){lset(LSA,'1');refresh()}}
+async function pull(){if(!logged())return;const r=await accGet();if(r===null)return;
+ const loc=pool(),have=new Set(keysOf(loc)),add=r.filter(k=>!have.has(k)).slice(0,Math.max(0,MAXK-loc.length));
+ if(add.length)pset(loc.concat(add.map(k=>({k}))));
+ if(!loc.length&&add.length){lset(LSO,'1');lset(LSA,'1');coolUntil=0;fails=0;toast('Đã lấy '+add.length+' khóa Gemini từ tài khoản, AI đang bật');refresh();return}
+ const all=pool();
+ if(lget(LSAOFF)!='1'&&all.length){if(all.some(e=>!r.includes(e.k))){if(await accSave(keysOf(all)))lset(LSA,'1')}else lset(LSA,'1')}
+ if(add.length)refresh()}
 setInterval(()=>{try{if(logged()&&PU!==currentUser.id){PU=currentUser.id;pull()}}catch(e){}},5000);
 
-function card(){const k=key(),on=isOn(),q=qget().n,lg=logged();
- const acc=lg?`<label style="display:flex;align-items:center;flex-wrap:nowrap;gap:8px;margin:6px 0;cursor:pointer"><input type=checkbox id=gs ${accOn()?'checked':''} style="width:18px;height:18px;min-width:0;min-height:0;padding:0;margin:0;flex:none"><span style="flex:1;min-width:0;font-size:.8rem;line-height:1.25">Lưu khóa vào tài khoản Discord, dùng được trên máy khác</span></label>`:`<p class=mut style="margin:2px 0 4px;font-size:.8rem">Đăng nhập Discord để lưu khóa vào tài khoản và dùng trên nhiều thiết bị.</p>`;
- return `<div class=card id=gemc><h3 style="display:flex;align-items:center;gap:7px"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemgrad" x1="3" y1="21" x2="21" y2="3" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4285f4"/><stop offset=".55" stop-color="#9b72cb"/><stop offset="1" stop-color="#d96570"/></linearGradient></defs><path fill="url(#gemgrad)" d="M12 0C12 6.63 17.37 12 24 12C17.37 12 12 17.37 12 24C12 17.37 6.63 12 0 12C6.63 12 12 6.63 12 0Z"/></svg>Gemini AI</h3><p class=mut style="margin:0 0 6px">Dùng Gemini AI để npc game đa dạng hơn.</p><div class=row><span>Trạng thái</span><span class="${on?'ok':'mut'}">${on?'Đang bật · hôm nay '+q+'/'+CFG.dayMax+' lượt':k?'Đã lưu khóa, đang tắt':'Chưa có khóa'}</span></div><input id=gk type=password autocomplete=off spellcheck=false placeholder="${k?'Khóa đã lưu '+mask(k)+' (dán khóa mới để đổi)':'Dán khóa API Gemini'}" style="width:100%;margin:4px 0">${acc}<div class=row><button class=p onclick="GEM.save()">Lưu &amp; bật</button>${k?`<button class=s onclick="GEM.toggle()">${on?'Tắt AI':'Bật AI'}</button><button class=s onclick="GEM.clear()">Xóa khóa</button>`:''}</div><p class=mut style="margin:6px 0 0;font-size:.72rem;opacity:.55">Lấy khóa miễn phí tại <a href="https://aistudio.google.com/apikey" target=_blank rel=noopener>aistudio.google.com/apikey</a>.</p></div>`}
+function card(){const a=pool(),on=isOn(),q=qget().n,lg=logged(),c=cur();
+ const tm=t=>new Date(t).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}),us=e=>e.d==day()?(e.n||0):0;
+ const st=e=>e.bad?'<span style="color:var(--bad)">khóa lỗi</span>':Date.now()<(e.cd||0)?'nghỉ tới '+tm(e.cd):us(e)>=CFG.dayMax?'hết lượt hôm nay':(on&&c&&c.k==e.k?'đang dùng':'chờ')+' · '+us(e)+'/'+CFG.dayMax;
+ const rows=a.map((e,i)=>`<div class=row style="margin:2px 0"><span>${i+1}. ${mask(e.k)} <span class=mut style="font-size:.72rem">${st(e)}</span></span><button class=s onclick="GEM.del(${i})" aria-label="Xóa khóa" style="min-height:0;padding:2px 10px">✕</button></div>`).join('');
+ const acc=lg?`<label style="display:flex;align-items:center;flex-wrap:nowrap;gap:8px;margin:6px 0;cursor:pointer"><input type=checkbox id=gs ${accOn()||lget(LSAOFF)!='1'?'checked':''} style="width:18px;height:18px;min-width:0;min-height:0;padding:0;margin:0;flex:none"><span style="flex:1;min-width:0;font-size:.8rem;line-height:1.25">Lưu khóa vào tài khoản Discord, dùng được trên máy khác</span></label>`:`<p class=mut style="margin:2px 0 4px;font-size:.8rem">Đăng nhập Discord để lưu khóa vào tài khoản và dùng trên nhiều thiết bị.</p>`;
+ return `<div class=card id=gemc><h3 style="display:flex;align-items:center;gap:7px"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemgrad" x1="3" y1="21" x2="21" y2="3" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4285f4"/><stop offset=".55" stop-color="#9b72cb"/><stop offset="1" stop-color="#d96570"/></linearGradient></defs><path fill="url(#gemgrad)" d="M12 0C12 6.63 17.37 12 24 12C17.37 12 12 17.37 12 24C12 17.37 6.63 12 0 12C6.63 12 12 6.63 12 0Z"/></svg>Gemini AI</h3><p class=mut style="margin:0 0 6px">Dùng Gemini AI để npc game đa dạng hơn. Có thể thêm nhiều khóa: game dùng lần lượt, khóa nào hết hạn mức thì tự chuyển sang khóa kế tiếp.</p><div class=row><span>Trạng thái</span><span class="${on?'ok':'mut'}">${on?'Đang bật · '+a.length+' khóa · hôm nay '+q+' lượt':a.length?'Đã lưu '+a.length+' khóa, đang tắt':'Chưa có khóa'}</span></div>${rows}<textarea id=gk rows=2 autocomplete=off spellcheck=false placeholder="${a.length?'Dán thêm khóa mới (nhiều khóa: mỗi dòng một khóa)':'Dán khóa API Gemini (nhiều khóa: mỗi dòng một khóa)'}" style="width:100%;margin:4px 0;resize:vertical;font-family:monospace;-webkit-text-security:disc"></textarea>${acc}<div class=row><button class=p onclick="GEM.save()">Thêm &amp; bật</button>${a.length?`<button class=s onclick="GEM.toggle()">${on?'Tắt AI':'Bật AI'}</button><button class=s onclick="GEM.clear()">Xóa tất cả</button>`:''}</div><p class=mut style="margin:6px 0 0;font-size:.72rem;opacity:.55">Lấy khóa miễn phí tại <a href="https://aistudio.google.com/apikey" target=_blank rel=noopener>aistudio.google.com/apikey</a>.</p></div>`}
 function refresh(){if(document.getElementById('gemc'))mdl('s')}
 function inject(){const m=document.querySelector('#modal .ms');if(!m||m.querySelector('#gemc'))return;const c=m.querySelector('.card');if(c)c.insertAdjacentHTML('afterend',card())}
 {const o=mdl;mdl=function(k){const r=o.apply(this,arguments);if(k=='s'){try{inject()}catch(e){}}return r}}
@@ -6365,19 +6411,32 @@ function inject(){const m=document.querySelector('#modal .ms');if(!m||m.querySel
 /* áp dụng lựa chọn lưu trên tài khoản */
 async function syncAcc(want){
  if(!logged()){if(want)toast('Hãy đăng nhập Discord để lưu khóa vào tài khoản');return}
- if(want){const ok=await accSave(key());if(ok){lset(LSA,'1');toast('Đã lưu khóa vào tài khoản Discord')}else{lset(LSA,'');toast('Chưa lưu được lên tài khoản (có thể chưa tạo bảng user_ai_keys). Khóa vẫn lưu trên máy này')}}
+ lset(LSAOFF,want?'':'1');
+ if(want){const ok=await accSave(keysOf(pool()));if(ok){lset(LSA,'1');toast('Đã lưu khóa vào tài khoản Discord')}else{lset(LSA,'');toast('Chưa lưu được lên tài khoản (có thể chưa tạo bảng user_ai_keys). Khóa vẫn lưu trên máy này')}}
  else if(accOn()){const ok=await accDel();lset(LSA,'');toast(ok?'Đã xóa khóa khỏi tài khoản':'Chưa xóa được khóa trên tài khoản')}}
 
 window.GEM={cfg:CFG,used:()=>qget().n,ready,
- save(){const v=String((document.getElementById('gk')||{}).value||'').trim(),gs=document.getElementById('gs'),want=gs?!!gs.checked:accOn();
-  if(v){if(v.length<20||/\s/.test(v))return toast('Khóa không đúng định dạng, hãy dán lại');lset(LSK,v)}
-  if(!key())return toast('Hãy dán khóa Gemini API trước');
-  lset(LSO,'1');coolUntil=0;fails=0;
-  if(!v){syncAcc(want).then(refresh);toast('Đã bật AI');refresh();return}
-  toast('Đang kiểm tra khóa...');
-  call('Trả về JSON {"ok":true}',40).then(async j=>{if(j&&j.ok){toast('Khóa hoạt động, đã bật AI');await syncAcc(want)}else{lset(LSO,'0');toast('Không dùng được khóa này (sai khóa, hết hạn mức hoặc mất mạng). AI đang tắt')}refresh()})},
+ async save(){const raw=String((document.getElementById('gk')||{}).value||''),gs=document.getElementById('gs'),want=gs?!!gs.checked:accOn();
+  const tk=[...new Set(raw.split(/[\s,;]+/).filter(Boolean))];
+  if(tk.some(x=>x.length<20))return toast('Có khóa không đúng định dạng, hãy dán lại');
+  const have=keysOf(pool()),fresh=tk.filter(x=>!have.includes(x));
+  if(!tk.length){
+   if(!have.length)return toast('Hãy dán khóa Gemini API trước');
+   pset(pool().map(e=>({k:e.k,n:e.n,d:e.d})));lset(LSO,'1');coolUntil=0;fails=0;toast('Đã bật AI');await syncAcc(want);refresh();return}
+  if(!fresh.length)return toast('Các khóa này đã có rồi');
+  if(have.length+fresh.length>MAXK)return toast('Tối đa '+MAXK+' khóa, hãy xóa bớt khóa cũ');
+  toast('Đang kiểm tra '+fresh.length+' khóa...');
+  const okk=[];let inv=0,unc=0,note='';
+  for(const k of fresh){const r=await probe(k);if(r.s=='invalid'){inv++;note=r.msg}else{okk.push(k);if(r.s!='ok')unc++}}
+  if(!okk.length){toast('Google báo khóa không hợp lệ'+(note?': '+note.slice(0,90):'')+'. Hãy kiểm tra lại khóa');return}
+  pset(pool().concat(okk.map(k=>({k}))));lset(LSO,'1');coolUntil=0;fails=0;
+  toast('Đã thêm '+okk.length+' khóa, đã bật AI'+(inv?' · '+inv+' khóa bị Google báo không hợp lệ':'')+(unc?' · '+unc+' khóa chưa kiểm tra được (hết hạn mức hoặc lỗi mạng) nhưng vẫn lưu':''));
+  await syncAcc(want);refresh()},
+ del(i){const a=pool();if(!a[i])return;a.splice(i,1);pset(a);if(!a.length)lset(LSO,'0');
+  if(accOn()&&logged()){if(a.length)accSave(keysOf(a));else{accDel();lset(LSA,'')}}
+  toast('Đã xóa khóa');refresh()},
  toggle(){lset(LSO,isOn()?'0':'1');coolUntil=0;toast(isOn()?'Đã bật AI':'Đã tắt AI, khách như bản thường');refresh()},
- clear(){if(!confirm('Xóa khóa Gemini khỏi thiết bị này'+(accOn()?' và khỏi tài khoản Discord':'')+'?'))return;const a=accOn();lset(LSK,'');lset(LSO,'0');if(a&&logged())accDel();lset(LSA,'');toast('Đã xóa khóa, khách như bản thường');refresh()}};
+ clear(){if(!confirm('Xóa tất cả khóa Gemini khỏi thiết bị này'+(accOn()?' và khỏi tài khoản Discord':'')+'?'))return;const a=accOn();pset([]);lset(LSK,'');lset(LSO,'0');if(a&&logged())accDel();lset(LSA,'');toast('Đã xóa khóa, khách như bản thường');refresh()}};
 })();
 
 </script>

@@ -2182,7 +2182,7 @@ return{make};
 
 const QRB={enc:u=>{let t='';for(let i=0;i<u.length;i+=0x8000)t+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(t).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')},dec:q=>{q=q.replace(/-/g,'+').replace(/_/g,'/');while(q.length%4)q+='=';const b=atob(q),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}};
 const qrPipe=async(u,C,f)=>new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new C(f))).arrayBuffer());
-function qrJson(lv,keepPf){lv=lv||0;const DROP=['led','bills','rv','notifs','forum','cam','prev','lastWallCheck','lastFriendCheck','devClicks','seenCust','qseen','nSeen','nInit'].concat(s.ph=='end'?[]:['rpt']);
+function qrJson(lv,keepPf){lv=lv||0;const DROP=['led','bills','rv','notifs','forum','fsr','cam','prev','lastWallCheck','lastFriendCheck','devClicks','seenCust','qseen','nSeen','nInit'].concat(s.ph=='end'?[]:['rpt']);
  return JSON.stringify(s,function(k,v){if(this===s&&DROP.includes(k))return undefined;if(typeof v=='string'&&v.slice(0,5)=='data:'&&!(keepPf&&this===s.pf))return undefined;
   if(lv>=2&&v&&typeof v=='object'&&!Array.isArray(v)&&k!='pr'&&k!=''){const o={};for(const q in v){if(v[q]!==0&&v[q]!==false&&v[q]!==null)o[q]=v[q]}return o}
   return v})}
@@ -3444,6 +3444,107 @@ nav button.locked span { position: relative; }
       if (tab === 'forum') R();
     }, 600);
     toast('Bạn: "' + line + '"');
+  };
+
+  // ----- TÌM HOA CHỦ ĐỘNG: mỗi loại hoa chỉ tìm 1 lần / ngày -----
+  let FSEL = null;
+  function fsrState() {
+    const d = s.day || 1;
+    if (!s.fsr || s.fsr.d !== d) s.fsr = { d, done: {}, cache: {}, cur: null };
+    if (!s.fsr.cache) s.fsr.cache = {};
+    return s.fsr;
+  }
+  function fsrBar(st) {
+    if (!FSEL || st.done[FSEL] || !F.some(f => f.id === FSEL)) FSEL = (F.find(f => !st.done[f.id]) || {}).id || null;
+    const all = F.every(f => st.done[f.id]);
+    const opts = F.map(f => `<option value="${f.id}" ${st.done[f.id] ? 'disabled' : ''} ${f.id === FSEL ? 'selected' : ''}>${st.done[f.id] ? '🔒 ' : ''}${esc(f.n)}${st.done[f.id] ? ' (đã mua)' : ''}</option>`).join('');
+    const doneNames = F.filter(f => st.done[f.id]).map(f => esc(f.n)).join(', ');
+    return `<div class="card"><h3>🔎 Tìm hoa cần mua</h3>
+      <p class="mut">Chọn loại hoa để xem những người đang bán với nhiều mức giá khác nhau. Mỗi loại hoa chỉ được mua qua tìm kiếm 1 lần mỗi ngày: sau khi mua, loại hoa đó bị khóa đến hết ngày (Ngày ${st.d}).</p>
+      <div class="row"><select id="fsel" onchange="forumPick(this.value)" style="flex:1;width:auto" ${all ? 'disabled' : ''}>${opts}</select>
+      <button class="p" onclick="forumSearch()" ${all ? 'disabled' : ''}>Tìm</button></div>
+      ${doneNames ? `<p class="mut">🔒 Đã mua hôm nay: ${doneNames}</p>` : ''}
+      ${all ? '<p class="mut">Hôm nay bạn đã mua hết mọi loại hoa qua tìm kiếm. Hãy quay lại vào ngày mai!</p>' : ''}</div>`;
+  }
+
+  function genSearchListings(fid) {
+    const base = marketPrice(fid), rare = RARE_FLOWERS.includes(fid);
+    const bands = [[0.5, 0.68], [0.72, 0.9], [0.92, 1.1], [1.15, 1.45], [1.5, 2.0]];
+    const names = FORUM_NAMES.slice().sort(() => Math.random() - 0.5);
+    const list = bands.map((b, i) => {
+      const mult = b[0] + Math.random() * (b[1] - b[0]);
+      const qty = rare ? 1 + Math.floor(Math.random() * 4) : 4 + Math.floor(Math.random() * 17);
+      const unitPrice = Math.max(100, Math.round(base * mult / 100) * 100);
+      const rating = 1 + Math.floor(Math.random() * 5);
+      let scamP = rating <= 2 ? 0.35 : rating === 3 ? 0.08 : 0.01;
+      if (mult < 0.68) scamP += 0.1;
+      return { seller: names[i], rating, qty, unitPrice, total: unitPrice * qty, scam: Math.random() < scamP, sold: false };
+    });
+    return list.sort((a, b) => a.unitPrice - b.unitPrice);
+  }
+
+  function fsrResults(st) {
+    const c = st.cur, market = marketPrice(c.fid);
+    let html = fsrBar(st) + `<div class="card"><div class="row"><h3>${art(c.fid)} ${esc(nm(c.fid))}</h3><button class="s bk" onclick="forumHome()">← Về trang chủ Diễn đàn</button></div>
+      <p class="mut">${c.list.length} người đang bán · Giá thị trường ~${$(market)}/bông. Sau khi bạn mua, nếu rời trang này hoặc tìm loại khác thì hoa này sẽ bị khóa đến hết ngày.</p></div>`;
+    c.list.forEach((p, i) => {
+      const pct = Math.round((p.unitPrice / market - 1) * 100);
+      const tag = pct <= -25 ? '📉 Rất rẻ' : pct < 0 ? '📉 Rẻ hơn TT' : pct <= 20 ? '⚖️ Gần giá TT' : '📈 Cao hơn TT';
+      html += `<div class="card forum-post ${pct < 0 ? 'cheap' : 'expensive'}" ${p.sold ? 'style="opacity:.6"' : ''}>
+        <div class="row"><b>${esc(p.seller)}</b><span class="chip">${tag}</span></div>
+        <div class="row"><span class="mut">Uy tín ${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</span><span>${p.qty} bông</span></div>
+        <div class="row"><b>${$(p.unitPrice)}/bông <span class="mut">(${pct >= 0 ? '+' : ''}${pct}%)</span></b><b>Tổng ${$(p.total)}</b></div>
+        <div class="row"><button class="p" ${p.sold ? 'disabled' : ''} onclick="forumBuyFound(${i})">${p.sold ? 'Đã mua' : 'Mua'}</button></div>
+      </div>`;
+    });
+    return html;
+  }
+
+  window.forumPick = function (v) { FSEL = v; };
+  window.forumSearch = function () {
+    const st = fsrState();
+    const sel = document.getElementById('fsel');
+    const fid = (sel && sel.value) || FSEL;
+    if (!fid || !F.some(f => f.id === fid)) return toast('Hãy chọn loại hoa');
+    if (st.done[fid]) return toast('Hôm nay bạn đã mua ' + nm(fid) + ' qua tìm kiếm rồi, mai hãy thử lại');
+    // Chưa mua thì chưa khóa; tìm lại sẽ thấy đúng danh sách cũ (không đổi giá bằng cách tìm lại)
+    if (!st.cache[fid]) st.cache[fid] = genSearchListings(fid);
+    st.cur = { fid, list: st.cache[fid] };
+    FSEL = null;
+    save();
+    try { document.activeElement && document.activeElement.blur(); } catch (e) {}
+    R();
+  };
+  window.forumHome = function () {
+    const st = fsrState();
+    st.cur = null;
+    save();
+    R();
+  };
+  window.forumBuyFound = function (i) {
+    const st = fsrState(), c = st.cur;
+    if (!c) return;
+    const p = c.list[i];
+    if (!p || p.sold) return;
+    if (s.money < p.total && !s.dev) return toast('Không đủ tiền');
+    if (!s.dev) s.money -= p.total;
+    if (p.scam) {
+      toast('⚠️ ' + p.seller + ' đã lấy tiền rồi bỏ trốn! Bạn bị lừa.');
+      L('out', 'Diễn đàn', 'Bị lừa đảo', 1, p.total);
+    } else {
+      s.st[c.fid] = (s.st[c.fid] || 0) + p.qty;
+      L('in', 'Diễn đàn', 'Mua ' + nm(c.fid), p.qty, p.total);
+      toast('Đã mua ' + p.qty + ' bông ' + nm(c.fid) + ' của ' + p.seller);
+    }
+    p.sold = true;
+    st.done[c.fid] = 1; // đã mua: loại hoa này khóa, sẽ không tìm lại được khi rời trang kết quả
+    save();
+    R();
+  };
+  const forumFeedV = V.forum;
+  V.forum = function () {
+    const st = fsrState();
+    return st.cur ? fsrResults(st) : fsrBar(st) + forumFeedV();
   };
 
   // Add forum tab

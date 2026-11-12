@@ -116,7 +116,7 @@ body.nh nav.fx{transform:translate(-50%,calc(100% + 30px))}
 .pdot.on,.pdi.on{background:#2ecc71}
 .pdi{display:inline-block;width:9px;height:9px;border-radius:50%;background:#9aa3a0;margin-right:5px;vertical-align:1px}
 .ptxt{font-size:.78rem}.ptxt.ptxt-on{color:#27ae60}
-</style></head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
+</style><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"></head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
 <script>
 const $=n=>Math.round(n).toLocaleString('vi-VN')+'đ',esc=t=>String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const I={home:'M3 11l9-8 9 8M5 10v10h14V10',cart:'M3 4h3l2 11h10l2-8H7M9 20h.01M17 20h.01',tag:'M3 12V3h9l9 9-9 9z',shop:'M3 9l2-5h14l2 5M4 9v11h16V9M9 20v-6h6v6',star:'M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3 1.3-6.2L3 9.5l6.3-.7z',quest:'M6 3v18M6 4h12l-3 4 3 4H6',up:'M12 20V5M5 11l7-7 7 7',book:'M4 5h7a2 2 0 012 2v13a2 2 0 00-2-2H4zM20 5h-7a2 2 0 00-2 2',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6',moon:'M20 14a8 8 0 11-10-10 7 7 0 0010 10z',sun:'M12 8a4 4 0 100 8 4 4 0 000-8M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',music:'M9 18V6l10-2v12M9 18a3 3 0 11-6 0 3 3 0 016 0M19 16a3 3 0 11-6 0 3 3 0 016 0',mute:'M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6',undo:'M4 9h11a5 5 0 010 10H8M4 9l4-4M4 9l4 4',bill:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',spk:'M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2'};
@@ -1291,7 +1291,7 @@ function music(){clearInterval(MT);if(s.mus){mi=0;const st=()=>{const c=CH[Math.
 function mdl(k){const m=document.getElementById('modal');if(!k){m.innerHTML='';return}const X='<button class=s onclick="mdl()" aria-label="Đóng">✕</button>',tg=(v)=>`<button class="s ${v?'on2':''}"`;let h;
 if(k=='g')h=`<div class=row><h2>Hướng dẫn</h2>${X}</div>${V.guide()}`;
 else if(k=='r')h=`<div class=row><h2>Khôi phục tiến trình</h2>${X}</div><div class=card><p class=mut style="margin-top:0">Dán mã lưu (tạo ở Cài đặt) vào ô bên dưới.</p><textarea id=cd2 style="width:100%;height:110px" placeholder="Dán mã lưu..."></textarea><div class=row><button class=p onclick="load('cd2')">Khôi phục</button></div></div>`;
-else h=`<div class=row><h2>Cài đặt</h2>${X}</div><div class=card><div class=row><span>Âm thanh hiệu ứng</span>${tg(s.snd)} onclick="s.snd=s.snd?0:1;save();mdl('s')">${s.snd?'Bật':'Tắt'}</button></div><div class=row><span>Nhạc nền</span>${tg(s.mus)} onclick="s.mus=s.mus?0:1;music();save();mdl('s')">${s.mus?'Bật':'Tắt'}</button></div><div class=row><span>Chế độ tối</span>${tg(s.dark)} onclick="toggleDark(event);mdl('s')">${s.dark?'Bật':'Tắt'}</button></div></div>${langUI()}${bgUI()}<div class=card><h3>Lưu tiến trình</h3><button class=p onclick="pop=btoa(unescape(encodeURIComponent(qrJson(0,1))));mdl('s')">Tạo mã lưu</button><textarea id=cd style="width:100%;height:80px;margin:8px 0">${pop}</textarea><button class=s style="width:100%;margin-bottom:8px" onclick="copyAll()">Sao chép tất cả</button><div class=row><button class=s onclick="load()">Khôi phục từ mã</button><button class=s onclick="mdl('r')">Dán mã khác</button></div></div><div class=card><h3>Khác</h3><div class=row><button class=s onclick="mdl('g')">Hướng dẫn</button><button class=s onclick="startTut()">Hướng dẫn từng bước</button><button class=s onclick="restart()">Chơi lại từ đầu</button></div></div>`;
+else h=`<div class=row><h2>Cài đặt</h2>${X}</div><div class=card><div class=row><span>Âm thanh hiệu ứng</span>${tg(s.snd)} onclick="s.snd=s.snd?0:1;save();mdl('s')">${s.snd?'Bật':'Tắt'}</button></div><div class=row><span>Nhạc nền</span>${tg(s.mus)} onclick="s.mus=s.mus?0:1;music();save();mdl('s')">${s.mus?'Bật':'Tắt'}</button></div><div class=row><span>Chế độ tối</span>${tg(s.dark)} onclick="toggleDark(event);mdl('s')">${s.dark?'Bật':'Tắt'}</button></div>${window.JSN?JSN.row():''}</div>${langUI()}${bgUI()}<div class=card><h3>Lưu tiến trình</h3><button class=p onclick="pop=btoa(unescape(encodeURIComponent(qrJson(0,1))));mdl('s')">Tạo mã lưu</button><textarea id=cd style="width:100%;height:80px;margin:8px 0">${pop}</textarea><button class=s style="width:100%;margin-bottom:8px" onclick="copyAll()">Sao chép tất cả</button><div class=row><button class=s onclick="load()">Khôi phục từ mã</button><button class=s onclick="mdl('r')">Dán mã khác</button></div></div><div class=card><h3>Khác</h3><div class=row><button class=s onclick="mdl('g')">Hướng dẫn</button><button class=s onclick="startTut()">Hướng dẫn từng bước</button><button class=s onclick="restart()">Chơi lại từ đầu</button></div></div>`;
 m.innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms>${h}</div></div>`}
 
 let MSO=0;function tgS(k){s[k]=s[k]?0:1;if(k=='mus')music();if(k=='dark'){TA=0;th()}save();renderMenu()}
@@ -1483,6 +1483,7 @@ return `<div class=card><div class=row><span>${bt('a','Tất cả ('+A.length+')
 TABS.splice(TABS.findIndex(t=>t[0]=='rev')+1,0,['bills','bill','Hóa đơn']);
 /* 15 phút */
 {const o=V.shop;V.shop=function(){return o().replace('8 phút</button>',`8 phút</button> <button class="s ${s.len==900?'on2':''}" onclick="s.len=900;R()">15 phút</button>`)}}
+/* v58: thông báo + Supabase Storage cho ảnh bảng tin */
 /* v57: workshop lưu mẫu, số lượng, không giới hạn túi/kệ, sửa ảnh khoe ngang, đăng ảnh lên bảng tin */
 /* v56: mở gian hàng 30 phút, mở khóa ở level 20 */
 {const o=V.shop;V.shop=function(){const h=o();if(s.ph!='prep')return h;const ok=lvOf(s.xp||0)>=20;
@@ -2993,14 +2994,14 @@ const snapW=t=>JSON.stringify(t=='fa'?{f:WF,v:WV}:t=='pf'?{p:WP,c:WC}:W[t]),
  putW=(t,j)=>{const d=JSON.parse(j);if(t=='fa'){WF=d.f;WV=d.v}else if(t=='pf'){WP=d.p;WC=d.c}else W[t]=d};
 Z.qt=(t,v)=>{QT[t]=Math.max(1,Math.min(50,parseInt(v)||1));R()};
 Z.mk=t=>{ws();const T=TY[t];if(L2()<T.lv)return toast('Mở khóa ở cấp độ '+T.lv);if(s.wq.some(j=>j.t==t))return toast('Bàn '+T.n.toLowerCase()+' đang bận, hãy chờ mẻ hiện tại xong');
- const n=QT[t]||1;if(n<2)return MK[t]();
+ const n=QT[t]||1;if(n<2){const r0=MK[t]();try{JSN.sync()}catch(e){}return r0}
  const snap=snapW(t),nmv=W.nm[t],b0=s.wq.length,oR=window.R;let ok=0,why='';
  QZ=1;window.R=()=>{};
  try{for(let i=0;i<n;i++){const l=s.wq.length;MK[t]();if(s.wq.length==l){const e=document.getElementById('toast');why=e?e.textContent:'';break}ok++;if(i<n-1){putW(t,snap);W.nm[t]=nmv}}}
  finally{QZ=0;window.R=oR}
  const js=s.wq.slice(b0);for(let i=1;i<js.length;i++){const d=js[i].en-js[i].st;js[i].st=js[i-1].en;js[i].en=js[i].st+d}
  if(js.length){const tot=(js[js.length-1].en-Date.now())/1000;toast(ok==n?TY[t].e+' Bắt đầu làm '+n+' món · xong hết sau '+wfmt(tot):'Chỉ làm được '+ok+'/'+n+' món'+(why?' · '+why:''))}
- try{save()}catch(e){}R()};
+ try{save()}catch(e){}try{JSN.sync()}catch(e){}R()};
 Z.mkFa=()=>Z.mk('fa');Z.mkPf=()=>Z.mk('pf');
 
 /* ----- hàng chờ hoàn thành, túi đồ ----- */
@@ -3008,8 +3009,8 @@ Z.job=(t,sec,it)=>{ws();const n=Date.now();s.wq.push({id:it.id,t,it,st:n,en:n+se
 Z.collect=()=>{if(!s.wq||!s.wq.length)return false;const n=Date.now();let ch=false;
  for(const j of s.wq.slice()){if(j.en>n)continue;
   
-  s.shelf.push(j.it);s.wq.splice(s.wq.indexOf(j),1);ch=true;toast(TY[j.t].e+' Hoàn thành: '+j.it.n+' · chất lượng '+j.it.q+'/100 · đã vào túi đồ')}
- if(ch)try{save()}catch(e){}return ch};
+  s.shelf.push(j.it);s.wq.splice(s.wq.indexOf(j),1);ch=true;try{JSN.done(j.t,j.it.n)}catch(e){}toast(TY[j.t].e+' Hoàn thành: '+j.it.n+' · chất lượng '+j.it.q+'/100 · đã vào túi đồ')}
+ if(ch){try{save()}catch(e){}try{JSN.sync()}catch(e){}}return ch};
 Z.jobCard=()=>{ws();const q=s.wq;if(!q.length)return '';const n=Date.now();
  return `<div class=card><div class=row><h3>⏳ Đang thực hiện</h3><span class=mut>${q.length} mẻ</span></div>${q.slice(0,6).map(j=>{const tot=Math.max(1,j.en-j.st),left=Math.max(0,j.en-n);
   return `<div style="margin:6px 0"><div class=row style="margin:0"><span>${TY[j.t].e} <b>${esc(j.it.n)}</b></span><b class=wjt data-id="${j.id}">${left>0?wfmt(left/1000):'Chờ chỗ trong túi'}</b></div><div class=bar><i class=wjb data-id="${j.id}" style="width:${Math.max(0,Math.min(100,(1-left/tot)*100))}%"></i></div></div>`}).join('')}${q.length>6?`<p class=mut style="margin:4px 0 0">+${q.length-6} mẻ nữa đang chờ</p>`:''}<p class=mut style="margin:4px 0 0">Hết thời gian, món tự vào túi đồ.</p></div>`};
@@ -3056,7 +3057,7 @@ Z.wpost=async()=>{if(WPB)return;if(typeof currentUser=='undefined'||!currentUser
  let done=0;
  try{const jpg=await feedJpeg(SHC.toDataURL('image/png')),cap=WPC.replace(/[ \t]+/g,' ').trim().slice(0,300),
    mk=img=>supabaseClient.from('feed_posts').insert({user_id:currentUser.id,image:img,caption:cap||null,music:null}).select('id').single();
-  let r=await mk(jpg);if(r.error&&r.error.code=='23502')r=await mk('');
+  const up=await feedUp(jpg);let r=await mk(up);if(r.error&&r.error.code=='23502')r=await mk(up||'');
   if(r.error)toast(feedMissing(r.error)?'Bảng tin chưa bật: cần chạy file justaseed-feed.sql':'Đăng lỗi: '+r.error.message);
   else{done=1;try{FEED.t=0;FEED.lk=Date.now()}catch(e){}toast('Đã đăng lên bảng tin!');mdl()}
  }catch(e){toast('Không đăng được: '+(e&&e.message||e))}
@@ -5267,7 +5268,7 @@ function feedTime(d){
  const h=Math.floor(m/60);if(h<24)return h+' giờ trước';
  const dd=Math.floor(h/24);if(dd<7)return dd+' ngày trước';
  return new Date(t).toLocaleDateString('vi-VN')}
-const feedImgOk=x=>typeof x=='string'&&/^data:image\/(jpeg|png);base64,[A-Za-z0-9+\/=]+$/.test(x);
+const feedImgOk=x=>typeof x=='string'&&(/^data:image\/(jpeg|png);base64,[A-Za-z0-9+\/=]+$/.test(x)||(x.startsWith(SUPABASE_URL+'/storage/v1/object/public/feed/')&&/^[A-Za-z0-9:\/._%\-]+$/.test(x)));
 
 /* ---- thông tin người đăng (tên + avatar) ---- */
 async function feedProfiles(uids){
@@ -5391,8 +5392,10 @@ async function feedDelCm(pid,cid){
  FEED.lk=Date.now();FEED.cm[pid]=(FEED.cm[pid]||[]).filter(c=>c.id!==cid);feedCmRefresh(pid)}
 async function feedDelPost(pid){
  if(!confirm('Xóa bài đăng này?'))return;
+ const oi=await feedImgOf(pid);
  const {error}=await supabaseClient.from('feed_posts').delete().eq('id',pid);
  if(error)return toast('Lỗi: '+error.message);
+ feedRm(oi);
  FEED.posts=FEED.posts.filter(p=>p.id!==pid);try{ClipMu.stop()}catch(e){}
  toast('Đã xóa bài đăng');feedPaint()}
 
@@ -5427,7 +5430,7 @@ uploadCardToWall=async function(){
   const jpg=await feedJpeg(b64),cap=String(FEEDCAP||'').trim().slice(0,200),mt=CO&&CO.m&&CO.mt;
   const hasClip=mt&&(mt.en|0)>(mt.st|0);
   const music=mt&&CLIPID.test(mt.id||'')?{id:mt.id,name:String(mt.name||'').slice(0,80),ar:String(mt.ar||'').slice(0,50),st:hasClip?mt.st|0:null,en:hasClip?mt.en|0:null}:null;
-  const {error:fe}=await supabaseClient.from('feed_posts').insert({user_id:currentUser.id,image:jpg,caption:cap||null,music});
+  const {error:fe}=await supabaseClient.from('feed_posts').insert({user_id:currentUser.id,image:await feedUp(jpg),caption:cap||null,music});
   if(fe){
    toast(feedMissing(fe)?'Đã cập nhật danh thiếp. Bảng tin chưa bật: cần chạy file justaseed-feed.sql':'Đăng bảng tin lỗi: '+fe.message);return}
   FEEDCAP='';FEED.t=0;FEEDMODE='feed';
@@ -5771,8 +5774,8 @@ async function feedPostNow(){
  if(!cap&&!FEED.pimg)return toast('Hãy viết gì đó hoặc thêm ảnh');
  FEED.posting=1;feedPaint();
  const mk=img=>supabaseClient.from('feed_posts').insert({user_id:currentUser.id,image:img,caption:cap||null,music:null}).select('id').single();
- let r=await mk(FEED.pimg||null);
- if(r.error&&r.error.code=='23502')r=await mk(FEED.pimg||'');
+ const pu=FEED.pimg?await feedUp(FEED.pimg):null;let r=await mk(pu);
+ if(r.error&&r.error.code=='23502')r=await mk(pu||'');
  FEED.posting=0;
  if(r.error){feedPaint();return toast(feedMissing(r.error)?'Bảng tin chưa bật: cần chạy file justaseed-feed.sql':'Đăng lỗi: '+r.error.message)}
  FEED.pimg=null;const t=document.getElementById('fcap');if(t)t.value='';
@@ -5825,8 +5828,10 @@ function upostMore(uid){UPL[uid]=(UPL[uid]||10)+10;upostLoad(uid,true)}
 function upostOpen(pid){try{mdl()}catch(e){}nxGo({k:'feed',pid})}
 async function upostDel(pid){
  if(!confirm('Xóa bài đăng này?'))return;
+ const oi=await feedImgOf(pid);
  const {error}=await supabaseClient.from('feed_posts').delete().eq('id',pid);
  if(error)return toast('Lỗi: '+error.message);
+ feedRm(oi);
  FEED.posts=FEED.posts.filter(p=>p.id!==pid);
  toast('Đã xóa bài đăng');
  if(currentUser){delete UPC[currentUser.id];upostLoad(currentUser.id,true)}}
@@ -6027,6 +6032,67 @@ window.AD={
    if(!r.data||!r.data.length)return toast('Không gỡ được, hãy kiểm tra file SQL quản trị');
    toast('Đã gỡ quyền admin');if(A.sel&&A.sel.id==id){A.sel.admin=false;redraw()}else AD.go('admins')}catch(er){fail(er)}}
 };
+})();
+</script>
+<script>
+/* ===== v58: Supabase Storage cho ảnh bảng tin + thông báo (Notifications / Web Push) ===== */
+const VAPID_PUBLIC_KEY=''; /* dán khóa công khai VAPID vào đây để bật Web Push khi đã đóng game (xem HUONG-DAN-v58.md) */
+const FEEDPFX=()=>SUPABASE_URL+'/storage/v1/object/public/feed/';
+async function feedUp(dataUrl){try{
+ if(typeof currentUser=='undefined'||!currentUser||typeof dataUrl!='string'||dataUrl.slice(0,5)!='data:')return dataUrl;
+ const b=await (await fetch(dataUrl)).blob(),ext=b.type=='image/png'?'png':'jpg',path=currentUser.id+'/'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.'+ext;
+ const r=await supabaseClient.storage.from('feed').upload(path,b,{contentType:b.type||'image/jpeg',cacheControl:'31536000',upsert:false});
+ if(!r||r.error)return dataUrl;
+ const u=supabaseClient.storage.from('feed').getPublicUrl(path),pu=u&&u.data&&u.data.publicUrl;
+ return typeof pu=='string'&&pu.startsWith('http')?pu:dataUrl}catch(e){return dataUrl}}
+async function feedImgOf(pid){try{const r=await supabaseClient.from('feed_posts').select('image').eq('id',pid).maybeSingle();return (r&&r.data&&r.data.image)||null}catch(e){return null}}
+function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))supabaseClient.storage.from('feed').remove([decodeURIComponent(u.slice(p.length))]).then(()=>{},()=>{})}catch(e){}}
+
+(function(){
+ const LS='jsNotif',sup=()=>'Notification' in window;
+ let REG=null,REGF=0,PUSHOK=0,TRY=0;
+ const on=()=>{try{return localStorage.getItem(LS)=='1'&&sup()&&Notification.permission=='granted'}catch(e){return false}};
+ const b64u=k=>{const r=atob((k+'='.repeat((4-k.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(r,c=>c.charCodeAt(0))};
+ async function reg(){if(REG)return REG;if(REGF||!('serviceWorker' in navigator))return null;
+  try{REG=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;return REG}catch(e){REGF=1;return null}}
+ async function show(title,body,tag){if(!on()||!document.hidden)return;
+  try{const o={body:String(body||'').slice(0,160),tag:tag||'js',icon:'icon-192.png'},r=await reg();if(r&&r.showNotification)return r.showNotification(title,o);new Notification(title,o)}catch(e){}}
+ async function subscribe(){if(!VAPID_PUBLIC_KEY||typeof currentUser=='undefined'||!currentUser)return false;
+  const r=await reg();if(!r||!r.pushManager)return false;
+  try{let sub=await r.pushManager.getSubscription();if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC_KEY)});
+   const j=sub.toJSON(),q=await supabaseClient.from('push_subs').upsert({user_id:currentUser.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,ua:navigator.userAgent.slice(0,120)},{onConflict:'endpoint'});
+   if(q&&q.error)throw q.error;PUSHOK=1;return true}catch(e){return false}}
+ async function enable(){if(!sup()){toast('Trình duyệt chưa hỗ trợ thông báo. Trên iPhone hãy thêm game vào Màn hình chính trước');return false}
+  let p=Notification.permission;if(p=='default')p=await Notification.requestPermission();
+  if(p!='granted'){toast('Thông báo đang bị chặn, hãy bật lại trong cài đặt trình duyệt');return false}
+  try{localStorage.setItem(LS,'1')}catch(e){}
+  const ok=await subscribe();toast(ok?'Đã bật thông báo (kể cả khi đóng game)':'Đã bật thông báo khi game đang mở nền');if(ok)sync();return true}
+ async function disable(){try{localStorage.setItem(LS,'0')}catch(e){}PUSHOK=0;
+  try{const r=await reg(),sub=r&&r.pushManager&&await r.pushManager.getSubscription();if(sub){const ep=sub.endpoint;await sub.unsubscribe();try{await supabaseClient.from('push_subs').delete().eq('endpoint',ep)}catch(e){}}}catch(e){}
+  try{if(typeof currentUser!='undefined'&&currentUser)await supabaseClient.from('push_jobs').delete().eq('user_id',currentUser.id).like('ref','ws-%')}catch(e){}
+  toast('Đã tắt thông báo')}
+ /* hẹn giờ push khi workshop xong (máy chủ gửi, kể cả khi đã đóng game) */
+ let ST=0;const sync=()=>{clearTimeout(ST);ST=setTimeout(doSync,1500)};
+ async function doSync(){if(!PUSHOK||typeof s=='undefined'||!s||typeof currentUser=='undefined'||!currentUser)return;
+  try{const by={};(s.wq||[]).forEach(j=>{const b=by[j.t]=by[j.t]||{n:0,en:0,nm:''};b.n++;if(j.en>=b.en){b.en=j.en;b.nm=(j.it&&j.it.n)||''}});
+   const keys=Object.keys(by),rows=keys.map(t=>({user_id:currentUser.id,ref:'ws-'+t,fire_at:new Date(by[t].en).toISOString(),title:'🎓 Workshop xong rồi',body:by[t].n>1?by[t].n+' món đã hoàn thành, vào nhận nào':'“'+by[t].nm+'” đã hoàn thành',sent:false}));
+   if(rows.length)await supabaseClient.from('push_jobs').upsert(rows,{onConflict:'user_id,ref'});
+   let q=supabaseClient.from('push_jobs').delete().eq('user_id',currentUser.id).like('ref','ws-%');if(keys.length)q=q.not('ref','in','('+keys.map(t=>'ws-'+t).join(',')+')');await q}catch(e){}}
+ /* thông báo trong game -> thông báo hệ thống khi game ở nền */
+ const SEEN=new Set();let init=0;const key=n=>n.type+'|'+n.id+'|'+n.time;
+ setInterval(()=>{try{if(typeof s=='undefined'||!s||!Array.isArray(s.notifs))return;
+  if(!init){s.notifs.forEach(n=>SEEN.add(key(n)));init=1;return}
+  const f=s.notifs.filter(n=>!n.read&&!SEEN.has(key(n)));f.forEach(n=>SEEN.add(key(n)));
+  const g=PUSHOK?f.filter(n=>String(n.text||'').slice(0,2)!='🎁'):f;
+  if(g.length)show('Justaseed',(g[0].text||'Có thông báo mới')+(g.length>1?' (+'+(g.length-1)+' thông báo nữa)':''),'js-n')}catch(e){}},5000);
+ setTimeout(async()=>{if(!on())return;if(!(await subscribe())){}else sync()},4000);
+ setInterval(()=>{if(on()&&!PUSHOK&&VAPID_PUBLIC_KEY&&TRY<3&&typeof currentUser!='undefined'&&currentUser){TRY++;subscribe().then(ok=>{if(ok)sync()})}},20000);
+ window.JSN={show,sync,pushOk:()=>PUSHOK,
+  done:(t,name)=>{if(!PUSHOK)show('🎓 Workshop xong rồi','Hoàn thành: '+name,'ws-'+t)},
+  row:()=>{const st=!sup()?'off':Notification.permission=='denied'?'blocked':on()?'on':'off',lb=st=='on'?'Bật':st=='blocked'?'Bị chặn':'Tắt';
+   const hint=st=='on'?`<p class=mut style="margin:0 0 6px">${PUSHOK?'Báo workshop xong và quà bạn bè, kể cả khi đã đóng game.':'Báo khi game đang mở ở nền. Muốn báo cả khi đã đóng game, cần cấu hình Web Push.'}</p>`:'';
+   return `<div class=row><span>Thông báo</span><button class="s ${st=='on'?'on2':''}" onclick="JSN.toggle()">${lb}</button></div>${hint}`},
+  toggle:async()=>{try{if(on())await disable();else await enable()}catch(e){}mdl('s')}};
 })();
 </script>
 </body></html>

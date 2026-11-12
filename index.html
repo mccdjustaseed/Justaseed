@@ -2345,7 +2345,7 @@ autoServe=function(){
  try{
   bd=nb();bd.size=c.z;bd.fl={...need};bd.ps=c.ps||bd.ps;
   if(c.xt&&!c.xm)bd.gift[c.xt]=1;
-  if(c.ask){const g=G.filter(x=>!W.includes(x.id)&&(s.st[x.id]||0)>0).sort((a,b)=>C[a.id]-C[b.id])[0];if(g)bd.gift[g.id]=(bd.gift[g.id]||0)+1}
+  if(c.ask){const gs=G.filter(x=>!W.includes(x.id)&&(s.st[x.id]||0)>0);if(gs.length){const g=gs[Math.floor(Math.random()*gs.length)];bd.gift[g.id]=(bd.gift[g.id]||0)+1}}
   give(c.id)}
  finally{bd=sv0;cur=live&&live.cs.some(x=>x.id==c0)?c0:(live&&live.cs[0]?live.cs[0].id:null)}}
 })();
@@ -3706,7 +3706,7 @@ const G=id=>document.getElementById(id),
   qn=()=>{const a=qa();return a.length&&(s.qseen||'')===a.join(',')?0:a.length};
 let K='friends',OPEN=0,HB='',HH='';
 const unread=()=>(s.notifs||[]).filter(n=>!n.read).length;
-document.body.insertAdjacentHTML('beforeend',`<div id=sdh role=button aria-label="Mở Cộng đồng">${ic('chev',18)}<span id=sdb></span></div><div id=sdo></div><aside id=sd aria-hidden=true><div class=sdt><b>Cộng đồng <small style="font-weight:400;opacity:.6;font-size:.55em">v39</small></b><span id=sda></span><button class=s onclick="SD.close()" aria-label="Đóng">${ic('close',16)}</button></div><div id=sdtabs></div><div id=sdbody></div></aside>`);
+document.body.insertAdjacentHTML('beforeend',`<div id=sdh role=button aria-label="Mở Cộng đồng">${ic('chev',18)}<span id=sdb></span></div><div id=sdo></div><aside id=sd aria-hidden=true><div class=sdt><b>Cộng đồng <small style="font-weight:400;opacity:.6;font-size:.55em">v41</small></b><span id=sda></span><button class=s onclick="SD.close()" aria-label="Đóng">${ic('close',16)}</button></div><div id=sdtabs></div><div id=sdbody></div></aside>`);
 G('sdh').onclick=()=>SD.open();G('sdo').onclick=()=>SD.close();
 function head(){
  if(OPEN&&K=='quest'){const j=qa().join(',');if((s.qseen||'')!==j){s.qseen=j;try{save()}catch(e){}}}
@@ -4427,7 +4427,7 @@ window.PRES=(function(){
  const meHtml=()=>`<i class="pdi ${me?'on':''}"></i>${me?'Online':'Offline'}`;
  function paint(){try{
   document.querySelectorAll('[data-pres]').forEach(e=>e.classList.toggle('on',on.has(e.getAttribute('data-pres'))));
-  document.querySelectorAll('[data-pt]').forEach(e=>{const o=on.has(e.getAttribute('data-pt'));e.textContent=o?'Online':'Offline';e.classList.toggle('ptxt-on',o)});
+  document.querySelectorAll('[data-pt]').forEach(e=>{const o=on.has(e.getAttribute('data-pt'));e.textContent=o?'Online':(window.lsText?lsText(e.getAttribute('data-pt')):'Offline');e.classList.toggle('ptxt-on',o)});
   document.querySelectorAll('.me-pres').forEach(e=>{e.innerHTML=meHtml()})}catch(x){}}
  function stop(){if(ch){try{supabaseClient.removeChannel(ch)}catch(e){}}ch=null;uid=null;me=0;on=new Set();seen=null;paint()}
  function start(){
@@ -4800,7 +4800,7 @@ cardMusic=function(){
 </style>
 <script>
 /* ===== V38: BẢNG TIN: đăng danh thiếp lên tường dạng news feed, có thả tim + bình luận ===== */
-let FEEDMODE='feed',FEEDCAP='';
+let FEEDMODE='list',FEEDCAP='';
 const FEED={posts:[],likes:{},cm:{},pmap:{},open:{},ids:[],t:0,more:false,busy:0,err:''};
 const FEED_PAGE=8;
 const feedMissing=e=>!!e&&(e.code=='42P01'||e.code=='PGRST205'||/does not exist|schema cache|Could not find the table/i.test(e.message||''));
@@ -4847,8 +4847,8 @@ function feedPostHtml(p){
  return `<div class="card fpost" id="fp-${p.id}"><div class=fph><span style="line-height:0;flex:0 0 auto">${w.av}</span><div class=fpn><b>${esc(w.name)}</b><small class=mut>${feedTime(p.created_at)}</small></div>${own?`<button class="s fcx" onclick="feedDelPost(${p.id})" aria-label="Xóa bài đăng">🗑</button>`:''}</div>${p.caption?`<p class=fpcap>${esc(p.caption)}</p>`:''}${img}<div class=fpa><button class="s ${(FEED.likes[p.id]||{}).me?'liked':''}" id="fl-${p.id}" onclick="feedLike(${p.id})">${feedLikeBtn(p.id)}</button><button class=s id="fcb-${p.id}" onclick="feedToggleCm(${p.id})">💬 <span>${n||''}</span></button></div><div id="fc-${p.id}" style="display:${FEED.open[p.id]?'block':'none'};margin-top:8px">${feedCmHtml(p.id)}</div></div>`}
 function feedPaint(){
  const box=document.getElementById('feed-box');if(!box)return;
- const keep={};box.querySelectorAll('input[id^=fci-]').forEach(i=>{if(i.value)keep[i.id]=i.value});
- let h=`<div class=row style="margin:4px 0"><h3 style="margin:0">📰 Bảng tin</h3><button class=s onclick="feedLoad()" ${FEED.busy?'disabled':''}>${FEED.busy?'Đang tải...':'↻ Làm mới'}</button></div>`;
+ const keep={},fa=document.activeElement&&document.activeElement.id=='fcap';box.querySelectorAll('input[id^=fci-],textarea#fcap').forEach(i=>{if(i.value)keep[i.id]=i.value});
+ let h=`<div class=row style="margin:4px 0"><h3 style="margin:0">📰 Bảng tin</h3><button class=s onclick="feedLoad()" ${FEED.busy?'disabled':''}>${FEED.busy?'Đang tải...':'↻ Làm mới'}</button></div>`+(FEED.err?'':feedComposerHtml());
  if(FEED.err){
   h+=feedMissing({message:FEED.err})
    ?`<div class=fsetup><b>Bảng tin chưa được bật</b><p class=mut style="margin:4px 0 0">Cần chạy file <b>justaseed-feed.sql</b> một lần trong Supabase (SQL Editor) để tạo bảng bài đăng, tim và bình luận.</p></div>`
@@ -4857,7 +4857,7 @@ function feedPaint(){
  h+=FEED.posts.map(feedPostHtml).join('');
  if(FEED.more&&!FEED.err)h+=`<button class=s style="width:100%;margin:6px 0" onclick="feedLoad(true)" ${FEED.busy?'disabled':''}>${FEED.busy?'Đang tải...':'Xem thêm'}</button>`;
  box.innerHTML=h;
- Object.keys(keep).forEach(k=>{const i=document.getElementById(k);if(i)i.value=keep[k]});
+ Object.keys(keep).forEach(k=>{const i=document.getElementById(k);if(i)i.value=keep[k]});if(fa){const tt=document.getElementById('fcap');if(tt)tt.focus()}
  try{ClipMu.ui()}catch(e){}}
 
 /* ---- tải dữ liệu ---- */
@@ -4990,11 +4990,11 @@ uploadCardToWall=async function(){
 
 /* ---- tab Bạn bè: thanh chuyển Bảng tin / Bạn bè ---- */
 function feedSegHtml(){
- return `<div class=fseg id=fseg><button class="s ${FEEDMODE=='feed'?'on2':''}" onclick="feedMode('feed')">📰 Bảng tin</button><button class="s ${FEEDMODE=='list'?'on2':''}" onclick="feedMode('list')">👥 Bạn bè</button></div>`}
+ return `<div class=fseg id=fseg><button class="s ${FEEDMODE=='list'?'on2':''}" onclick="feedMode('list')">👥 Bạn bè</button><button class="s ${FEEDMODE=='feed'?'on2':''}" onclick="feedMode('feed')">📰 Bảng tin</button></div>`}
 function feedMode(m){
  FEEDMODE=m;
  const sg=document.getElementById('fseg');
- if(sg)sg.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on2',(i==0)==(m=='feed')));
+ if(sg)sg.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on2',(i==0)==(m=='list')));
  loadFriendsUI()}
 {const o=V.friends;V.friends=function(){
  const h=o.apply(this,arguments);
@@ -5235,6 +5235,94 @@ function nxRtStart(){
 setInterval(nxRtStart,3000);
 setInterval(()=>{if(!document.hidden){feedSync();wallSync()}},8000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){feedSync();wallSync();NX.check()}});
+</script>
+
+<style>
+/* ===== V40 ===== */
+.fcomp textarea{font:inherit;border:2px solid var(--g);border-radius:12px;padding:8px 10px;background:var(--card);color:var(--ink);min-height:56px}
+.fcomp .fpimg{max-height:300px;object-fit:cover}
+</style>
+<script>
+/* ===== V40: nội thất bố trí hợp lý, offline bao lâu, đăng bảng tin trực tiếp ===== */
+
+/* ---- 1. Sắp xếp lại nội thất trong ảnh gian hàng ----
+   Treo trên mái hiên: đèn lồng, bảng OPEN, tranh, đồng hồ, gương (dưới mái, trên hàng hoa)
+   Trên quầy: chậu cây ở đầu quầy trái. Trên cây: chuồng chim.
+   Mặt cỏ phía trước (trái → phải): thỏ, ghế dài, bảng giá, thảm, bàn trà, đài phun nước. */
+(()=>{
+ const sh=(cx,cy,rx)=>`<ellipse cx=${cx} cy=${cy} rx=${rx} ry=3 fill=#000 opacity=.16 />`;
+ const L={
+  long:[158,264].map(x=>`<path d="M${x} 46v12" stroke=#8c5a2b /><ellipse cx=${x} cy=66 rx=6 ry=8 fill=#ff5a4a /><path d="M${x-3} 59h6M${x-3} 73h6" stroke=#ffd166 />`).join(''),
+  neon:`<path d="M80 70v14M96 70v14" stroke=#8c5a2b /><rect x=72 y=84 width=32 height=15 rx=5 fill=#2b1d3a stroke=#ff6fa0 stroke-width=1.5 /><text x=88 y=95.5 text-anchor=middle font-size=9 font-weight=700 fill=#ff9bc0 style="filter:drop-shadow(0 0 2px #ff6fa0)">OPEN</text>`,
+  tranh:`<path d="M126 70L134 82M142 70L134 82" stroke=#8c5a2b stroke-width=1 /><rect x=120 y=82 width=28 height=22 rx=2 fill=#fff8e6 stroke=#a8743f stroke-width=2 /><path d="M123 101l7-8 5 5 4-4 8 7z" fill=#6cc07a /><circle cx=142 cy=89 r=3 fill=#ffd166 />`,
+  dh:`<path d="M188 72v10" stroke=#8c5a2b stroke-width=1 /><circle cx=188 cy=92 r=10 fill=#fff stroke=#8c5a2b stroke-width=2 /><path d="M188 92v-6M188 92l4 3" stroke=#333 stroke-width=1.4 />`,
+  guong:`<path d="M226 72l4 9M234 72l-4 9" stroke=#8c5a2b stroke-width=1 /><ellipse cx=230 cy=92 rx=8 ry=11 fill=#cfeefa stroke=#c9955c stroke-width=2.5 /><path d="M226 87q2-3 5-3" stroke=#fff fill=none />`,
+  chau:`<path d="M58 132h15l-2 14H60z" fill=#d98a5f /><path d="M65.5 132c-8-4-9-12-4-17 4 3 6 10 4 17zM65.5 132c7-6 9-11 6-16-5 3-7 9-6 16z" fill=#58ad69 />`,
+  tho:sh(62,235,9)+`<ellipse cx=62 cy=230 rx=8 ry=6 fill=#f3f3f3 /><circle cx=62 cy=222 r=5.5 fill=#f3f3f3 /><ellipse cx=59 cy=214 rx=2 ry=5.5 fill=#f3f3f3 /><ellipse cx=65 cy=214 rx=2 ry=5.5 fill=#f3f3f3 /><circle cx=60.5 cy=221.5 r=.8 fill=#333 />`,
+  ghe:sh(108,236,34)+`<rect x=80 y=202 width=56 height=4 rx=2 fill=#c9955c /><rect x=82 y=206 width=3 height=10 fill=#8c5a2b /><rect x=131 y=206 width=3 height=10 fill=#8c5a2b /><rect x=78 y=216 width=60 height=5 rx=2 fill=#c9955c /><rect x=78 y=221 width=60 height=3 fill=#a8743f /><rect x=82 y=224 width=4 height=9 fill=#8c5a2b /><rect x=130 y=224 width=4 height=9 fill=#8c5a2b />`,
+  bien:sh(155,233,12)+`<path d="M149 218l-2 14M161 218l2 14" stroke=#8c5a2b stroke-width=3 /><rect x=142 y=200 width=26 height=18 rx=2 fill=#2f3e36 stroke=#a8743f stroke-width=1.5 /><path d="M146 206h18M146 211h12" stroke=#fff />`,
+  tham:`<rect x=176 y=194 width=76 height=9 rx=3 fill=#d9534f /><path d="M180 198.5h68" stroke=#fff stroke-width=1 stroke-dasharray="4 4" />`,
+  ban:sh(281,233,19)+`<rect x=262 y=210 width=38 height=5 rx=2 fill=#c9955c /><rect x=267 y=215 width=4 height=16 fill=#8c5a2b /><rect x=291 y=215 width=4 height=16 fill=#8c5a2b /><ellipse cx=281 cy=207 rx=7 ry=2.5 fill=#fff /><path d="M277 207v-4h8v4" fill=#f6e3c4 stroke=#c9955c stroke-width=.8 />`,
+  phun:`<ellipse cx=344 cy=232 rx=26 ry=8 fill=#9fd8e8 stroke=#b0b8c0 stroke-width=3 /><rect x=341 y=212 width=6 height=20 fill=#b0b8c0 /><path d="M344 212q-10-10-16 6M344 212q10-10 16 6" stroke=#7fc8e8 stroke-width=2 fill=none />`,
+  chim:`<path d="M372 88v8" stroke=#8c5a2b /><rect x=366 y=96 width=12 height=10 fill=#c9955c /><path d="M364 96l8-7 8 7z" fill=#d9534f /><circle cx=372 cy=101 r=2 fill=#333 />`
+ };
+ Object.keys(L).forEach(k=>{if(FU[k])FU[k][2]=L[k]});
+})();
+
+/* ---- 2. Hiển thị thời gian offline của bạn bè (cần cột shop_public.last_seen, xem justaseed-v40.sql) ---- */
+const LSN={};
+window.lsText=id=>{
+ const t=LSN[id];if(!t)return 'Offline';
+ const m=Math.floor((Date.now()-t)/60000);
+ return 'Offline · '+(m<1?'vừa mới hoạt động':m<60?m+' phút trước':m<1440?Math.floor(m/60)+' giờ trước':Math.floor(m/1440)+' ngày trước')};
+async function lsFetch(){
+ try{
+  if(typeof currentUser==='undefined'||!currentUser)return;
+  const ids=[...new Set([...document.querySelectorAll('[data-pt]')].map(e=>e.getAttribute('data-pt')))];
+  if(!ids.length)return;
+  const {data,error}=await supabaseClient.from('shop_public').select('user_id, last_seen').in('user_id',ids);
+  if(error)return;
+  (data||[]).forEach(r=>{const t=r.last_seen?new Date(r.last_seen).getTime():0;if(t)LSN[r.user_id]=t});
+  if(window.PRES)PRES.paint()
+ }catch(e){}}
+async function lsBeat(){
+ try{
+  if(typeof currentUser==='undefined'||!currentUser||!window.DISCORD_OK)return;
+  await supabaseClient.from('shop_public').update({last_seen:new Date().toISOString()}).eq('user_id',currentUser.id)
+ }catch(e){}}
+setInterval(()=>{if(!document.hidden)lsBeat()},60000);
+setTimeout(lsBeat,6000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)lsBeat();else{lsBeat();lsFetch()}});
+addEventListener('pagehide',()=>{lsBeat()});
+setInterval(()=>{if(!document.hidden&&document.querySelector('[data-pt]'))lsFetch();else if(window.PRES&&document.querySelector('[data-pt]'))PRES.paint()},30000);
+{const o=loadFriendsUI;loadFriendsUI=async function(){const r=await o.apply(this,arguments);setTimeout(lsFetch,400);return r}}
+{const o=visitFriend;visitFriend=async function(){const r=await o.apply(this,arguments);setTimeout(lsFetch,400);return r}}
+
+/* ---- 3. Đăng bảng tin trực tiếp, không cần tạo card visit ---- */
+FEED.pimg=null;FEED.posting=0;
+function feedComposerHtml(){
+ return `<div class="card fcomp"><textarea id=fcap maxlength=300 rows=2 placeholder="Bạn đang nghĩ gì? Chia sẻ với bạn bè..." style="width:100%;resize:vertical"></textarea>${FEED.pimg?`<div style="position:relative;margin-top:6px"><img class=fpimg src="${FEED.pimg}" alt="Ảnh đính kèm"><button class="s fcx" style="position:absolute;top:6px;right:6px;background:var(--card);opacity:1" onclick="feedUnpick()" aria-label="Bỏ ảnh">✕</button></div>`:''}<div class=row style="margin-top:6px"><label class=lb>🖼 ${FEED.pimg?'Đổi ảnh':'Thêm ảnh'}<input type=file accept="image/*" hidden onchange="feedPick(this)"></label><button class=p onclick="feedPostNow()" ${FEED.posting?'disabled':''}>${FEED.posting?'Đang đăng...':'Đăng'}</button></div></div>`}
+function feedPick(inp){
+ const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
+ const r=new FileReader();
+ r.onload=async()=>{try{FEED.pimg=await feedJpeg(r.result);feedPaint()}catch(e){toast('Không đọc được ảnh')}};
+ r.onerror=()=>toast('Không đọc được ảnh');r.readAsDataURL(f)}
+function feedUnpick(){FEED.pimg=null;feedPaint()}
+async function feedPostNow(){
+ if(!currentUser)return toast('Hãy liên kết Discord');
+ if(FEED.posting)return;
+ const e=document.getElementById('fcap'),cap=e?e.value.replace(/[ \t]+/g,' ').trim().slice(0,300):'';
+ if(!cap&&!FEED.pimg)return toast('Hãy viết gì đó hoặc thêm ảnh');
+ FEED.posting=1;feedPaint();
+ const mk=img=>supabaseClient.from('feed_posts').insert({user_id:currentUser.id,image:img,caption:cap||null,music:null}).select('id').single();
+ let r=await mk(FEED.pimg||null);
+ if(r.error&&r.error.code=='23502')r=await mk(FEED.pimg||'');
+ FEED.posting=0;
+ if(r.error){feedPaint();return toast(feedMissing(r.error)?'Bảng tin chưa bật: cần chạy file justaseed-feed.sql':'Đăng lỗi: '+r.error.message)}
+ FEED.pimg=null;const t=document.getElementById('fcap');if(t)t.value='';
+ FEED.lk=Date.now();FEED.t=0;
+ toast('Đã đăng lên bảng tin!');
+ await feedLoad()}
 </script>
 
 </body></html>

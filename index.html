@@ -3070,11 +3070,11 @@ Z.recv=id=>{const x=findIt(id);if(!x)return;const big=(x.t=='sh'||x.t=='ar')&&x.
  MD(`<div class=row><h2>🎁 Quà từ ${esc(x.gf||'bạn bè')}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${big}${icon(x,big?90:160)}<br><b>${esc(x.n)}</b><br><span class=mut>${TY[x.t].n} · chất lượng ${x.q}/100 · làm bởi ${esc(x.cr||'bạn bè')}</span></div>${x.gm?`<div class=bub style="margin:8px 0">${esc(x.gm)}</div>`:''}<p class=mut style="text-align:center;margin:8px 0">Giá trị khi bán: <b>${$(val(x))}</b> (đã +30% nhờ là quà tặng)</p><div class=row><button class=p onclick="XB.on('${x.id}');mdl()">Trưng lên kệ để bán</button><button class=s onclick="mdl()">Giữ ở túi đồ</button></div>`)};
 let GP=0,GW=0;
 async function pollGifts(man){if(GP){if(man)toast('Đang kiểm tra quà...');return}if(typeof scr=='undefined'||scr!='game'||typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined'||typeof s=='undefined')return;GP=1;
- try{ws();const r=await supabaseClient.from('wall_messages').select('id').eq('to_user',currentUser.id).like('message','JSGIFT1:%').order('created_at',{ascending:false}).limit(30);
+ try{ws();if(!s.gfx){s.gfx=1;s.wsGot=[]}const r=await supabaseClient.from('wall_messages').select('id').eq('to_user',currentUser.id).like('message','JSGIFT1:%').order('created_at',{ascending:false}).limit(30);
   if(r&&r.error){if(man)toast('Không đọc được quà: '+(r.error.message||'lỗi'));GP=0;return}const ids=((r&&r.data)||[]).map(m=>m.id).filter(i=>!s.wsGot.includes(i)).reverse(),got=[];
   for(const id of ids){if(s.shelf.length+s.wq.length>=CAP2){if(!GW){GW=1;toast('🎁 Có quà đang chờ nhưng túi workshop đầy')}break}GW=0;
    const q=await supabaseClient.from('wall_messages').select('id,message,from_user').eq('id',id).maybeSingle(),row=q&&q.data;if(q&&q.error){if(man)toast('Không mở được quà: '+(q.error.message||'lỗi'));break}s.wsGot.push(id);if(!row)continue;
-   let p=null;try{p=JSON.parse(String(row.message).slice(7))}catch(e){}const it=clean(p);if(!it)continue;s.shelf.push(it);got.push([id,it]);
+   let p=null;try{p=JSON.parse(String(row.message).slice(8))}catch(e){}const it=clean(p);if(!it)continue;s.shelf.push(it);got.push([id,it]);
    try{supabaseClient.from('wall_messages').delete().eq('id',id).then(()=>{},()=>{})}catch(e){}}
   if(s.wsGot.length>300)s.wsGot=s.wsGot.slice(-300);
   if(got.length){s.notifs=s.notifs||[];got.forEach(([id,it])=>{s.notifs=s.notifs.filter(n=>!(n.type=='wall'&&n.id==id));s.notifs.unshift({type:'wall',id,text:'🎁 '+it.gf+' tặng bạn "'+it.n+'". Xem ở Túi đồ workshop.',time:new Date().toISOString(),read:false})});
@@ -5448,7 +5448,7 @@ NX.check=async function(){
   /* A) người khác ký tường / trả lời trên tường của mình (không tính mình tự trả lời) */
   try{
    const {data:inb,error}=await sb.from('wall_messages').select('id, from_user, to_user, parent_id, created_at')
-    .eq('to_user',me).neq('from_user',me).order('created_at',{ascending:false}).limit(40);
+    .eq('to_user',me).neq('from_user',me).not('message','like','JSGIFT1:%').order('created_at',{ascending:false}).limit(40);
    if(!error){
     await nxNames((inb||[]).map(m=>m.from_user));
     take('wm',(inb||[]).map(m=>({key:'wm:'+m.id,type:'wall',time:m.created_at,tgt:{k:'wall',owner:me,mid:m.id},
@@ -5458,7 +5458,7 @@ NX.check=async function(){
   /* B) bạn bè trả lời mình ở tường của họ  +  C) bạn bè thả tim ký tường/trả lời của mình */
   try{
    const {data:mine,error}=await sb.from('wall_messages').select('id, to_user, parent_id, created_at')
-    .eq('from_user',me).order('created_at',{ascending:false}).limit(150);
+    .eq('from_user',me).not('message','like','JSGIFT1:%').order('created_at',{ascending:false}).limit(150);
    if(!error&&mine&&mine.length){
     const mm=new Map(mine.map(m=>[m.id,m]));
     const rootsElsewhere=mine.filter(m=>m.parent_id==null&&m.to_user!==me).map(m=>m.id);

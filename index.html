@@ -5253,13 +5253,18 @@ cardMusic=function(){
 .fch{font-size:.8rem;color:var(--mut);margin:0 0 8px;padding-top:8px;border-top:1px solid var(--ln)}
 .fcm{display:flex;gap:8px;align-items:flex-start}
 .fcm .fcw{min-width:0;flex:0 1 auto;max-width:calc(100% - 36px)}
-.fcm .fcb{background:var(--g);border-radius:16px;padding:6px 12px;line-height:1.35;font-size:.92rem;overflow-wrap:anywhere;white-space:pre-wrap}
-.fcm .fcb b{display:block;font-size:.8rem}
-.fcm .fcto{display:block;font-size:.72rem;color:var(--mut);margin:1px 0 2px}
+.fcm .fcb{background:var(--g);border-radius:16px;padding:6px 12px;line-height:1.35;font-size:.92rem;font-weight:400;overflow-wrap:anywhere;white-space:pre-wrap}
+.fcm .fcb b{display:block;font-size:.8rem;font-weight:700}
+.fcm .fcto{display:block;font-size:.76rem;font-weight:600;color:var(--mut);margin:0 0 1px}
 .fcm .fcm2{display:flex;gap:12px;align-items:center;padding:3px 12px 0;font-size:.72rem;color:var(--mut)}
 .fcm .fcm2 button{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;min-height:0!important;width:auto!important;font-size:.72rem!important;font-weight:700;opacity:1;cursor:pointer;color:var(--mut)}
 .fcm .fcm2 button:active{opacity:.6}
-.fcr{margin:8px 0 0 14px;padding-left:10px;border-left:2px solid var(--ln);display:flex;flex-direction:column;gap:8px}
+.fcav{display:flex;flex-direction:column;align-items:center;align-self:stretch;width:28px;flex:0 0 28px}
+.fcav i{flex:1;width:2px;margin-top:4px;background:var(--ln);border-radius:2px}
+.fcr{margin-left:36px;display:flex;flex-direction:column}
+.fcm.fcrp{position:relative;margin-top:8px}
+.fcm.fcrp::before{content:"";position:absolute;left:-23px;top:-10px;width:20px;height:22px;border-left:2px solid var(--ln);border-bottom:2px solid var(--ln);border-bottom-left-radius:12px;box-sizing:border-box}
+.fcm.fcrp:not(:last-child)::after{content:"";position:absolute;left:-23px;top:-10px;bottom:-9px;width:2px;background:var(--ln)}
 .fcm.fcrp .fcb{font-size:.88rem;padding:5px 11px}
 .fcm.nglow{padding-left:6px;padding-right:6px}
 .fce{margin:4px 0 8px;text-align:center;font-size:.85rem}
@@ -5317,12 +5322,12 @@ function feedCmHtml(pid){
  const rootOf=c=>{let x=c,g=0,p;while(g++<30&&(p=par(x)))x=p;return x};
  const roots=[],kids={};
  a.forEach(c=>{if(!par(c))roots.push(c);else{const r=rootOf(c);(kids[r.id]=kids[r.id]||[]).push(c)}});
- const item=(c,isRp)=>{const w=feedWho(c.user_id),mine=c.user_id===uid,p=feedCmParse(c),pc=par(c);
-  const to=isRp&&pc?`<span class=fcto>↪ ${esc(feedWho(pc.user_id).name)}</span>`:'';
-  return `<div class="fcm${isRp?' fcrp':''}" id="fcm-${c.id}"><span style="line-height:0;flex:0 0 auto">${currentUser&&mine?avH(isRp?24:28):friendAvTap((FEED.pmap[c.user_id]||{}).gav,isRp?24:28,c.user_id)}</span><div class=fcw><div class=fcb><b>${esc(w.name)}</b>${to}${esc(p.text)}</div><div class=fcm2><span>${feedTime(c.created_at)}</span><button class=s onclick="feedReplyTo(${pid},${c.id})">Trả lời</button>${mine||own?`<button class=s onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">Xóa</button>`:''}</div></div></div>`};
- const list=roots.map(c=>`<div class=fct>${item(c,false)}${(kids[c.id]||[]).length?`<div class=fcr>${kids[c.id].map(k=>item(k,true)).join('')}</div>`:''}</div>`).join('');
+ const item=(c,isRp,hasKids)=>{const w=feedWho(c.user_id),mine=c.user_id===uid,p=feedCmParse(c),pc=par(c);
+  const to=isRp&&pc?`<span class=fcto>${esc(feedWho(pc.user_id).name)}</span>`:'';
+  return `<div class="fcm${isRp?' fcrp':''}" id="fcm-${c.id}"><span class=fcav><span style="line-height:0">${currentUser&&mine?avH(isRp?24:28):friendAvTap((FEED.pmap[c.user_id]||{}).gav,isRp?24:28,c.user_id)}</span>${hasKids?'<i></i>':''}</span><div class=fcw><div class=fcb><b>${esc(w.name)}</b>${to}${esc(p.text)}</div><div class=fcm2><span>${feedTime(c.created_at)}</span><button class=s onclick="feedReplyTo(${pid},${c.id})">Trả lời</button>${mine||own?`<button class=s onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">Xóa</button>`:''}</div></div></div>`};
+ const list=roots.map(c=>`<div class=fct>${item(c,false,!!(kids[c.id]||[]).length)}${(kids[c.id]||[]).length?`<div class=fcr>${kids[c.id].map(k=>item(k,true)).join('')}</div>`:''}</div>`).join('');
  const rp=(FEED.rp||{})[pid],rc=rp&&byId[rp];
- const banner=rc?`<div class=fcbn><span>↪ Đang trả lời <b>${esc(feedWho(rc.user_id).name)}</b></span><button class=s onclick="feedReplyTo(${pid},0)" aria-label="Hủy trả lời">✕</button></div>`:'';
+ const banner=rc?`<div class=fcbn><span>Đang trả lời <b>${esc(feedWho(rc.user_id).name)}</b></span><button class=s onclick="feedReplyTo(${pid},0)" aria-label="Hủy trả lời">✕</button></div>`:'';
  return `<div class=fch>${a.length?'💬 '+a.length+' bình luận':'💬 Bình luận'}</div>`
  +(a.length?`<div class=fcl>${list}</div>`:`<p class="fce mut">Chưa có bình luận nào. Hãy là người đầu tiên!</p>`)
  +banner

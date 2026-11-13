@@ -1779,6 +1779,7 @@ async function summaryAvatarB64() {
 
 async function shareDayToDiscord() {
   if (!currentUser) return toast('Hãy đăng nhập Discord trước');
+  if (!(await dcGate())) return;
   if (!SHC) return toast('Chưa có ảnh tổng kết');
   toast('Đang gửi lên Discord...');
   try {
@@ -2371,6 +2372,7 @@ function qrSet(k,v){QO[k]=v;s.qc={...QO};save();qrUI()}
 
 async function sendQrToDiscord() {
   if (!currentUser) return toast('Hãy liên kết Discord trước');
+  if (!(await dcGate())) return;
   if (!QCV) return toast('Chưa có ảnh QR');
   toast('Đang gửi...');
   try {
@@ -6808,9 +6810,23 @@ window.MB={clear(){cache={};persist();tried.clear()}};
 <script>
 /* ===== Gửi workshop / danh thiếp lên Discord (bảng discord_shares) ===== */
 function dcMyId(){const u=typeof currentUser!='undefined'&&currentUser;return u?(u.user_metadata&&u.user_metadata.provider_id)||(u.identities&&u.identities[0]&&u.identities[0].id)||(u.user_metadata&&u.user_metadata.sub)||null:null}
+/* chỉ tài khoản đã tham gia server Discord của bot mới được chia sẻ (bảng server_members do bot cập nhật) */
+window.DC_INVITE=window.DC_INVITE||'';
+let __dcMem={id:null,ok:false,t:0};
+async function dcGate(){
+  try{
+    const id=dcMyId();if(!id||typeof supabaseClient=='undefined'){toast('Hãy đăng nhập Discord trước');return false}
+    if(__dcMem.id===id&&__dcMem.ok&&Date.now()-__dcMem.t<300000)return true;
+    const r=await supabaseClient.from('server_members').select('discord_id').eq('discord_id',String(id)).maybeSingle();
+    if(r&&r.error)throw r.error;
+    const ok=!!(r&&r.data);__dcMem={id,ok,t:Date.now()};
+    if(!ok)toast('Bạn cần tham gia server Discord của bot để dùng tính năng chia sẻ'+(window.DC_INVITE?': '+window.DC_INVITE:''));
+    return ok
+  }catch(e){console.warn('[discord] kiểm tra thành viên server lỗi:',e&&e.message||e);toast('Chưa kiểm tra được bạn đã vào server Discord chưa, thử lại sau');return false}}
 function dcSnow(v){return /^\d{5,25}$/.test(String(v||''))?String(v):null}
 async function dcSend(kind,image,payload,withAvatar){
   if(typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined'){toast('Hãy đăng nhập Discord trước');return false}
+  if(!(await dcGate()))return false;
   if(Date.now()-(window.__dcLast||0)<15000){toast('Bạn gửi hơi nhanh, đợi vài giây nhé');return false}
   window.__dcLast=Date.now();
   let avatar=null;if(withAvatar){try{avatar=await summaryAvatarB64()}catch(e){}}

@@ -2539,11 +2539,23 @@ const ivt=L=>`<div class=ivt><b>Sản phẩm</b><b>Giá</b><b>SL</b><b>Thành ti
  q[1].innerHTML=ivt(billLines(b));
  const ln=(t,v,c)=>`<div class=row style="margin:2px 0"><span>${t}</span><b class="${c||''}">${v}</b></div>`;
  q[2].innerHTML=(b.tip?ln('Tiền boa','+'+$(b.tip)):'')+ln('Tổng cộng',b.run?'0đ':$(b.pr+b.xp+b.tip),b.run?'bad':'ok')}}
-billCv=function(b){const L=billLines(b),W=720,[c,x]=paperC(W,540+L.length*46+(b.tip?50:0));
+
+/* ---- ảnh bill: xuống dòng tên sản phẩm, không đè lên cột Giá ---- */
+{const mx=document.createElement('canvas').getContext('2d');
+window.bwrap=(t,w)=>{mx.font='26px Onest,sans-serif';t=String(t);const out=[];let cur='';
+ t.split(/\s+/).forEach(wd=>{const a=cur?cur+' '+wd:wd;if(mx.measureText(a).width<=w){cur=a;return}
+  if(cur)out.push(cur);cur='';
+  while(mx.measureText(wd).width>w&&wd.length>1){let i=wd.length-1;while(i>1&&mx.measureText(wd.slice(0,i)).width>w)i--;out.push(wd.slice(0,i));wd=wd.slice(i)}
+  cur=wd});
+ if(cur)out.push(cur);return out.length?out:['']};
+window.rowsH=ls=>ls.reduce((a,l)=>a+(bwrap(l[0],190).length-1)*32+46,0);
+window.rowsDraw=(x,ls,y,W)=>{ls.forEach(l=>{const t=bwrap(l[0],190);x.textAlign='left';t.forEach((s,i)=>x.fillText(s,80,y+i*32));
+ x.textAlign='right';x.fillText($(l[1]),420,y,145);x.textAlign='center';x.fillText(l[2],466,y);x.textAlign='right';x.fillText($(l[3]),W-80,y,150);y+=(t.length-1)*32+46});return y}}
+billCv=function(b){const L=billLines(b),W=720,[c,x]=paperC(W,540+rowsH(L)+(b.tip?50:0));
  x.fillText(`HÓA ĐƠN · Ngày ${b.d}${b.t?' · '+b.t:''}`,W/2,160);dashL(x,190,W);x.textAlign='left';x.fillStyle='#244033';x.font='600 30px Onest,sans-serif';x.fillText('Khách: '+b.nm+(b.vip?' 👑':''),80,240,560);
- x.font='600 22px Onest,sans-serif';x.fillStyle='#678a73';x.fillText('Sản phẩm',80,292);x.textAlign='right';x.fillText('Giá',400,292);x.textAlign='center';x.fillText('SL',470,292);x.textAlign='right';x.fillText('Thành tiền',W-80,292);
+ x.font='600 22px Onest,sans-serif';x.fillStyle='#678a73';x.fillText('Sản phẩm',80,292);x.textAlign='right';x.fillText('Giá',420,292);x.textAlign='center';x.fillText('SL',466,292);x.textAlign='right';x.fillText('Thành tiền',W-80,292);
  let y=338;x.font='26px Onest,sans-serif';x.fillStyle='#244033';
- L.forEach(l=>{x.textAlign='left';x.fillText(l[0],80,y,230);x.textAlign='right';x.fillText($(l[1]),400,y,110);x.textAlign='center';x.fillText(l[2],470,y);x.textAlign='right';x.fillText($(l[3]),W-80,y,150);y+=46});
+ y=rowsDraw(x,L,y,W);
  dashL(x,y-16,W);y+=30;if(b.tip){x.textAlign='left';x.fillText('Tiền boa',80,y);x.textAlign='right';x.fillText('+'+$(b.tip),W-80,y);y+=50}
  x.font='700 40px "Baloo 2",sans-serif';x.textAlign='left';x.fillText('Tổng',80,y+10);x.textAlign='right';x.fillStyle=b.run?'#d9534f':'#388a55';x.fillText(b.run?'0đ':$(b.pr+b.xp+b.tip),W-80,y+10);y+=75;
  x.textAlign='center';x.fillStyle='#678a73';x.font='26px Onest,sans-serif';x.fillText(b.run?'Khách quỵt tiền':'★'.repeat(b.st)+'☆'.repeat(5-b.st)+' · Cảm ơn quý khách',W/2,y,560);return c};
@@ -7931,13 +7943,13 @@ function myBill(id){
 /* ---------- ảnh bill (cùng kiểu với ảnh bill khách) ---------- */
 function myBillCv(r){
  const out=r.k!='in',ls=r.ls,adj=r.adj||[],g=r.gold,rows=g?certRows(g):[],gH=g?68+40*rows.length:0;
- const W=720,[c,x]=paperC(W,540+ls.length*46+adj.length*50+gH);
+ const W=720,[c,x]=paperC(W,540+rowsH(ls)+adj.length*50+gH);
  x.fillText(`${out?'HÓA ĐƠN MUA':'PHIẾU THU'} · Ngày ${r.d}${r.t?' · '+r.t:''}`,W/2,160);dashL(x,190,W);
  x.textAlign='left';x.fillStyle='#244033';x.font='600 30px Onest,sans-serif';x.fillText((out?'Mua tại: ':'Nhận từ: ')+r.vendor,80,240,430);
  x.font='600 22px Onest,sans-serif';x.fillStyle='#678a73';x.textAlign='right';x.fillText(r.no,W-80,240);
- x.fillText('Giá',400,292);x.textAlign='left';x.fillText('Sản phẩm',80,292);x.textAlign='center';x.fillText('SL',470,292);x.textAlign='right';x.fillText('Thành tiền',W-80,292);
+ x.fillText('Giá',420,292);x.textAlign='left';x.fillText('Sản phẩm',80,292);x.textAlign='center';x.fillText('SL',466,292);x.textAlign='right';x.fillText('Thành tiền',W-80,292);
  let y=338;x.font='26px Onest,sans-serif';x.fillStyle='#244033';
- ls.forEach(l=>{x.textAlign='left';x.fillText(l[0],80,y,230);x.textAlign='right';x.fillText($(l[1]),400,y,110);x.textAlign='center';x.fillText(l[2],470,y);x.textAlign='right';x.fillText($(l[3]),W-80,y,150);y+=46});
+ y=rowsDraw(x,ls,y,W);
  dashL(x,y-16,W);y+=30;
  adj.forEach(a=>{x.textAlign='left';x.fillText(a[0],80,y);x.textAlign='right';x.fillText(a[1],W-80,y);y+=50});
  if(g){

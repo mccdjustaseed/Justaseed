@@ -1987,6 +1987,10 @@ async function search(raw){
 
 /* ---------- trình phát (YouTube IFrame Player API) ---------- */
 let ctl=null,ctlP=null,apiP=null,loaded='',kid=0,ending=0,dk=-1,miniSig='';
+let YM=0;
+function unm(){if(!YM||!ctl)return;try{ctl.unMute();ctl.setVolume(100);setTimeout(()=>{try{if(ctl.isMuted()){if(MS.playing)toast('Đang phát tắt tiếng — chạm vào màn hình để bật tiếng')}else YM=0}catch(e){}},500)}catch(e){}}
+['pointerdown','touchend','click','keydown'].forEach(n=>addEventListener(n,()=>{if(YM)unm()},{capture:true,passive:true}));
+addEventListener('pointerdown',()=>{loadApi().catch(()=>{})},{once:true,capture:true,passive:true});
 let stAt=0,hidT=0,errN=0,aut=0,dtT=0,dtS=0,msId='',sil=null,silUrl='';
 function loadApi(){
  if(apiP)return apiP;
@@ -2004,16 +2008,17 @@ function ensureCtl(id,auto){
  ctlP=loadApi().then(Y=>new Promise(res=>{
   const p=new Y.Player('spEl',{width:'100%',height:'100%',videoId:id,
    playerVars:{playsinline:1,rel:0,modestbranding:1,autoplay:auto?1:0,start:stAt||0},
-   events:{onReady:()=>{ctl=p;loaded=id;res(p)},onStateChange:onSt,onError:onErr}})
+   events:{onReady:()=>{ctl=p;loaded=id;try{p.getIframe().setAttribute('allow','autoplay; encrypted-media; picture-in-picture; fullscreen')}catch(e){}res(p)},onStateChange:onSt,onError:onErr}})
  })).catch(e=>{ctlP=null;throw e});
  return ctlP}
 const est=()=>MS.playing?Math.min(MS.pos+(Date.now()-MS.evT)*(MS.rate||1),MS.dur||1e9):MS.pos;
 function kick(c){
  const k=++kid;let n=0;
  const f=()=>{if(k!==kid||!MS.want||MS.playing)return;
+  try{if(n===2&&!c.isMuted()){YM=1;c.mute()}}catch(e){}
   try{c.playVideo()}catch(e){}
   n++;if(n<6)setTimeout(f,n<3?700:1500);
-  else if(!document.hidden){MS.show=1;ui();toast('Trình duyệt chặn tự phát — hãy bấm Play trong khung YouTube')}};
+  else if(!document.hidden){MS.arm=1;MS.show=1;ui();toast('Trình duyệt chặn tự phát — chạm vào màn hình để phát')}};
  setTimeout(f,250)}
 function go(t,at){
  if(MS.now&&t&&MS.now.id===t.id&&!(at>2000))MS.rst=(MS.rst|0)+1;
@@ -2024,7 +2029,7 @@ function go(t,at){
 function onSt(e){
  const st=e&&e.data;
  if(st===1){
-  errN=0;MS.arm=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
+  errN=0;MS.arm=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;if(YM)unm();try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
   try{MS.pos=ctl.getCurrentTime()*1000;const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(x){}
   ui();duck()}
  else if(st===2){
@@ -2727,8 +2732,19 @@ pin2:W(`<path d="M12 21.500c-4.500-5-6.500-8-6.500-11.200a6.500 6.500 0 0113 0c0
 uparrow:ln('M12 20V5M5 11l7-7 7 7',2.4),
 scissors:W(`<circle cx="6" cy="6.500" r="2.800" fill="none" stroke="#7d8a96" stroke-width="1.800"/><circle cx="6" cy="17.500" r="2.800" fill="none" stroke="#7d8a96" stroke-width="1.800"/><path d="M8.200 8.200L20 18M8.200 15.800L20 6" stroke="#9aa8b4" stroke-width="2"/>`),
 backspace:ln('M9 5h10a2 2 0 012 2v10a2 2 0 01-2 2H9l-6-7zM12.500 9.500l5 5M17.500 9.500l-5 5',1.800),
+beach:W(`<path d="M2 21c3-2.600 7-2.600 10-1.200S19 21 22 19v3H2z" fill="#f3d9a0" stroke="#c9a94a" stroke-width="1.200"/><path d="M12 20V9" stroke="#8a5a2b" stroke-width="1.800" fill="none"/><path d="M3.500 10a8.500 8.500 0 0117 0z" fill="#ff7d9a" stroke="#c84766" stroke-width="1.300"/><path d="M8.500 10a4 7 0 013.500-7.700M15.500 10a4 7 0 00-3.500-7.700" fill="none" stroke="#fff" stroke-width="1" opacity=".7"/>`),
+shield:W(`<path d="M12 2.500l7.500 3v6c0 5-3.200 8.200-7.500 10-4.300-1.800-7.500-5-7.500-10v-6z" fill="#6bb5ff" stroke="#3d86c9" stroke-width="1.300" stroke-linejoin="round"/><path d="M8.500 12l2.500 2.500 4.500-5" fill="none" stroke="#fff" stroke-width="2"/>`),
+unlock:W(`<path d="M8 10.500V8a4 4 0 017.600-1.700" fill="none" stroke="#8d97a3" stroke-width="2"/><rect x="5" y="10.500" width="14" height="10" rx="2.500" fill="#4fb06f" stroke="#2f8a4d" stroke-width="1.300"/><circle cx="12" cy="15.500" r="1.500" fill="#fff"/>`),
+chartbar:W(`<path d="M4 20V4M4 20h16" stroke="#7d8a96" stroke-width="1.600" fill="none"/><rect x="7" y="12" width="3" height="8" fill="#8fd49a"/><rect x="12" y="7" width="3" height="13" fill="#5aa9e6"/><rect x="17" y="10" width="3" height="10" fill="#ffc83d"/>`),
+broom:W(`<path d="M20 3.500L12 11.500" stroke="#a8722d" stroke-width="2.200" fill="none"/><path d="M10.500 9.500l4 4-3 7.500H4.500l-1.500-5z" fill="#f0c35a" stroke="#b9822a" stroke-width="1.300" stroke-linejoin="round"/><path d="M7 15l-1.500 5M10 15.500l-1 5" stroke="#b9822a" stroke-width="1" fill="none"/>`),
+ring:W(`<circle cx="12" cy="15" r="5.500" fill="none" stroke="#ffc83d" stroke-width="2.400"/><path d="M8.500 7.500L10 3.500h4l1.500 4-3.500 3z" fill="#7fd6ee" stroke="#2f9bb8" stroke-width="1.100" stroke-linejoin="round"/>`),
+tup:W(`<path d="M12 6l7.500 12.500h-15z" fill="currentColor" stroke="currentColor" stroke-width="1.500" stroke-linejoin="round"/>`),
+tdn:W(`<path d="M12 18L4.500 5.500h15z" fill="currentColor" stroke="currentColor" stroke-width="1.500" stroke-linejoin="round"/>`),
+circ:W(`<circle cx="12" cy="12" r="7.500" fill="none" stroke="currentColor" stroke-width="2"/>`),
+rectv:W(`<rect x="8" y="3.500" width="8" height="17" rx="1.500" fill="none" stroke="currentColor" stroke-width="2"/>`),
+recth:W(`<rect x="3.500" y="8" width="17" height="8" rx="1.500" fill="none" stroke="currentColor" stroke-width="2"/>`),
 };
-const K={'👑':'crown','🌸':'blossom','🔒':'lock','💧':'drop','📸':'camera','📷':'camera','📝':'memo','☕':'coffee','🖼':'picture','📌':'pin','🕘':'clock','☀':'sun','🏃':'runner','✨':'sparkle','📲':'phone','👍':'up','👎':'down','❤':'heart','♥':'heart','♡':'heart0','🍂':'leaf','❄':'snow','☁':'cloud','🌧':'rain','☔':'umbrella','📜':'scroll','🎁':'gift','👩\u200d🌾':'farmer','🔥':'flame','📅':'calendar','🧑':'person','👤':'person','💰':'money','⭐':'star','★':'star','☆':'star0','🧾':'bill','🏅':'medal','🔍':'search','🔁':'repeat','🚪':'door','✅':'ok','❌':'no','🚫':'ban','💬':'chat','⚙':'gear','♪':'note','✕':'x','✗':'x','✓':'check','←':'left','→':'right','↩':'back','↻':'redo','🐱':'cat','🐶':'dog','🌷':'tul','🌹':'hong','🌻':'hd','💜':'oai','🌼':'cuc','🪷':'sen','💐':'bouquet','👥':'people','🏆':'trophy','⚖':'scale','🔔':'bell','🌱':'sprout','🛒':'cart','🎒':'bag','💡':'bulb','🎓':'cap','🧪':'flask','🪴':'pot','💾':'disk','🎨':'palette','⏳':'hourglass','📈':'chartup','📉':'chartdn','⚠':'warn','📋':'clip','⚡':'bolt','💿':'disc','🎵':'note','🔎':'search','▶':'play','🌿':'herb','🌌':'galaxy','🍭':'lolly','👼':'angel','💖':'heart','🌙':'moon','🌊':'wave','🍁':'maple','🔮':'crystal','💎':'gem','🌺':'hibiscus','🌾':'wheat','🧴':'bottle','📰':'news','🗑':'trash','🤍':'heartw','👕':'tshirt','✏':'pencil','💭':'thought','📿':'bracelet','🕯':'candle','🏺':'vase','🧽':'sponge','✔':'check','⏱':'timer','⏸':'pause','📍':'pin2','⬆':'uparrow','✂':'scissors','✿':'blossom','⌫':'backspace'};
+const K={'🏖':'beach','🛡':'shield','🔓':'unlock','📊':'chartbar','🧹':'broom','💍':'ring','👩\u200d🌾':'farmer','▲':'tup','▴':'tup','▼':'tdn','▾':'tdn','○':'circ','▯':'rectv','▭':'recth','👑':'crown','🌸':'blossom','🔒':'lock','💧':'drop','📸':'camera','📷':'camera','📝':'memo','☕':'coffee','🖼':'picture','📌':'pin','🕘':'clock','☀':'sun','🏃':'runner','✨':'sparkle','📲':'phone','👍':'up','👎':'down','❤':'heart','♥':'heart','♡':'heart0','🍂':'leaf','❄':'snow','☁':'cloud','🌧':'rain','☔':'umbrella','📜':'scroll','🎁':'gift','👩\u200d🌾':'farmer','🔥':'flame','📅':'calendar','🧑':'person','👤':'person','💰':'money','⭐':'star','★':'star','☆':'star0','🧾':'bill','🏅':'medal','🔍':'search','🔁':'repeat','🚪':'door','✅':'ok','❌':'no','🚫':'ban','💬':'chat','⚙':'gear','♪':'note','✕':'x','✗':'x','✓':'check','←':'left','→':'right','↩':'back','↻':'redo','🐱':'cat','🐶':'dog','🌷':'tul','🌹':'hong','🌻':'hd','💜':'oai','🌼':'cuc','🪷':'sen','💐':'bouquet','👥':'people','🏆':'trophy','⚖':'scale','🔔':'bell','🌱':'sprout','🛒':'cart','🎒':'bag','💡':'bulb','🎓':'cap','🧪':'flask','🪴':'pot','💾':'disk','🎨':'palette','⏳':'hourglass','📈':'chartup','📉':'chartdn','⚠':'warn','📋':'clip','⚡':'bolt','💿':'disc','🎵':'note','🔎':'search','▶':'play','🌿':'herb','🌌':'galaxy','🍭':'lolly','👼':'angel','💖':'heart','🌙':'moon','🌊':'wave','🍁':'maple','🔮':'crystal','💎':'gem','🌺':'hibiscus','🌾':'wheat','🧴':'bottle','📰':'news','🗑':'trash','🤍':'heartw','👕':'tshirt','✏':'pencil','💭':'thought','📿':'bracelet','🕯':'candle','🏺':'vase','🧽':'sponge','✔':'check','⏱':'timer','⏸':'pause','📍':'pin2','⬆':'uparrow','✂':'scissors','✿':'blossom','⌫':'backspace'};
 const FK={tul:1,hong:1,hd:1,oai:1,cuc:1,sen:1};
 const svg=k=>{const n=K[k];return FK[n]?FW(n):D[n]};
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -3057,6 +3073,18 @@ const frag=x=>{const c=i=>cc(x,i),v=x.v|0,e=x.ex|0;switch(x.t){
  default:return `<path d="M-7 0L-9 -12H9L7 0z" fill="#cfe8f5" stroke="#0003" stroke-width=".6"/><path d="M-3 -12V-22M0 -13V-25M3 -12V-21" stroke="#58ad69" stroke-width="1.4"/><circle cx="-6" cy="-21" r="4.2" fill="${c(0)}"/><circle cx="0" cy="-26" r="4.8" fill="${c(1)}"/><circle cx="6" cy="-20" r="4.2" fill="${c(2)}"/>`}};
 const icon=(x,z)=>`<svg width="${z}" height="${Math.round(z*1.16)}" viewBox="-16 -34 32 37" style="flex:0 0 auto">${frag(x)}</svg>`;
 window.WSI={frag,icon};
+/* ===== đính kèm vật phẩm workshop vào bình luận ===== */
+Z.att=(()=>{
+ const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k),tx=(v,n)=>String(v==null?'':v).replace(/[<>\u27e6\u27e7]/g,'').replace(/\s+/g,' ').trim().slice(0,n),
+  nn=(v,a,b)=>Math.max(a,Math.min(b,Math.round(+v)||0));
+ const clean=o=>{if(!o||typeof o!='object'||o.k!='w'||typeof o.t!='string'||!own(TY,o.t))return null;
+  return{k:'w',t:o.t,n:tx(o.n,40)||'Vật phẩm',q:nn(o.q,0,100),vl:nn(o.vl,0,1e10),cl:(Array.isArray(o.cl)?o.cl:[]).map(hx).filter(Boolean).slice(0,8),v:nn(o.v,0,5),ex:nn(o.ex,0,5),sc:tx(o.sc,40),mt:tx(o.mt,120),cr:tx(o.cr,30),gf:o.gf?1:0}};
+ const snap=x=>clean({k:'w',t:x.t,n:x.n,q:x.q,vl:val(x),cl:x.cl,v:x.v,ex:x.ex,sc:x.sc,mt:x.mt,cr:x.cr||crn(),gf:x.gf});
+ const list=()=>{ws();return s.shelf.slice().reverse().slice(0,60).map(x=>({id:x.id,sn:snap(x)})).filter(r=>r.sn)};
+ const info=a=>{const ty=TY[a.t];return `<div class=row><h2>${ty.e} ${esc(a.n)}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${icon(a,170)}</div>
+ <div class=row><span class=mut>Loại</span><b>${ty.n}</b></div><div class=row><span class=mut>Chất lượng</span><b>${a.q}/100</b></div><div class=row><span class=mut>Giá trị lúc khoe</span><b>${$(a.vl)}</b></div>
+ ${a.sc?`<div class=row><span class=mut>Hương</span><b>${esc(a.sc)}</b></div>`:''}${a.mt?`<div class=row style="align-items:flex-start"><span class=mut>Nguyên liệu</span><b style="text-align:right;max-width:70%">${esc(a.mt)}</b></div>`:''}<div class=row><span class=mut>Người làm</span><b>${esc(a.cr||'—')}</b></div>${a.gf?`<div class=row><span class=mut>Nguồn gốc</span><b>Quà tặng từ bạn bè</b></div>`:''}`};
+ return{label:'Workshop',empty:'Túi workshop trống. Hãy làm sản phẩm ở các bàn workshop nhé.',clean,snap,list,info,art:(a,z)=>icon(a,z),sum:a=>TY[a.t].n+' · CL '+a.q+'/100 · '+$(a.vl)}})();
 
 /* ----- mẫu có sẵn cho áo / tranh (vẽ bằng code) ----- */
 const star5=(x,cx,cy,r)=>{x.beginPath();for(let i=0;i<10;i++){const a=-1.5708+i*Math.PI/5,rr=i%2?r*.45:r;x[i?'lineTo':'moveTo'](cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();x.fill()};
@@ -5537,7 +5565,24 @@ function feedLikeBtn(pid){
  const L=FEED.likes[pid]||{n:0,me:0};
  return `<span class=fhe>${L.me?'❤️':'🤍'}</span><span>${L.n||''}</span>`}
 const FEED_RP=/^↩(\d+)\|([\s\S]*)$/;
-function feedCmParse(c){const m=FEED_RP.exec(c.body||'');return m?{to:+m[1],text:m[2]}:{to:0,text:c.body||''}}
+const FEED_AT=/\u27e6A:([^\u27e7]*)\u27e7\s*$/;
+function feedAtApi(k){return k=='w'?(window.XB||{}).att:k=='g'?(window.GOLD||{}).att:null}
+function feedAtDec(str){try{const o=JSON.parse(decodeURIComponent(str)),a=o&&typeof o=='object'?feedAtApi(o.k):null;return a?a.clean(o):null}catch(e){return null}}
+function feedCmParse(c){let b=c.body||'',at=null;const am=FEED_AT.exec(b);if(am){at=feedAtDec(am[1]);b=b.slice(0,am.index)}const m=FEED_RP.exec(b);return m?{to:+m[1],text:m[2],att:at}:{to:0,text:b,att:at}}
+function feedAtCard(a,pid,cid){const api=feedAtApi(a.k);if(!api)return '';
+ return `<div class=fcat role=button tabindex=0 onclick="feedAtView(${pid},${cid})" onkeydown="if(event.key=='Enter')feedAtView(${pid},${cid})" aria-label="Xem chi tiết: ${esc(a.n)}"><span class=fca>${api.art(a,44)}</span><span class=fct2><b>${esc(a.n)}</b><small>${esc(api.sum(a))}</small></span><span class=fcg>›</span></div>`}
+function feedAtView(pid,cid){
+ const c=((FEED.cm||{})[pid]||[]).find(x=>x.id==cid);if(!c)return;
+ const p=feedCmParse(c),api=p.att&&feedAtApi(p.att.k);if(!api)return;
+ $q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms>${api.info(p.att)}<p class=mut style="margin:10px 0 0;font-size:.76rem">${esc(feedWho(c.user_id).name)} khoe trong bình luận · ${feedTime(c.created_at)}. Thông tin là ảnh chụp tại thời điểm khoe.</p></div></div>`}
+function feedAtPick(pid,tab){
+ if(!currentUser)return toast('Hãy liên kết Discord');
+ const T=tab||FEED.atab||'w';FEED.atab=T;
+ const api=feedAtApi(T),L=api?api.list():[];FEED.atl=L;
+ const rows=L.length?L.map((r,i)=>`<div class=xbi style="align-items:center;cursor:pointer" onclick="feedAtSet(${pid},${i})"><span style="flex:0 0 auto;line-height:0">${api.art(r.sn,46)}</span><div class=xbt><span><b>${esc(r.sn.n)}</b></span><span class=mut>${esc(api.sum(r.sn))}</span></div><button class=s type=button>Chọn</button></div>`).join(''):`<p class=mut style="margin:8px 0">${api?api.empty:'Chưa dùng được tính năng này.'}</p>`;
+ $q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>Đính kèm vào bình luận</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div class=strip2><button class="s ${T=='w'?'on2':''}" onclick="feedAtPick(${pid},'w')">🎒 Workshop</button><button class="s ${T=='g'?'on2':''}" onclick="feedAtPick(${pid},'g')">💍 Vàng</button></div>${rows}<p class=mut style="margin:8px 0 0;font-size:.76rem">Mọi người bấm vào sẽ xem được ảnh và thông tin món đồ. Món đồ vẫn nằm trong túi của bạn.</p></div></div>`}
+function feedAtSet(pid,i){const r=(FEED.atl||[])[i];if(!r)return;(FEED.att=FEED.att||{})[pid]=r.sn;mdl();feedCmRefresh(pid);const n=document.getElementById('fci-'+pid);if(n)n.focus()}
+function feedAtClear(pid){if(FEED.att)delete FEED.att[pid];feedCmRefresh(pid)}
 function feedCmHtml(pid){
  const uid=currentUser.id,pOwner=(FEED.posts.find(p=>p.id===pid)||{}).user_id,own=pOwner===uid;
  const a=FEED.cm[pid]||[],byId={};a.forEach(c=>byId[c.id]=c);
@@ -5549,14 +5594,16 @@ function feedCmHtml(pid){
    cl=FEED.cl[c.id]||[],lm=cl.includes(uid),au=!!pOwner&&cl.includes(pOwner),z=22;
   const auH=au?`<span class=fcah title="Tác giả đã thả tim"><span style="line-height:0">${feedAvOf(pOwner,z)}</span><i>❤️</i></span>`:'';
   const lkH=FEED.clErr?'':`<button class="s fclk${lm?' on':''}" onclick="feedClLike(${pid},${c.id})" aria-label="Thả tim bình luận"><span class=fhe>${lm?'❤️':'🤍'}</span></button>${cl.length?`<small class=fcn2>${cl.length}</small>`:''}`;
-  return `<div class="fcm${isRp?' fcrp':''}" id="fcm-${c.id}"><span class=fcav><span style="line-height:0">${currentUser&&mine?avH(isRp?24:28):friendAvTap((FEED.pmap[c.user_id]||{}).gav,isRp?24:28,c.user_id)}</span>${hasKids?'<i></i>':''}</span><div class=fcw><div class=fcrow><div class=fcb><div class=fcn><b>${esc(w.name)}</b>${pau?'<small class=fcau>• Tác Giả</small>':''}</div><div class=fctx>${esc(p.text)}</div>${auH}</div><div class=fcrt>${lkH}</div></div><div class=fcm2><span>${feedTime(c.created_at)}</span><button class=s onclick="feedReplyTo(${pid},${c.id})">Trả lời</button>${mine||own?`<button class=s onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">Xóa</button>`:''}</div></div></div>`};
+  return `<div class="fcm${isRp?' fcrp':''}" id="fcm-${c.id}"><span class=fcav><span style="line-height:0">${currentUser&&mine?avH(isRp?24:28):friendAvTap((FEED.pmap[c.user_id]||{}).gav,isRp?24:28,c.user_id)}</span>${hasKids?'<i></i>':''}</span><div class=fcw><div class=fcrow><div class=fcb><div class=fcn><b>${esc(w.name)}</b>${pau?'<small class=fcau>• Tác Giả</small>':''}</div>${p.text?`<div class=fctx>${esc(p.text)}</div>`:''}${p.att?feedAtCard(p.att,pid,c.id):''}${auH}</div><div class=fcrt>${lkH}</div></div><div class=fcm2><span>${feedTime(c.created_at)}</span><button class=s onclick="feedReplyTo(${pid},${c.id})">Trả lời</button>${mine||own?`<button class=s onclick="feedDelCm(${pid},${c.id})" aria-label="Xóa bình luận">Xóa</button>`:''}</div></div></div>`};
  const list=roots.map(c=>`<div class=fct>${item(c,false,!!(kids[c.id]||[]).length)}${(kids[c.id]||[]).length?`<div class=fcr>${kids[c.id].map(k=>item(k,true)).join('')}</div>`:''}</div>`).join('');
  const rp=(FEED.rp||{})[pid],rc=rp&&byId[rp];
+ const at=(FEED.att||{})[pid],atApi=at&&feedAtApi(at.k),atBn=at&&atApi?`<div class=fcbn><span><span style="display:inline-block;vertical-align:middle;line-height:0;margin-right:6px">${atApi.art(at,24)}</span>Đính kèm: <b>${esc(at.n)}</b></span><button class=s onclick="feedAtClear(${pid})" aria-label="Bỏ đính kèm">✕</button></div>`:'';
  const banner=rc?`<div class=fcbn><span>Đang trả lời <b>${esc(feedWho(rc.user_id).name)}</b></span><button class=s onclick="feedReplyTo(${pid},0)" aria-label="Hủy trả lời">✕</button></div>`:'';
  return `<div class=fch>${a.length?'💬 '+a.length+' bình luận':'💬 Bình luận'}</div>`
  +(a.length?`<div class=fcl>${list}</div>`:`<p class="fce mut">Chưa có bình luận nào. Hãy là người đầu tiên!</p>`)
  +banner
- +`<div class=fcin><span style="line-height:0;flex:0 0 auto">${avH(28)}</span><input id="fci-${pid}" maxlength=300 placeholder="${rc?'Viết trả lời...':'Viết bình luận...'}" onkeydown="if(event.key=='Enter')feedComment(${pid})"><button class=p onclick="feedComment(${pid})">Gửi</button></div>`}
+ +atBn
+ +`<div class=fcin><span style="line-height:0;flex:0 0 auto">${avH(28)}</span><input id="fci-${pid}" maxlength=300 placeholder="${rc?'Viết trả lời...':'Viết bình luận...'}" onkeydown="if(event.key=='Enter')feedComment(${pid})"><button class="s fcatb ${at?'on2':''}" type=button onclick="feedAtPick(${pid})" aria-label="Đính kèm món đồ hoặc vàng">💎</button><button class=p onclick="feedComment(${pid})">Gửi</button></div>`}
 function feedReplyTo(pid,cid){
  FEED.rp=FEED.rp||{};if(cid)FEED.rp[pid]=cid;else delete FEED.rp[pid];
  FEED.open[pid]=true;feedCmRefresh(pid);
@@ -5643,12 +5690,13 @@ function feedCmRefresh(pid){
 async function feedComment(pid){
  if(!currentUser)return toast('Hãy liên kết Discord');
  const i=document.getElementById('fci-'+pid),v=i?i.value.replace(/\s+/g,' ').trim().slice(0,300):'';
- if(!v)return toast('Nhập nội dung');
+ const at0=(FEED.att||{})[pid];
+ if(!v&&!at0)return toast('Nhập nội dung hoặc đính kèm món đồ');
  if(i)i.disabled=true;FEED.lk=Date.now();
- const rp0=(FEED.rp||{})[pid],bd=(rp0&&(FEED.cm[pid]||[]).some(x=>x.id===rp0))?'↩'+rp0+'|'+v:v;
+ const rp0=(FEED.rp||{})[pid],bd=((rp0&&(FEED.cm[pid]||[]).some(x=>x.id===rp0))?'↩'+rp0+'|'+v:v)+(at0?'\u27e6A:'+encodeURIComponent(JSON.stringify(at0)).replace(/'/g,'%27')+'\u27e7':'');
  const {data,error}=await supabaseClient.from('feed_comments').insert({post_id:pid,user_id:currentUser.id,body:bd}).select('id, post_id, user_id, body, created_at').single();
  if(error){if(i)i.disabled=false;return toast('Lỗi: '+error.message)}
- FEED.lk=Date.now();(FEED.cm[pid]=FEED.cm[pid]||[]).push(data);FEED.open[pid]=true;if(FEED.rp)delete FEED.rp[pid];
+ FEED.lk=Date.now();(FEED.cm[pid]=FEED.cm[pid]||[]).push(data);FEED.open[pid]=true;if(FEED.rp)delete FEED.rp[pid];if(FEED.att)delete FEED.att[pid];
  if(i)i.value='';feedCmRefresh(pid);
  const n=document.getElementById('fci-'+pid);if(n)n.focus()}
 async function feedDelCm(pid,cid){
@@ -5745,6 +5793,21 @@ button.wh.liked .fhe{animation:fpop .35s ease}
  50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--g2) 32%,transparent),0 0 26px 8px color-mix(in srgb,var(--g2) 65%,transparent)}}
 .fcm.nglow{padding-left:6px;padding-right:6px}
 @media(prefers-reduced-motion:reduce){.nglow{animation:none}}
+/* sửa lỗi: danh sách bình luận cuộn (overflow) cắt mất viền sáng + huy hiệu tim tác giả ở mép trên/hai bên */
+.fcl{padding:16px 12px 8px;margin:-14px -12px 0;scroll-padding-top:16px}
+.fcl .fcm.nglow{outline-width:2px;outline-offset:1px;box-shadow:0 0 0 3px color-mix(in srgb,var(--g2) 25%,transparent),0 0 8px 2px color-mix(in srgb,var(--g2) 40%,transparent);animation-name:nglowc}
+@keyframes nglowc{0%,100%{box-shadow:0 0 0 2px color-mix(in srgb,var(--g2) 18%,transparent),0 0 6px 1px color-mix(in srgb,var(--g2) 30%,transparent)}
+ 50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--g2) 30%,transparent),0 0 9px 3px color-mix(in srgb,var(--g2) 50%,transparent)}}
+.fcl .fcm{position:relative}
+.fcm .fcat{display:flex;align-items:center;gap:8px;margin-top:6px;padding:5px 10px 5px 6px;border-radius:14px;background:color-mix(in srgb,#ffd54a 22%,var(--card));border:1.5px solid color-mix(in srgb,#e3a000 45%,var(--ln));cursor:pointer;-webkit-tap-highlight-color:transparent;max-width:100%;box-sizing:border-box}
+.fcm .fcat:active{transform:scale(.98)}
+.fcm .fcat .fca{flex:0 0 auto;width:46px;height:46px;display:flex;align-items:center;justify-content:center;line-height:0}
+.fcm .fcat .fca img,.fcm .fcat .fca svg{max-width:100%;max-height:100%}
+.fcm .fcat .fct2{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.25;text-align:left}
+.fcm .fcat .fct2 b{display:block;font-size:.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fcm .fcat .fct2 small{font-size:.7rem;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fcm .fcat .fcg{flex:0 0 auto;color:var(--mut);font-size:1.1rem}
+.fcin .fcatb{flex:0 0 auto;width:38px;height:38px;min-height:0;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
 </style>
 <script>
 /* ===== V39: thông báo tường/tim/bảng tin, đi tới đúng vị trí, bảng tin thời gian thực ===== */
@@ -5816,7 +5879,7 @@ async function nxNames(ids){
   (data||[]).forEach(p=>NX.names[p.id]=p)}catch(e){}
  need.forEach(u=>{if(!NX.names[u])NX.names[u]={}})}
 const nxName=u=>{const p=NX.names[u]||{};return p.display_name||p.username||'Một người chơi'};
-const nxSnip=x=>{x=String(x||'').replace(/^↩\d+\|/,'').replace(/\s+/g,' ').trim();return x.length>40?x.slice(0,40)+'…':x};
+const nxSnip=x=>{x=String(x||'').replace(/^↩\d+\|/,'').replace(/\u27e6A:[^\u27e7]*\u27e7/g,' [đính kèm] ').replace(/\s+/g,' ').trim();return x.length>40?x.slice(0,40)+'…':x};
 
 NX.check=async function(){
  if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||NX.busy)return;
@@ -6198,7 +6261,7 @@ const playersH=()=>`<div class=card><div class=row style="margin:0"><input id=ad
 
 const bannedH=()=>A.banned==null?LOAD:(A.banned.map(b=>`<div class=card><div class=row style="margin:0">${nameBtn(b.user_id,A.names[b.user_id])}<button class=s onclick="AD.unban('${b.user_id}')">🔓 Mở khóa</button></div><div class=mut>Lý do: ${E(b.reason||'—')}${b.created_at?' · '+ago(b.created_at):''}</div></div>`).join('')||EMPTY('Không có tài khoản nào bị khóa.'));
 
-const contentH=()=>{const ck=A.ct,cap=ck=='posts'?r=>r.caption||'(chỉ có ảnh)':ck=='cmts'?r=>(r.body||'').replace(/^↩\d+\|/,''):r=>r.message||'',del=ck=='posts'?'AD.delPost':ck=='cmts'?'AD.delCmt':'AD.delMsg';
+const contentH=()=>{const ck=A.ct,cap=ck=='posts'?r=>r.caption||'(chỉ có ảnh)':ck=='cmts'?r=>(r.body||'').replace(/^↩\d+\|/,'').replace(/\u27e6A:[^\u27e7]*\u27e7/g,' [đính kèm]'):r=>r.message||'',del=ck=='posts'?'AD.delPost':ck=='cmts'?'AD.delCmt':'AD.delMsg';
  const head=bar(chip(ck=='posts','📰 Bài đăng',"AD.ctype('posts')")+chip(ck=='cmts','💬 Bình luận',"AD.ctype('cmts')")+chip(ck=='msgs','📝 Ký tường',"AD.ctype('msgs')"));
  if(A.content==null)return head+LOAD;
  return head+(A.content.map(r=>`<div class=card><div class=row style="margin:0">${nameBtn(r.uid,A.names[r.uid])}<small class=mut style="flex:1;text-align:right">${ago(r.created_at)}</small><button class=s onclick="${del}(${+r.id})" aria-label="Xóa">🗑</button></div><div style="word-break:break-word;margin-top:4px">${E(cap(r))}</div></div>`).join('')||EMPTY('Không có nội dung.'))};
@@ -6208,7 +6271,7 @@ const grantsH=()=>`<div class=card><div class=strip2><button class=s onclick="AD
 
 const adminsH=()=>`<div class=card><h3>Thêm quản trị viên</h3><div class=row style="margin:0"><input id=adnew placeholder="Dán User ID..." style="flex:1;width:auto;min-width:0"><button class=p onclick="AD.addAdmin(document.getElementById('adnew').value)">Thêm</button></div></div>`+(A.admins==null?LOAD:(A.admins.map(a=>`<div class=card><div class=row style="margin:0">${nameBtn(a.user_id,A.names[a.user_id])}${me()&&a.user_id==me().id?'<span class=tag>Bạn</span>':'<button class=s onclick="AD.delAdmin(\''+a.user_id+'\')">Gỡ</button>'}</div><div class=mut style="word-break:break-all">${E(a.user_id)}</div></div>`).join('')||EMPTY('Không có.')));
 
-const viewH=()=>{const p=A.sel,me_=me()&&p.id===me().id;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b>${p.ban?'<span class=tag style="background:#d9534f">Đã khóa</span>':''}${p.admin?'<span class=tag>Admin</span>':''}<button class=s onclick="AD.back()">← Quay lại</button></div><div class=mut>@${E(p.username||'—')}</div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div>${p.ban&&p.reason?'<div class=mut>Lý do khóa: '+E(p.reason)+'</div>':''}<div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button>${me_?'':`<button class=s onclick="${p.admin?`AD.delAdmin('${p.id}')`:`AD.addAdmin('${p.id}')`}">${p.admin?'Gỡ admin':'🛡 Cấp admin'}</button>`}</div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Bình luận</h3>${rowsH(A.cmts,r=>(r.body||'').replace(/^↩\d+\|/,''),'AD.delCmt')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
+const viewH=()=>{const p=A.sel,me_=me()&&p.id===me().id;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b>${p.ban?'<span class=tag style="background:#d9534f">Đã khóa</span>':''}${p.admin?'<span class=tag>Admin</span>':''}<button class=s onclick="AD.back()">← Quay lại</button></div><div class=mut>@${E(p.username||'—')}</div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div>${p.ban&&p.reason?'<div class=mut>Lý do khóa: '+E(p.reason)+'</div>':''}<div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button>${me_?'':`<button class=s onclick="${p.admin?`AD.delAdmin('${p.id}')`:`AD.addAdmin('${p.id}')`}">${p.admin?'Gỡ admin':'🛡 Cấp admin'}</button>`}</div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Bình luận</h3>${rowsH(A.cmts,r=>(r.body||'').replace(/^↩\d+\|/,'').replace(/\u27e6A:[^\u27e7]*\u27e7/g,' [đính kèm]'),'AD.delCmt')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
 
 const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['admins','🛡 Quản trị viên',adminsH]];
 V.adm=()=>{
@@ -7284,6 +7347,23 @@ window.GOLD={
  closeRec(){GD.rec=null;ui();try{R()}catch(e){}},
  send(){const i=document.getElementById('gci'),t=i?i.value:GD.inp;ask(t)},say(t){ask(t)},
  tab(t){GD.t=t;GD.msg='';GD.cf='';ui()}};
+/* ===== đính kèm vàng / trang sức vào bình luận ===== */
+window.GOLD.att=(()=>{
+ const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k),nn=(v,a,b)=>Math.max(a,Math.min(b,Math.round(+v)||0));
+ const KIND={bar:'Vàng miếng',ring:'Nhẫn trơn',jew:'Trang sức'};
+ const clean=o=>{if(!o||typeof o!='object'||o.k!='g')return null;
+  const kd=typeof o.kd=='string'&&own(KIND,o.kd)?o.kd:'jew',ty=kd=='bar'?'bar':(typeof o.ty=='string'&&own(TY,o.ty)?o.ty:(kd=='ring'?'ring':'charm')),kk=own(RATIO,+o.kk)?+o.kk:24;
+  return{k:'g',n:cl(o.n,40).replace(/[\u27e6\u27e7]/g,'')||'Vàng',kd,ty,kk:kd=='jew'?kk:24,w:Math.max(0,Math.min(1000,Math.round((+o.w||0)*100)/100)),gem:typeof o.gem=='string'&&own(GEMS,o.gem)?o.gem:'none',tone:typeof o.tone=='string'&&own(TC,o.tone)?o.tone:'y',lab:cl(o.lab,12).replace(/[\u27e6\u27e7]/g,''),cu:o.cu?1:0,vl:nn(o.vl,0,1e11)}};
+ const snap=i=>clean({k:'g',n:i.name,kd:i.kind,ty:i.type,kk:i.k,w:i.w,gem:i.gem,tone:i.tone,lab:i.lab,cu:i.custom,vl:val(i)});
+ const list=()=>G0().items.slice(0,60).map(i=>({id:i.id,sn:snap(i)})).filter(r=>r.sn);
+ const art=(a,z,fx)=>{const u=procURL({type:a.ty,tone:a.tone,gem:a.gem,lab:a.lab});return fx?spk(u,z):`<img src="${u}" alt="" draggable=false style="width:${z}px;height:${z}px;object-fit:contain;display:block">`};
+ const kl=a=>a.kd=='jew'?KL[a.kk]:'24K · 9999';
+ const info=a=>{const jew=a.kd=='jew',loai=jew&&own(TY,a.ty)?TY[a.ty][0]:KIND[a.kd],now=val({kind:a.kd,w:a.w,k:a.kk});
+  return `<div class=row><h2>${E(a.n)}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${art(a,170,true)}</div>
+ <div class=row><span class=mut>Loại</span><b>${E(loai)}${a.cu?' · Đặt riêng':''}</b></div><div class=row><span class=mut>Trọng lượng</span><b>${fw2(a.w)}</b></div><div class=row><span class=mut>Tuổi vàng</span><b>${kl(a)}</b></div>
+ ${jew?`<div class=row><span class=mut>Màu vàng</span><b>${TONE[a.tone]||TONE.y}</b></div>`:''}${a.gem!='none'?`<div class=row><span class=mut>Đá</span><b>${E(GEMS[a.gem][0])}</b></div>`:''}${a.lab?`<div class=row><span class=mut>Nhãn</span><b>${E(a.lab)}</b></div>`:''}
+ <div class=row><span class=mut>Giá trị lúc khoe</span><b>${$(a.vl)}</b></div><div class=row><span class=mut>Tiệm thu hôm nay</span><b>${$(now)}</b></div><p class=mut style="margin:4px 0 0;font-size:.74rem">"Tiệm thu hôm nay" tính theo bảng giá vàng trên máy của bạn.</p>`};
+ return{label:'Vàng',empty:'Hộp vàng trống. Ghé Cộng đồng > Tiệm vàng để mua hoặc đặt gia công nhé.',clean,snap,list,info,art:(a,z)=>art(a,z),sum:a=>fw2(a.w)+' · '+kl(a)+(a.gem!='none'?' · '+GEMS[a.gem][0]:'')}})();
 V.gold=function(){
  const g=G0();
  if(!PR.loading&&Date.now()-PR.tryAt>(PR.live?3e5:6e4)){PR.tryAt=Date.now();setTimeout(()=>{loadP(true);loadH(GD.hs,GD.hd)},0)}

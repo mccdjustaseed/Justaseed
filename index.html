@@ -7404,6 +7404,7 @@ GOLD.gdisc=async()=>{
  }catch(e){toast('Không gửi được: '+(e&&e.message||e))}
  GDB=0;const b2=document.getElementById('gdb');if(b2){b2.disabled=false;b2.textContent='💬 Gửi lên Discord'}};
 
+GOLD.px=()=>{try{const c=PR.d&&PR.d.SJ9999;return c&&+c.sell>0?{v:Math.round(+c.sell),live:!!PR.live}:null}catch(e){return null}};
 V.gold=function(){
  const g=G0();
  if(!PR.loading&&Date.now()-PR.tryAt>(PR.live?3e5:6e4)){PR.tryAt=Date.now();setTimeout(()=>{loadP(true);loadH(GD.hs,GD.hd)},0)}
@@ -7418,4 +7419,201 @@ setInterval(()=>{try{const g=G0();let ch=0;g.orders.forEach(o=>{if(o.st=='making
 })();
 
 </script>
+<script>
+/* ===== v43: Góc giải trí (gói hoa nhanh, chậu hoa, lật thẻ, hộp quà, đoán giá vàng, xếp hạng bạn bè) ===== */
+(function(){
+const FN={tab:'bq',bq:null,mt:null,html:null,lw:0,lb:{g:'bq',data:null,err:'',busy:0,t:0,gk:'',ids:null,it:0},synced:0,ggT:0};
+const FUN=window.FUN={};
+const E=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LIM={bq:5,mt:3,hv:6},BQ_T=9000,BQ_N=5,POT_N=10;
+const dk=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const st=()=>{if(!s.fn||typeof s.fn!='object')s.fn={};const f=s.fn;
+ if(f.d!==dk()){f.d=dk();f.bq=0;f.mt=0;f.box=0;f.hv=0;f.prize=null}
+ if(!f.best||typeof f.best!='object')f.best={};
+ if(!f.gg||typeof f.gg!='object')f.gg={st:0,bs:0};
+ return f};
+const pool=n=>{let a=F.filter(f=>{try{return fOK(f)}catch(e){return false}});if(a.length<n)a=a.concat(F.filter(f=>!a.includes(f)));return a.slice(0,n)};
+const fa=id=>{try{return art(id)}catch(e){return '🌸'}};
+const fnm=id=>{const f=F.find(x=>x.id==id);return f?f.n:id};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const give=(id,q)=>{s.st[id]=(s.st[id]||0)+q};
+const rw=(id,q)=>`<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle">${fa(id)} <b>${E(fnm(id))}</b> ×${q}</span>`;
+const GN={bq:['Gói hoa nhanh','điểm'],mt:['Lật thẻ','điểm'],gg:['Đoán giá vàng','chuỗi thắng']};
+const money=n=>Math.round(+n||0).toLocaleString('vi-VN')+'đ';
+
+/* ---------- gửi / đọc điểm ---------- */
+async function submit(g,score){try{
+ if(typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined'||!score)return;
+ await supabaseClient.from('minigame_scores').upsert({user_id:currentUser.id,game:g,score:score|0,updated_at:new Date().toISOString()},{onConflict:'user_id,game'});
+ FN.lb.t=0}catch(e){}}
+
+/* ---------- 1. GÓI HOA NHANH ---------- */
+function bqNew(){const b=FN.bq;b.seq=[0,1,2].map(()=>rnd(b.pool).id);b.pos=0;b.t0=Date.now()}
+FUN.bqStart=()=>{const f=st();if(f.bq>=LIM.bq)return toast('Hết lượt hôm nay, mai chơi tiếp nhé');
+ f.bq++;save();FN.bq={on:1,i:0,ok:0,score:0,pool:pool(6),res:null};bqNew();ui()};
+FUN.bqTap=id=>{const b=FN.bq;if(!b||!b.on)return;
+ if(id==b.seq[b.pos]){b.pos++;beep(700);
+  if(b.pos>=3){b.score+=10+Math.max(0,Math.ceil((BQ_T-(Date.now()-b.t0))/1000));b.ok++;bqNext()}else bqPaint()}
+ else{beep(220);toast('Sai rồi!');bqNext()}};
+function bqNext(){const b=FN.bq;b.i++;if(b.i>=BQ_N)return bqEnd();bqNew();bqPaint()}
+function bqEnd(){const b=FN.bq,f=st();b.on=0;
+ const q=b.ok>=5?3:b.ok>=3?2:b.ok>=1?1:0,id=rnd(b.pool).id;
+ if(q)give(id,q);if(b.ok)xp(b.ok*2);
+ b.res={q,id};if(b.score>(f.best.bq||0)){f.best.bq=b.score;submit('bq',b.score)}
+ save();ui()}
+function bqBody(){const b=FN.bq;if(!b)return '';
+ const sl=b.seq.map((id,i)=>`<div class="fnc ${i<b.pos?'dn':'on'}">${i<b.pos?'<span style="font-size:1.6rem">✓</span>':fa(id)}<span>${i<b.pos?'xong':E(fnm(id))}</span></div>`).join('');
+ const e=Date.now()-b.t0;
+ return `<div class=row><span class=mut>Khách ${Math.min(b.i+1,BQ_N)}/${BQ_N}</span><b>${b.score} điểm</b></div><p class=mut style="margin:2px 0 6px">Khách muốn bó này, chạm đúng thứ tự từ trái sang phải:</p><div class="fng fng3">${sl}</div><div class=fnbar style="margin-top:8px"><i id=fnbar style="width:${Math.max(0,100-e/BQ_T*100)}%"></i></div>`}
+function bqPaint(){const el=document.getElementById('fnbq');if(el)el.innerHTML=bqBody()}
+setInterval(()=>{const b=FN.bq;if(!b||!b.on)return;const e=Date.now()-b.t0,bar=document.getElementById('fnbar');
+ if(bar)bar.style.width=Math.max(0,100-e/BQ_T*100)+'%';
+ if(e>BQ_T){toast('Hết giờ!');bqNext()}},150);
+function vBq(){const f=st(),b=FN.bq;
+ if(b&&b.on)return `<div class=card><div id=fnbq>${bqBody()}</div></div><div class="fng fng3">${b.pool.map(x=>`<button class=fnc onclick="FUN.bqTap('${x.id}')">${fa(x.id)}<span>${E(x.n)}</span></button>`).join('')}</div>`;
+ let r='';
+ if(b&&b.res)r=`<div class=card style="border-color:var(--g2)"><b>Kết quả: ${b.ok}/${BQ_N} bó đúng · ${b.score} điểm</b><p style="margin:6px 0 0">${b.res.q?'Thưởng: '+rw(b.res.id,b.res.q):'Lần này chưa có thưởng, thử lại nhé!'}</p><div class=row style="margin-top:6px;justify-content:flex-start;gap:6px"><button class=s onclick="FUN.share('bq')">📸 Khoe điểm</button></div></div>`;
+ return r+`<div class=card><b>🌼 Gói hoa nhanh</b><p class=mut style="margin:4px 0 6px">${BQ_N} khách, mỗi khách một bó 3 bông. Chạm đúng thứ tự trong ${BQ_T/1000} giây. Đúng nhiều thì thưởng nhiều hoa.</p><div class=row><span class=mut>Lượt hôm nay: ${f.bq}/${LIM.bq} · Điểm cao nhất: ${f.best.bq||0}</span><button class=p ${f.bq>=LIM.bq?'disabled':''} onclick="FUN.bqStart()">${b&&b.res?'Chơi lại':'Bắt đầu'}</button></div></div>`}
+
+/* ---------- 2. CHẬU HOA ---------- */
+const STG=['🌰','🌱','🌿','🌸'];
+FUN.plant=id=>{const f=st();if(f.pot)return;f.pot={id,w:0};save();ui()};
+FUN.water=()=>{const f=st();if(!f.pot||f.pot.w>=POT_N)return;const n=Date.now();if(n-FN.lw<1200)return;FN.lw=n;f.pot.w++;beep(520);save();potPaint()};
+FUN.harvest=()=>{const f=st();if(!f.pot||f.pot.w<POT_N)return;if(f.hv>=LIM.hv)return toast('Hôm nay đã hái đủ '+LIM.hv+' chậu, mai hái tiếp nhé');
+ const id=f.pot.id;f.hv++;give(id,2);xp(3);f.pot=null;f.pm={id,q:2};save();toast('Đã hái 2 bông '+fnm(id));ui()};
+function potBody(){const f=st(),p=f.pot;if(!p)return '';
+ const stg=p.w>=POT_N?3:p.w>=5?2:p.w>=1?1:0;
+ return `<div class=fnbig>${p.w>=POT_N?fa(p.id):STG[stg]}</div><p style="text-align:center;margin:4px 0"><b>${E(fnm(p.id))}</b> · ${p.w>=POT_N?'Đã nở, hái được rồi!':'Tưới '+p.w+'/'+POT_N}</p><div class=fnbar><i style="width:${Math.min(100,p.w/POT_N*100)}%"></i></div>`}
+function potPaint(){const el=document.getElementById('fnpot');if(el)el.innerHTML=potBody();
+ const b=document.getElementById('fnwb'),p=st().pot;if(b&&p&&p.w>=POT_N)ui()}
+function vPt(){const f=st(),p=f.pot,pm=f.pm;
+ if(!p)return (pm?`<div class=card style="border-color:var(--g2)"><b>Vừa hái xong!</b><p style="margin:4px 0 0">Thưởng: ${rw(pm.id,pm.q)}</p></div>`:'')+`<div class=card><b>🪴 Chậu hoa</b><p class=mut style="margin:4px 0 6px">Chọn một hạt giống rồi chạm "Tưới" ${POT_N} lần cho hoa nở. Hái được 2 bông (tối đa ${LIM.hv} chậu mỗi ngày, hôm nay đã hái ${f.hv}).</p><div class="fng fng3">${pool(6).map(x=>`<button class=fnc onclick="FUN.plant('${x.id}')">${fa(x.id)}<span>${E(x.n)}</span></button>`).join('')}</div></div>`;
+ const ready=p.w>=POT_N;
+ return `<div class=card><div id=fnpot>${potBody()}</div><div class=row style="margin-top:8px;justify-content:center">${ready?`<button class=p id=fnwb onclick="FUN.harvest()">✂️ Hái hoa</button>`:`<button class=p id=fnwb onclick="FUN.water()">💧 Tưới</button>`}</div><p class=mut style="margin:6px 0 0;text-align:center;font-size:.78rem">Hôm nay đã hái ${f.hv}/${LIM.hv} chậu</p></div>`}
+
+/* ---------- 3. LẬT THẺ ---------- */
+FUN.mtStart=()=>{const f=st();if(f.mt>=LIM.mt)return toast('Hết lượt hôm nay, mai chơi tiếp nhé');
+ f.mt++;save();const p=pool(8),c=[];p.forEach(x=>c.push(x.id,x.id));
+ for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]]}
+ FN.mt={cards:c,open:[],done:{},moves:0,lock:0,pool:p,res:null};ui()};
+FUN.mtFlip=i=>{const m=FN.mt;if(!m||m.res||m.lock||m.done[i]||m.open.includes(i))return;
+ m.open.push(i);beep(500);
+ if(m.open.length==2){m.moves++;const a=m.open[0],b=m.open[1];
+  if(m.cards[a]==m.cards[b]){m.done[a]=m.done[b]=1;m.open=[];beep(800);if(Object.keys(m.done).length>=16)return mtEnd();mtPaint()}
+  else{m.lock=1;mtPaint();setTimeout(()=>{m.open=[];m.lock=0;mtPaint()},650)}}
+ else mtPaint()};
+function mtEnd(){const m=FN.mt,f=st();
+ const sc=Math.max(10,100-(m.moves-8)*6),q=m.moves<=12?3:m.moves<=16?2:1,id=rnd(m.pool).id;
+ give(id,q);xp(6);m.res={sc,q,id};
+ if(sc>(f.best.mt||0)){f.best.mt=sc;submit('mt',sc)}
+ save();ui()}
+function mtBody(){const m=FN.mt;if(!m)return '';
+ return `<div class=row><span class=mut>Số lượt lật: ${m.moves}</span><span class=mut>Đã ghép ${Object.keys(m.done).length/2}/8</span></div><div class="fng fng4" style="margin-top:6px">${m.cards.map((id,i)=>{const up=m.done[i]||m.open.includes(i);return `<button class="fnc ${m.done[i]?'dn':''}" onclick="FUN.mtFlip(${i})" style="min-height:70px">${up?fa(id):'<span style="font-size:1.6rem">❓</span>'}</button>`}).join('')}</div>`}
+function mtPaint(){const el=document.getElementById('fnmt');if(el)el.innerHTML=mtBody()}
+function vMt(){const f=st(),m=FN.mt;
+ if(m&&!m.res)return `<div class=card><div id=fnmt>${mtBody()}</div></div>`;
+ let r='';
+ if(m&&m.res)r=`<div class=card style="border-color:var(--g2)"><b>Xong sau ${m.moves} lượt lật · ${m.res.sc} điểm</b><p style="margin:6px 0 0">Thưởng: ${rw(m.res.id,m.res.q)}</p><div class=row style="margin-top:6px;justify-content:flex-start"><button class=s onclick="FUN.share('mt')">📸 Khoe điểm</button></div></div>`;
+ return r+`<div class=card><b>🃏 Lật thẻ ghép hoa</b><p class=mut style="margin:4px 0 6px">Bảng 4×4 có 8 cặp hoa. Ghép hết càng ít lượt càng nhiều điểm và thưởng.</p><div class=row><span class=mut>Lượt hôm nay: ${f.mt}/${LIM.mt} · Điểm cao nhất: ${f.best.mt||0}</span><button class=p ${f.mt>=LIM.mt?'disabled':''} onclick="FUN.mtStart()">${m&&m.res?'Chơi lại':'Bắt đầu'}</button></div></div>`}
+
+/* ---------- 4. HỘP QUÀ HẰNG NGÀY ---------- */
+FUN.box=i=>{const f=st();if(f.box)return;f.box=1;f.pick=i;
+ const r=Math.random(),p=pool(6);let pr;
+ if(r<.45){const id=rnd(p).id;give(id,3);pr={t:'f',id,q:3}}
+ else if(r<.75){xp(8);pr={t:'x',q:8}}
+ else if(r<.93){s.money+=20000;L('in','Giải trí','Hộp quà',1,20000);pr={t:'m',q:20000}}
+ else if(r<.98){const id=rnd(p).id;give(id,6);pr={t:'f',id,q:6}}
+ else{s.money+=100000;L('in','Giải trí','Hộp quà may mắn',1,100000);pr={t:'m',q:100000}}
+ f.prize=pr;save();beep(900);ui()};
+function vBx(){const f=st();
+ if(!f.box)return `<div class=card><b>🎁 Hộp quà hằng ngày</b><p class=mut style="margin:4px 0 6px">Mỗi ngày được mở 1 hộp. Có thể ra hoa, kinh nghiệm hoặc ít tiền. Chọn một hộp nào:</p><div class="fng fng3">${[0,1,2].map(i=>`<button class=fnc onclick="FUN.box(${i})" style="min-height:96px"><span style="font-size:2.4rem">🎁</span></button>`).join('')}</div></div>`;
+ const p=f.prize||{},t=p.t=='f'?'Nhận '+rw(p.id,p.q):p.t=='x'?'Nhận '+p.q+' kinh nghiệm':p.t=='m'?'Nhận '+money(p.q):'';
+ return `<div class=card style="border-color:var(--g2)"><b>🎁 Hộp quà hôm nay</b><div class=fnbig>🎉</div><p style="text-align:center;margin:4px 0">${t}</p><p class=mut style="text-align:center;margin:0">Mai quay lại để mở hộp mới nhé.</p></div>`}
+
+/* ---------- 5. ĐOÁN GIÁ VÀNG ---------- */
+const px=()=>{try{return window.GOLD&&GOLD.px?GOLD.px():null}catch(e){return null}};
+function ggCheck(){const f=st(),g=f.gg;if(!g.p0)return false;
+ const p=px(),age=Date.now()-g.t0;if(!p||age<3*36e5)return false;
+ const res=p.v>g.p0?1:p.v<g.p0?-1:0;if(res==0&&age<24*36e5)return false;
+ const win=(res>0&&g.d=='u')||(res<0&&g.d=='d');
+ g.last={p0:g.p0,p1:p.v,d:g.d,r:res==0?'draw':win?'win':'lose'};
+ if(res!=0){if(win){g.st=(g.st||0)+1;g.bs=Math.max(g.bs||0,g.st);const id=rnd(pool(6)).id;give(id,2);xp(5);g.last.id=id;
+   if(g.bs>(f.best.gg||0)){f.best.gg=g.bs;submit('gg',g.bs)}}else g.st=0}
+ g.p0=0;g.t0=0;g.d='';save();return true}
+FUN.ggPick=d=>{const f=st(),g=f.gg;if(g.p0)return;const p=px();
+ if(!p){try{GOLD.refresh()}catch(e){}return toast('Chưa có giá vàng, thử lại sau vài giây')}
+ g.p0=p.v;g.t0=Date.now();g.d=d;g.last=null;save();ui()};
+setInterval(()=>{try{if(st().gg.p0&&ggCheck()){toast('Đã có kết quả đoán giá vàng!');ui()}}catch(e){}},30000);
+function vGg(){const f=st(),g=f.gg;ggCheck();const p=px();
+ if(!p&&!FN.ggT){FN.ggT=1;setTimeout(()=>{FN.ggT=0},20000);try{GOLD.refresh()}catch(e){}}
+ let r='';
+ if(g.last){const l=g.last,t=l.r=='win'?'Đoán đúng! '+(l.id?'Thưởng: '+rw(l.id,2)+' và 5 kinh nghiệm':''):l.r=='lose'?'Chưa đúng lần này, chuỗi thắng về 0.':'Giá không đổi, hoà và không mất lượt.';
+  r=`<div class=card style="border-color:${l.r=='win'?'var(--g2)':'var(--ln)'}"><b>Kết quả lần trước</b><p style="margin:4px 0 0">${money(l.p0)} → ${money(l.p1)}<br>${t}</p>${l.r=='win'?'<div class=row style="margin-top:6px;justify-content:flex-start"><button class=s onclick="FUN.share(\'gg\')">📸 Khoe chuỗi thắng</button></div>':''}</div>`}
+ const body=g.p0?`<p style="margin:6px 0 0">Bạn đã đoán giá vàng nhẫn 9999 sẽ <b>${g.d=='u'?'tăng':'giảm'}</b> so với <b>${money(g.p0)}</b>. Kết quả có sau ít nhất 3 giờ, quay lại xem nhé.</p>`
+  :`<p style="margin:6px 0 4px">Giá hiện tại: <b>${p?money(p.v):'đang tải…'}</b></p><div class=row style="gap:8px"><button class=p style="flex:1" ${p?'':'disabled'} onclick="FUN.ggPick('u')">📈 Sẽ tăng</button><button class=p style="flex:1" ${p?'':'disabled'} onclick="FUN.ggPick('d')">📉 Sẽ giảm</button></div>`;
+ return r+`<div class=card><b>🪙 Đoán giá vàng</b><p class=mut style="margin:4px 0 0">Đoán giá vàng thị trường (nhẫn 9999) tăng hay giảm. Đúng thì được 2 bông hoa và kinh nghiệm, chuỗi thắng của bạn lên bảng xếp hạng.</p>${body}<p class=mut style="margin:6px 0 0;font-size:.78rem">Chuỗi thắng: ${g.st||0} · Kỷ lục: ${g.bs||0}</p></div>`}
+
+/* ---------- 6. XẾP HẠNG BẠN BÈ ---------- */
+async function lbLoad(force){const B=FN.lb;if(B.busy)return;
+ if(typeof currentUser=='undefined'||!currentUser||typeof supabaseClient=='undefined'){B.err='login';return}
+ if(!force&&B.data&&B.gk==B.g&&Date.now()-B.t<45000)return;
+ B.busy=1;const g=B.g;
+ try{const uid=currentUser.id,f=st();
+  if(!FN.synced){FN.synced=1;for(const k in f.best)if(f.best[k])await submit(k,f.best[k])}
+  if(!B.ids||Date.now()-B.it>120000){
+   const {data:fr}=await supabaseClient.from('friends').select('user_id, friend_id, status').eq('status','accepted').or(`user_id.eq.${uid},friend_id.eq.${uid}`);
+   B.ids=[uid,...new Set((fr||[]).map(r=>r.user_id===uid?r.friend_id:r.user_id))];B.it=Date.now()}
+  const {data,error}=await supabaseClient.from('minigame_scores').select('user_id, score').eq('game',g).in('user_id',B.ids).order('score',{ascending:false}).limit(30);
+  if(error){B.err=/relation|does not exist|schema cache/i.test(error.message||'')?'sql':(error.message||'Lỗi');B.data=null}
+  else{B.err='';B.data=data||[];try{await feedProfiles(B.data.map(r=>r.user_id))}catch(e){}}
+  B.t=Date.now();B.gk=g}catch(e){B.err=e&&e.message||'Lỗi'}
+ B.busy=0;if(B.g==g)ui();else lbLoad(true)}
+FUN.lbg=g=>{FN.lb.g=g;FN.lb.data=null;FN.lb.err='';ui()};
+FUN.lbr=()=>{FN.lb.err='';lbLoad(true);ui()};
+function vRk(){const B=FN.lb,sub=Object.keys(GN).map(k=>`<button class="s ${B.g==k?'on2':''}" onclick="FUN.lbg('${k}')">${GN[k][0]}</button>`).join('');
+ let body;
+ if(B.err=='login')body='<p class=mut>Hãy liên kết Discord để xem bảng xếp hạng bạn bè.</p>';
+ else if(B.err=='sql')body='<p class=mut>Cần chạy file <b>minigame-scores.sql</b> một lần trong Supabase (SQL Editor) để bật bảng xếp hạng.</p>';
+ else if(B.err)body=`<p class=mut>Lỗi: ${E(B.err)}</p>`;
+ else if(!B.data||B.gk!=B.g){body='<p class=mut>Đang tải…</p>';if(!B.busy)setTimeout(()=>lbLoad(),0)}
+ else if(!B.data.length)body='<p class=mut>Chưa có ai có điểm. Hãy chơi trước nhé!</p>';
+ else{const me=typeof currentUser!='undefined'&&currentUser?currentUser.id:null;
+  body=B.data.map((r,i)=>{let w={name:'Người chơi',av:''};try{w=feedWho(r.user_id)}catch(e){}
+   return `<div class=row style="align-items:center;${r.user_id===me?'background:color-mix(in srgb,var(--g2) 14%,transparent);border-radius:12px;padding:2px 6px':''}"><span style="display:flex;align-items:center;gap:8px"><b style="width:1.6em">${i<3?['🥇','🥈','🥉'][i]:i+1}</b><span style="line-height:0">${w.av||''}</span><span>${E(w.name)}</span></span><b>${r.score} <span class=mut style="font-weight:400">${GN[B.g][1]}</span></b></div>`}).join('')}
+ return `<div class=card><b>🏆 Xếp hạng bạn bè</b><div class=gsub style="margin-top:6px">${sub}</div>${body}<div class=row style="margin-top:6px;justify-content:flex-start;gap:6px"><button class=s onclick="FUN.lbr()">↻ Làm mới</button><button class=s onclick="FUN.share('${B.g}')">📸 Khoe điểm</button></div></div>`}
+
+/* ---------- khoe điểm lên bảng tin ---------- */
+FUN.share=async g=>{const f=st(),sc=g=='gg'?(f.gg.bs||0):(f.best[g]||0);
+ if(!sc)return toast('Chưa có điểm để khoe');
+ try{const Wd=1080,Ht=760,K=themeK(),[c,x]=paperC(Wd,Ht,K);x.textAlign='center';
+  x.fillStyle=K.m;x.font='30px Onest,sans-serif';x.fillText('✿ Góc giải trí ✿',Wd/2,150);
+  x.fillStyle=K.d;x.font='700 72px "Baloo 2",sans-serif';x.fillText(GN[g][0],Wd/2,290,900);
+  x.fillStyle=K.q;x.font='700 150px "Baloo 2",sans-serif';x.fillText(String(sc),Wd/2,470);
+  x.fillStyle=K.m;x.font='34px Onest,sans-serif';x.fillText(GN[g][1]+' cao nhất · '+(s.name||'Tiệm hoa'),Wd/2,550,900);x.fillText('Justaseed',Wd/2,680);
+  shOpen(c,'justaseed-giai-tri-'+g+'.png','📸 Khoe điểm');
+  const m=document.querySelector('#modal .ms');
+  if(m){try{XB.wpc('')}catch(e){}
+   m.insertAdjacentHTML('beforeend','<div class=card style="margin-top:8px"><b>📰 Đăng lên bảng tin</b><textarea id=wpc maxlength=300 rows=2 placeholder="Viết vài dòng cho bài đăng (không bắt buộc)..." style="width:100%;resize:vertical;margin:6px 0" oninput="XB.wpc(this.value)"></textarea><button class=p style="width:100%" id=wpb onclick="XB.wpost()">📰 Đăng ảnh này</button></div>')}
+ }catch(e){toast('Không tạo được ảnh trên thiết bị này')}};
+
+/* ---------- khung chung ---------- */
+const TABS=[['bq','🌼','Gói hoa'],['pt','🪴','Chậu hoa'],['mt','🃏','Lật thẻ'],['bx','🎁','Quà'],['gg','🪙','Giá vàng'],['rk','🏆','Xếp hạng']];
+FUN.tab=t=>{if(FN.tab=='bq'&&FN.bq&&FN.bq.on)FN.bq=null;FN.tab=t;ui()};
+function build(){
+ const nav=`<div class=gsub>${TABS.map(t=>`<button class="s ${FN.tab==t[0]?'on2':''}" onclick="FUN.tab('${t[0]}')">${t[1]} ${t[2]}</button>`).join('')}</div>`;
+ const v=FN.tab=='pt'?vPt():FN.tab=='mt'?vMt():FN.tab=='bx'?vBx():FN.tab=='gg'?vGg():FN.tab=='rk'?vRk():vBq();
+ return `<div class=card><b>🎮 Góc giải trí</b><p class=mut style="margin:4px 0 0">Giết thời gian lúc chờ nhân viên bán hàng. Thưởng là hoa, kinh nghiệm và ít tiền, có giới hạn mỗi ngày.</p></div>${nav}${v}`}
+let goOrig=null;
+function ui(){try{const b=document.querySelector('#sdtabs button.on');
+ if(!b||!/'fun'/.test(b.getAttribute('onclick')||''))return;
+ FN.html=build();goOrig.call(window.SD,'fun')}catch(e){}}
+V.fun=()=>FN.html||(FN.html=build());
+try{SDX.TS.splice(3,0,['fun','star','Giải trí'])}catch(e){}
+try{goOrig=SD.go;const oo=SD.open;
+ SD.go=function(k){FN.html=null;if(k!='fun'&&FN.bq&&FN.bq.on)FN.bq=null;return goOrig.apply(this,arguments)};
+ SD.open=function(k){FN.html=null;return oo.apply(this,arguments)}}catch(e){}
+document.head.insertAdjacentHTML('beforeend','<style>.fng{display:grid;gap:8px}.fng3{grid-template-columns:repeat(3,minmax(0,1fr))}.fng4{grid-template-columns:repeat(4,minmax(0,1fr))}.fnc{background:var(--card);border:2px solid var(--ln);border-radius:16px;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.74rem;padding:6px 2px;font-family:inherit}.fnc.on{border-color:var(--g2)}.fnc.dn{opacity:.45}.fnbig{font-size:3.4rem;text-align:center;line-height:1.15}.fnbar{height:10px;border-radius:99px;background:var(--ln);overflow:hidden}.fnbar i{display:block;height:100%;background:var(--g2);width:100%;transition:width .15s linear}</style>');
+})();
+</script>
+
 </body></html>

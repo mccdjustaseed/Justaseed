@@ -7307,7 +7307,7 @@ function vRec(){
 function boxCard(rec){
  const g=G0(),tot=g.items.reduce((a,i)=>a+val(i),0),gr=g.items.reduce((a,i)=>a+i.w,0);
  const it=g.items.map(i=>{const v=val(i),pl=v-(i.paid||0),pp=i.paid?Math.round(pl/i.paid*1000)/10:0;
-  return `<div class="gc ${GD.hl==i.id?'gh':''}">${spk(imgURL(i),104)}<b style="display:block;margin-top:2px;line-height:1.15">${E(i.name)}</b><span class=mut style="font-size:.78rem">${fw2(i.w)} · ${i.kind=='jew'?KL[i.k]:'9999'}${i.gem&&i.gem!='none'?' · '+GEMS[i.gem][0]:''}</span>${i.custom?'<span class=chip style="font-size:.7rem">Đặt riêng</span>':''}<div class=row style="margin:4px 0 0"><span class=mut style="font-size:.74rem">Mua ${$(i.paid||0)}</span></div><div class=row style="margin:0"><span class=mut style="font-size:.74rem">Tiệm thu ${$(v)}</span><span style="font-size:.74rem;color:${pl>=0?'#2e9e5b':'#d9534f'}">${pl>=0?'+':'−'}${$(Math.abs(pl))} (${pp}%)</span></div>${i.note?`<span class=mut style="font-size:.72rem;display:block">${E(i.note)}</span>`:''}<small class=mut style="font-size:.66rem;display:block">${E(i.sn||i.id)} · ngày ${i.day}</small><button class=s style="width:100%;margin-top:6px" onclick="GOLD.sell('${i.id}')">Bán lại tiệm</button></div>`}).join('');
+  return `<div class="gc ${GD.hl==i.id?'gh':''}">${spk(imgURL(i),104)}<b style="display:block;margin-top:2px;line-height:1.15">${E(i.name)}</b><span class=mut style="font-size:.78rem">${fw2(i.w)} · ${i.kind=='jew'?KL[i.k]:'9999'}${i.gem&&i.gem!='none'?' · '+GEMS[i.gem][0]:''}</span>${i.custom?'<span class=chip style="font-size:.7rem">Đặt riêng</span>':''}<div class=row style="margin:4px 0 0"><span class=mut style="font-size:.74rem">Mua ${$(i.paid||0)}</span></div><div class=row style="margin:0"><span class=mut style="font-size:.74rem">Tiệm thu ${$(v)}</span><span style="font-size:.74rem;color:${pl>=0?'#2e9e5b':'#d9534f'}">${pl>=0?'+':'−'}${$(Math.abs(pl))} (${pp}%)</span></div>${i.note?`<span class=mut style="font-size:.72rem;display:block">${E(i.note)}</span>`:''}<small class=mut style="font-size:.66rem;display:block">${E(i.sn||i.id)} · ngày ${i.day}</small><div class=row style="margin:6px 0 0;gap:6px;flex-wrap:nowrap"><button class=s style="flex:1" onclick="GOLD.photo('${i.id}')">📸 Khoe</button><button class=s style="flex:1" onclick="GOLD.sell('${i.id}')">Bán lại</button></div></div>`}).join('');
  return (rec||'')+`<div class=card><h3 style="margin:0 0 4px">Trang sức & vàng của bạn</h3><div class=row><span class=mut>${g.items.length} món · ${fw2(gr)}</span><span><b>${$(tot)}</b> <span class=mut>nếu bán lại hôm nay</span></span></div><p class=mut style="margin:2px 0 0;font-size:.78rem">Giá thu mua đổi theo giá vàng từng ngày, nên lời hay lỗ phụ thuộc thị trường và khoản chênh lệch mua - bán.</p></div>${it?`<div class=gcat>${it}</div>`:`<div class=card><p class=mut style="margin:0">Hộp còn trống. Ghé Cộng đồng > Tiệm vàng để mua hoặc đặt gia công nhé.</p></div>`}`}
 function vChat(){
  const g=G0(),b=GD.busy=='chat',ms=g.chat.slice(-14);
@@ -7368,6 +7368,42 @@ window.GOLD.att=(()=>{
  ${jew?`<div class=row><span class=mut>Màu vàng</span><b>${TONE[a.tone]||TONE.y}</b></div>`:''}${a.gem!='none'?`<div class=row><span class=mut>Đá</span><b>${E(GEMS[a.gem][0])}</b></div>`:''}${a.lab?`<div class=row><span class=mut>Nhãn</span><b>${E(a.lab)}</b></div>`:''}
  <div class=row><span class=mut>Giá trị lúc khoe</span><b>${$(a.vl)}</b></div><div class=row><span class=mut>Tiệm thu hôm nay</span><b>${$(now)}</b></div><p class=mut style="margin:4px 0 0;font-size:.74rem">"Tiệm thu hôm nay" tính theo bảng giá vàng trên máy của bạn.</p>`};
  return{label:'Vàng',empty:'Hộp vàng trống. Ghé Cộng đồng > Tiệm vàng để mua hoặc đặt gia công nhé.',clean,snap,list,info,art:(a,z)=>art(a,z),sum:a=>fw2(a.w)+' · '+kl(a)+(a.gem!='none'?' · '+GEMS[a.gem][0]:'')}})();
+/* ===== khoe vàng lên bảng tin / Discord ===== */
+let GPI=null,GDB=0;
+const gLoadImg=u=>new Promise((ok,no)=>{const m=new Image();m.onload=()=>ok(m);m.onerror=no;m.src=u});
+const gInfo=i=>{const jew=i.kind=='jew';return{
+ loai:i.kind=='bar'?'Vàng miếng':i.kind=='ring'?'Nhẫn trơn':(TY[i.type]?TY[i.type][0]:'Trang sức'),
+ kl:jew?(KL[i.k]||''):'24K · 9999',
+ gem:i.gem&&i.gem!='none'&&GEMS[i.gem]?GEMS[i.gem][0]:'',
+ tone:jew?(TONE[i.tone]||''):''}};
+GOLD.photo=async id=>{
+ const i=G0().items.find(x=>x.id==id);if(!i)return toast('Không tìm thấy món này');
+ GPI=id;toast('Đang tạo ảnh...');
+ try{
+  const Wd=1080,Ht=1350,K=themeK(),[c,g]=paperC(Wd,Ht,K),f=gInfo(i);
+  g.textAlign='center';g.fillStyle=K.m;g.font='30px Onest,sans-serif';g.fillText('✿ Tiệm vàng · '+f.loai+' ✿',Wd/2,170);
+  g.fillStyle=K.box;rrCv(g,150,210,780,780,40);g.fill();
+  try{const im=await gLoadImg(imgURL(i)),r=Math.min(700/im.width,700/im.height),w=im.width*r,h=im.height*r;g.drawImage(im,(Wd-w)/2,210+(780-h)/2,w,h)}catch(e){}
+  g.fillStyle=K.d;g.font='700 56px "Baloo 2",sans-serif';g.fillText(i.name,Wd/2,1080,880);
+  g.fillStyle=K.q;g.font='600 34px Onest,sans-serif';g.fillText(fw2(i.w)+' · '+f.kl+(f.gem?' · '+f.gem:''),Wd/2,1140,880);
+  g.fillStyle=K.d;g.font='28px Onest,sans-serif';g.fillText('Giá trị Tiệm thu: '+$(val(i)),Wd/2,1195,880);
+  g.fillStyle=K.m;g.font='30px Onest,sans-serif';g.fillText('Của '+(s.name||'Tiệm hoa'),Wd/2,1250,880);g.fillText('Justaseed · Tiệm vàng',Wd/2,1305);
+  shOpen(c,'justaseed-vang-'+i.id+'.png','📸 Ảnh khoe');
+  const m=document.querySelector('#modal .ms');
+  if(m){try{XB.wpc('')}catch(e){}
+   m.insertAdjacentHTML('beforeend','<div class=card style="margin-top:8px"><b>📰 Đăng lên bảng tin</b><textarea id=wpc maxlength=300 rows=2 placeholder="Viết vài dòng cho bài đăng (không bắt buộc)..." style="width:100%;resize:vertical;margin:6px 0" oninput="XB.wpc(this.value)"></textarea><button class=p style="width:100%" id=wpb onclick="XB.wpost()">📰 Đăng ảnh này</button><button class=s style="width:100%;margin-top:6px" id=gdb onclick="GOLD.gdisc()">💬 Gửi lên Discord</button></div>')}
+ }catch(e){toast('Không tạo được ảnh trên thiết bị này')}};
+GOLD.gdisc=async()=>{
+ if(GDB)return;const i=G0().items.find(x=>x.id==GPI);if(!i)return toast('Không tìm thấy món này');
+ if(typeof SHC=='undefined'||!SHC)return toast('Chưa có ảnh để gửi');
+ if(typeof dcSend!='function')return toast('Chưa dùng được tính năng Discord');
+ GDB=1;const b=document.getElementById('gdb');if(b){b.disabled=true;b.textContent='Đang gửi...'}
+ try{const f=gInfo(i),ta=document.getElementById('wpc'),cap=String(ta?ta.value:'').replace(/[ \t]+/g,' ').trim().slice(0,300);
+  const ok=await dcSend('gold',SHC.toDataURL('image/png'),{name:String(i.name||'').slice(0,60),type:f.loai,emoji:'💍',weight:fw2(i.w),karat:f.kl,gem:f.gem,tone:f.tone,custom:i.custom?1:0,value:val(i)|0,paid:(i.paid||0)|0,shop_name:String(s.name||'Tiệm hoa').slice(0,60),caption:cap},true);
+  if(ok)toast('Đã gửi yêu cầu. Bot sẽ đăng lên Discord trong giây lát!')
+ }catch(e){toast('Không gửi được: '+(e&&e.message||e))}
+ GDB=0;const b2=document.getElementById('gdb');if(b2){b2.disabled=false;b2.textContent='💬 Gửi lên Discord'}};
+
 V.gold=function(){
  const g=G0();
  if(!PR.loading&&Date.now()-PR.tryAt>(PR.live?3e5:6e4)){PR.tryAt=Date.now();setTimeout(()=>{loadP(true);loadH(GD.hs,GD.hd)},0)}

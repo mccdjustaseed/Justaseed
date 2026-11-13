@@ -6210,7 +6210,7 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 <script>
 /* ===== v52: Quản trị nằm trong ngăn Cộng đồng (chỉ tài khoản có trong bảng admins) + khóa tài khoản + nhận tiền quản trị viên tặng ===== */
 (function(){
-const A={ok:0,uid:null,v:'home',need:1,busy:0,q:'',mode:'recent',list:null,sel:null,stats:null,banned:null,ct:'posts',content:null,names:{},grants:null,admins:null};
+const A={ok:0,uid:null,v:'home',need:1,busy:0,q:'',mode:'recent',list:null,sel:null,stats:null,banned:null,ct:'posts',content:null,names:{},grants:null,admins:null,roles:null};
 const sb=()=>typeof supabaseClient!='undefined'?supabaseClient:null;
 const E=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fm=n=>Number(n||0).toLocaleString('vi-VN');
@@ -6279,7 +6279,9 @@ const adminsH=()=>`<div class=card><h3>Thêm quản trị viên</h3><div class=r
 
 const viewH=()=>{const p=A.sel,me_=me()&&p.id===me().id;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b>${p.ban?'<span class=tag style="background:#d9534f">Đã khóa</span>':''}${p.admin?'<span class=tag>Admin</span>':''}<button class=s onclick="AD.back()">← Quay lại</button></div><div class=mut>@${E(p.username||'—')}</div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div>${p.ban&&p.reason?'<div class=mut>Lý do khóa: '+E(p.reason)+'</div>':''}<div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button>${me_?'':`<button class=s onclick="${p.admin?`AD.delAdmin('${p.id}')`:`AD.addAdmin('${p.id}')`}">${p.admin?'Gỡ admin':'🛡 Cấp admin'}</button>`}</div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Bình luận</h3>${rowsH(A.cmts,r=>(r.body||'').replace(/^↩\d+\|/,'').replace(/\u27e6A:[^\u27e7]*\u27e7/g,' [đính kèm]'),'AD.delCmt')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
 
-const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['admins','🛡 Quản trị viên',adminsH]];
+const rin=(id,val,ph,t)=>`<input id="${id}" ${t?'type='+t+' ':''}value="${E(val)}" placeholder="${ph}" style="width:100%;margin:2px 0">`;
+const rolesH=()=>`<div class=card><h3>➕ Thêm role bán</h3>${rin('rl-id','','ID role Discord (dãy số)')}${rin('rl-n','','Tên hiển thị')}${rin('rl-p','','Giá (tiền trong game)','number')}${rin('rl-d','','Mô tả (không bắt buộc)')}${rin('rl-s',0,'Thứ tự','number')}<button class=p style="width:100%;margin-top:6px" onclick="AD.roleAdd()">Thêm</button></div>`+(A.roles==null?LOAD:(A.roles.map(it=>{const k='rr'+it.role_id+'-',q=`'${E(it.role_id)}'`;return `<div class=card><div class=row style="margin:0"><b>${E(it.name)}</b><span class="${it.active?'ok':'mut'}">${it.active?'Đang bán':'Đã tắt'}</span></div><div class=mut style="font-size:.72rem">ID ${E(it.role_id)}</div>${rin(k+'n',it.name,'Tên')}${rin(k+'p',it.price,'Giá','number')}${rin(k+'d',it.description,'Mô tả')}${rin(k+'s',it.sort,'Thứ tự','number')}<div class=row><button class=p onclick="AD.roleSave(${q})">Lưu</button><button class=s onclick="AD.roleToggle(${q})">${it.active?'Tắt bán':'Bật bán'}</button><button class=s onclick="AD.roleDel(${q})">Xóa</button></div></div>`}).join('')||EMPTY('Chưa có role nào.')));
+const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['roles','🎭 Role',rolesH],['admins','🛡 Quản trị viên',adminsH]];
 V.adm=()=>{
  if(!A.ok)return EMPTY('Bạn không có quyền quản trị.');
  if(A.need){A.need=0;setTimeout(()=>AD.go(A.v),0)}
@@ -6295,6 +6297,7 @@ window.AD={
    else if(v=='content')await this._content();
    else if(v=='banned')await this._banned();
    else if(v=='grants')await this._grants();
+   else if(v=='roles')await this._roles();
    else if(v=='admins')await this._admins();
   }catch(er){fail(er)}
   A.busy=0;redraw()},
@@ -6329,6 +6332,13 @@ window.AD={
  async _grants(){let r=await sb().from('admin_grants').select('*').order('created_at',{ascending:false}).limit(50);
   if(r.error)r=await sb().from('admin_grants').select('*').limit(50);if(r.error)throw r.error;
   A.names=await namesOf(r.data.map(x=>x.user_id));A.grants=r.data},
+ async _roles(){const r=await sb().from('shop_roles').select('*').order('sort');if(r.error)throw r.error;A.roles=r.data||[]},
+ _rf(pre){const g=i=>{const e=document.getElementById(pre+i);return e?e.value:''},name=g('n').trim().slice(0,60),price=Math.floor(Number(g('p'))),d=g('d').trim().slice(0,120),sort=Math.floor(Number(g('s')))||0;if(!name){toast('Nhập tên role');return null}if(!(price>0)){toast('Giá phải lớn hơn 0');return null}return{name,price,description:d||null,sort}},
+ async _rdone(r,m){if(r.error)throw r.error;toast(m);try{if(window.ROLES)ROLES.stale()}catch(e){}await AD.go('roles')},
+ async roleAdd(){const id=String((document.getElementById('rl-id')||{}).value||'').trim();if(!/^\d{5,25}$/.test(id))return toast('ID role không đúng (dãy số lấy từ Discord)');const f=this._rf('rl-');if(!f)return;try{await this._rdone(await sb().from('shop_roles').insert({role_id:id,...f,active:true}),'Đã thêm role')}catch(er){fail(er)}},
+ async roleSave(id){const f=this._rf('rr'+id+'-');if(!f)return;try{await this._rdone(await sb().from('shop_roles').update(f).eq('role_id',id),'Đã lưu role')}catch(er){fail(er)}},
+ async roleToggle(id){const it=(A.roles||[]).find(x=>x.role_id==id);if(!it)return;try{await this._rdone(await sb().from('shop_roles').update({active:!it.active}).eq('role_id',id),it.active?'Đã tắt bán':'Đã bật bán')}catch(er){fail(er)}},
+ async roleDel(id){if(!confirm('Xóa role này khỏi cửa hàng? Nếu đã có người mua thì hãy chọn Tắt bán.'))return;try{const r=await sb().from('shop_roles').delete().eq('role_id',id);if(r.error&&/foreign key|violates/i.test(r.error.message))return toast('Role đã có người mua, hãy chọn Tắt bán thay vì xóa');await this._rdone(r,'Đã xóa role')}catch(er){fail(er)}},
  async _admins(){const r=await sb().from('admins').select('*');if(r.error)throw r.error;
   A.names=await namesOf(r.data.map(x=>x.user_id));A.admins=r.data},
  async open(id){
@@ -7632,6 +7642,53 @@ try{goOrig=SD.go;const oo=SD.open;
  SD.go=function(k){FN.html=null;if(k!='fun'&&FN.bq&&FN.bq.on)FN.bq=null;return goOrig.apply(this,arguments)};
  SD.open=function(k){FN.html=null;return oo.apply(this,arguments)}}catch(e){}
 document.head.insertAdjacentHTML('beforeend','<style>.fng{display:grid;gap:8px}.fng3{grid-template-columns:repeat(3,minmax(0,1fr))}.fng4{grid-template-columns:repeat(4,minmax(0,1fr))}.fnc{background:var(--card);border:2px solid var(--ln);border-radius:16px;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.74rem;padding:6px 2px;font-family:inherit}.fnc.on{border-color:var(--g2)}.fnc.dn{opacity:.45}.fnbig{font-size:3.4rem;text-align:center;line-height:1.15}.fnbar{height:10px;border-radius:99px;background:var(--ln);overflow:hidden}.fnbar i{display:block;height:100%;background:var(--g2);width:100%;transition:width .15s linear}</style>');
+})();
+</script>
+<script>
+/* ===== Mua role Discord (bot gắn role sau khi mua) ===== */
+(function(){
+const RL={items:[],mine:[],loaded:0,busy:0,err:''};
+const sb=()=>typeof supabaseClient!='undefined'?supabaseClient:null;
+const logged=()=>typeof currentUser!='undefined'&&!!currentUser&&!!window.DISCORD_OK&&!!sb();
+const owned=id=>RL.mine.some(x=>x.role_id==id&&x.status!='failed');
+async function load(){
+  if(RL.busy||!logged())return;RL.busy=1;RL.err='';
+  try{
+    const a=await sb().from('shop_roles').select('role_id,name,price,description').eq('active',true).order('sort');
+    if(a.error)throw a.error;
+    const b=await sb().from('role_purchases').select('id,role_id,status,refunded,price').eq('user_id',currentUser.id);
+    if(b.error)throw b.error;
+    RL.items=a.data||[];RL.mine=b.data||[];RL.loaded=1;
+    for(const r of RL.mine.filter(x=>x.status=='failed'&&!x.refunded)){
+      const u=await sb().from('role_purchases').update({refunded:true}).eq('id',r.id).eq('refunded',false).select('id');
+      if(!u.error&&u.data&&u.data.length){const m=Number(r.price)||0;s.money+=m;L('in','Hoàn tiền','Hoàn tiền role Discord',1,m);r.refunded=true;toast('Đã hoàn tiền một đơn role không gắn được');try{save()}catch(e){}}
+    }
+  }catch(e){RL.err=String(e&&e.message||e)}
+  RL.busy=0;if(typeof tab!='undefined'&&tab=='roles')R()}
+async function buy(id){
+  const it=RL.items.find(x=>x.role_id==id);if(!it||RL.busy)return;
+  if(owned(id))return toast('Bạn đã mua role này rồi');
+  const price=Number(it.price);if(s.money<price)return toast('Không đủ tiền');
+  if(!confirm('Mua role "'+it.name+'" với giá '+$(price)+'?'))return;
+  RL.busy=1;
+  if(!(await dcGate())){RL.busy=0;return}
+  const r=await sb().from('role_purchases').insert({user_id:currentUser.id,discord_id:String(dcMyId()),role_id:id,price}).select('id,role_id,status,refunded,price').single();
+  RL.busy=0;
+  if(r.error){toast(/duplicate|unique/i.test(r.error.message)?'Bạn đã mua role này rồi':'Không mua được: '+r.error.message);return}
+  s.money-=price;L('out','Role Discord','Role '+it.name,1,price);RL.mine.push(r.data);try{save()}catch(e){}
+  toast('Đã đặt mua. Bot sẽ gắn role trong giây lát!');R();setTimeout(()=>{if(!RL.busy)load()},8000)}
+window.ROLES={buy,reload(){RL.loaded=0;RL.err='';R()},stale(){RL.loaded=0}};
+V.roles=()=>{
+  const hd='<h3>🎭 Role Discord</h3>';
+  if(!logged())return '<div class=card>'+hd+'<p class=mut>Đăng nhập Discord và tham gia server của bot để mua role.</p></div>';
+  if(RL.err)return '<div class=card>'+hd+'<p class=mut>Không tải được danh sách role: '+esc(RL.err)+'</p><button class=s onclick="ROLES.reload()">Thử lại</button></div>';
+  if(!RL.loaded){if(!RL.busy)load();return '<div class=card>'+hd+'<p class=mut>Đang tải...</p></div>'}
+  if(!RL.items.length)return '<div class=card>'+hd+'<p class=mut>Hiện chưa có role nào để mua.</p></div>';
+  return '<div class=card>'+hd+'<p class=mut>Mua bằng tiền trong game, bot sẽ gắn role cho bạn trên server Discord. Mỗi role mua một lần.</p></div>'+RL.items.map(it=>{
+    const m=RL.mine.find(x=>x.role_id==it.role_id&&x.status!='failed'),p=Number(it.price);
+    const btn=m?'<span class="ok">'+(m.status=='done'?'Đã gắn role':'Đang chờ bot…')+'</span>':'<button class=p '+(s.money>=p?'':'disabled')+' onclick="ROLES.buy(\''+esc(String(it.role_id))+'\')">'+$(p)+'</button>';
+    return '<div class=card><div class=row><span><b>'+esc(it.name)+'</b>'+(it.description?'<br><span class=mut>'+esc(it.description)+'</span>':'')+'</span>'+btn+'</div></div>'}).join('')};
+TABS.splice(TABS.findIndex(t=>t[0]=='up')+1,0,['roles','star','Role']);
 })();
 </script>
 

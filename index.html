@@ -7670,9 +7670,32 @@ async function load(){
     let a=await sb().from('shop_roles').select('role_id,name,price,description,color,color2,effect').eq('active',true).order('sort');
     if(a.error)a=await sb().from('shop_roles').select('role_id,name,price,description').eq('active',true).order('sort');
     if(a.error)throw a.error;
+
+    // Lấy màu thật từ Discord (bảng guild_roles)
+    const ids=(a.data||[]).map(x=>x.role_id);
+    let colorMap={};
+    if(ids.length){
+      const g=await sb().from('guild_roles').select('role_id,color').in('role_id',ids);
+      if(!g.error&&g.data){
+        g.data.forEach(r=>{ if(r.color) colorMap[r.role_id]=r.color; });
+      }
+    }
+
+    RL.items=(a.data||[]).map(it=>{
+      const dc=colorMap[it.role_id];
+      return {
+        ...it,
+        // Ưu tiên màu từ Discord, không có thì dùng màu trong shop_roles
+        color: dc || it.color || '#99aab5',
+        color2: dc || it.color2 || it.color || '#99aab5',
+        // Hiệu ứng vẫn lấy từ shop_roles (Discord không có gradient/shimmer/holo/glow)
+        effect: it.effect || 'none'
+      };
+    });
+
     const b=await sb().from('role_purchases').select('id,role_id,status,refunded,price').eq('user_id',currentUser.id);
     if(b.error)throw b.error;
-    RL.items=a.data||[];RL.mine=b.data||[];RL.loaded=1;
+    RL.mine=b.data||[];RL.loaded=1;
     for(const r of RL.mine.filter(x=>x.status=='failed'&&!x.refunded)){
       const u=await sb().from('role_purchases').update({refunded:true}).eq('id',r.id).eq('refunded',false).select('id');
       if(!u.error&&u.data&&u.data.length){const m=Number(r.price)||0;s.money+=m;L('in','Hoàn tiền','Hoàn tiền role Discord',1,m);r.refunded=true;toast('Đã hoàn tiền một đơn role không gắn được');try{save()}catch(e){}}

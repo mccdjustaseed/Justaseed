@@ -2160,7 +2160,7 @@ function qTog(){MS.qo=MS.qo?0:1;qui()}
 function fTog(){MS.fo=MS.fo?0:1;fui()}
 function qvTog(){MS.qv=MS.qv=='f'?'q':'f';qui()}
 V.music=()=>{setTimeout(()=>{loadApi().catch(()=>{});if(!ctl&&MS.now)ensureCtl(MS.now.id).catch(()=>{})},0);
- return `<div class="card" id="mnow">${nowH()}</div><div class="card" id="mq">${qH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Link YouTube" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Thêm</button></div><div id="mres">${resH()}</div></div>`};
+ return `<div class="card" id="mnow">${nowH()}</div><div class="card" id="mly">${lyH()}</div><div class="card" id="mq">${qH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Link YouTube" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Thêm</button></div><div id="mres">${resH()}</div></div>`};
 function resUI(){const e=$e('mres');if(e)e.innerHTML=resH()}
 function tickUI(e){
  const d=MS.dur||(MS.now&&MS.now.dur)||0,p=d?Math.min(1,e/d):0;
@@ -2168,7 +2168,7 @@ function tickUI(e){
  const a=$e('mtl');if(a&&!MS.seeking)a.textContent=fm(e);
  const b=$e('mtr');if(b)b.textContent=fm(d);
  const m=$e('mpb');if(m)m.style.width=(p*100)+'%';const rg=$e('mvp');if(rg)rg.style.strokeDashoffset=100-p*100;
- document.querySelectorAll('.qeta').forEach(x=>{x.textContent=etaT(+x.dataset.i)})}
+ document.querySelectorAll('.qeta').forEach(x=>{x.textContent=etaT(+x.dataset.i)});try{lyTick(e)}catch(_){}}
 function placeMv(){
  let v=$e('mv');
  if(!v){document.body.insertAdjacentHTML('beforeend','<div id="mv"></div>');v=$e('mv');miniSig='';mini(true)}
@@ -2282,6 +2282,49 @@ function rsTry(e){
  MS.rsLoad=0}
 ['pointerdown','touchend','click','keydown'].forEach(n=>addEventListener(n,rsTry,{capture:true,passive:true}));
 setTimeout(()=>{if(MS.arm&&!MS.playing&&scr=='game')toast('🎵 Chạm vào màn hình để nghe tiếp bài đang dở')},3500);
+
+/* ---------- LỜI BÀI HÁT (tra từ LRCLIB theo tên bài, chạy theo thời gian của YouTube) ---------- */
+const LYC={};let LY={id:'',st:'',L:[],P:'',i:-2,off:0};
+document.head.insertAdjacentHTML('beforeend','<style>#mly .lb{position:relative;height:210px;overflow:auto;text-align:center;scroll-behavior:smooth;padding:70px 0}#mly .ll{padding:4px 8px;color:var(--mut);transition:color .2s,font-size .2s}#mly .ll.on{color:var(--g3);font-weight:700;font-size:1.15rem}#mly pre{white-space:pre-wrap;font:inherit;margin:0;padding:0 8px}</style>');
+function lyClean(n){return String(n||'').replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|music video|mv|lyrics?|lyric video|audio|visualizer|hd|4k)\b.*$/i,' ').replace(/\s+/g,' ').trim()}
+function lyParse(s){const o=[];String(s||'').split('\n').forEach(l=>{const m=l.match(/^((?:\[\d+:\d+(?:\.\d+)?\])+)(.*)$/);if(!m)return;const tx=m[2].trim();m[1].replace(/\[(\d+):(\d+(?:\.\d+)?)\]/g,(_,a,b)=>{o.push({t:+a*60+ +b,s:tx})})});return o.sort((a,b)=>a.t-b.t)}
+function lyH(){
+ if(!MS.now)return '<h3>🎤 Lời bài hát</h3><p class=mut style="margin:0">Phát một bài để xem lời.</p>';
+ let h='<div class=row style="margin-top:0"><h3 style="margin:0">🎤 Lời bài hát</h3>'+(LY.L.length?'<span><button class=s onclick="LYO(-.5)" aria-label="Lời sớm hơn">−0.5s</button> <button class=s onclick="LYO(.5)" aria-label="Lời trễ hơn">+0.5s</button></span>':'')+'</div>';
+ if(LY.st=='load')return h+'<p class=mut style="margin:0">Đang tìm lời…</p>';
+ if(LY.L.length)return h+'<div class=lb id=mlb>'+LY.L.map((x,i)=>'<div class=ll data-i='+i+'>'+(esc(x.s)||'♪')+'</div>').join('')+'</div>';
+ if(LY.P)return h+'<div class=lb id=mlb><pre>'+esc(LY.P)+'</pre></div><p class=mut style="margin:4px 0 0">Bài này chỉ có lời thường, không chạy theo nhạc.</p>';
+ return h+'<p class=mut style="margin:0">'+(LY.st=='err'?'Không tải được lời (kiểm tra mạng).':'Chưa tìm thấy lời cho bài này.')+'</p>'}
+function lyUI(){const e=$e('mly');if(e){e.innerHTML=lyH();LY.i=-2}}
+async function lyFetch(t){
+ const id=t.id;
+ if(LYC[id]){LY=Object.assign({id,st:'ok',i:-2,off:0},LYC[id]);lyUI();return}
+ LY={id,st:'load',L:[],P:'',i:-2,off:0};lyUI();
+ try{
+  let nm=lyClean(t.name),ar=lyClean(t.ar||'').replace(/\s*-\s*Topic$/i,'');
+  const sp=nm.split(/\s+[-–|]\s+/);if(sp.length>=2){ar=sp[0];nm=sp.slice(1).join(' ')}
+  let r=[];
+  for(const qs of [{track_name:nm,artist_name:ar},{q:(ar+' '+nm).trim()}]){
+   const res=await fetch('https://lrclib.net/api/search?'+new URLSearchParams(qs));
+   if(!res.ok)continue;r=await res.json();if(r&&r.length)break}
+  if(LY.id!==id)return;
+  const d=(MS.dur||(MS.now&&MS.now.dur)||0)/1000;
+  let c=(r||[]).filter(x=>x.syncedLyrics||x.plainLyrics);
+  if(d){const n=c.filter(x=>Math.abs((x.duration||0)-d)<=15);if(n.length)c=n}
+  c.sort((a,b)=>(!!b.syncedLyrics-!!a.syncedLyrics)||(d?Math.abs(a.duration-d)-Math.abs(b.duration-d):0));
+  const p=c[0],o={L:p&&p.syncedLyrics?lyParse(p.syncedLyrics):[],P:p&&p.plainLyrics||''};
+  LYC[id]=o;LY=Object.assign({id,st:'ok',i:-2,off:0},o);lyUI()
+ }catch(e){if(LY.id===id){LY.st='err';lyUI()}}}
+function lyTick(e){
+ const t=MS.now;if(!t||!$e('mly'))return;
+ if(LY.id!==t.id){lyFetch(t);return}
+ if(!LY.L.length)return;
+ const s=e/1000+LY.off;let i=-1;for(let k=0;k<LY.L.length&&LY.L[k].t<=s;k++)i=k;
+ if(i===LY.i)return;LY.i=i;
+ const b=$e('mlb');if(!b)return;
+ b.querySelectorAll('.ll.on').forEach(x=>x.classList.remove('on'));
+ const a=b.querySelector('.ll[data-i="'+i+'"]');if(a){a.classList.add('on');b.scrollTop=a.offsetTop-b.clientHeight/2+a.clientHeight/2}}
+window.LYO=d=>{LY.off=Math.round((LY.off+d)*10)/10;LY.i=-2;toast('Lệch lời: '+(LY.off>0?'+':'')+LY.off+'s');try{lyTick(est())}catch(e){}};
 
 /* ---------- khởi tạo ---------- */
 document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></div><div id="spEmb"><div id="spEl"></div><button id="spX" aria-label="Quay lại nghe nhạc" onclick="MU.movie(0)">✕</button></div>');

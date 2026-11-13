@@ -1993,7 +1993,7 @@ let YM=0;
 function unm(){if(!YM||!ctl)return;try{ctl.unMute();ctl.setVolume(100);setTimeout(()=>{try{if(ctl.isMuted()){if(MS.playing)toast('Đang phát tắt tiếng — chạm vào màn hình để bật tiếng')}else YM=0}catch(e){}},500)}catch(e){}}
 ['pointerdown','touchend','click','keydown'].forEach(n=>addEventListener(n,()=>{if(YM)unm()},{capture:true,passive:true}));
 addEventListener('pointerdown',()=>{loadApi().catch(()=>{})},{once:true,capture:true,passive:true});
-let stAt=0,hidT=0,errN=0,aut=0,dtT=0,dtS=0,msId='',sil=null,silUrl='';
+let stAt=0,hidT=0,errN=0,aut=0,dtT=0,dtS=0,msId='',sil=null,silUrl='',BW=0,bgW=0;
 function loadApi(){
  if(apiP)return apiP;
  apiP=new Promise((res,rej)=>{
@@ -2045,7 +2045,7 @@ function watch(t){
 function onSt(e){
  const st=e&&e.data;
  if(st===1){
-  errN=0;eRn=0;apiTry=0;wdK++;MS.arm=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;if(YM)unm();try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
+  errN=0;eRn=0;apiTry=0;wdK++;MS.arm=0;MS.rs=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;if(YM)unm();try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
   try{MS.pos=ctl.getCurrentTime()*1000;const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(x){}
   ui();duck()}
  else if(st===2){
@@ -2245,23 +2245,34 @@ function mkSilence(){
  v.setUint32(24,sr,true);v.setUint32(28,sr,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);
  for(let i=0;i<n;i++)v.setUint8(44+i,128);
  silUrl=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));return silUrl}
-function mediaSess(){if(!('mediaSession' in navigator))return;try{navigator.mediaSession.metadata=null;navigator.mediaSession.playbackState='none'}catch(e){}}
-function bg(){try{if(sil&&!sil.paused)sil.pause()}catch(e){}mediaSess()}
+function mediaSess(){if(BW&&document.hidden)return;if(!('mediaSession' in navigator))return;try{navigator.mediaSession.metadata=null;navigator.mediaSession.playbackState='none'}catch(e){}}
+function silOn(){try{if(!sil){sil=new Audio(mkSilence());sil.loop=true}sil.volume=.02;const p=sil.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
+function bg(){if(MS.playing)silOn();else if(!(BW&&document.hidden)){try{if(sil&&!sil.paused)sil.pause()}catch(e){}}mediaSess()}
+function msOn(){const ms=navigator.mediaSession;if(!ms)return;const t=MS.now||{};
+ try{ms.metadata=new MediaMetadata({title:t.name||'Justaseed',artist:t.ar||'Justaseed',artwork:t.th?[{src:t.th,sizes:'480x360',type:'image/jpeg'}]:[]});ms.playbackState='playing'}catch(e){}
+ const h=(n,f)=>{try{ms.setActionHandler(n,f)}catch(e){}};
+ h('play',()=>{BW=1;if(!MS.playing)tog();bgKeep()});
+ h('pause',()=>{BW=0;if(MS.playing)tog()});
+ h('previoustrack',()=>prev());h('nexttrack',()=>next(0))}
+/* phát nền: giữ phiên âm thanh bằng tiếng im lặng + nút ở màn hình khóa + thử phát lại nếu trình duyệt tự dừng video */
+function bgKeep(){BW=1;silOn();try{msOn()}catch(e){}try{sv()}catch(e){}
+ clearInterval(bgW);bgW=setInterval(()=>{if(!document.hidden||!BW){clearInterval(bgW);return}
+  silOn();if(MS.now&&!MS.playing){try{ctl&&ctl.playVideo()}catch(e){}}},2500)}
 (function msInit(){if(!('mediaSession' in navigator))return;['play','pause','previoustrack','nexttrack','seekbackward','seekforward','seekto'].forEach(n=>{try{navigator.mediaSession.setActionHandler(n,null)}catch(e){}})})();
 function bgStop(){
- try{if(MS.now&&(MS.playing||MS.want)){MS.rs=1;MS.pos=est();MS.evT=Date.now();MS.want=0;kid++;MS.playing=0;try{ctl&&ctl.pauseVideo()}catch(e){}try{ui()}catch(e){}}}catch(e){}
+ try{if(MS.now&&(MS.playing||MS.want)){bgKeep()}}catch(e){}
  try{duck()}catch(e){}try{clearInterval(MT)}catch(e){}
  try{if(AC&&AC.state=='running')AC.suspend()}catch(e){}
  try{sv()}catch(e){}}
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){hidT=Date.now();bgStop();return}
- hidT=0;
+ hidT=0;BW=0;clearInterval(bgW);
  try{if(AC&&AC.state=='suspended')AC.resume()}catch(e){}
  try{if(MS.rs&&MS.now){MS.rs=0;MS.arm=1;MS.want=1;if(ctl&&loaded===MS.now.id){try{ctl.playVideo()}catch(e){}kick(ctl)}else go(MS.now)}
  else if(!MS.playing&&!MS.want&&s&&s.mus&&scr=='game')music()}catch(e){}
  tickUI(est());mediaSess()});
 addEventListener('pagehide',()=>{hidT=Date.now();bgStop()});
-/* v55: nhạc KHÔNG chạy nền (ẩn/tắt màn hình/thoát web là dừng). Quay lại web: tự phát tiếp; nếu trình duyệt chặn thì chạm vào màn hình là phát tiếp */
+/* v56: thử cho nhạc YouTube chạy nền. Nếu trình duyệt vẫn chặn thì như cũ: quay lại web tự phát tiếp, hoặc chạm màn hình để phát tiếp */
 function rsTry(e){
  if(!MS.arm||!MS.now)return;
  if(MS.playing){MS.arm=0;return}

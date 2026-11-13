@@ -2277,19 +2277,40 @@ function rsTry(e){
 setTimeout(()=>{if(MS.arm&&!MS.playing&&scr=='game')toast('🎵 Chạm vào màn hình để nghe tiếp bài đang dở')},3500);
 
 /* ---------- LỜI BÀI HÁT (tra từ LRCLIB theo tên bài, chạy theo thời gian của YouTube) ---------- */
-const LYC={};let LY={id:'',st:'',L:[],P:'',i:-2,off:0};
-document.head.insertAdjacentHTML('beforeend','<style>#mly .lyb{position:relative;height:210px;overflow:auto;text-align:center;scroll-behavior:smooth;padding:70px 0}#mly .lyl{padding:4px 8px;color:var(--mut);transition:color .28s ease,font-size .28s ease,opacity .28s ease;line-height:1.45;min-height:1.45em}#mly .lyl.on{color:var(--g3);font-weight:700;font-size:1.12rem}#mly .lyb.ly1{height:auto;min-height:84px;overflow:visible;padding:18px 8px;display:flex;align-items:center;justify-content:center}#mly .ly1 .lyl{font-size:1.2rem;line-height:1.4}#mly .lyb.ly2{height:auto;max-height:0;min-height:0;overflow:hidden;padding:0 4px;opacity:0;text-align:center;transition:max-height .5s cubic-bezier(.22,.8,.25,1),opacity .4s ease,padding .5s cubic-bezier(.22,.8,.25,1)}#mly .lyb.ly2.ly-open{max-height:4.2em;opacity:1;padding:12px 4px}#mly .ly-win{height:2.2em;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}#mly .ly-stack{position:relative;width:100%;height:2.2em}#mly .ly2 .lyl{position:absolute;left:0;right:0;top:0;height:2.2em;display:flex;align-items:center;justify-content:center;font-size:1.12rem;font-weight:700;color:var(--g3);padding:0 12px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;will-change:transform,opacity}#mly .ly2 .lyl.ly-in{animation:lyIn .42s cubic-bezier(.22,.8,.25,1) both}#mly .ly2 .lyl.ly-out{animation:lyOut .38s cubic-bezier(.4,0,.2,1) both}#mly pre{white-space:pre-wrap;font:inherit;margin:0;padding:0 8px}@keyframes lyIn{from{transform:translateY(120%);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes lyOut{from{transform:translateY(0);opacity:1}to{transform:translateY(-120%);opacity:0}}@media(prefers-reduced-motion:reduce){#mly .lyb.ly2{transition:none}#mly .ly2 .lyl.ly-in,#mly .ly2 .lyl.ly-out{animation:none}}</style>');
+const LYC={};let LY={id:'',st:'',L:[],P:'',i:-2,off:0};let LYH=0;/* chieu cao (px) cua khung loi, giu nguyen suot bai va giua cac bai co loi */
+document.head.insertAdjacentHTML('beforeend','<style>#mly .lyb{position:relative;height:210px;overflow:auto;text-align:center;scroll-behavior:smooth;padding:70px 0}#mly .lyl{padding:4px 8px;color:var(--mut);transition:color .28s ease,font-size .28s ease,opacity .28s ease;line-height:1.45;min-height:1.45em}#mly .lyl.on{color:var(--g3);font-weight:700;font-size:1.12rem}#mly .lyb.ly1{height:auto;min-height:84px;overflow:visible;padding:18px 8px;display:flex;align-items:center;justify-content:center}#mly .ly1 .lyl{font-size:1.2rem;line-height:1.4}#mly .lyb.ly2{height:auto;min-height:0;overflow:hidden;padding:0 4px;opacity:0;text-align:center;transition:opacity .4s ease,padding .5s cubic-bezier(.22,.8,.25,1)}#mly .lyb.ly2.ly-open{opacity:1;padding:12px 4px}#mly .ly-win{height:0;overflow:hidden;position:relative;transition:height .5s cubic-bezier(.22,.8,.25,1)}#mly .ly-stack{position:relative;width:100%;height:100%}#mly .ly2 .lyl{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:1.12rem;font-weight:700;color:var(--g3);padding:0 12px;line-height:1.3;white-space:normal;will-change:transform,opacity}#mly .ly2 .lyl>span{display:block;max-width:100%;overflow-wrap:anywhere;word-break:break-word;text-wrap:balance}#mly .ly2 .lyl.ly-in{animation:lyIn .42s cubic-bezier(.22,.8,.25,1) both}#mly .ly2 .lyl.ly-out{animation:lyOut .38s cubic-bezier(.4,0,.2,1) both}#mly pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:0;padding:0 8px}@keyframes lyIn{from{transform:translateY(120%);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes lyOut{from{transform:translateY(0);opacity:1}to{transform:translateY(-120%);opacity:0}}@media(prefers-reduced-motion:reduce){#mly .lyb.ly2,#mly .ly-win{transition:none}#mly .ly2 .lyl.ly-in,#mly .ly2 .lyl.ly-out{animation:none}}</style>');
 function lyClean(n){return String(n||'').replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|music video|mv|lyrics?|lyric video|audio|visualizer|hd|4k)\b.*$/i,' ').replace(/\s+/g,' ').trim()}
 function lyParse(s){const o=[];String(s||'').split('\n').forEach(l=>{const m=l.match(/^((?:\[\d+:\d+(?:\.\d+)?\])+)(.*)$/);if(!m)return;const tx=m[2].trim();m[1].replace(/\[(\d+):(\d+(?:\.\d+)?)\]/g,(_,a,b)=>{o.push({t:+a*60+ +b,s:tx})})});return o.sort((a,b)=>a.t-b.t)}
 function lyH(){
- if(!MS.now)return '<h3>🎤 Lời bài hát</h3><p class=mut style="margin:0">Phát một bài để xem lời.</p>';
+ if(!MS.now){LYH=0;return '<h3>🎤 Lời bài hát</h3><p class=mut style="margin:0">Phát một bài để xem lời.</p>'}
  let h='<div class=row style="margin-top:0"><h3 style="margin:0">🎤 Lời bài hát</h3>'+'</div>';
- if(LY.st=='load')return h+'<p class=mut style="margin:0">Đang tìm lời…</p>';
- if(LY.L.length){
-  return h+'<div class="lyb ly2" id=mlb><div class="ly-win"><div class="ly-stack" id="mll-stack"><div class="lyl ly-in" id="mll">♪</div></div></div></div>';
+ /* đang tìm lời nhưng bài trước có lời: giữ khung mở nguyên chiều cao, không co lại */
+ if(LY.st=='load'&&!LYH)return h+'<p class=mut style="margin:0">Đang tìm lời…</p>';
+ if(LY.L.length||(LY.st=='load'&&LYH)){
+  const open=LYH>0;
+  return h+'<div class="lyb ly2'+(open?' ly-open':'')+'" id=mlb><div class="ly-win"'+(open?' style="height:'+LYH+'px"':'')+'><div class="ly-stack" id="mll-stack"><div class="lyl ly-in" id="mll"><span>♪</span></div></div></div></div>';
  }
  if(LY.P)return h+'<div class=lyb id=mlb><pre>'+esc(LY.P)+'</pre></div><p class=mut style="margin:4px 0 0">Bài này chỉ có lời thường, không chạy theo nhạc.</p>';
  return h+'<p class=mut style="margin:0">'+(LY.st=='err'?'Không tải được lời (kiểm tra mạng).':'Chưa tìm thấy lời cho bài này.')+'</p>'}
+/* Chiều cao khung = chiều cao của câu dài nhất (sau khi xuống dòng) của cả bài, đo một lần rồi giữ cố định.
+   Bài kế có lời: giữ nguyên chiều cao, chỉ nở thêm nếu bài mới có câu cần nhiều dòng hơn. */
+function lyFit(force){
+ const stack=$e('mll-stack'),win=stack&&stack.parentNode;if(!stack||!win||!LY.L.length)return;
+ const w=stack.clientWidth;
+ if(!w){if(!win.style.height||win.style.height==='0px')win.style.height=(LYH||0)?LYH+'px':'2.2em';return}
+ const wc=LY.fw&&LY.fw!==w;
+ if(force||wc){LY.need=0;LYH=0}
+ if(!LY.need){
+  const probe=stack.querySelector('.lyl'),fs=parseFloat(getComputedStyle(probe).fontSize)||18;
+  const m=document.createElement('div');m.className='lyl';
+  m.style.cssText='visibility:hidden;pointer-events:none;bottom:auto;height:auto;animation:none;transition:none';
+  const sp=document.createElement('span');sp.textContent='♪';m.appendChild(sp);stack.appendChild(m);
+  let mx=sp.offsetHeight;const seen=new Set();
+  for(const l of LY.L){const t=l.s;if(!t||t.length<14||seen.has(t))continue;seen.add(t);sp.textContent=t;const hh=sp.offsetHeight;if(hh>mx)mx=hh}
+  m.remove();
+  LY.need=Math.ceil(Math.max(fs*2.2,mx+fs*.6));LY.fw=w}
+ LYH=Math.max(LYH,LY.need);
+ if(win.style.height!==LYH+'px')win.style.height=LYH+'px'}
 function lyOpen(){
  const b=$e('mlb');if(!b||!b.classList.contains('ly2'))return;
  b.classList.remove('ly-open');
@@ -2306,12 +2327,24 @@ function lyShow(i){
   const old=cur;
   setTimeout(()=>{try{if(old.parentNode===stack)old.remove()}catch(e){}},400);
  }
- /* câu mới từ dưới lên, nằm giữa khung */
+ /* câu mới từ dưới lên, nằm giữa khung (khung đã cố định chiều cao nên không giật) */
  const n=document.createElement('div');
- n.className='lyl ly-in';n.id='mll';n.textContent=tx;
+ n.className='lyl ly-in';n.id='mll';
+ const sp=document.createElement('span');sp.textContent=tx;n.appendChild(sp);
  stack.appendChild(n);
 }
-function lyUI(){const e=$e('mly');if(e){e.innerHTML=lyH();LY.i=-2;if(LY.L&&LY.L.length){lyOpen();requestAnimationFrame(()=>lyShow(-1))}}}
+addEventListener('resize',()=>{try{lyFit()}catch(e){}});
+try{document.fonts&&document.fonts.ready.then(()=>{try{lyFit(1)}catch(e){}})}catch(e){}
+function lyUI2(){const e=$e('mly');if(e){e.innerHTML=lyH();LY.i=-2;if(LY.L&&LY.L.length){const b=$e('mlb');if(b&&!b.classList.contains('ly-open'))lyOpen();requestAnimationFrame(()=>{lyShow(-1);lyFit()})}}}
+function lyUI(){
+ const e=$e('mly');if(!e)return;
+ const b=$e('mlb');
+ /* bài mới không có lời: khung co lại mượt rồi mới đổi nội dung */
+ if(!LY.L.length&&LY.st!=='load'&&LYH>0&&b&&b.classList.contains('ly2')){
+  LYH=0;const win=b.querySelector('.ly-win');b.classList.remove('ly-open');if(win)win.style.height='0px';
+  const id=LY.id;clearTimeout(lyUI.t);lyUI.t=setTimeout(()=>{if(LY.id===id)lyUI2()},520);return}
+ clearTimeout(lyUI.t);lyUI2()}
+
 async function lyFetch(t){
  const id=t.id;
  if(LYC[id]){LY=Object.assign({id,st:'ok',i:-2,off:0},LYC[id]);lyUI();return}
@@ -2336,10 +2369,11 @@ function lyTick(e){
  if(LY.id!==t.id){lyFetch(t);return}
  if(!LY.L.length)return;
  const s=e/1000+LY.off;let i=-1;for(let k=0;k<LY.L.length&&LY.L[k].t<=s;k++)i=k;
- if(i===LY.i)return;LY.i=i;
- const b=$e('mlb');if(!b)return;
+ const b=$e('mlb');if(!b||!b.classList.contains('ly2'))return;
+ LY.i=i;
  if(!b.classList.contains('ly-open'))lyOpen();
  lyShow(i);
+ const st=$e('mll-stack');if(st&&st.clientWidth!==LY.fw)lyFit();
 }
 
 /* ---------- khởi tạo ---------- */

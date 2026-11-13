@@ -3447,8 +3447,11 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
       const r = await supabaseClient.from('game_saves').select('user_id').eq('user_id', uid).maybeSingle();
       if (r && r.error) {
         const m = (r.error.message || '') + (r.error.code || '');
-        if (/42P01|PGRST205|game_saves|schema cache/i.test(m)) {
-          toast('Chưa tạo được bảng game_saves trên Supabase. Hãy chạy SQL tạo bảng trước.');
+        if (!window.__gsErrShown) {
+          window.__gsErrShown = true;
+          if (/42P01|PGRST205|schema cache|does not exist/i.test(m)) toast('Supabase chưa có bảng game_saves. Hãy chạy file justaseed-game-saves.sql.');
+          else if (/42501|permission denied|row-level security/i.test(m)) toast('Bảng game_saves thiếu quyền truy cập. Hãy chạy lại file justaseed-game-saves.sql.');
+          else toast('Không kiểm tra được tài khoản: ' + (r.error.message || m));
         }
         return null; // lỗi: không chắc, KHÔNG được coi là chưa đăng ký
       }
@@ -3584,8 +3587,15 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
   }, 4000);
 
   // Xử lý sau khi Discord OAuth trả về
-  async function onSession(user){
-    if (!user) { window.DISCORD_OK = false; return; }
+  let _sessBusy = null;
+  function onSession(user){
+    if (!user) { window.DISCORD_OK = false; return Promise.resolve(); }
+    if (_sessBusy && _sessBusy.id === user.id) return _sessBusy.p;
+    const p = onSessionRun(user).finally(function(){ if (_sessBusy && _sessBusy.p === p) _sessBusy = null; });
+    _sessBusy = { id: user.id, p: p };
+    return p;
+  }
+  async function onSessionRun(user){
     currentUser = user;
     let intent = null;
     try{ intent = localStorage.getItem(INTENT_KEY); localStorage.removeItem(INTENT_KEY); }catch(e){}
@@ -3595,6 +3605,9 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
 
     if (intent === 'register') {
       try{ await upsertProfile(user); }catch(e){}
+      if (exists === false) {
+        try{ await supabaseClient.from('game_saves').upsert({ user_id: user.id, data: '', xp: 0, day: 1, money: 0, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); }catch(e){}
+      }
       window.DISCORD_OK = true;
       setMode('discord');
       toast(exists ? 'Tài khoản đã tồn tại, đã đăng nhập.' : 'Đã tạo tài khoản Discord. Tiến trình sẽ được lưu tự động.');
@@ -3932,7 +3945,7 @@ nav button.locked span { position: relative; }
       L('out', 'Diễn đàn', 'Bị lừa đảo', 1, p.total);
     } else {
       s.st[p.flowerId] = (s.st[p.flowerId] || 0) + p.qty;
-      L('in', 'Diễn đàn', 'Mua ' + nm(p.flowerId), p.qty, p.total);
+      L('out', 'Diễn đàn', 'Mua ' + nm(p.flowerId), p.qty, p.total);
       toast('Đã mua thành công ' + p.qty + ' bông ' + nm(p.flowerId));
     }
     p.status = 'sold';
@@ -4067,7 +4080,7 @@ nav button.locked span { position: relative; }
       if (!s.dev && s.money < pick.total) { skip++; return; }
       if (!s.dev) s.money -= pick.total;
       if (pick.scam) { scam++; L('out', 'Diễn đàn', 'Bị lừa đảo', 1, pick.total); }
-      else { s.st[f.id] = (s.st[f.id] || 0) + pick.qty; L('in', 'Diễn đàn', 'Mua ' + nm(f.id), pick.qty, pick.total); ok++; }
+      else { s.st[f.id] = (s.st[f.id] || 0) + pick.qty; L('out', 'Diễn đàn', 'Mua ' + nm(f.id), pick.qty, pick.total); ok++; }
       spent += pick.total; pick.sold = true; st.done[f.id] = 1;
     });
     st.cur = null;
@@ -4093,7 +4106,7 @@ nav button.locked span { position: relative; }
       L('out', 'Diễn đàn', 'Bị lừa đảo', 1, p.total);
     } else {
       s.st[c.fid] = (s.st[c.fid] || 0) + p.qty;
-      L('in', 'Diễn đàn', 'Mua ' + nm(c.fid), p.qty, p.total);
+      L('out', 'Diễn đàn', 'Mua ' + nm(c.fid), p.qty, p.total);
       toast('Đã mua ' + p.qty + ' bông ' + nm(c.fid) + ' của ' + p.seller);
     }
     p.sold = true;
@@ -5055,13 +5068,13 @@ async function up(force){
  const j=cj();if(!force&&j===CS.last)return;
  CS.busy=1;
  try{const code=await enc(j),r=await supabaseClient.from('game_saves').upsert({user_id:currentUser.id,data:code,xp:Math.round(s.xp||0),day:s.day||1,money:Math.round(s.money||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
-  if(r&&r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: thiếu bảng game_saves trên Supabase')}}else{CS.last=j;CS.t=Date.now()}}catch(e){}
+  if(r&&r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: kiểm tra bảng game_saves trên Supabase (chạy justaseed-game-saves.sql)')}}else{CS.last=j;CS.t=Date.now()}}catch(e){}
  CS.busy=0}
 async function sync(){
  if(!window.DISCORD_OK||!currentUser)return;const uid=currentUser.id;CS.uid=uid;CS.ready=0;
  let row=null;
  try{const r=await supabaseClient.from('game_saves').select('data,xp,day,money').eq('user_id',uid).maybeSingle();
-  if(r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: thiếu bảng game_saves trên Supabase')}else{CS.uid=null;CS.retry=Date.now()}return}
+  if(r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: kiểm tra bảng game_saves trên Supabase (chạy justaseed-game-saves.sql)')}else{CS.uid=null;CS.retry=Date.now()}return}
   row=r.data}catch(e){CS.uid=null;CS.retry=Date.now();return}
  if(!currentUser||currentUser.id!=uid)return;
  if(row&&row.data){
@@ -7366,7 +7379,7 @@ function vRec(){
 function boxCard(rec){
  const g=G0(),tot=g.items.reduce((a,i)=>a+val(i),0),gr=g.items.reduce((a,i)=>a+i.w,0);
  const it=g.items.map(i=>{const v=val(i),pl=v-(i.paid||0),pp=i.paid?Math.round(pl/i.paid*1000)/10:0;
-  return `<div class="gc ${GD.hl==i.id?'gh':''}">${spk(imgURL(i),104)}<b style="display:block;margin-top:2px;line-height:1.15">${E(i.name)}</b><span class=mut style="font-size:.78rem">${fw2(i.w)} · ${i.kind=='jew'?KL[i.k]:'9999'}${i.gem&&i.gem!='none'?' · '+GEMS[i.gem][0]:''}</span>${i.custom?'<span class=chip style="font-size:.7rem">Đặt riêng</span>':''}<div class=row style="margin:4px 0 0"><span class=mut style="font-size:.74rem">Mua ${$(i.paid||0)}</span></div><div class=row style="margin:0"><span class=mut style="font-size:.74rem">Tiệm thu ${$(v)}</span><span style="font-size:.74rem;color:${pl>=0?'#2e9e5b':'#d9534f'}">${pl>=0?'+':'−'}${$(Math.abs(pl))} (${pp}%)</span></div>${i.note?`<span class=mut style="font-size:.72rem;display:block">${E(i.note)}</span>`:''}<small class=mut style="font-size:.66rem;display:block">${E(i.sn||i.id)} · ngày ${i.day}</small><div class=row style="margin:6px 0 0;gap:6px;flex-wrap:nowrap"><button class=s style="flex:1" onclick="GOLD.photo('${i.id}')">📸 Khoe</button><button class=s style="flex:1" onclick="GOLD.sell('${i.id}')">Bán lại</button></div></div>`}).join('');
+  return `<div class="gc ${GD.hl==i.id?'gh':''}">${spk(imgURL(i),104)}<b style="display:block;margin-top:2px;line-height:1.15">${E(i.name)}</b><span class=mut style="font-size:.78rem">${fw2(i.w)} · ${i.kind=='jew'?KL[i.k]:'9999'}${i.gem&&i.gem!='none'?' · '+GEMS[i.gem][0]:''}</span>${i.custom?'<span class=chip style="font-size:.7rem">Đặt riêng</span>':''}<div class=row style="margin:4px 0 0"><span class=mut style="font-size:.74rem">Mua ${$(i.paid||0)}</span></div><div class=row style="margin:0"><span class=mut style="font-size:.74rem">Tiệm thu ${$(v)}</span><span style="font-size:.74rem;color:${pl>=0?'#2e9e5b':'#d9534f'}">${pl>=0?'+':'−'}${$(Math.abs(pl))} (${pp}%)</span></div>${i.note?`<span class=mut style="font-size:.72rem;display:block">${E(i.note)}</span>`:''}<small class=mut style="font-size:.66rem;display:block">${E(i.sn||i.id)} · ngày ${i.day}</small><div class=row style="margin:6px 0 0;gap:6px;flex-wrap:nowrap"><button class=s style="flex:1" onclick="GOLD.photo('${i.id}')">📸 Khoe</button><button class=s style="flex:1" onclick="GOLD.sell('${i.id}')">Bán lại</button></div><div class=row style="margin:4px 0 0"><button class=s style="width:100%" onclick="INV.gold('${i.id}')">🧾 Hóa đơn &amp; giấy tờ</button></div></div>`}).join('');
  return (rec||'')+`<div class=card><h3 style="margin:0 0 4px">Trang sức & vàng của bạn</h3><div class=row><span class=mut>${g.items.length} món · ${fw2(gr)}</span><span><b>${$(tot)}</b> <span class=mut>nếu bán lại hôm nay</span></span></div><p class=mut style="margin:2px 0 0;font-size:.78rem">Giá thu mua đổi theo giá vàng từng ngày, nên lời hay lỗ phụ thuộc thị trường và khoản chênh lệch mua - bán.</p></div>${it?`<div class=gcat>${it}</div>`:`<div class=card><p class=mut style="margin:0">Hộp còn trống. Ghé Cộng đồng > Tiệm vàng để mua hoặc đặt gia công nhé.</p></div>`}`}
 function vChat(){
  const g=G0(),b=GD.busy=='chat',ms=g.chat.slice(-14);
@@ -7435,6 +7448,7 @@ const gInfo=i=>{const jew=i.kind=='jew';return{
  kl:jew?(KL[i.k]||''):'24K · 9999',
  gem:i.gem&&i.gem!='none'&&GEMS[i.gem]?GEMS[i.gem][0]:'',
  tone:jew?(TONE[i.tone]||''):''}};
+GOLD.info=gInfo;GOLD.val=val;GOLD.fw=fw2;
 GOLD.photo=async id=>{
  const i=G0().items.find(x=>x.id==id);if(!i)return toast('Không tìm thấy món này');
  GPI=id;toast('Đang tạo ảnh...');
@@ -7771,6 +7785,216 @@ function syncTab(){try{
     T.splice(i,1);SDX.refresh();if(wasOn&&window.SD)SD.go('friends')}
 }catch(e){}}
 setInterval(syncTab,1500);setTimeout(syncTab,2000);
+})();
+</script>
+
+<script>
+/* ===== v63: HÓA ĐƠN CỦA TÔI + GIẤY TỜ VÀNG + ĐĂNG BILL LÊN BẢNG TIN / DISCORD =====
+   - Hồ sơ > Hóa đơn: 2 phần "Của khách" (cũ) và "Của tôi" (mới)
+   - Mọi khoản chi qua sổ thu chi L('out',...) tự thành 1 hóa đơn (gộp theo từng lần bấm mua)
+   - Tiệm vàng: mua / đặt cọc / nhận hàng / bán lại / hủy đơn đều có hóa đơn, món vàng có giấy tờ (mã số, tuổi vàng, khối lượng...)
+   - Món vàng mua từ trước được cấp lại hóa đơn khi mở tab
+   - Ảnh bill (khách + của tôi) có nút đăng bảng tin / gửi Discord */
+(function(){
+const E=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SHOP='Tiệm vàng Kim Ngân';
+let SEG='k',FLT='a',LIM=30,CTX=null,DB=0;
+
+/* ---------- dữ liệu: s.inv (hóa đơn) + s.invT (tổng cộng dồn, không mất khi dọn bớt) ---------- */
+const lst=()=>{if(!Array.isArray(s.inv))s.inv=[];if(!s.invT||typeof s.invT!='object')s.invT={n:0,out:0,in:0};return s.inv};
+const tally=()=>{lst();return s.invT};
+const nowT=()=>{try{return typeof live!='undefined'&&live&&typeof clk=='function'?clk():''}catch(e){return ''}};
+const fw=w=>(Math.round((+w||0)*100)/100).toString().replace('.',',')+' chỉ';
+const items=()=>((s.gd&&Array.isArray(s.gd.items))?s.gd.items:[]);
+const orders=()=>((s.gd&&Array.isArray(s.gd.orders))?s.gd.orders:[]);
+
+function add(r){
+ const T=tally(),A=lst();
+ T.n=(T.n||0)+1;r.q=T.n;r.no='HĐ-'+String(T.n).padStart(4,'0');
+ r.id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+ r.d=r.d||s.day;if(r.t==null)r.t=nowT();
+ r.tot=Math.max(0,Math.round(r.tot||0));
+ T[r.k]=(T[r.k]||0)+r.tot;
+ A.unshift(r);
+ /* hóa đơn vàng giữ vĩnh viễn (là giấy tờ); các khoản khác giữ 300 hóa đơn gần nhất */
+ if(A.length>360){for(let i=A.length-1;i>=0&&A.length>300;i--){if(!A[i].gold)A.splice(i,1)}}
+ return r}
+
+/* ---------- nhóm / nhãn ---------- */
+const VEN={'Nhập hoa':'Chợ nhập hoa','Giấy gói':'Chợ nhập hoa','Quà tặng':'Chợ nhập hoa','Nâng cấp':'Nâng cấp shop','Mèo':'Cửa hàng thú cưng','Thú cưng':'Cửa hàng thú cưng','Nội thất':'Cửa hàng nội thất','Thuế':'Cơ quan thuế','Thuế & phí':'Thuế & phí mặt bằng','Workshop':'Xưởng thủ công','Nhân viên':'Thuê nhân viên','Diễn đàn':'Diễn đàn mua bán','Role Discord':'Shop role Discord','Tưới hoa':'Tưới hoa','Nhiệm vụ':'Nhiệm vụ'};
+const vendorOf=c=>VEN[c]||c||'Chi tiêu của shop';
+const grpOf=r=>(r.gold||r.cat=='Tiệm vàng')?'g':(r.cat=='Nhập hoa'||r.cat=='Giấy gói'||r.cat=='Quà tặng'?'s':'o');
+const icoOf=r=>({g:'💍',s:'🛒',o:'🧾'})[grpOf(r)];
+
+/* ---------- bắt mọi khoản chi qua sổ thu chi, gộp theo từng lần bấm ---------- */
+const oL=L;let pend=[],sch=0;
+L=function(k,cat,name,q,amt,d){
+ const r=oL.apply(this,arguments);
+ try{if(k=='out'&&amt>0){pend.push([String(cat||'Chi khác'),String(name||''),q||1,amt,d||s.day]);if(!sch){sch=1;Promise.resolve().then(flush)}}}catch(e){}
+ return r};
+function flush(){
+ sch=0;const P=pend;pend=[];if(!P.length||typeof s=='undefined'||!s)return;
+ const by={};P.forEach(p=>{(by[p[4]]=by[p[4]]||[]).push(p)});
+ Object.keys(by).forEach(d=>{
+  const g=by[d],cats=[...new Set(g.map(x=>x[0]))];
+  const ls=g.map(x=>[x[1],Math.round(x[3]/(x[2]||1)),x[2]||1,x[3]]),tot=g.reduce((a,x)=>a+x[3],0);
+  add({k:'out',d:+d,t:(+d==s.day?nowT():''),cat:cats[0],ttl:cats.length>1?'Chi tiêu tổng hợp':(g.length==1?g[0][1]:cats[0]),vendor:cats.length>1?'Nhiều khoản chi':vendorOf(cats[0]),ls,tot})});
+ try{save()}catch(e){}}
+
+/* ---------- giấy tờ vàng ---------- */
+function goldBlock(it,extra){
+ let f={loai:'Vàng',kl:'',gem:'',tone:''};try{f=GOLD.info(it)}catch(e){}
+ return Object.assign({id:it.id,sn:it.sn||it.id,name:it.name,loai:f.loai,kl:f.kl,gem:f.gem,tone:f.tone,w:it.w,custom:it.custom?1:0,paid:it.paid||0,day:it.day},extra||{})}
+const goldLine=(g,p)=>[g.name,p,1,p];
+const certRows=g=>[['Mã số',g.sn],['Loại',g.loai+(g.custom?' · Đặt riêng':'')],['Tuổi vàng',g.kl],['Khối lượng',fw(g.w)]].concat(g.tone?[['Màu vàng',g.tone]]:[],g.gem?[['Đá',g.gem]]:[],[['Ngày mua','Ngày '+g.day],['Cấp bởi',SHOP]]);
+const certHtml=g=>`<div class=inq><div class=row style="margin:0"><b>📜 Giấy tờ vàng</b><span class=chip>${g.sold?'Hết hiệu lực':'Chính hãng'}</span></div>${certRows(g).map(x=>`<div class=row style="margin:2px 0"><span class=mut>${E(x[0])}</span><b>${E(x[1])}</b></div>`).join('')}</div>`;
+
+function pick(id){
+ const it=items().find(x=>x.id==id),od=orders().find(x=>x.id==id);
+ return{money:s.money,ids:items().map(x=>x.id),it:it?Object.assign({},it):null,od:od?{st:od.st,name:od.br&&od.br.name}:null}}
+function wrapG(name,fn){
+ const o=window.GOLD&&GOLD[name];if(typeof o!='function')return;
+ GOLD[name]=function(a){const pre=pick(a);const r=o.apply(this,arguments);try{fn(pre,a)}catch(e){console.warn('[hóa đơn vàng]',e)}return r}}
+
+wrapG('buy',p=>{
+ const it=items().find(x=>!p.ids.includes(x.id));if(!it)return;
+ const paid=Math.max(0,p.money-s.money)||it.paid||0,g=goldBlock(it,{paid});
+ oL('out','Tiệm vàng','Mua '+it.name,1,paid);
+ add({k:'out',cat:'Tiệm vàng',ttl:'Mua '+it.name,vendor:SHOP,ls:[goldLine(g,paid)],tot:paid,gold:g,gk:'buy',foot:'Giữ giấy tờ này để bán lại cho tiệm. Cảm ơn quý khách!'});
+ try{save()}catch(e){}});
+
+wrapG('accept',(p,id)=>{
+ const od=orders().find(x=>x.id==id);if(!od||od.st!='making'||!p.od||p.od.st!='quote')return;
+ const dep=Math.max(0,p.money-s.money);if(!dep)return;
+ const nm=(od.br&&od.br.name)||'Đơn gia công';
+ oL('out','Tiệm vàng','Đặt cọc '+nm,1,dep);
+ add({k:'out',cat:'Tiệm vàng',ttl:'Đặt cọc '+nm,vendor:SHOP,ls:[[nm+' (cọc 50%)',dep,1,dep]],tot:dep,gk:'dep',foot:'Hẹn lấy hàng ngày '+od.due+'. Mang hóa đơn này khi nhận hàng.'});
+ try{save()}catch(e){}});
+
+wrapG('collect',(p,id)=>{
+ const it=items().find(x=>x.id==id);if(!it||p.ids.includes(id))return;
+ const bal=p.money-s.money,total=it.paid||0,dep=Math.max(0,total-bal),g=goldBlock(it),k=bal<0?'in':'out',amt=Math.abs(bal);
+ if(amt)oL(k,'Tiệm vàng',(bal<0?'Tiệm hoàn lại ':'Nhận hàng ')+it.name,1,amt);
+ add({k,cat:'Tiệm vàng',ttl:'Nhận hàng '+it.name,vendor:SHOP,ls:[goldLine(g,total)],adj:[['Đã đặt cọc trước','−'+$(dep)]],tot:amt,gold:g,gk:'buy',foot:'Cân thực tế '+fw(it.w)+'. Giữ giấy tờ này để bán lại cho tiệm.'});
+ try{save()}catch(e){}});
+
+wrapG('sell',(p,id)=>{
+ if(!p.it||items().some(x=>x.id==id))return;
+ const v=Math.max(0,s.money-p.money);
+ oL('in','Tiệm vàng','Bán lại '+p.it.name,1,v);
+ const g=goldBlock(p.it,{sold:1});
+ add({k:'in',cat:'Tiệm vàng',ttl:'Bán lại '+p.it.name,vendor:SHOP,ls:[goldLine(g,v)],tot:v,gold:g,gk:'sell',foot:'Tiệm đã thu mua lại. Giấy tờ của món này hết hiệu lực.'});
+ try{save()}catch(e){}});
+
+wrapG('cancel',(p,id)=>{
+ if(!p.od||p.od.st!='making'||orders().some(x=>x.id==id))return;
+ const r=s.money-p.money;if(r<=0)return;
+ const nm=p.od.name||'Đơn gia công';
+ oL('in','Tiệm vàng','Hoàn cọc '+nm,1,r);
+ add({k:'in',cat:'Tiệm vàng',ttl:'Hủy đơn, hoàn cọc',vendor:SHOP,ls:[[nm+' (hoàn 70% cọc)',r,1,r]],tot:r,gk:'cancel',foot:'Tiệm giữ lại 30% tiền cọc theo quy định.'});
+ try{save()}catch(e){}});
+
+/* cấp lại hóa đơn cho vàng đã mua trước khi có sổ hóa đơn */
+function backfill(){
+ if(!(window.GOLD&&GOLD.info))return;
+ const A=lst();let ch=0;
+ items().forEach(it=>{
+  if(A.some(r=>r.gold&&r.gold.id==it.id&&r.gk=='buy'))return;
+  const g=goldBlock(it),paid=it.paid||0;
+  add({k:'out',d:it.day||s.day,t:'',cat:'Tiệm vàng',ttl:'Mua '+it.name,vendor:SHOP,ls:[goldLine(g,paid)],tot:paid,gold:g,gk:'buy',bf:1,foot:'Hóa đơn cấp lại cho món đã mua trước khi có sổ hóa đơn.'});ch=1});
+ if(ch){try{save()}catch(e){}}}
+
+/* ---------- giao diện: Hồ sơ > Hóa đơn ---------- */
+const ob=V.bills;
+V.bills=function(){
+ const nk=(typeof billN=='function')?billN():0,nmine=tally().n||lst().length;
+ const seg=`<div class=card style="padding:6px"><div class=row style="justify-content:flex-start;gap:6px;margin:0"><button class="s ${SEG=='k'?'on2':''}" onclick="INV.seg('k')">👥 Của khách (${nk})</button><button class="s ${SEG=='m'?'on2':''}" onclick="INV.seg('m')">🧾 Của tôi (${nmine})</button></div></div>`;
+ return seg+(SEG=='k'?ob():mine())};
+
+function mine(){
+ backfill();
+ const T=tally(),A=lst().slice().sort((a,b)=>(b.d-a.d)||(b.q-a.q)),F=A.filter(r=>FLT=='a'||grpOf(r)==FLT),sh=F.slice(0,LIM);
+ const chips=[['a','Tất cả'],['g','💍 Vàng'],['s','🛒 Nhập hàng'],['o','🧾 Khác']].map(c=>`<button class="s ${FLT==c[0]?'on2':''}" onclick="INV.flt('${c[0]}')">${c[1]}</button>`).join(' ');
+ const rows=sh.map(r=>`<div class=row><span style="display:flex;gap:8px;align-items:center"><span style="font-size:1.5rem">${icoOf(r)}</span><span><b>${E(r.ttl)}</b><br><span class=mut>Ngày ${r.d}${r.t?' · '+E(r.t):''} · ${E(r.cat)}${r.gold&&r.gk!='sell'?' · có giấy tờ':''}</span></span></span><span><b class="${r.k=='in'?'ok':'bad'}">${r.k=='in'?'+':'−'}${$(r.tot)}</b> <button class=s onclick="INV.view('${r.id}')">Xem bill</button></span></div>`).join('');
+ return `<div class=card><div class=row><b>Sổ chi tiêu của tôi</b></div><div class=row><span>Tổng chi đã ghi</span><b class=bad>${$(T.out||0)}</b></div><div class=row><span>Tổng thu (bán lại, hoàn cọc)</span><b class=ok>${$(T.in||0)}</b></div><p class=mut style="margin:6px 0">${T.n||0} hóa đơn. Hóa đơn vàng được giữ mãi vì là giấy tờ; các khoản khác lưu 300 hóa đơn gần nhất, tổng tiền vẫn được cộng dồn.</p><div class=row style="justify-content:flex-start;gap:6px">${chips}</div></div><div class=card>${rows||'<p class=mut>Chưa có khoản chi nào. Từ giờ mọi khoản chi sẽ được ghi lại ở đây.</p>'}${F.length>LIM?`<div class=row style="justify-content:center"><button class=s onclick="INV.more()">Xem thêm</button></div>`:''}</div>`}
+
+const lnH=(t,v,c)=>`<div class=row style="margin:2px 0"><span>${t}</span><b class="${c||''}">${v}</b></div>`;
+function tbl(ls){
+ if(typeof ivt=='function')return ivt(ls);
+ return ls.map(l=>`<div class=row><span>${E(l[0])} × ${l[2]}</span><b>${$(l[3])}</b></div>`).join('')}
+
+function myBill(id){
+ const r=lst().find(x=>x.id==id);if(!r)return;const out=r.k!='in';
+ $q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>Hóa đơn</h2><button class=s onclick=mdl()>✕</button></div><div class=card style="border-style:dashed"><div style="text-align:center"><b class=hand>${E(s.name)}</b><br><span class=mut>Ngày ${r.d}${r.t?' · '+E(r.t):''} · ${E(r.no)}</span></div><div class=inq>${out?'Mua tại':'Nhận từ'}: <b>${E(r.vendor)}</b></div><div class=inq>${tbl(r.ls)}</div>${r.gold?certHtml(r.gold):''}<div class=inq>${(r.adj||[]).map(a=>lnH(E(a[0]),E(a[1]))).join('')}${lnH(out?'Tổng cộng':'Tổng nhận',$(r.tot),out?'bad':'ok')}</div><p class=mut style="text-align:center;margin:6px 0 0">${E(r.foot||'Cảm ơn quý khách')}</p></div><div class=row><button class=p onclick="INV.img('${r.id}')">🖼 Lưu / chia sẻ ảnh bill</button></div></div></div>`}
+
+/* ---------- ảnh bill (cùng kiểu với ảnh bill khách) ---------- */
+function myBillCv(r){
+ const out=r.k!='in',ls=r.ls,adj=r.adj||[],g=r.gold,rows=g?certRows(g):[],gH=g?68+40*rows.length:0;
+ const W=720,[c,x]=paperC(W,540+ls.length*46+adj.length*50+gH);
+ x.fillText(`${out?'HÓA ĐƠN MUA':'PHIẾU THU'} · Ngày ${r.d}${r.t?' · '+r.t:''}`,W/2,160);dashL(x,190,W);
+ x.textAlign='left';x.fillStyle='#244033';x.font='600 30px Onest,sans-serif';x.fillText((out?'Mua tại: ':'Nhận từ: ')+r.vendor,80,240,430);
+ x.font='600 22px Onest,sans-serif';x.fillStyle='#678a73';x.textAlign='right';x.fillText(r.no,W-80,240);
+ x.fillText('Giá',400,292);x.textAlign='left';x.fillText('Sản phẩm',80,292);x.textAlign='center';x.fillText('SL',470,292);x.textAlign='right';x.fillText('Thành tiền',W-80,292);
+ let y=338;x.font='26px Onest,sans-serif';x.fillStyle='#244033';
+ ls.forEach(l=>{x.textAlign='left';x.fillText(l[0],80,y,230);x.textAlign='right';x.fillText($(l[1]),400,y,110);x.textAlign='center';x.fillText(l[2],470,y);x.textAlign='right';x.fillText($(l[3]),W-80,y,150);y+=46});
+ dashL(x,y-16,W);y+=30;
+ adj.forEach(a=>{x.textAlign='left';x.fillText(a[0],80,y);x.textAlign='right';x.fillText(a[1],W-80,y);y+=50});
+ if(g){
+  x.textAlign='left';x.fillStyle='#678a73';x.font='600 24px Onest,sans-serif';x.fillText('📜 Giấy tờ vàng · '+(g.sold?'hết hiệu lực':'chính hãng'),80,y,560);y+=16;
+  rows.forEach(rw=>{y+=40;x.textAlign='left';x.fillStyle='#678a73';x.font='24px Onest,sans-serif';x.fillText(rw[0],80,y);x.textAlign='right';x.fillStyle='#244033';x.font='600 24px Onest,sans-serif';x.fillText(String(rw[1]),W-80,y,380)});
+  dashL(x,y+12,W);y+=52}
+ x.font='700 40px "Baloo 2",sans-serif';x.textAlign='left';x.fillStyle='#244033';x.fillText(out?'Tổng cộng':'Tổng nhận',80,y+10);
+ x.textAlign='right';x.fillStyle=out?'#d9534f':'#388a55';x.fillText($(r.tot),W-80,y+10);y+=75;
+ x.textAlign='center';x.fillStyle='#678a73';x.font='26px Onest,sans-serif';x.fillText(r.foot||'Cảm ơn quý khách',W/2,y,560);
+ return c}
+
+/* thêm ô chú thích + nút đăng bảng tin / Discord dưới ảnh bill */
+function shExtra(ctx){
+ CTX=ctx;
+ try{
+  const rw=[...document.querySelectorAll('#modal .ms > .row')].pop();if(!rw)return;
+  rw.insertAdjacentHTML('beforebegin',`<div class=sec>Chú thích khi đăng (không bắt buộc)</div><div class=row><input maxlength=200 placeholder="Viết vài dòng cho bài đăng..." value="${E(typeof FEEDCAP!='undefined'?FEEDCAP:'')}" oninput="FEEDCAP=this.value" style="width:100%"></div>`);
+  rw.insertAdjacentHTML('beforeend','<button class=p onclick="postDayToFeed()">📌 Đăng lên bảng tin</button><button class=p onclick="INV.disc()">💬 Chia sẻ lên Discord</button>')
+ }catch(e){console.error(e)}}
+
+async function img(id){
+ const r=lst().find(x=>x.id==id);if(!r)return;
+ await fontsOK2();shOpen(myBillCv(r),'justaseed-hoadon-'+r.no+'.png','Ảnh hóa đơn');shExtra({t:'m',id})}
+
+/* ảnh bill của khách cũng có nút đăng */
+imgBill=async function(id){
+ const b=(s.bills||[]).find(x=>x.id==id);if(!b)return;
+ await fontsOK2();shOpen(billCv(b),'justaseed-bill-'+b.id+'.png','Ảnh hóa đơn');shExtra({t:'c',id})};
+
+async function disc(){
+ if(DB)return;
+ if(!CTX||typeof SHC=='undefined'||!SHC)return toast('Chưa có ảnh để gửi');
+ if(typeof dcSend!='function')return toast('Chưa dùng được tính năng Discord');
+ DB=1;
+ try{
+  const cap=String(typeof FEEDCAP!='undefined'?FEEDCAP:'').replace(/[ \t]+/g,' ').trim().slice(0,200),shop=String(s.name||'Tiệm hoa').slice(0,60);
+  let kind='bill',pl;
+  if(CTX.t=='c'){
+   const b=(s.bills||[]).find(x=>x.id==CTX.id);if(!b)throw new Error('Không tìm thấy hóa đơn');
+   pl={bill_type:'customer',customer:String(b.nm||'').slice(0,40),vip:b.vip?1:0,total:b.run?0:(b.pr+b.xp+b.tip),stars:b.st|0,run:b.run?1:0,day:b.d,shop_name:shop,caption:cap}
+  }else{
+   const r=lst().find(x=>x.id==CTX.id);if(!r)throw new Error('Không tìm thấy hóa đơn');
+   if(r.gold&&window.GOLD&&GOLD.val){
+    const g=r.gold,it=items().find(x=>x.id==g.id);kind='gold';
+    pl={name:String(g.name||'').slice(0,60),type:g.loai,emoji:'🧾',weight:fw(g.w),karat:g.kl,gem:g.gem,tone:g.tone,custom:g.custom?1:0,value:it?(GOLD.val(it)|0):0,paid:g.paid|0,invoice:1,invoice_no:r.no,shop_name:shop,caption:cap}
+   }else pl={bill_type:'mine',title:String(r.ttl||'').slice(0,80),category:r.cat,vendor:r.vendor,direction:r.k,total:r.tot,day:r.d,invoice_no:r.no,shop_name:shop,caption:cap}}
+  const ok=await dcSend(kind,SHC.toDataURL('image/png'),pl,true);
+  if(ok)toast('Đã gửi yêu cầu. Bot sẽ đăng lên Discord trong giây lát!')
+ }catch(e){toast('Không gửi được: '+(e&&e.message||e))}
+ DB=0}
+
+window.INV={
+ seg(v){SEG=v;R()},flt(v){FLT=v;LIM=30;R()},more(){LIM+=30;R()},
+ view:myBill,img,disc,
+ gold(id){backfill();const r=lst().find(x=>x.gold&&x.gold.id==id&&x.gk=='buy');if(!r)return toast('Chưa có hóa đơn cho món này');myBill(r.id)}};
+
+/* nút Discord chỉ hiện khi đã là thành viên server (cùng cơ chế các nút Discord khác) */
+document.head.insertAdjacentHTML('beforeend','<style>html:not(.dcok) button[onclick*="INV.disc"]{display:none!important}</style>');
 })();
 </script>
 

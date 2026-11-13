@@ -7669,12 +7669,13 @@ function dcFx(g){
   const base=c1||c2||c3;
   return {color:base,color2:c2||base,effect:holo?'holo':(c2&&c2!==base?'gradient':'none')}}
 window.ROLEFX={pill,dc:dcFx};
-{const st=document.createElement('style');st.textContent='.rp{display:inline-flex;align-items:center;gap:6px;font-weight:700;max-width:100%;min-width:0;line-height:1.4;vertical-align:middle}.rp>i{width:11px;height:11px;border-radius:50%;background:var(--c);flex:none}.rp .rnm{color:var(--c);display:inline-block;min-width:0;line-height:1.4;padding:.08em .12em;overflow-wrap:anywhere}'
+{const st=document.createElement('style');st.textContent='.rp{display:inline-flex;align-items:center;gap:6px;font-weight:700;max-width:100%;min-width:0;line-height:1.4;vertical-align:middle}.rp>i{width:11px;height:11px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 1px 2px rgba(0,0,0,.35)}.rp .rnm{color:var(--c);display:inline-block;min-width:0;line-height:1.4;padding:.08em .12em;overflow-wrap:anywhere}'
 +'.rp-gradient .rnm,.rp-shimmer .rnm{background:linear-gradient(90deg,var(--c),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}'
 +'.rp-shimmer .rnm{background-size:200% 100%;animation:rpm 2.2s ease-in-out infinite alternate}'
 +'.rp-holo>i{background:linear-gradient(135deg,#ff8aa8,#ffd166,#7cffb2,#6ec6ff,#c39bff)}.rp-holo .rnm{background:linear-gradient(90deg,#ff8aa8,#ffd166,#7cffb2,#6ec6ff,#c39bff,#ff8aa8);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rpm 3s linear infinite alternate}'
 +'.rp-glow .rnm{text-shadow:0 0 8px var(--c),0 0 2px var(--c)}.rp-glow>i{box-shadow:0 0 8px var(--c)}'
-+'@keyframes rpm{from{background-position:0 0}to{background-position:100% 0}}@media(prefers-reduced-motion:reduce){.rp .rnm{animation:none!important}}';document.head.appendChild(st)}
++'@keyframes rpm{from{background-position:0 0}to{background-position:100% 0}}@media(prefers-reduced-motion:reduce){.rp .rnm{animation:none!important}}'
++'.rp .rnm{filter:drop-shadow(0 1px 1px rgba(0,0,0,.4)) drop-shadow(0 0 1.5px rgba(0,0,0,.3))}';document.head.appendChild(st)}
 const owned=id=>RL.mine.some(x=>x.role_id==id&&x.status!='failed');
 async function load(){
   if(RL.busy||!logged())return;RL.busy=1;RL.err='';

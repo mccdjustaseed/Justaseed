@@ -7682,7 +7682,8 @@ const sb=()=>typeof supabaseClient!='undefined'?supabaseClient:null;
 const logged=()=>typeof currentUser!='undefined'&&!!currentUser&&!!window.DISCORD_OK&&!!sb();
 const HEX=/^#[0-9a-fA-F]{6}$/;
 function pill(it){const c=HEX.test(it.color||'')?it.color:'#99aab5',c2=HEX.test(it.color2||'')?it.color2:c,e=['gradient','shimmer','holo','glow'].includes(it.effect)?it.effect:'none';
-  return '<span class="rp rp-'+e+'" style="--c:'+c+';--c2:'+c2+'"><i></i><span class=rnm>'+esc(it.name)+'</span></span>'}
+  const lm=h=>{const n=parseInt(h.slice(1),16);return(.299*(n>>16&255)+.587*(n>>8&255)+.114*(n&255))/255},lt=e=='none'||e=='glow'||e=='gradient'||e=='shimmer'?Math.min(lm(c),lm(c2))<.3:false;
+  return '<span class="rp rp-'+e+(lt?' rp-lt':'')+'" style="--c:'+c+';--c2:'+c2+'"><i></i><span class=rnm>'+esc(it.name)+'</span></span>'}
 /* Lấy màu + hiệu ứng thật từ role Discord (bảng guild_roles). Chịu được nhiều kiểu cột: hex, số nguyên, JSON colors */
 function dcHex(v){if(v==null||v==='')return '';if(typeof v==='number'){return v>0?'#'+v.toString(16).padStart(6,'0').slice(-6):''}v=String(v).trim();if(/^\d+$/.test(v)){const n=Number(v);return n>0?'#'+n.toString(16).padStart(6,'0').slice(-6):''}if(/^#?[0-9a-fA-F]{6}$/.test(v))return (v[0]=='#'?v:'#'+v).toLowerCase();return ''}
 function dcFx(g){
@@ -7696,13 +7697,13 @@ function dcFx(g){
   const base=c1||c2||c3;
   return {color:base,color2:c2||base,effect:holo?'holo':(c2&&c2!==base?'gradient':'none')}}
 window.ROLEFX={pill,dc:dcFx};
-{const st=document.createElement('style');st.textContent='.rp{display:inline-flex;align-items:center;gap:6px;font-weight:700;max-width:100%;min-width:0;line-height:1.4;vertical-align:middle}.rp>i{width:11px;height:11px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 1px 2px rgba(0,0,0,.35)}.rp .rnm{color:var(--c);display:inline-block;min-width:0;line-height:1.4;padding:.08em .12em;overflow-wrap:anywhere}'
+{const st=document.createElement('style');st.textContent='.rp{display:inline-flex;align-items:center;gap:6px;font-weight:700;max-width:100%;min-width:0;line-height:1.4;vertical-align:middle;background:#2b2d31;padding:4px 12px 4px 9px;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.3)}.rp.rp-lt{background:#f2f3f5;box-shadow:0 1px 4px rgba(0,0,0,.2)}.rp>i{width:11px;height:11px;border-radius:50%;background:var(--c);flex:none}.rp .rnm{color:var(--c);display:inline-block;min-width:0;line-height:1.4;padding:.08em .12em;overflow-wrap:anywhere}'
 +'.rp-gradient .rnm,.rp-shimmer .rnm{background:linear-gradient(90deg,var(--c),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}'
 +'.rp-shimmer .rnm{background-size:200% 100%;animation:rpm 2.2s ease-in-out infinite alternate}'
 +'.rp-holo>i{background:linear-gradient(135deg,#ff8aa8,#ffd166,#7cffb2,#6ec6ff,#c39bff)}.rp-holo .rnm{background:linear-gradient(90deg,#ff8aa8,#ffd166,#7cffb2,#6ec6ff,#c39bff,#ff8aa8);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rpm 3s linear infinite alternate}'
 +'.rp-glow .rnm{text-shadow:0 0 8px var(--c),0 0 2px var(--c)}.rp-glow>i{box-shadow:0 0 8px var(--c)}'
 +'@keyframes rpm{from{background-position:0 0}to{background-position:100% 0}}@media(prefers-reduced-motion:reduce){.rp .rnm{animation:none!important}}'
-+'.rp .rnm{filter:drop-shadow(0 1px 1px rgba(0,0,0,.4)) drop-shadow(0 0 1.5px rgba(0,0,0,.3))}';document.head.appendChild(st)}
+;document.head.appendChild(st)}
 const owned=id=>RL.mine.some(x=>x.role_id==id&&x.status!='failed');
 async function load(){
   if(RL.busy||!logged())return;RL.busy=1;RL.err='';

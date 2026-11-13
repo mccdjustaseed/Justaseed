@@ -1854,7 +1854,7 @@ function pfmT(){if(scr=='game'&&tab=='pf'){tab='home';R();scrollTo(0,0)}else pfm
 .mtr:first-child{border-top:0}
 .mth{width:48px;height:48px;border-radius:10px;object-fit:cover;background:var(--g);flex:none}
 .mti{flex:1;min-width:0;display:flex;flex-direction:column}
-.mti b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Baloo 2',sans-serif;font-weight:500}
+.mti b{display:block;width:100%;min-width:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Baloo 2',sans-serif;font-weight:700}
 .mti span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.82rem;color:var(--mut)}
 .mtr.cur b{color:var(--g3)}
 .qeta{flex:none;font-size:.85rem;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -2745,9 +2745,9 @@ R()})();
 </script>
 <style>
 /* ===== v11: nhạc - chữ chạy ngang, số thứ tự, bài tiếp theo ===== */
-.mqi{font-style:normal;display:inline-block;white-space:nowrap;max-width:none}.mqi.run{display:inline-block;white-space:nowrap;animation:mqs var(--md,8s) linear infinite;will-change:transform;padding-right:0}
-.mnm.mrun{text-overflow:clip}
-.mqa{display:inline-block;padding-right:2.5em;white-space:nowrap}
+.mqi{font-style:normal;display:inline-block;white-space:nowrap;max-width:none;color:var(--ink);opacity:1;font-weight:700}.mqi.run{display:inline-block;white-space:nowrap;animation:mqs var(--md,8s) linear infinite;will-change:transform;padding-right:0;color:var(--ink);opacity:1}
+.mnm.mrun,.mti b.mrun{text-overflow:clip;color:var(--ink)}
+.mqa{display:inline-block;padding-right:2.5em;white-space:nowrap;color:inherit;opacity:1}
 @keyframes mqs{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .mtr.qpl{cursor:pointer}.mtr.qpl:active{background:color-mix(in srgb,var(--g2) 14%,transparent)}
 .mnm{display:block!important;white-space:nowrap;overflow:hidden;text-overflow:clip;-webkit-line-clamp:unset;position:relative}
@@ -2763,13 +2763,14 @@ R()})();
 (()=>{const fx=()=>document.querySelectorAll('.mqi').forEach(e=>{const p=e.parentElement;if(!p)return;
 const raw=(e.dataset.t!=null?e.dataset.t:(e.dataset.t=(e.textContent||'').trim()));
 const txt=raw;const w=p.clientWidth;if(!w)return;
-const k=txt+'|'+w;if(e.dataset.k===k&&e.classList.contains('run')=== (e.dataset.run==='1'))return;e.dataset.k=k;
+const k=txt+'|'+w;if(e.dataset.k===k&&e.classList.contains('run')===(e.dataset.run==='1'))return;e.dataset.k=k;
 e.classList.remove('run');p.classList.remove('mrun');e.style.removeProperty('--md');
-e.textContent=txt;
+e.textContent=txt;e.style.opacity='1';e.style.color='';
 /* đo bằng scrollWidth để không bị co theo khung cha */
 const need=(e.scrollWidth||e.getBoundingClientRect().width)-w;
 if(need>4){e.innerHTML='<span class="mqa"></span><span class="mqa"></span>';
 e.children[0].textContent=txt;e.children[1].textContent=txt;e.classList.add('run');p.classList.add('mrun');e.dataset.run='1';
+e.style.opacity='1';
 const one=Math.max(e.children[0].offsetWidth||0,e.scrollWidth/2);e.style.setProperty('--md',Math.max(5,one/28).toFixed(1)+'s')}
 else{e.dataset.run='0'}});
 setInterval(fx,600);addEventListener('resize',()=>{document.querySelectorAll('.mqi').forEach(e=>{e.dataset.k=''});fx()});fx()})();

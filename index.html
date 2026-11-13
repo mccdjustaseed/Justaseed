@@ -2278,17 +2278,36 @@ setTimeout(()=>{if(MS.arm&&!MS.playing&&scr=='game')toast('🎵 Chạm vào màn
 
 /* ---------- LỜI BÀI HÁT (tra từ LRCLIB theo tên bài, chạy theo thời gian của YouTube) ---------- */
 const LYC={};let LY={id:'',st:'',L:[],P:'',i:-2,off:0};
-document.head.insertAdjacentHTML('beforeend','<style>#mly .lyb{position:relative;height:210px;overflow:auto;text-align:center;scroll-behavior:smooth;padding:70px 0}#mly .lyl{padding:4px 8px;color:var(--mut);transition:color .2s,font-size .2s}#mly .lyl.on{color:var(--g3);font-weight:700;font-size:1.15rem}#mly .lyb.ly1{height:auto;min-height:84px;overflow:visible;padding:18px 8px;display:flex;align-items:center;justify-content:center}#mly .ly1 .lyl{font-size:1.2rem;line-height:1.4}#mly pre{white-space:pre-wrap;font:inherit;margin:0;padding:0 8px}</style>');
+document.head.insertAdjacentHTML('beforeend','<style>#mly .lyb{position:relative;height:210px;overflow:auto;text-align:center;scroll-behavior:smooth;padding:70px 0}#mly .lyl{padding:4px 8px;color:var(--mut);transition:color .28s ease,font-size .28s ease,opacity .28s ease;line-height:1.45;min-height:1.45em}#mly .lyl.on{color:var(--g3);font-weight:700;font-size:1.12rem}#mly .lyb.ly1{height:auto;min-height:84px;overflow:visible;padding:18px 8px;display:flex;align-items:center;justify-content:center}#mly .ly1 .lyl{font-size:1.2rem;line-height:1.4}#mly .lyb.ly2{height:auto;max-height:0;min-height:0;overflow:hidden;padding:0 4px;opacity:0;text-align:center;transition:max-height .5s cubic-bezier(.22,.8,.25,1),opacity .4s ease,padding .5s cubic-bezier(.22,.8,.25,1)}#mly .lyb.ly2.ly-open{max-height:5.6em;opacity:1;padding:10px 4px}#mly .ly-win{height:2.9em;overflow:hidden;position:relative;mask-image:linear-gradient(180deg,transparent 0%,#000 12%,#000 88%,transparent 100%);-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 12%,#000 88%,transparent 100%)}#mly .ly-slide{will-change:transform;transition:transform .45s cubic-bezier(.22,.8,.25,1)}#mly .ly2 .lyl{font-size:1.02rem;padding:2px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#mly .ly2 .lyl.on{font-size:1.12rem}#mly .ly2 .lyl.dim{opacity:.55}#mly pre{white-space:pre-wrap;font:inherit;margin:0;padding:0 8px}@media(prefers-reduced-motion:reduce){#mly .lyb.ly2{transition:none}#mly .ly-slide{transition:none}}</style>');
 function lyClean(n){return String(n||'').replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|music video|mv|lyrics?|lyric video|audio|visualizer|hd|4k)\b.*$/i,' ').replace(/\s+/g,' ').trim()}
 function lyParse(s){const o=[];String(s||'').split('\n').forEach(l=>{const m=l.match(/^((?:\[\d+:\d+(?:\.\d+)?\])+)(.*)$/);if(!m)return;const tx=m[2].trim();m[1].replace(/\[(\d+):(\d+(?:\.\d+)?)\]/g,(_,a,b)=>{o.push({t:+a*60+ +b,s:tx})})});return o.sort((a,b)=>a.t-b.t)}
 function lyH(){
  if(!MS.now)return '<h3>🎤 Lời bài hát</h3><p class=mut style="margin:0">Phát một bài để xem lời.</p>';
  let h='<div class=row style="margin-top:0"><h3 style="margin:0">🎤 Lời bài hát</h3>'+'</div>';
  if(LY.st=='load')return h+'<p class=mut style="margin:0">Đang tìm lời…</p>';
- if(LY.L.length)return h+'<div class="lyb ly1" id=mlb><div class="lyl on" id=mll>♪</div></div>';
+ if(LY.L.length){
+  const lines=LY.L.map((l,idx)=>'<div class="lyl'+(idx===0?' on':' dim')+'" data-i="'+idx+'">'+esc(l.s||' ')+'</div>').join('');
+  return h+'<div class="lyb ly2" id=mlb><div class="ly-win"><div class="ly-slide" id="mll-slide">'+lines+'</div></div></div>';
+ }
  if(LY.P)return h+'<div class=lyb id=mlb><pre>'+esc(LY.P)+'</pre></div><p class=mut style="margin:4px 0 0">Bài này chỉ có lời thường, không chạy theo nhạc.</p>';
  return h+'<p class=mut style="margin:0">'+(LY.st=='err'?'Không tải được lời (kiểm tra mạng).':'Chưa tìm thấy lời cho bài này.')+'</p>'}
-function lyUI(){const e=$e('mly');if(e){e.innerHTML=lyH();LY.i=-2}}
+function lyOpen(){
+ const b=$e('mlb');if(!b||!b.classList.contains('ly2'))return;
+ b.classList.remove('ly-open');
+ /* 2 rAF: để trình duyệt nhận trạng thái đóng rồi mới mở mượt */
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const x=$e('mlb');if(x)x.classList.add('ly-open')}));
+}
+function lyPos(i){
+ const slide=$e('mll-slide');if(!slide)return;
+ const kids=[...slide.children];
+ kids.forEach((el,idx)=>{const on=idx===i;el.classList.toggle('on',on);el.classList.toggle('dim',!on&&idx!==i-1&&idx!==i+1);if(idx===i-1||idx===i+1)el.classList.add('dim')});
+ const cur=kids[Math.max(0,i)]||kids[0];
+ const lh=cur?cur.offsetHeight:22;
+ /* cửa sổ 2 dòng: dòng trước trên, dòng đang hát dưới */
+ const y=Math.max(0,(i<=0?0:i-1))*lh;
+ slide.style.transform='translateY('+(y?-y:0)+'px)';
+}
+function lyUI(){const e=$e('mly');if(e){e.innerHTML=lyH();LY.i=-2;if(LY.L&&LY.L.length){lyOpen();requestAnimationFrame(()=>lyPos(0))}}}
 async function lyFetch(t){
  const id=t.id;
  if(LYC[id]){LY=Object.assign({id,st:'ok',i:-2,off:0},LYC[id]);lyUI();return}
@@ -2315,7 +2334,10 @@ function lyTick(e){
  const s=e/1000+LY.off;let i=-1;for(let k=0;k<LY.L.length&&LY.L[k].t<=s;k++)i=k;
  if(i===LY.i)return;LY.i=i;
  const b=$e('mlb');if(!b)return;
- const a=$e('mll');if(a)a.textContent=(i>=0&&LY.L[i].s)||'♪'}
+ /* lần đầu có lời: bảo đảm đã mở khung 2 dòng */
+ if(!b.classList.contains('ly-open'))lyOpen();
+ lyPos(i<0?0:i);
+}
 
 /* ---------- khởi tạo ---------- */
 document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></div><div id="spEmb"><div id="spEl"></div><button id="spX" aria-label="Quay lại nghe nhạc" onclick="MU.movie(0)">✕</button></div>');

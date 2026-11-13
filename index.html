@@ -2027,11 +2027,25 @@ function go(t,at){
  stAt=at>2000?Math.floor(at/1000):0;MS.now=t;MS.ended=0;MS.pos=at||0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
  sv();ui();
  const fin=c=>{if(loaded!==t.id){loaded=t.id;try{c.loadVideoById(at>2000?{videoId:t.id,startSeconds:Math.floor(at/1000)}:t.id)}catch(e){}}kick(c)};
- if(ctl)fin(ctl);else ensureCtl(t.id,1).then(fin).catch(e=>{MS.want=0;ui();toast(e.message||'Không phát được')})}
+ if(ctl)fin(ctl);else ensureCtl(t.id,1).then(fin).catch(e=>{
+  if(apiTry<2&&MS.now&&MS.now.id===t.id){apiTry++;toast('Đang thử tải lại trình phát...');ctlP=null;apiP=null;setTimeout(()=>{if(MS.now&&MS.now.id===t.id&&MS.want&&!MS.playing)go(t,at)},1500);return}
+  MS.want=0;ui();toast(e.message||'Không phát được')});
+ watch(t)}
+/* tự phát lại: nếu bấm phát mà sau vài giây vẫn chưa chạy thì nạp lại bài, tối đa 3 lần */
+let apiTry=0,wdK=0,eRid='',eRn=0;
+function retryPlay(t){
+ try{if(ctl){loaded=t.id;ctl.loadVideoById(t.id);kick(ctl)}
+  else{ctlP=null;apiP=null;ensureCtl(t.id,1).then(c=>{loaded=t.id;kick(c)}).catch(()=>{})}}catch(e){}}
+function watch(t){
+ const k=++wdK;let n=0;
+ const chk=()=>{if(k!==wdK||!MS.now||MS.now.id!==t.id||MS.playing||!MS.want)return;
+  if(document.hidden){setTimeout(chk,3000);return}
+  if(n>=3)return;n++;toast('Chưa phát được, đang thử lại...');retryPlay(t);setTimeout(chk,6000)};
+ setTimeout(chk,5000)}
 function onSt(e){
  const st=e&&e.data;
  if(st===1){
-  errN=0;MS.arm=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;if(YM)unm();try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
+  errN=0;eRn=0;apiTry=0;wdK++;MS.arm=0;MS.playing=MS.now?1:0;MS.want=1;MS.evT=Date.now();MS.show=0;if(YM)unm();try{if(ctl&&ctl.getPlaybackRate()!==(MS.rate||1))ctl.setPlaybackRate(MS.rate||1)}catch(x){}
   try{MS.pos=ctl.getCurrentTime()*1000;const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(x){}
   ui();duck()}
  else if(st===2){
@@ -2041,7 +2055,11 @@ function onSt(e){
    MS.want=0;kid++;ui();duck();if(MS.rs)try{clearInterval(MT)}catch(x){}}}
  else if(st===0){end()}}
 function onErr(e){
- const c=e&&e.data;
+ const c=e&&e.data,t0=MS.now;
+ if(t0&&c!=2&&c!=100&&c!=101&&c!=150){
+  if(eRid!==t0.id){eRid=t0.id;eRn=0}
+  if(eRn<2){eRn++;MS.playing=0;MS.want=1;toast('Đang thử phát lại...');
+   setTimeout(()=>{if(MS.now&&MS.now.id===t0.id&&ctl){try{loaded=t0.id;ctl.loadVideoById(t0.id)}catch(x){}kick(ctl)}},1200);return}}
  toast(c==101||c==150?'Video này không cho phép phát nhúng — thử bài khác':'Không phát được video này');
  MS.playing=0;MS.want=0;kid++;errN++;
  if(errN>=4){errN=0;return halt()}
@@ -8023,4 +8041,46 @@ document.head.insertAdjacentHTML('beforeend','<style>html:not(.dcok) button[oncl
 })();
 </script>
 
+
+<style id="jas-desktop">
+/* ===== Giao diện máy tính (màn hình >= 900px): thanh tab dọc bên trái, nội dung 2 cột ===== */
+@media (min-width:900px){
+ #app{max-width:1280px;padding:12px 28px 48px;display:grid;grid-template-columns:232px minmax(0,1fr);column-gap:22px;align-items:start}
+ #app>.hd{grid-column:1/-1;padding:8px 4px 12px}
+ #app>nav{grid-column:1;grid-row:2}
+ #app>main{grid-column:2;grid-row:2;min-width:0}
+ #app nav.fx,body.nh #app nav.fx,body.scrl #app nav.fx{position:sticky!important;top:14px!important;bottom:auto!important;left:auto!important;transform:none!important;
+  width:auto!important;margin:0!important;flex-direction:column;overflow:visible;gap:4px;padding:10px;cursor:default;touch-action:auto;
+  max-height:calc(100dvh - 28px);overflow-y:auto;background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none;
+  border:2px solid var(--ln);box-shadow:0 6px 18px rgba(20,70,40,.12)}
+ #app nav.fx button{flex:0 0 auto;width:100%;min-width:0;flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 12px;border-radius:14px;touch-action:auto;font-size:.95rem}
+ #app nav.fx button span{display:block;font-size:.95rem;white-space:nowrap}
+ #app nav.fx button svg{width:22px;height:22px;flex:0 0 auto}
+ #app nav.fx button .bd{position:static;margin-left:auto}
+ #app nav.fx button:not(.on):hover{background:color-mix(in srgb,var(--g2) 14%,transparent);color:var(--ink)}
+ #navh{display:none!important}
+ /* nội dung: 2 cột, thẻ lớn trải toàn chiều rộng */
+ #tc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:20px;align-items:start}
+ #tc>*{grid-column:span 1}
+ #tc>:not(.card):not(.bub),#tc>.card[style*="padding:0"],#tc>.card:only-child,#tc>.card:has(.xbi),#tc>.card:has(.rvw),#tc>.card:has(.ivt){grid-column:1/-1}
+ #tc .card:has(>.xbi){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}
+ #tc .card:has(>.xbi)>:not(.xbi){grid-column:1/-1}
+ #tc .card:has(>.xbi)>.xbi:nth-of-type(2){border-top:0}
+ /* thanh giỏ hàng nằm gọn trong khu nội dung */
+ #cbar{left:calc(50% + 127px);bottom:20px;width:min(58%,600px)}
+ /* hộp thoại: giữa màn hình thay vì trượt từ dưới lên */
+ .mb{align-items:center;padding:28px}
+ .ms{max-width:680px;max-height:88vh;border-radius:24px;padding-bottom:18px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+ /* tương tác chuột */
+ button:not(:disabled):hover{filter:brightness(1.06)}
+ button:not(:disabled):active{transform:translateY(1px)}
+ *{scrollbar-width:thin;scrollbar-color:var(--g) transparent}
+}
+@media (min-width:1500px){
+ #app{max-width:1480px;grid-template-columns:248px minmax(0,1fr)}
+ #tc{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #tc .card:has(>.xbi){grid-template-columns:repeat(3,minmax(0,1fr))}
+ #cbar{left:calc(50% + 135px)}
+}
+</style>
 </body></html>

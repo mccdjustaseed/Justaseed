@@ -6851,7 +6851,7 @@ window.TT={sync};
    - Người chơi là KHÁCH: mua, đặt làm, bán lại. Mọi số tiền do code tính, AI chỉ nói chuyện và vẽ. */
 (function(){
 'use strict';
-const SC=50,CHI=10;
+const SC=1,CHI=10; /* giá game = giá thật */
 const E=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cl=(x,n)=>String(x==null?'':x).replace(/[<>]/g,'').replace(/\s+/g,' ').trim().slice(0,n||200);
 const lg=k=>{try{return localStorage.getItem(k)}catch(e){return null}},ls=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
@@ -6875,6 +6875,9 @@ const PR={d:{},t:0,live:0,loading:0,err:'',tryAt:0,H:{}};
 try{const j=JSON.parse(lg('jsGoldP')||'null');if(j&&j.d){PR.d=j.d;PR.t=0;PR.saved=j.t||0}}catch(e){}
 const gq=c=>PR.d[c]||{buy:DEF[c][0],sell:DEF[c][1],cb:0,cs:0,t:0,def:1};
 const ui=()=>{try{const b=document.querySelector('#sdtabs button.on');if(!b||!/'gold'/.test(b.getAttribute('onclick')||''))return;const ae=document.activeElement,bd=document.getElementById('sdbody');if(ae&&bd&&bd.contains(ae)&&/INPUT|TEXTAREA/.test(ae.tagName))return;SD.open('gold')}catch(e){}};
+function extract(j){const out={};const walk=(v,key,dp)=>{if(!v||typeof v!='object'||dp>5)return;
+ if(!Array.isArray(v)&&(v.buy!=null||v.sell!=null)){const c=v.type_code||v.code||v.type||key;if(c&&typeof c=='string')out[c]=v;return}
+ if(Array.isArray(v))v.forEach(x=>walk(x,x&&(x.type_code||x.code||x.type),dp+1));else Object.keys(v).forEach(k=>walk(v[k],k,dp+1))};walk(j,'',0);return out}
 function norm(x,c){let b=+x.buy,sl=+x.sell,cb=+x.change_buy||0,cs=+x.change_sell||0;if(!(b>0)&&!(sl>0))return null;if(!(b>0))b=sl;if(!(sl>0))sl=b;
  if(c!='XAUUSD'){const f=Math.max(b,sl)<5e6?1000:1;b*=f;sl*=f;cb*=f;cs*=f}
  return{buy:b,sell:sl,cb,cs,t:+x.update_time||0}}
@@ -6885,10 +6888,9 @@ async function loadP(force){
   const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),12000);
   const r=await fetch('https://giavang.now/api/prices',{signal:ac.signal,cache:'no-store'});clearTimeout(tm);
   if(!r.ok)throw new Error('HTTP '+r.status);
-  const j=await r.json(),arr=Array.isArray(j)?j:(j&&(j.data||j.prices))||[];
-  if(!Array.isArray(arr)||!arr.length)throw new Error('Dữ liệu trống');
-  let n=0;arr.forEach(x=>{const c=x&&x.type_code;if(!c)return;const v=norm(x,c);if(v){PR.d[c]=v;n++}});
-  if(!n)throw new Error('Không đọc được giá');
+  const j=await r.json(),ex=extract(j);let n=0;
+  Object.keys(ex).forEach(c=>{const v=norm(ex[c],c);if(v){PR.d[c]=v;n++}});
+  if(!n)throw new Error('Không đọc được giá. Phản hồi: '+cl(JSON.stringify(j),90));
   PR.live=1;PR.t=Date.now();PR.err='';ls('jsGoldP',JSON.stringify({t:Date.now(),d:PR.d}));snap()
  }catch(e){PR.live=0;PR.err=cl(e&&e.message||e,80)||'Lỗi mạng'}
  PR.loading=0;ui()}
@@ -6917,7 +6919,7 @@ const GEMS={none:['Không đá',0,'no gemstone'],cz:['Đá CZ',40e3,'small spark
 const perkPct=()=>{const p=G0().perk;return p&&p.day==s.day?p.pct:0};
 const promoPct=()=>{const b=G0().bul;return b&&b.day==s.day?(b.promo||0):0};
 const discPct=()=>Math.max(perkPct(),promoPct());
-const maxDisc=()=>{const sp=G0().spent;return sp>=5e6?30:sp>=2e6?20:sp>=5e5?15:10};
+const maxDisc=()=>{const sp=G0().spent;return sp>=250e6?30:sp>=100e6?20:sp>=25e6?15:10};
 /* o: {kind,type,k,w,gem,cx,custom}; trả về các khoản theo đồng game */
 function price(o){
  const w=+o.w||0,kind=o.kind||'jew';
@@ -7080,6 +7082,7 @@ const CAT=[
  {id:'b1',name:'Vàng miếng SJC 1 chỉ',kind:'bar',type:'bar',k:24,w:1,lab:'1 CHỈ'},
  {id:'b5',name:'Vàng miếng SJC 5 chỉ',kind:'bar',type:'bar',k:24,w:5,lab:'5 CHỈ'},
  {id:'b10',name:'Vàng miếng SJC 1 lượng',kind:'bar',type:'bar',k:24,w:10,lab:'1 LƯỢNG'},
+ {id:'r01',name:'Nhẫn tròn trơn 9999 (1 phân)',kind:'ring',type:'ring',k:24,w:.1},
  {id:'r05',name:'Nhẫn tròn trơn 9999',kind:'ring',type:'ring',k:24,w:.5},
  {id:'r1',name:'Nhẫn tròn trơn 9999',kind:'ring',type:'ring',k:24,w:1},
  {id:'r2',name:'Nhẫn tròn trơn 9999',kind:'ring',type:'ring',k:24,w:2},
@@ -7197,7 +7200,7 @@ function vPrice(){
  return `<div class=card><div class=row><h3 style="margin:0">Giá vàng hôm nay</h3><button class=s onclick="GOLD.refresh()" ${PR.loading?'disabled':''}>${PR.loading?'Đang tải…':'Làm mới'}</button></div>
  <p class=mut style="margin:2px 0 6px">Nguồn: giavang.now · ${PR.live?`<span class=ok>trực tuyến${age!=null?', cập nhật '+(age<1?'vừa xong':age+' phút trước'):''}</span>`:`<span class=bad>chưa tải được${PR.err?' ('+E(PR.err)+')':''}, đang dùng ${PR.saved?'giá lưu lần gần nhất':'giá mẫu'}</span>`}</p>
  <div style="overflow-x:auto"><table class=gt><thead><tr><th style="text-align:left">Loại</th><th>Mua vào</th><th>Bán ra</th><th>±</th></tr></thead><tbody>${rows}</tbody></table></div>
- <p class=mut style="margin:6px 0 0;font-size:.78rem">Giá trong game = giá thật ÷ 50, tính theo <b>1 chỉ</b> (1 lượng = 10 chỉ = 37,5 g). Dòng nhỏ là giá thật theo lượng. "Mua vào" là giá tiệm mua lại của khách, "Bán ra" là giá tiệm bán.</p></div>
+ <p class=mut style="margin:6px 0 0;font-size:.78rem">Giá trong game = giá vàng thật, quy ra <b>1 chỉ</b> (1 lượng = 10 chỉ = 37,5 g). Dòng nhỏ là giá thật theo lượng. "Mua vào" là giá tiệm mua lại của khách, "Bán ra" là giá tiệm bán.</p></div>
  <div class=card><div class=row><h3 style="margin:0">Biểu đồ ${NAMES[sel]||sel}</h3><span>${[7,30].map(d=>chip(GD.hd==d,`GOLD.hd(${d})`,d+' ngày')).join('')}</span></div>${spark(sel,GD.hd)}</div>
  <div class=card><h3 style="margin-top:0">Bảng giá của ${SHOP}</h3><div style="overflow-x:auto"><table class=gt><thead><tr><th style="text-align:left">Hàng</th><th>Thu mua</th><th>Bán ra</th></tr></thead><tbody>
  <tr><td><b>Vàng miếng SJC</b></td><td style="text-align:right">${$(rn(b.buy))}</td><td style="text-align:right"><b>${$(rn(b.sell))}</b></td></tr>

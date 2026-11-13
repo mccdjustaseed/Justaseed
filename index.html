@@ -2131,7 +2131,7 @@ const bt=(cls,lb,fn,ic,dis)=>`<button class="${cls}" aria-label="${lb}" title="$
 const nxH=()=>MS.rep?'<span>🔁 Lặp lại bài này</span>':MS.q.length?'<span>Tiếp theo:</span><b class="mq"><em class="mqi">'+esc(MS.q[0].name)+'</em></b>':'<span>Hết hàng đợi, chưa có bài tiếp theo</span>';
 function nowH(){
  const t=MS.now;
- return `<div class="mnr"><div class="ttslot" onclick="MU.dt()" title="Chạm hai lần để xem video"></div>
+ return `<div class="mnr"><div class="ttslot" onclick="MU.dt()" title="Chạm: chạy lại hiệu ứng đĩa · Chạm đúp: xem video"></div>
 <div class="mni">${t?`<p class="mnx" id="mnx">${nxH()}</p>`:''}<p class="mnm">${t?'<em class="mqi">'+esc(t.name)+'</em>':'Chưa có bài nào đang phát'}</p>
 <p class="mar mut">${t?esc(t.ar||'YouTube'):'Tìm bài hát hoặc dán link YouTube bên dưới'}</p></div><button class="msk10 msrate" ${t?'':'disabled'} aria-label="Tốc độ phát ${(+MS.rate||1)}x (chạm để đổi)" title="Tốc độ phát · chạm để đổi" onclick="MU.rateNext()">${+MS.rate||1}x</button></div>
 <input type="range" id="msk" min="0" max="1000" value="0" ${t?'':'disabled'} aria-label="Tua bài hát" oninput="MU.sk(this.value,1)" onchange="MU.sk(this.value)">
@@ -2168,6 +2168,7 @@ function tickUI(e){
  const a=$e('mtl');if(a&&!MS.seeking)a.textContent=fm(e);
  const b=$e('mtr');if(b)b.textContent=fm(d);
  const m=$e('mpb');if(m)m.style.width=(p*100)+'%';const rg=$e('mvp');if(rg)rg.style.strokeDashoffset=100-p*100;
+ const sk2=$e('spSk');if(sk2&&!sk2.matches(':active')&&!(sk2.dataset&&sk2.dataset.seek==='1')){try{if(!document.getElementById('spProg')||!document.getElementById('spEmb')||!document.getElementById('spEmb').classList.contains('ctl')){/* still update values */}sk2.value=Math.round(p*1000);const t0=$e('spT0'),t1=$e('spT1');if(t0)t0.textContent=fm(e);if(t1)t1.textContent=fm(d)}catch(x){}}
  document.querySelectorAll('.qeta').forEach(x=>{x.textContent=etaT(+x.dataset.i)});try{lyTick(e)}catch(_){}}
 function placeMv(){
  let v=$e('mv');
@@ -2184,7 +2185,7 @@ const bodyCls=()=>{document.body.classList.toggle('mpon',!!MS.now&&!MS.mc);docum
 function mini(force){
  const t=MS.now,sig=(t?t.id:'')+'|'+MS.playing+'|'+MS.mc;if(!force&&sig===miniSig)return;miniSig=sig;
  const m=$e('mp'),v=$e('mv');if(!m)return;
- if(v)v.innerHTML=t?`<div class="mvw"><svg class="mvr" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" pathLength="100" class="mvb"/><circle id="mvp" cx="20" cy="20" r="18" pathLength="100" class="mvf"/></svg><button class="mvd ${MS.playing?'on':''}" aria-label="Hiện lại trình phát nhạc" title="Chạm: mở trình phát · chạm hai lần: xem video" onclick="MU.mvTap()">${t.th?`<img src="${esc(t.th)}" alt="">`:'<span>♪</span>'}</button></div>`:'';if(t)try{tickUI(est())}catch(e){};
+ if(v)v.innerHTML=t?`<div class="mvw"><svg class="mvr" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" pathLength="100" class="mvb"/><circle id="mvp" cx="20" cy="20" r="18" pathLength="100" class="mvf"/></svg><button class="mvd ${MS.playing?'on':''}" aria-label="Hiện lại trình phát nhạc" title="Chạm: mở trình phát · chạm đúp: xem video" onclick="MU.mvTap()">${t.th?`<img src="${esc(t.th)}" alt="">`:'<span>♪</span>'}</button></div>`:'';if(t)try{tickUI(est())}catch(e){};
  m.innerHTML=t?`${t.th?`<img class="mpi" src="${esc(t.th)}" alt="" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)">`:'<div class="mpi" title="Thu nhỏ thành đĩa than" onclick="MU.mc(1)"></div>'}<div class="mpt" onclick="MU.open()"><b><em class="mqi">${esc(t.name)}</em></b><span>${esc(t.ar||'YouTube')}</span></div>${bt('','Bài trước','MU.prev()','prev')}${bt('pp',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play')}${bt('','Bài tiếp theo','MU.next()','next')}<i id="mpb"></i>`:''}
 function ui(){
  bodyCls();
@@ -2226,16 +2227,17 @@ const sku=()=>clearTimeout(skT);
 const skc=()=>{if(skL){skL=0;return}seekBy(MS.sd*10)};
 function apTog(){MS.ap=MS.ap?0:1;sv();fui();toast(MS.ap?'Autoplay: bật':'Autoplay: tắt')}
 
-/* ---------- chế độ xem phim (chạm hai lần vào đĩa) ---------- */
+/* ---------- chế độ xem phim (chạm đúp vào đĩa) ---------- */
 function movie(v){
  const on=v==null?!MS.movie:!!v;
  if(on&&!MS.now)return toast('Hãy chọn một bài trước');
  MS.movie=on?1:0;
  if(on&&!ctl&&MS.now)ensureCtl(MS.now.id).catch(()=>{});
  ui();toast(on?'Chế độ xem video — kéo để di chuyển, chụm hai ngón để đổi cỡ':'Chế độ nghe nhạc')}
-function dtap(){const n=Date.now();if(n-dtT<380){dtT=0;clearTimeout(dtS);return 1}dtT=n;return 0}
-function dtCover(){if(dtap())movie();else{try{window.TT&&TT.replay()}catch(e){}}}
-function dtMini(){if(dtap())return movie();clearTimeout(dtS);dtS=setTimeout(()=>{dtT=0;MU.mc(0)},380)}
+function dtap(){const n=Date.now();if(n-dtT>0&&n-dtT<420){dtT=0;clearTimeout(dtS);return 1}dtT=n;return 0}
+function dtCover(){if(dtap()){try{window.TT&&TT.replay()}catch(e){}movie();return}
+ try{window.TT&&TT.replay()}catch(e){}}
+function dtMini(){if(dtap())return movie();clearTimeout(dtS);dtS=setTimeout(()=>{dtT=0;MU.mc(0)},420)}
 
 /* ---------- phát nền: Media Session + âm thanh im lặng giữ phiên âm thanh ---------- */
 function mkSilence(){
@@ -2326,7 +2328,7 @@ setInterval(()=>{
  if(!MS.now)return;if(MS.mc)placeMv();
  if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
  tickUI(est())},500);
-window.MU={seekBy,skd,sku,skc,rateNext(){const a=[.5,.75,1,1.25,1.5,2],i=a.indexOf(+MS.rate||1);MU.rate(a[(i+1)%a.length])},ap:apTog,movie,dt:dtCover,mvTap:dtMini,
+window.MU={sk,seekBy,skd,sku,skc,rateNext(){const a=[.5,.75,1,1.25,1.5,2],i=a.indexOf(+MS.rate||1);MU.rate(a[(i+1)%a.length])},ap:apTog,movie,dt:dtCover,mvTap:dtMini,
  rate(v){v=+v;if(!(v>0))return;MS.pos=est();MS.evT=Date.now();MS.rate=v;try{ctl&&ctl.setPlaybackRate(v)}catch(e){}fui();toast('Tốc độ phát: '+v+'x')},
  favSet(tr){if(!tr||!IDRE.test(tr.id))return false;const i=MS.fav.findIndex(x=>x.id===tr.id);if(i>=0){MS.fav.splice(i,1);fui();return false}MS.fav.unshift({id:tr.id,name:tr.name||'Video YouTube',ar:tr.ar||'',img:tr.th||cov(tr.id),th:tr.th||cov(tr.id),dur:0});fui();return true},
  isFav(id){return MS.fav.some(x=>x.id===id)},
@@ -2634,11 +2636,12 @@ R()})();
 </script>
 <style>
 /* ===== v11: nhạc - chữ chạy ngang, số thứ tự, bài tiếp theo ===== */
-.mqi{font-style:normal}.mqi.run{display:inline-block;white-space:nowrap;animation:mqs var(--md,8s) linear infinite;will-change:transform}
-.mqa{display:inline-block;padding-right:2.5em}
+.mqi{font-style:normal;display:inline-block;white-space:nowrap;max-width:none}.mqi.run{display:inline-block;white-space:nowrap;animation:mqs var(--md,8s) linear infinite;will-change:transform;padding-right:0}
+.mnm.mrun{text-overflow:clip}
+.mqa{display:inline-block;padding-right:2.5em;white-space:nowrap}
 @keyframes mqs{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .mtr.qpl{cursor:pointer}.mtr.qpl:active{background:color-mix(in srgb,var(--g2) 14%,transparent)}
-.mnm{display:block!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:unset}
+.mnm{display:block!important;white-space:nowrap;overflow:hidden;text-overflow:clip;-webkit-line-clamp:unset;position:relative}
 .mnx{display:flex;gap:4px;align-items:baseline;margin:0 0 2px;font-size:.76rem;color:var(--mut);white-space:nowrap;min-width:0}
 .mnx>span{flex:none}.mnx b.mq{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600;color:var(--ink);font-family:Onest,sans-serif}
 .qn{flex:none;width:22px;text-align:center;font-size:.85rem;color:var(--mut);font-variant-numeric:tabular-nums}
@@ -2649,20 +2652,24 @@ R()})();
 <script>
 /* chữ quá dài thì chạy ngang một chiều, lặp vòng */
 (()=>{const fx=()=>document.querySelectorAll('.mqi').forEach(e=>{const p=e.parentElement;if(!p)return;
-const txt=e.dataset.t!=null?e.dataset.t:(e.dataset.t=e.textContent);
-const k=txt+'|'+p.clientWidth;if(e.dataset.k===k)return;e.dataset.k=k;
-e.classList.remove('run');e.textContent=txt;
-const w=p.clientWidth;if(!w)return;
-const ov=e.getBoundingClientRect().width-w;
-if(ov>2){e.innerHTML='<span class="mqa"></span><span class="mqa"></span>';e.children[0].textContent=txt;e.children[1].textContent=txt;e.classList.add('run');
-const one=e.getBoundingClientRect().width/2;e.style.setProperty('--md',Math.max(4,one/32).toFixed(1)+'s')}});
-setInterval(fx,700);addEventListener('resize',fx);fx()})();
+const raw=(e.dataset.t!=null?e.dataset.t:(e.dataset.t=(e.textContent||'').trim()));
+const txt=raw;const w=p.clientWidth;if(!w)return;
+const k=txt+'|'+w;if(e.dataset.k===k&&e.classList.contains('run')=== (e.dataset.run==='1'))return;e.dataset.k=k;
+e.classList.remove('run');p.classList.remove('mrun');e.style.removeProperty('--md');
+e.textContent=txt;
+/* đo bằng scrollWidth để không bị co theo khung cha */
+const need=(e.scrollWidth||e.getBoundingClientRect().width)-w;
+if(need>4){e.innerHTML='<span class="mqa"></span><span class="mqa"></span>';
+e.children[0].textContent=txt;e.children[1].textContent=txt;e.classList.add('run');p.classList.add('mrun');e.dataset.run='1';
+const one=Math.max(e.children[0].offsetWidth||0,e.scrollWidth/2);e.style.setProperty('--md',Math.max(5,one/28).toFixed(1)+'s')}
+else{e.dataset.run='0'}});
+setInterval(fx,600);addEventListener('resize',()=>{document.querySelectorAll('.mqi').forEach(e=>{e.dataset.k=''});fx()});fx()})();
 </script>
 <style>
 /* v11: thu nhỏ giao diện tab nhạc */
 .mnr{gap:10px;margin:0 0 2px}
 .mcv{width:60px;flex:0 0 60px}
-.mnm{font-size:.95rem}
+.mnm{font-size:.95rem;display:block!important;white-space:nowrap;overflow:hidden;text-overflow:clip;-webkit-line-clamp:unset}
 .mar{font-size:.8rem;margin-top:1px}
 .mnx{font-size:.7rem;margin-bottom:1px}
 #msk{margin:6px 0 0;height:18px}
@@ -6312,8 +6319,8 @@ FPT.splice(1,0,['posts','Bài đăng']);
 <style>/* v50: khóa cỡ chữ tên bài hát, tránh lúc to lúc nhỏ */
 html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .mti b,#mp .mpt b,.mnm,.mnx b.mq{line-height:1.3;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-.mqi{display:inline-block;white-space:nowrap;font-size:inherit;line-height:inherit;vertical-align:top}
-.mqa{font-size:inherit}
+.mqi{display:inline-block;white-space:nowrap;font-size:inherit;line-height:inherit;vertical-align:top;max-width:none}
+.mqa{font-size:inherit;white-space:nowrap}
 </style>
 <script>
 /* ===== v52: Quản trị nằm trong ngăn Cộng đồng (chỉ tài khoản có trong bảng admins) + khóa tài khoản + nhận tiền quản trị viên tặng ===== */
@@ -8316,8 +8323,15 @@ V.forum=function(){
 #spEmb.movie.ctl #spCt{opacity:1}
 #spCt button{pointer-events:none;position:absolute;border:0;padding:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;line-height:1;font-family:inherit}
 #spEmb.movie.ctl #spCt button{pointer-events:auto}
-#spPp{width:44px;height:44px;font-size:1.15rem}
-#spSz{width:30px;height:30px;right:6px;bottom:6px;font-size:.95rem}
+#spPp{width:44px;height:44px;font-size:1.15rem;left:50%;top:42%;transform:translate(-50%,-50%)}
+#spB10,#spF10{width:40px;height:32px;font-size:.78rem;font-weight:700;border-radius:10px;top:42%;transform:translateY(-50%)}
+#spB10{left:12%}
+#spF10{right:12%}
+#spSz{width:30px;height:30px;right:6px;top:6px;bottom:auto;font-size:.95rem}
+#spProg{position:absolute;left:8px;right:8px;bottom:8px;display:flex;align-items:center;gap:6px;pointer-events:none}
+#spEmb.movie.ctl #spProg{pointer-events:auto}
+#spProg span{font-size:.68rem;font-weight:700;color:#fff;min-width:2.2em;text-shadow:0 1px 2px #000}
+#spProg input[type=range]{flex:1;min-width:0;margin:0;padding:0;height:18px;accent-color:#7bd88f;background:transparent}
 #spEmb.movie:not(.ctl) #spX{opacity:0;pointer-events:none}
 #spEmb.movie #spX{z-index:3;transition:opacity .18s}
 @media(prefers-reduced-motion:reduce){#spEmb.movie.pin{animation:none}}
@@ -8325,8 +8339,22 @@ V.forum=function(){
 <script>
 (()=>{
 const em=document.getElementById('spEmb');if(!em)return;
-em.insertAdjacentHTML('beforeend','<div id="spDr"></div><div id="spCt"><button id="spPp" aria-label="Phát / tạm dừng"></button><button id="spSz" aria-label="Đổi cỡ cửa sổ">⤢</button></div>');
+em.insertAdjacentHTML('beforeend','<div id="spDr"></div><div id="spCt"><button id="spB10" aria-label="Tua lùi 10 giây">−10</button><button id="spPp" aria-label="Phát / tạm dừng"></button><button id="spF10" aria-label="Tua tới 10 giây">+10</button><button id="spSz" aria-label="Đổi cỡ cửa sổ">⤢</button><div id="spProg"><span id="spT0">0:00</span><input id="spSk" type="range" min="0" max="1000" value="0" aria-label="Tua video"><span id="spT1">0:00</span></div></div>');
 const dr=document.getElementById('spDr'),pp=document.getElementById('spPp'),sz=document.getElementById('spSz');
+const b10=document.getElementById('spB10'),f10=document.getElementById('spF10'),sk=document.getElementById('spSk'),t0=document.getElementById('spT0'),t1=document.getElementById('spT1');
+const fmMs=ms=>{ms=Math.max(0,Math.round((ms||0)/1000));return Math.floor(ms/60)+':'+String(ms%60).padStart(2,'0')};
+let seeking=0;
+function paintProg(){
+  try{
+    if(!window.MS||!MS.now){if(sk)sk.value=0;if(t0)t0.textContent='0:00';if(t1)t1.textContent='0:00';return}
+    const d=MS.dur||MS.now.dur||0;
+    let e;try{e=(typeof est==='function')?est():MS.pos||0}catch(x){e=MS.pos||0}
+    if(t1)t1.textContent=fmMs(d);
+    if(!seeking){if(t0)t0.textContent=fmMs(e);if(sk&&d)sk.value=Math.round(Math.min(1,e/d)*1000);else if(sk)sk.value=0}
+    if(pp)pp.textContent=(MS.playing)?'⏸':'▶';
+  }catch(x){}
+}
+setInterval(paintProg,400);
 const pb=document.createElement('div');pb.style.cssText='position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';document.body.appendChild(pb);
 const ins=()=>{const c=getComputedStyle(pb);return{t:parseFloat(c.paddingTop)||0,b:parseFloat(c.paddingBottom)||0}};
 const M=10,RES=140,MINW=176;
@@ -8380,6 +8408,14 @@ function end(e){
 dr.addEventListener('pointerup',end);dr.addEventListener('pointercancel',end);
 pp.addEventListener('click',e=>{e.stopPropagation();try{MU.tog()}catch(_){};setTimeout(()=>{pp.textContent=(window.MS&&MS.playing)?'⏸':'▶'},250);clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),3200)});
 sz.addEventListener('click',e=>{e.stopPropagation();toggleSize();clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),3200)});
+if(b10)b10.addEventListener('click',e=>{e.stopPropagation();try{MU.seekBy(-10)}catch(x){}paintProg();clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),3200)});
+if(f10)f10.addEventListener('click',e=>{e.stopPropagation();try{MU.seekBy(10)}catch(x){}paintProg();clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),3200)});
+if(sk){
+  sk.addEventListener('pointerdown',e=>e.stopPropagation());
+  sk.addEventListener('click',e=>e.stopPropagation());
+  sk.addEventListener('input',e=>{e.stopPropagation();seeking=1;const d=(MS&&MS.dur)||0;const p=(+sk.value/1000)*d;if(t0)t0.textContent=fmMs(p);clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),4000)});
+  sk.addEventListener('change',e=>{e.stopPropagation();seeking=0;const d=(MS&&MS.dur)||0;const p=(+sk.value/1000)*d;try{MU.sk(sk.value)}catch(x){try{if(typeof seekMs==='function')seekMs(p)}catch(y){}}paintProg();clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),3200)});
+}
 function clear(){['width','height','left','top','transition'].forEach(k=>em.style[k]='');st.on=0;ctl(0)}
 function sync(){
  const mv=em.classList.contains('movie')&&em.classList.contains('show');

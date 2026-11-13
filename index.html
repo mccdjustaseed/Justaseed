@@ -2299,8 +2299,6 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 </style>`);
 function lyClean(n){return String(n||'').replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|music video|mv|lyrics?|lyric video|audio|visualizer|hd|4k)\b.*$/i,' ').replace(/\s+/g,' ').trim()}
 function lyParse(s){const o=[];String(s||'').split('\n').forEach(l=>{const m=l.match(/^((?:\[\d+:\d+(?:\.\d+)?\])+)(.*)$/);if(!m)return;const tx=m[2].trim();m[1].replace(/\[(\d+):(\d+(?:\.\d+)?)\]/g,(_,a,b)=>{o.push({t:+a*60+ +b,s:tx})})});return o.sort((a,b)=>a.t-b.t)}
-
-/* đo chiều cao cao nhất của các câu (sau khi xuống dòng) theo đúng bề rộng khung */
 function lyMeasure(lines){
   const host=$e('mly');if(!host)return 0;
   const win=host.querySelector('.ly-win');
@@ -2311,13 +2309,9 @@ function lyMeasure(lines){
   m.style.width=w+'px';
   let max=0;
   const list=(lines&&lines.length)?lines:['♪'];
-  for(const s of list){
-    m.textContent=s||'♪';
-    max=Math.max(max,m.offsetHeight||0);
-  }
+  for(const s of list){m.textContent=s||'♪';max=Math.max(max,m.offsetHeight||0)}
   return Math.ceil(max+2);
 }
-
 function lyApplyH(px,growOnly){
   const b=$e('mlb');if(!b)return;
   const cur=LY.h|0;
@@ -2326,46 +2320,32 @@ function lyApplyH(px,growOnly){
   if(h<1)h=0;
   LY.h=h;
   b.style.setProperty('--lyh',h?h+'px':'0px');
-  if(h){
-    b.style.maxHeight=(h+28)+'px';
-    b.classList.add('ly-open');
-    LY.open=1;
-  }
+  if(h){b.style.maxHeight=(h+28)+'px';b.classList.add('ly-open');LY.open=1}
 }
-
 function lyShrinkThen(cb){
   const b=$e('mlb');
   if(!b||!LY.open){LY.h=0;LY.open=0;if(cb)cb();return}
-  b.classList.remove('ly-open');
-  b.style.maxHeight='0px';
-  b.style.opacity='0';
+  b.classList.remove('ly-open');b.style.maxHeight='0px';b.style.opacity='0';
   const done=()=>{LY.h=0;LY.open=0;if(cb)cb()};
   let finished=0;
   const fin=()=>{if(finished)return;finished=1;b.removeEventListener('transitionend',onEnd);done()};
   const onEnd=e=>{if(e.propertyName==='max-height'||e.propertyName==='opacity')fin()};
-  b.addEventListener('transitionend',onEnd);
-  setTimeout(fin,520);
+  b.addEventListener('transitionend',onEnd);setTimeout(fin,520);
 }
-
 function lyH(){
   if(!MS.now){LY.h=0;LY.open=0;LY.i=-2;return '<h3>🎤 Lời bài hát</h3><p class=mut style="margin:0">Phát một bài để xem lời.</p>';}
   const head='<div class=row style="margin-top:0"><h3 style="margin:0">🎤 Lời bài hát</h3></div>';
-  /* đang tải: nếu khung đang mở (bài trước có lời) thì giữ size + hiện ♪ */
   if(LY.st=='load'){
-    if(LY.open&&LY.h>0){
-      return head+`<div class="lyb ly2 ly-open" id=mlb style="--lyh:${LY.h}px;max-height:${LY.h+28}px;opacity:1;padding:12px 4px"><div class="ly-win"><div class="ly-stack" id="mll-stack"><div class="lyl" id="mll">♪</div></div></div></div>`;
-    }
+    if(LY.open&&LY.h>0)return head+`<div class="lyb ly2 ly-open" id=mlb style="--lyh:${LY.h}px;max-height:${LY.h+28}px;opacity:1;padding:12px 4px"><div class="ly-win"><div class="ly-stack" id="mll-stack"><div class="lyl" id="mll">♪</div></div></div></div>`;
     return head+'<p class=mut style="margin:0">♪</p>';
   }
   if(LY.L.length){
-    const h=LY.h||0;
-    const open=LY.open&&h>0;
+    const h=LY.h||0,open=LY.open&&h>0;
     return head+`<div class="lyb ly2${open?' ly-open':''}" id=mlb style="${h?`--lyh:${h}px;max-height:${h+28}px;`:''}${open?'opacity:1;padding:12px 4px':''}"><div class="ly-win"><div class="ly-stack" id="mll-stack"><div class="lyl" id="mll">♪</div></div></div></div>`;
   }
   if(LY.P)return head+'<div class="lyb ly-plain" id=mlb><pre>'+esc(LY.P)+'</pre></div><p class=mut style="margin:4px 0 0">Bài này chỉ có lời thường, không chạy theo nhạc.</p>';
   return head+'<p class=mut style="margin:0">'+(LY.st=='err'?'Không tải được lời (kiểm tra mạng).':'Chưa tìm thấy lời cho bài này.')+'</p>';
 }
-
 function lyShow(i){
   const stack=$e('mll-stack');if(!stack)return;
   const tx=(i>=0&&LY.L[i]&&LY.L[i].s)?LY.L[i].s:'♪';
@@ -2373,72 +2353,36 @@ function lyShow(i){
   if(cur){
     if(cur.textContent===tx&&!cur.classList.contains('ly-out'))return;
     cur.classList.remove('ly-in');cur.classList.add('ly-out');
-    const old=cur;
-    setTimeout(()=>{try{if(old.parentNode===stack)old.remove()}catch(e){}},400);
+    const old=cur;setTimeout(()=>{try{if(old.parentNode===stack)old.remove()}catch(e){}},400);
   }
-  const n=document.createElement('div');
-  n.className='lyl ly-in';n.id='mll';n.textContent=tx;
-  stack.appendChild(n);
+  const n=document.createElement('div');n.className='lyl ly-in';n.id='mll';n.textContent=tx;stack.appendChild(n);
 }
-
 function lyOpenMeasured(){
   const lines=(LY.L||[]).map(x=>x.s||'').filter(Boolean);
-  const need=lyMeasure(lines);
-  if(need<1)return;
-  const b=$e('mlb');
-  if(!b)return;
-  /* chỉ nở, không co khi đang còn lời */
+  const need=lyMeasure(lines);if(need<1)return;
+  const b=$e('mlb');if(!b)return;
   lyApplyH(need,true);
-  if(!b.classList.contains('ly-open')){
-    void b.offsetHeight;
-    requestAnimationFrame(()=>{const x=$e('mlb');if(x){x.classList.add('ly-open');LY.open=1}});
-  }else{
-    LY.open=1;
-  }
+  if(!b.classList.contains('ly-open')){void b.offsetHeight;requestAnimationFrame(()=>{const x=$e('mlb');if(x){x.classList.add('ly-open');LY.open=1}})}
+  else LY.open=1;
 }
-
 function lyUI(opts){
-  opts=opts||{};
-  const e=$e('mly');if(!e)return;
+  opts=opts||{};const e=$e('mly');if(!e)return;
   const keepFrame=opts.keepFrame&&LY.open&&LY.h>0&&(LY.st=='load'||(LY.L&&LY.L.length));
   if(keepFrame){
     const stack=$e('mll-stack');
-    if(stack&&LY.st=='load'){
-      const cur=stack.querySelector('.lyl:not(.ly-out)');
-      if(cur)cur.textContent='♪';
-      else lyShow(-1);
-    }
+    if(stack&&LY.st=='load'){const cur=stack.querySelector('.lyl:not(.ly-out)');if(cur)cur.textContent='♪';else lyShow(-1)}
     return;
   }
-  /* chuyển từ có lời → không lời: co khung rồi mới thay nội dung */
   if(LY.open&&LY.h>0&&!(LY.L&&LY.L.length)&&LY.st!=='load'){
-    lyShrinkThen(()=>{
-      const el=$e('mly');if(el)el.innerHTML=lyH();
-      LY.i=-2;
-    });
-    return;
+    lyShrinkThen(()=>{const el=$e('mly');if(el)el.innerHTML=lyH();LY.i=-2});return;
   }
-  e.innerHTML=lyH();
-  LY.i=-2;
-  if(LY.L&&LY.L.length){
-    requestAnimationFrame(()=>{
-      lyOpenMeasured();
-      requestAnimationFrame(()=>lyShow(-1));
-    });
-  }else{
-    LY.h=0;LY.open=0;
-  }
+  e.innerHTML=lyH();LY.i=-2;
+  if(LY.L&&LY.L.length)requestAnimationFrame(()=>{lyOpenMeasured();requestAnimationFrame(()=>lyShow(-1))});
+  else{LY.h=0;LY.open=0}
 }
-
 async function lyFetch(t){
   const id=t.id;
-  if(LYC[id]){
-    const prevOpen=LY.open,prevH=LY.h;
-    LY=Object.assign({id,st:'ok',i:-2,off:0,h:prevH,open:prevOpen},LYC[id]);
-    lyUI();
-    return;
-  }
-  /* đang tìm: giữ khung nếu đang mở */
+  if(LYC[id]){const prevOpen=LY.open,prevH=LY.h;LY=Object.assign({id,st:'ok',i:-2,off:0,h:prevH,open:prevOpen},LYC[id]);lyUI();return}
   const prevOpen=LY.open,prevH=LY.h;
   LY={id,st:'load',L:[],P:'',i:-2,off:0,h:prevH,open:prevOpen};
   lyUI({keepFrame:true});
@@ -2456,37 +2400,23 @@ async function lyFetch(t){
     if(d){const n=c.filter(x=>Math.abs((x.duration||0)-d)<=15);if(n.length)c=n}
     c.sort((a,b)=>(!!b.syncedLyrics-!!a.syncedLyrics)||(d?Math.abs(a.duration-d)-Math.abs(b.duration-d):0));
     const p=c[0],o={L:p&&p.syncedLyrics?lyParse(p.syncedLyrics):[],P:p&&p.plainLyrics||''};
-    LYC[id]=o;
-    LY=Object.assign({id,st:'ok',i:-2,off:0,h:LY.h,open:LY.open},o);
-    lyUI();
-  }catch(e){
-    if(LY.id===id){
-      LY.st='err';LY.L=[];LY.P='';
-      lyUI();
-    }
-  }
+    LYC[id]=o;LY=Object.assign({id,st:'ok',i:-2,off:0,h:LY.h,open:LY.open},o);lyUI();
+  }catch(e){if(LY.id===id){LY.st='err';LY.L=[];LY.P='';lyUI()}}
 }
-
 function lyTick(e){
   const t=MS.now;if(!t||!$e('mly'))return;
   if(LY.id!==t.id){lyFetch(t);return}
   if(!LY.L.length)return;
   const s=e/1000+LY.off;let i=-1;for(let k=0;k<LY.L.length&&LY.L[k].t<=s;k++)i=k;
   if(i===LY.i)return;LY.i=i;
-  const b=$e('mlb');
-  if(b&&!b.classList.contains('ly-open'))lyOpenMeasured();
+  const b=$e('mlb');if(b&&!b.classList.contains('ly-open'))lyOpenMeasured();
   lyShow(i);
 }
-
-/* đổi kích thước / xoay màn hình: đo lại một lần */
 let _lyResizeT=0;
 function lyOnResize(){
   if(!(LY.L&&LY.L.length)||!$e('mlb'))return;
   clearTimeout(_lyResizeT);
-  _lyResizeT=setTimeout(()=>{
-    const need=lyMeasure((LY.L||[]).map(x=>x.s||''));
-    if(need>0)lyApplyH(need,false);
-  },120);
+  _lyResizeT=setTimeout(()=>{const need=lyMeasure((LY.L||[]).map(x=>x.s||''));if(need>0)lyApplyH(need,false)},120);
 }
 addEventListener('resize',lyOnResize);
 addEventListener('orientationchange',lyOnResize);
@@ -6977,7 +6907,7 @@ async function syncAcc(want){
  else if(accOn()){const ok=await accDel();lset(LSA,'');toast(ok?'Đã xóa khóa khỏi tài khoản':'Chưa xóa được khóa trên tài khoản')}}
 
 /* ---- v61: cổng gọi Gemini dùng chung cho Tiệm vàng (văn bản có ảnh đính kèm + tạo ảnh), dùng chung nhóm khóa, giãn cách và hạn mức ngày ---- */
-const IMGM=['gemini-2.5-flash-image','gemini-3.1-flash-image-preview','gemini-2.5-flash-image-preview','gemini-3-pro-image-preview'],LSI='jsGemImgM';
+const IMGM=['gemini-nano-banana-2.1','gemini-3.1-flash-image','gemini-2.5-flash-image','gemini-3-pro-image-preview','gemini-3.1-flash-image-preview','gemini-2.5-flash-image-preview'],LSI='jsGemImgM';
 let chainI=Promise.resolve();
 function xgen(parts,o){o=o||{};
  if(!isOn())return Promise.resolve({err:'off'});
@@ -6995,7 +6925,7 @@ function xgen(parts,o){o=o||{};
    let keyBad=0;
    for(const m of ms){
     const gc={temperature:o.temp==null?1:o.temp};
-    if(o.image)gc.responseModalities=['TEXT','IMAGE'];
+    if(o.image){gc.responseModalities=['TEXT','IMAGE'];gc.imageConfig={aspectRatio:'1:1',imageSize:'1K'}}
     else{gc.maxOutputTokens=o.max||500;if(o.json!==false)gc.responseMimeType='application/json';if(/2\.5/.test(m))gc.thinkingConfig={thinkingBudget:0}}
     const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),o.timeout||(o.image?90000:20000));
     let r;
@@ -7005,14 +6935,16 @@ function xgen(parts,o){o=o||{};
     if(!r.ok){
      let msg='';try{msg=String(((await r.json()).error||{}).message||'')}catch(e){}
      console.warn('[gemini-x]',m,r.status,msg);
-     lastErr={err:r.status==429?'quota':'http',st:r.status,msg};
+     lastErr={err:r.status==429?'quota':'http',st:r.status,msg,model:m};
      if(r.status==401||r.status==403||(r.status==400&&/api.?key/i.test(msg))){mut(ke.k,x=>{x.bad=1});keyBad=1;break}
-     if(!o.image&&r.status==429){mut(ke.k,x=>{x.cd=Date.now()+(/PerDay|per day|daily/i.test(msg)?72e5:6e5)});break}
+     if(r.status==429){mut(ke.k,x=>{x.cd=Date.now()+(/PerDay|per day|daily/i.test(msg)?72e5:6e5)});if(!o.image)break;continue}
+     /* model không tồn tại / không hỗ trợ ảnh → thử model kế */
+     if(r.status==404||(r.status==400&&/not (found|supported)|invalid model|unknown model/i.test(msg)))continue;
      continue}
     let j;try{j=await r.json()}catch(e){lastErr={err:'parse'};continue}
     const ps=(j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[];
     const text=ps.map(x=>x.text||'').join(''),imgs=ps.filter(x=>x.inlineData&&x.inlineData.data).map(x=>({mime:x.inlineData.mimeType||'image/png',data:x.inlineData.data}));
-    if(o.image){if(imgs.length){lset(LSI,m==IMGM[0]?'':m);return{ok:1,text,images:imgs,model:m}}lastErr={err:'noimg',msg:text.slice(0,120)};continue}
+    if(o.image){if(imgs.length){lset(LSI,m===IMGM[0]?'':m);return{ok:1,text,images:imgs,model:m}}lastErr={err:'noimg',msg:(text||'').slice(0,160)||('model '+m+' không trả ảnh'),model:m};continue}
     try{return{ok:1,json:JSON.parse(text.replace(/```json|```/g,'').trim()),text}}catch(e){lastErr={err:'parse',msg:text.slice(0,120)};return lastErr}
    }
    if(!keyBad&&lastErr.err!='quota')break;
@@ -7668,7 +7600,7 @@ The PREVIOUS DRAFT is attached: keep it as the base and apply this change reques
  if(prev&&prev.b64){parts.push({text:'PREVIOUS DRAFT:'});parts.push({inlineData:{mimeType:'image/png',data:prev.b64}})}
  if(f.refB){parts.push({text:'CUSTOMER REFERENCE PHOTO:'});parts.push({inlineData:{mimeType:f.refB.mime,data:f.refB.b64}})}
  const r=await X().gen(parts,{image:true,temp:.9});
- if(!r||!r.ok||!r.images||!r.images.length)return{err:(r&&r.err)||'fail',st:r&&r.st,msg:r&&r.msg};
+ if(!r||!r.ok||!r.images||!r.images.length)return{err:(r&&r.err)||'fail',st:r&&r.st,msg:(r&&r.msg)||'',model:r&&r.model};
  try{const blob=await keyOut('data:'+r.images[0].mime+';base64,'+r.images[0].data);if(!blob)return{err:'proc'};return{blob}}catch(e){return{err:'proc'}}}
 
 /* ================= CHỦ TIỆM ================= */
@@ -7772,7 +7704,7 @@ async function startOrder(){
  if(br.feasible===false){GD.busy='';GD.msg=br.reason;ui();return}
  GD.busy='img';ui();
  let blob=null,why='';
- if(aiOn()){const m=await makeImg(br.design,fx,null);blob=m.blob;why=m.err?(m.err+(m.st?' '+m.st:'')):''}else why='off';
+ if(aiOn()){const m=await makeImg(br.design,fx,null);blob=m.blob;why=m.err?(m.err+(m.st?' '+m.st:'')+(m.msg?': '+String(m.msg).slice(0,80):'')):''}else why='off';
  const id='o'+Date.now().toString(36)+Math.floor(Math.random()*90+10);
  if(blob)await putImg(id,blob);
  const o={id,st:'quote',day:s.day,req:{type:f.type,k:f.k,tone:f.tone,w,gem:f.gem,desc,ref:!!GD.ref},br:{name:br.name,note:br.note,design:br.design,cx:br.cx},img:!!blob,rev:0};
@@ -7789,7 +7721,7 @@ async function reviseOrder(id,redo){
  const prev=IMG[id]?{b64:await blobB64(IMG[id].blob),note}:null;
  const r=o.req,m=await makeImg(o.br.design,{type:r.type,k:r.k,tone:r.tone,gem:r.gem},redo?null:prev);
  if(m.blob){await putImg(id,m.blob);o.img=true;if(!redo){o.rev++;GD.rv[id]=''}GD.msg='';toast('Thợ đã vẽ mẫu mới')}
- else GD.msg='Chưa vẽ được ảnh ('+(m.err||'lỗi')+(m.st?' '+m.st:'')+'). Thử lại sau nhé.';
+ else GD.msg='Chưa vẽ được ảnh ('+(m.err||'lỗi')+(m.st?' '+m.st:'')+(m.msg?': '+String(m.msg).slice(0,80):'')+'). Thử lại sau nhé.';
  GD.busy='';try{save()}catch(e){}ui()}
 function acceptOrder(id){
  const o=G0().orders.find(x=>x.id==id);if(!o||o.st!='quote')return;

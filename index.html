@@ -2235,8 +2235,11 @@ function movie(v){
  if(on&&!ctl&&MS.now)ensureCtl(MS.now.id).catch(()=>{});
  ui();toast(on?'Chế độ xem video — kéo để di chuyển, chụm hai ngón để đổi cỡ':'Chế độ nghe nhạc')}
 function dtap(){const n=Date.now();if(n-dtT>0&&n-dtT<420){dtT=0;clearTimeout(dtS);return 1}dtT=n;return 0}
-function dtCover(){if(dtap()){try{window.TT&&TT.replay()}catch(e){}movie();return}
- try{window.TT&&TT.replay()}catch(e){}}
+function dtCover(){
+ const dbl=dtap();
+ try{window.TT&&TT.replay()}catch(e){}
+ if(dbl)movie()
+}
 function dtMini(){if(dtap())return movie();clearTimeout(dtS);dtS=setTimeout(()=>{dtT=0;MU.mc(0)},420)}
 
 /* ---------- phát nền: Media Session + âm thanh im lặng giữ phiên âm thanh ---------- */
@@ -7043,6 +7046,29 @@ function loop(ts){
  ang=(ang+vel*dt)%360;paint();
  if(vel>0||spin)raf=requestAnimationFrame(loop)}
 function kick(){if(RM||raf)return;last=performance.now();raf=requestAnimationFrame(loop)}
+function hardIntro(t){
+ /* ép chạy lại animation bao bì + đĩa (mobile hay không restart khi chỉ toggle class) */
+ if(!node)return;
+ build(t||MS.now);
+ const slot=document.querySelector('.ttslot');
+ if(slot&&node.parentNode!==slot){slot.textContent='';slot.appendChild(node)}
+ introAt=Date.now();fresh=1;
+ clearTimeout(spinT);spin=0;dn=0;shown=0;vel=0;
+ node.classList.remove('empty','intro','done','dn');
+ node.querySelectorAll('.ttp,.ttc').forEach(el=>{el.style.animation='none';el.style.transform='';});
+ void node.offsetWidth;
+ node.querySelectorAll('.ttp,.ttc').forEach(el=>{el.style.animation='';el.style.transform='';});
+ node.style.setProperty('--ttd','0s');
+ if(RM){
+  /* máy giảm chuyển động: bỏ qua animation dài, lật thẳng sang mặt đĩa */
+  node.classList.add('done');
+  const want=!!(MS.now&&MS.playing);
+  if(want){dn=1;shown=1;node.classList.add('dn');spinT=setTimeout(()=>{spin=1;kick()},200)}
+  paint();return
+ }
+ node.classList.add('intro');
+ paint();
+}
 function sync(){
  if(typeof MS==='undefined')return;
  if(!node){node=document.createElement('div');node.className='tt empty done'}
@@ -7056,7 +7082,10 @@ function sync(){
  node.classList.toggle('empty',!t);
  if(intro){
   if(mounted||fresh||!node.classList.contains('intro')){
-   node.classList.remove('intro','done');void node.offsetWidth;
+   node.classList.remove('intro','done');
+   node.querySelectorAll('.ttp,.ttc').forEach(el=>{el.style.animation='none';el.style.transform='';});
+   void node.offsetWidth;
+   node.querySelectorAll('.ttp,.ttc').forEach(el=>{el.style.animation='';el.style.transform='';});
    node.style.setProperty('--ttd',(-el/1000)+'s');node.classList.add('intro')}}
  else if(!node.classList.contains('done')){node.classList.remove('intro');node.classList.add('done')}
  const want=(t&&MS.playing&&!intro)?1:0;
@@ -7068,7 +7097,7 @@ function sync(){
  fresh=0}
 try{new MutationObserver(sync).observe(document.body,{childList:true,subtree:true})}catch(e){}
 setInterval(sync,250);sync();
-window.TT={sync,replay(){if(RM||!node||typeof MS==='undefined'||!MS.now)return;introAt=Date.now();fresh=1;sync()}};
+window.TT={sync,replay(){if(!node||typeof MS==='undefined'||!MS.now)return;hardIntro(MS.now)},hardIntro};
 })();
 </script>
 

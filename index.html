@@ -26,7 +26,7 @@ button.s{border:2px solid var(--g);border-radius:12px;padding:4px 10px;backgroun
 button:disabled{opacity:.4}
 input,textarea{font:inherit;border:2px solid var(--g);border-radius:10px;padding:6px 8px;background:var(--card);color:var(--ink)}input{width:110px}
 .mut{color:var(--mut);font-size:.88rem}.bad{color:var(--bad)}.ok{color:var(--g3)}
-.chip{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--g);margin:2px;font-size:.85rem}.chip.on{background:var(--g2);color:#fff}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--g);margin:2px;font-size:.85rem}.chip.on{background:var(--g2);color:#fff}.chip.gold{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff3b0,#f5c542 55%,#e0a416);color:#6b4500;font-weight:800;border:1px solid #d9a21b;box-shadow:0 0 8px rgba(245,197,66,.55)}.chip.gold::after{content:'';position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.9),transparent);transform:skewX(-20deg);animation:goldShine 2.4s ease-in-out infinite}@keyframes goldShine{0%{left:-70%}55%,100%{left:130%}}@media(prefers-reduced-motion:reduce){.chip.gold::after{animation:none}}
 .cust{display:inline-block;margin:4px;padding:6px;border-radius:16px;background:var(--g);text-align:center;width:76px;cursor:pointer}.cust.sel{outline:3px solid var(--g2)}
 .bar{height:7px;background:rgba(0,0,0,.14);border-radius:9px;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--g2)}
 .bub{background:var(--pk);border-radius:16px;padding:10px;margin:8px 0}
@@ -7890,7 +7890,7 @@ function goldBlock(it,extra){
  return Object.assign({id:it.id,sn:it.sn||it.id,name:it.name,loai:f.loai,kl:f.kl,gem:f.gem,tone:f.tone,w:it.w,custom:it.custom?1:0,paid:it.paid||0,day:it.day},extra||{})}
 const goldLine=(g,p)=>[g.name,p,1,p];
 const certRows=g=>[['Mã số',g.sn],['Loại',g.loai+(g.custom?' · Đặt riêng':'')],['Tuổi vàng',g.kl],['Khối lượng',fw(g.w)]].concat(g.tone?[['Màu vàng',g.tone]]:[],g.gem?[['Đá',g.gem]]:[],[['Ngày mua','Ngày '+g.day],['Cấp bởi',SHOP]]);
-const certHtml=g=>`<div class=inq><div class=row style="margin:0"><b>📜 Giấy tờ vàng</b><span class=chip>${g.sold?'Hết hiệu lực':'Chính hãng'}</span></div>${certRows(g).map(x=>`<div class=row style="margin:2px 0"><span class=mut>${E(x[0])}</span><b>${E(x[1])}</b></div>`).join('')}</div>`;
+const certHtml=g=>`<div class=inq><div class=row style="margin:0"><b>📜 Giấy tờ vàng</b><span class="chip${g.sold?'':' gold'}">${g.sold?'Hết hiệu lực':'Chính hãng'}</span></div>${certRows(g).map(x=>`<div class=row style="margin:2px 0"><span class=mut>${E(x[0])}</span><b>${E(x[1])}</b></div>`).join('')}</div>`;
 
 function pick(id){
  const it=items().find(x=>x.id==id),od=orders().find(x=>x.id==id);

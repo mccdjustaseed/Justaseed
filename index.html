@@ -621,7 +621,10 @@ function vinylHtml(mu) {
 
 /* ---- Trình phát nhạc riêng cho card (không đụng tới nhạc/hàng đợi của người chơi) ---- */
 const CardMu = (function () {
-  let pl = null, plP = null, want = '', cued = '', playing = 0, resumeMain = 0, mu = null;
+  let pl = null, plP = null, want = '', cued = '', playing = 0, resumeMain = 0, mu = null, pend = 0, pendT = 0;
+  // đồng bộ đĩa than NGAY khi trạng thái đổi (không chờ vòng lặp 400ms) để đĩa không bao giờ quay trễ hơn nhạc
+  function emit() { try { vinylNow(); } catch (e) {} }
+  function setPend(v) { clearTimeout(pendT); pend = v ? 1 : 0; if (v) pendT = setTimeout(() => { pend = 0; emit(); }, 7000); emit(); }
   function loadYT() {
     if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
     if (loadYT.p) return loadYT.p;
@@ -661,14 +664,14 @@ const CardMu = (function () {
             const st = e && e.data;
             if (st === 1) {
               // Nếu nhạc người chơi đang phát (không do mình tạm dừng) thì dừng ngay đĩa than
-              if (MS.playing) { try { p.pauseVideo(); } catch (x) {} playing = 0; return; }
-              playing = 1;
+              if (MS.playing) { try { p.pauseVideo(); } catch (x) {} playing = 0; setPend(0); return; }
+              playing = 1; setPend(0);
             } else if (st === 2 || st === 0) {
-              playing = 0;
+              playing = 0; setPend(0);
               if (st === 0) giveBack();
             }
           },
-          onError: () => { playing = 0; giveBack(); }
+          onError: () => { playing = 0; setPend(0); giveBack(); }
         }
       });
     })).catch(e => { plP = null; throw e; });
@@ -702,21 +705,27 @@ const CardMu = (function () {
     },
     tap() {
       if (!mu) return;
-      if (playing) { try { pl.pauseVideo(); } catch (e) {} playing = 0; giveBack(); return; }
+      if (playing) { try { pl.pauseVideo(); } catch (e) {} playing = 0; setPend(0); giveBack(); return; }
       // Người chơi chủ động bấm đĩa than: tạm dừng nhạc của họ, hết đĩa than sẽ tự phát tiếp
       if (MS.playing) { resumeMain = 1; try { MU.tog(); } catch (e) {} }
-      load(mu.id).then(p => { try { playIt(p); } catch (e) {} }).catch(() => { toast('Không phát được nhạc của card'); giveBack(); });
+      setPend(1); // đĩa bắt đầu quay ngay khi chạm, nhạc lên sau
+      load(mu.id).then(p => { try { playIt(p); } catch (e) { setPend(0); } }).catch(() => { setPend(0); toast('Không phát được nhạc của card'); giveBack(); });
     },
     // rời card / người chơi bật nhạc riêng -> dừng đĩa than; keepMain=true thì không bật lại nhạc chính
     stop(keepMain) {
       if (pl && playing) { try { pl.pauseVideo(); } catch (e) {} }
-      playing = 0; want = '';
+      playing = 0; want = ''; setPend(0);
       if (keepMain) resumeMain = 0; else giveBack();
     },
-    playing() { return !!playing; }
+    playing() { return !!playing; },
+    spinning() { return !!(playing || pend); }
   };
 })();
 
+function vinylNow() {
+  const v = document.getElementById('vinyl');
+  if (v) v.classList.toggle('spin', CardMu.spinning());
+}
 function vinylSync() {
   clearInterval(VMT);
   const f = () => {
@@ -724,9 +733,9 @@ function vinylSync() {
     if (!v || !VMU) { clearInterval(VMT); CardMu.stop(); return; }
     // Người chơi tự bật nhạc của mình trong lúc nghe đĩa than -> nhường nhạc của họ
     if (CardMu.playing() && MS.playing) CardMu.stop(true);
-    v.classList.toggle('spin', CardMu.playing());
+    v.classList.toggle('spin', CardMu.spinning());
   };
-  f(); VMT = setInterval(f, 400);
+  f(); VMT = setInterval(f, 150);
 }
 /* ---- nhấn giữ đĩa than: xem thông tin bài hát + thêm yêu thích ---- */
 let VLP = 0, VLF = 0, VX = 0, VY = 0;
@@ -1104,7 +1113,7 @@ guide(){return `<div class=card><h3>🌱 Bắt đầu nhanh</h3><p class=mut sty
 <div class=card><h3>🎒 Túi đồ, Pet &amp; Nội thất</h3><ul><li><b>Túi đồ:</b> xem tồn kho và hạn dùng của từng nguyên liệu.</li><li><b>Pet:</b> vuốt ve, cho ăn, mua và mặc phụ kiện cho thú cưng của tiệm. Bạn cũng có thể chạm vào mèo ở màn hình chính.</li><li><b>Nội thất:</b> mua và sắp xếp đồ trang trí để tiệm thêm đẹp.</li><li><b>Gian hàng:</b> tùy chỉnh diện mạo gian hàng của bạn, bạn bè sẽ thấy khi ghé thăm.</li></ul></div>
 <div class=card><h3>⭐ Đánh giá, Hóa đơn &amp; Thống kê</h3><ul><li><b>Đánh giá:</b> chia 2 kênh Google Map và Fanpage. Bạn tự viết phản hồi cho từng đánh giá.</li><li><b>Hóa đơn:</b> lịch sử thu chi từng khoản, chỉ lưu 7 ngày gần nhất (số lần mua của khách vẫn được giữ lại).</li><li><b>Thống kê:</b> xem thu chi chi tiết theo ngày, tuần, tháng.</li><li><b>Chi phí cố định mỗi ngày:</b> thuê mặt bằng ${$(RENT)} + điện nước ${$(UTIL)}. Hãy đảm bảo doanh thu đủ bù khoản này.</li></ul></div>
 <div class=card><h3>🏆 Nhiệm vụ, Thành tích &amp; Nâng cấp</h3><ul><li><b>Nhiệm vụ:</b> hoàn thành mục tiêu (phục vụ khách, đạt 5 sao, doanh thu tích lũy...) rồi bấm nhận thưởng tiền.</li><li><b>Thành tích:</b> huy hiệu mở khóa khi bạn đạt các cột mốc.</li><li><b>Nâng cấp:</b> nâng cấp quầy (tối đa cấp 5) và mở khóa loại hoa mới bằng tiền để bán được nhiều loại hơn.</li></ul></div>
-<div class=card><h3>👥 Hồ sơ, Bạn bè &amp; Lưu tiến trình</h3><ul><li><b>Hồ sơ:</b> bấm avatar trên thanh đầu để đổi ảnh, tên, màu chủ đề, làm card visit và xem level. Bạn có thể viết <b>suy nghĩ</b> hiện trên avatar và gắn một <b>đoạn nhạc</b> đang nghe (tối đa 30 giây) vào hồ sơ để bạn bè xem.</li><li><b>Bạn bè:</b> đăng nhập Discord để kết bạn bằng username, xem hồ sơ và gian hàng của nhau.</li><li><b>Chơi ngay:</b> tiến trình chỉ lưu trên máy này. Bạn có thể sao lưu bằng <b>mã</b> hoặc <b>QR</b> rồi khôi phục bằng "Khôi phục bằng mã / QR" ở màn hình chính.</li><li><b>Đăng nhập Discord:</b> tiến trình tự động lưu lên tài khoản và khôi phục khi bạn đăng nhập lại ở thiết bị khác. Chưa có tài khoản thì bấm "Ấn vào đây" để đăng ký.</li><li>Đăng xuất sẽ xóa dữ liệu trên máy, nên hãy đảm bảo tiến trình đã được lưu.</li></ul></div>
+<div class=card><h3>👥 Hồ sơ, Bạn bè &amp; Lưu tiến trình</h3><ul><li><b>Hồ sơ:</b> bấm avatar trên thanh đầu để đổi ảnh, tên, làm card visit và xem level. Bạn có thể viết <b>suy nghĩ</b> hiện trên avatar và gắn một <b>đoạn nhạc</b> đang nghe (tối đa 30 giây) vào hồ sơ để bạn bè xem.</li><li><b>Bạn bè:</b> đăng nhập Discord để kết bạn bằng username, xem hồ sơ và gian hàng của nhau.</li><li><b>Chơi ngay:</b> tiến trình chỉ lưu trên máy này. Bạn có thể sao lưu bằng <b>mã</b> hoặc <b>QR</b> rồi khôi phục bằng "Khôi phục bằng mã / QR" ở màn hình chính.</li><li><b>Đăng nhập Discord:</b> tiến trình tự động lưu lên tài khoản và khôi phục khi bạn đăng nhập lại ở thiết bị khác. Chưa có tài khoản thì bấm "Ấn vào đây" để đăng ký.</li><li>Đăng xuất sẽ xóa dữ liệu trên máy, nên hãy đảm bảo tiến trình đã được lưu.</li></ul></div>
 <div class=card><h3>💡 Mẹo</h3><ul><li>Nhập vừa đủ để hạn chế hoa hỏng, nhất là khi chưa biết lượng khách.</li><li>Xem kỹ yêu cầu khách trước khi chọn nguyên liệu để tránh bị trừ điểm.</li><li>Trả lời đánh giá đều đặn để giữ tiệm có tiếng tốt.</li><li>Đổi ngôn ngữ và chế độ tối trong <b>Cài đặt</b>.</li></ul>${document.body.classList.contains('m')?'':'<button class=p onclick="startTut()">Xem lại hướng dẫn từng bước</button>'}</div>`},
 save(){return `<div class=card><button class=p onclick="pop=btoa(unescape(encodeURIComponent(qrJson(0,1))));R()">Tạo mã lưu</button><br><textarea id=cd style="width:100%;height:90px;margin:8px 0">${pop}</textarea><button class=s onclick="load()">Khôi phục từ mã</button> <button class=s onclick="restart()">Chơi lại</button></div>`}};
 function claimQ(i){s.cl[i]=1;s.money+=Q[i][2];L('in','Thưởng nhiệm vụ',Q[i][0],1,Q[i][2]);beep(800);R()}
@@ -2107,24 +2116,24 @@ function resH(){
  return ''}
 const chv=o=>`<span style="display:inline-block;transition:transform .2s;transform:rotate(${o?0:-90}deg)">${sg('chev',18)}</span>`;
 function qH(){
- return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.qt()" aria-expanded="${MS.qo?'true':'false'}">${chv(MS.qo)}<h3 style="margin:0">Hàng đợi <span class="qcnt">(${MS.q.length})</span></h3></button><span>${MS.qo&&MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button> `:''}${MS.qo&&MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}</span></div>`+
- (MS.qo?(MS.q.length?MS.q.map((t,i)=>qrow(t,i,bt('s','Xóa khỏi hàng đợi',`event.stopPropagation();MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Tìm bài rồi bấm Thêm để đưa vào hàng đợi. Bấm vào bài để phát.</p>'):'')}
+ const fv=MS.qv=='f',open=fv?MS.fo:MS.qo,cnt=fv?MS.fav.length:MS.q.length;
+ const head=`<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="${fv?'MU.ft()':'MU.qt()'}" aria-expanded="${open?'true':'false'}">${chv(open)}<h3 style="margin:0">${fv?'Yêu thích':'Hàng đợi'} <span class="qcnt">(${cnt})</span></h3></button><span style="display:flex;align-items:center;gap:4px">${!fv&&MS.qo&&MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button>`:''}${!fv&&MS.qo&&MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}<button class="s" style="width:34px;height:34px;padding:0;display:inline-grid;place-items:center;border-radius:10px;${fv?'color:#e0446f;border-color:#e0446f':''}" aria-pressed="${fv?'true':'false'}" aria-label="${fv?'Quay lại hàng đợi':'Xem danh sách yêu thích'}" title="${fv?'Quay lại hàng đợi':'Xem danh sách yêu thích'}" onclick="MU.qv()">${sg(fv?'heartf':'heart',18)}</button></span></div>`;
+ if(fv)return head+(MS.fo?(MS.fav.length?MS.fav.map((t,i)=>row(t,bt('s','Phát ngay',`MU.fp(${i})`,'play')+bt('s','Thêm vào hàng đợi',`MU.fq(${i})`,'plus')+bt('s','Bỏ khỏi yêu thích',`MU.fr(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Chưa có bài nào. Bấm ♡ cạnh nút bài tiếp theo để lưu bài đang phát.</p>'):'');
+ return head+(MS.qo?(MS.q.length?MS.q.map((t,i)=>qrow(t,i,bt('s','Xóa khỏi hàng đợi',`event.stopPropagation();MU.rm(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Trống. Tìm bài rồi bấm Thêm để đưa vào hàng đợi. Bấm vào bài để phát.</p>'):'')}
 const eta=i=>{let w=Math.max(0,(MS.dur||(MS.now&&MS.now.dur)||0)-est());for(let j=0;j<i;j++){const d=MS.q[j].dur;if(!d)return null;w+=d}return MS.now&&!(MS.dur||MS.now.dur)?null:w};
 const etaT=i=>{const w=eta(i);return w==null?'--:--':fm(w)};
 const qrow=(t,i,btns)=>`<div class="mtr qpl" title="Bấm để phát bài này" onclick="MU.jump(${i})"><span class="qn">${i+1}</span><div class="mti"><b><em class="mqi">${esc(t.name)}</em></b><span>${esc(t.ar||"YouTube")}</span></div><span class="qeta" data-i="${i}">${etaT(i)}</span><div class="mbt">${btns}</div></div>`;
 const isFav=t=>!!(t&&MS.fav.some(x=>x.id===t.id));
-function fH(){
- return `<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="MU.ft()" aria-expanded="${MS.fo?'true':'false'}">${chv(MS.fo)}<h3 style="margin:0">Yêu thích ${MS.fav.length?`<span class="mut">(${MS.fav.length})</span>`:''}</h3></button></div>`+
- (MS.fo?(MS.fav.length?MS.fav.map((t,i)=>row(t,bt('s','Phát ngay',`MU.fp(${i})`,'play')+bt('s','Thêm vào hàng đợi',`MU.fq(${i})`,'plus')+bt('s','Bỏ khỏi yêu thích',`MU.fr(${i})`,'x'))).join(''):'<p class="mut" style="margin:6px 0 0">Chưa có bài nào. Bấm ♡ cạnh nút bài tiếp theo để lưu bài đang phát.</p>'):'')}
-function fui(){sv();const f=$e('mf');if(f)f.innerHTML=fH();const n=$e('mnow');if(n)n.innerHTML=nowH()}
+function fui(){sv();const q=$e('mq');if(q)q.innerHTML=qH();const n=$e('mnow');if(n)n.innerHTML=nowH()}
 function favTog(){const t=MS.now;if(!t)return;const i=MS.fav.findIndex(x=>x.id===t.id);if(i>=0){MS.fav.splice(i,1);toast('Đã bỏ khỏi yêu thích')}else{MS.fav.unshift({id:t.id,name:t.name,ar:t.ar,img:t.img,th:t.th,dur:t.dur});toast('Đã thêm vào yêu thích')}fui()}
 function fPlay(i){const t=MS.fav[i];if(!t)return;if(MS.now&&MS.now.id!==t.id){MS.hist.push(MS.now);if(MS.hist.length>30)MS.hist.shift()}go(Object.assign({},t));qui()}
 function fQ(i){const t=MS.fav[i];if(!t)return;if(!MS.now){go(Object.assign({},t));return qui()}MS.q.push(Object.assign({},t));toast('Đã thêm vào hàng đợi');qui()}
 function fRm(i){MS.fav.splice(i,1);fui()}
 function qTog(){MS.qo=MS.qo?0:1;qui()}
 function fTog(){MS.fo=MS.fo?0:1;fui()}
+function qvTog(){MS.qv=MS.qv=='f'?'q':'f';qui()}
 V.music=()=>{setTimeout(()=>{loadApi().catch(()=>{});if(!ctl&&MS.now)ensureCtl(MS.now.id).catch(()=>{})},0);
- return `<div class="card" id="mnow">${nowH()}</div><div class="card" id="mq">${qH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Link YouTube" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Thêm</button></div><div id="mres">${resH()}</div></div><div class="card" id="mf">${fH()}</div>`};
+ return `<div class="card" id="mnow">${nowH()}</div><div class="card" id="mq">${qH()}</div><div class="card"><div class="row" style="flex-wrap:nowrap;margin-top:0"><input id="msq" style="flex:1;width:auto;min-width:0" placeholder="Tên bài · Bài - Ca sĩ · Link YouTube" value="${esc(MS.qry)}" oninput="MS.qry=this.value" onkeydown="if(event.key=='Enter')MU.search()" enterkeyhint="search" autocomplete="off"><button class="p" onclick="MU.search()">Thêm</button></div><div id="mres">${resH()}</div></div>`};
 function resUI(){const e=$e('mres');if(e)e.innerHTML=resH()}
 function tickUI(e){
  const d=MS.dur||(MS.now&&MS.now.dur)||0,p=d?Math.min(1,e/d):0;
@@ -2253,7 +2262,7 @@ window.MU={seekBy,skd,sku,skc,rateNext(){const a=[.5,.75,1,1.25,1.5,2],i=a.index
  rate(v){v=+v;if(!(v>0))return;MS.pos=est();MS.evT=Date.now();MS.rate=v;try{ctl&&ctl.setPlaybackRate(v)}catch(e){}fui();toast('Tốc độ phát: '+v+'x')},
  favSet(tr){if(!tr||!IDRE.test(tr.id))return false;const i=MS.fav.findIndex(x=>x.id===tr.id);if(i>=0){MS.fav.splice(i,1);fui();return false}MS.fav.unshift({id:tr.id,name:tr.name||'Video YouTube',ar:tr.ar||'',img:tr.th||cov(tr.id),th:tr.th||cov(tr.id),dur:0});fui();return true},
  isFav(id){return MS.fav.some(x=>x.id===id)},
- playTrack(tr){if(!tr||!IDRE.test(tr.id))return;if(MS.now&&MS.now.id===tr.id&&MS.playing)return;go({id:tr.id,name:tr.name||'',ar:tr.ar||'',th:tr.th||cov(tr.id),img:tr.th||cov(tr.id),dur:0})},cur(){return MS.now?{id:MS.now.id,name:MS.now.name,ar:MS.now.ar,th:MS.now.th||MS.now.img||cov(MS.now.id)}:null},search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
+ playTrack(tr){if(!tr||!IDRE.test(tr.id))return;if(MS.now&&MS.now.id===tr.id&&MS.playing)return;go({id:tr.id,name:tr.name||'',ar:tr.ar||'',th:tr.th||cov(tr.id),img:tr.th||cov(tr.id),dur:0})},cur(){return MS.now?{id:MS.now.id,name:MS.now.name,ar:MS.now.ar,th:MS.now.th||MS.now.img||cov(MS.now.id)}:null},search:doSearch,fav:favTog,fp:fPlay,fq:fQ,fr:fRm,qt:qTog,ft:fTog,qv:qvTog,r:addRes,tog,next:()=>next(0),prev,sk,jump,up,rm,clr,shuf,
  rep(){MS.rep=MS.rep?0:1;sv();ui()},
  mc(v){MS.mc=v?1:0;sv();ui()},
  emb(){MS.show=MS.show?0:1;ui()},
@@ -2584,7 +2593,6 @@ setInterval(fx,700);addEventListener('resize',fx);fx()})();
 #msq{font-size:.9rem;padding:8px 10px}
 #mq .mti span{opacity:.6}
 #app{zoom:.86}
-body.mtab #app{zoom:1}
 nav.fx{padding:7px 7px;gap:5px}
 nav.fx button{min-width:60px;padding:7px 5px;gap:2px;border-radius:16px}
 nav.fx button svg{width:24px;height:24px}
@@ -2934,6 +2942,7 @@ summary{cursor:pointer;padding:2px 0}details.card[open] summary{margin-bottom:6p
 .pfw .card{border-color:color-mix(in srgb,var(--pc) 50%,var(--ln))}
 .pfw button.p{background:var(--pc);box-shadow:0 3px 0 color-mix(in srgb,var(--pc) 70%,#000)}.pfw .bar i{background:var(--pc)}.pfw button.s.on2{background:color-mix(in srgb,var(--pc) 30%,var(--card));border-color:var(--pc)}
 .sws{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.sw{width:34px;height:34px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--ln);padding:0}.sw.on{box-shadow:0 0 0 3px var(--ink)}
+.hxr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 0}.hxr .hxn{width:40px;height:34px;padding:0;border:2px solid var(--ln);border-radius:10px;background:none;cursor:pointer}.hxr .hxi{width:96px;font-family:ui-monospace,Menlo,monospace;text-transform:lowercase}.hxr .hxl{font-size:.82rem;color:var(--mut)}
 select{font:inherit;border:2px solid var(--g);border-radius:10px;padding:5px 8px;background:var(--card);color:var(--ink)}
 </style><script>(function(){
 const Z=window.XB={};
@@ -3001,7 +3010,11 @@ Z.delRc=id=>{s.rcp=(s.rcp||[]).filter(r=>r.id!=id);R()};
 Z.tf=id=>{pk(WF,id,4);R()};Z.tp=id=>{pk(WP,id,3);R()};Z.vs=i=>{WV=i;R()};Z.c=c=>{WC=c;R()};
 const CAP2=20;
 const PAL=['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#ec407a','#6d4c41','#212121','#fafafa','#90caf9','#a5d6a7'];
-const BP=['#ef5350','#ffa726','#ffee58','#66bb6a','#42a5f5','#ab47bc','#f48fb1','#8d6e63','#eceff1','#26c6da'],
+/* bảng màu pastel cho các nút chọn màu workshop (cùng thứ tự/ý nghĩa với bảng cũ) + hỗ trợ mã hex tự nhập */
+const PALP=['#f4a6a3','#fbd0a0','#fff3a8','#b7e1b0','#a9d2f5','#d9b3e6','#f8c8dc','#d2b8a8','#b8bcc4','#fafafa','#c9e4fa','#d4ecd5'];
+const cvl=(a,v)=>typeof v=='string'?v:(a[v]||a[0]),bc=v=>typeof v=='string'?v:(BP[v]||BP[0]),bcs=b=>b.beads.map(bc);
+const hx=v=>{v=String(v==null?'':v).trim();if(v&&v[0]!='#')v='#'+v;if(/^#[0-9a-f]{3}$/i.test(v))v='#'+v.slice(1).split('').map(a=>a+a).join('');return /^#[0-9a-f]{6}$/i.test(v)?v.toLowerCase():null};
+const BP=['#f4a6a3','#fbd0a0','#fff3a8','#b7e1b0','#a9d2f5','#d9b3e6','#f8c8dc','#d2b8a8','#eef1f4','#a6e3ea'],
  CORD=[['Dây thun',6000,1],['Dây da',12000,1.08],['Dây bạc',20000,1.2]],CORDC=['#d9c7a0','#8d5b34','#cfd6dd'],
  CHARM=[['Không',0,1],['Ngôi sao',5000,1.05],['Trái tim',5000,1.05],['Hoa nhỏ',6000,1.08]],BEADC=1500,
  BRP=[['Hoàng Hôn',0,1,[1,0,6,1,0,6,1]],['Biển Xanh',1,0,[4,9,8,4,9,8,4,9]],['Rừng Mơ',1,3,[3,7,3,2,3,7]],['Kẹo Ngọt',0,2,[6,8,6,5,6,8,6]],['Ngân Hà',2,1,[5,4,8,5,4,8,5,4]],['Nắng Mai',0,0,[2,1,2,8,2,1,2]]];
@@ -3010,7 +3023,7 @@ const WAX=[['Sáp đậu nành',10000,1],['Sáp ong',16000,1.12],['Sáp cọ',22
  CAP3=[['Vườn Xuân',['tul','hong'],0,0,1],['Hoàng Hôn Ngọt',['hong','dt'],1,1,5],['Rừng Ấm',['oai','cc'],2,2,6],['Sương Mai',['sen','lily'],0,0,3],['Nắng Mùa Hè',['hd','cuc'],1,0,0],['Trà Hoa Thanh',['tc','cuc'],0,1,2]];
 const SHAPE=[['Chén',9000,1,240],['Đĩa',12000,1.05,300],['Bình',16000,1.15,420],['Chậu cây',20000,1.25,540]],CLAY=[['Đất nung',6000,1],['Đất sét trắng',8000,1.05],['Đất đen',12000,1.12]],GLZC=4000,
  POP=[['Chén Men Ngọc',0,1,3],['Bình Gốm Cổ',2,0,7],['Chậu Mini Xanh',3,2,10],['Đĩa Hoàng Hôn',1,1,1],['Bình Hồng Đào',2,1,6]];
-const TEE=[['Áo cotton',25000,1],['Áo oversize',35000,1.1],['Áo premium',50000,1.25]],TC=['#fafafa','#212121','#e53935','#1e88e5','#43a047','#fdd835','#f48fb1','#90caf9','#a1887f','#7e57c2'],
+const TEE=[['Áo cotton',25000,1],['Áo oversize',35000,1.1],['Áo premium',50000,1.25]],TC=['#fafafa','#b8bcc6','#f4a6a3','#a9d2f5','#b7e1b0','#fff3a8','#f8c8dc','#c9e4fa','#d2b8a8','#cdb8ea'],
  SIZE=[['Khổ A5',15000,1],['Khổ A4',28000,1.15],['Khổ A3',45000,1.35]],FRAME=[['Không khung',0,1],['Khung gỗ',12000,1.1],['Khung vàng',22000,1.2]],FRC=['#ffffff','#a8743f','#d4a72c'],
  MOT=['Hướng Dương','Trăng Sao','Bướm Đêm','Trái Tim','Núi & Mặt Trời'];
 const W={t:'fa',nm:{},br:{cord:0,charm:0,beads:[],pre:-1},ca:{wax:0,jar:0,col:0,fl:[],pre:-1},po:{shape:0,clay:0,glaze:0,fl:[],pre:-1},sh:{ty:0,col:0,pre:-1,img:null,cov:0},ar:{size:0,frame:0,pre:-1,img:null,cov:0}};
@@ -3056,7 +3069,7 @@ const motifImg=(i,bg)=>{const k=i+bg;if(MC[k])return MC[k];const c=document.crea
 /* ----- trình vẽ / chèn ảnh (áo phông, tranh) ----- */
 let ED=null;
 const hexRgb=h=>{h=h.replace('#','');if(h.length==3)h=h.split('').map(a=>a+a).join('');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]};
-Z.edit=t=>{if(ED)return;const st=W[t],bg=t=='sh'?TC[st.col]:'#fffdf7';ED={t,bg,hist:[],col:'#212121',sz:10,er:0,fl:null,drag:0,lx:0,ly:0};
+Z.edit=t=>{if(ED)return;const st=W[t],bg=t=='sh'?cvl(TC,st.col):'#fffdf7';ED={t,bg,hist:[],col:'#212121',sz:10,er:0,fl:null,drag:0,lx:0,ly:0};
  const el=document.createElement('div');el.id='wse';
  el.innerHTML=`<div class=wsh><b>${t=='sh'?'👕 Thiết kế áo phông':'🖼️ Vẽ tranh'}</b><span><button class=s onclick="XB.edUndo()">↩ Hoàn tác</button> <button class=s onclick="XB.edClear()">🗑 Xóa hết</button></span></div>
  <div class=wsst><canvas width=480 height=480></canvas></div>
@@ -3096,7 +3109,10 @@ Z.dx=t=>{W[t].img=null;W[t].cov=0;R()};
 Z.tb=k=>{W.t=k;R()};Z.nm=(t,v)=>{W.nm[t]=String(v).slice(0,24)};
 Z.set=(t,k,v)=>{W[t][k]=v;if(['br','ca','po'].includes(t))W[t].pre=-1;R()};
 Z.tfl=(t,id)=>{const a=W[t].fl,i=a.indexOf(id);if(i>=0)a.splice(i,1);else if(a.length<2)a.push(id);else toast('Tối đa 2 loại hoa');W[t].pre=-1;R()};
-Z.bd=i=>{const b=W.br.beads;if(b.length>=10)return toast('Tối đa 10 hạt');b.push(i);W.br.pre=-1;R()};Z.bdx=()=>{W.br.beads.pop();W.br.pre=-1;R()};Z.bdc=()=>{W.br.beads=[];W.br.pre=-1;R()};
+Z.bd=i=>{const b=W.br.beads;if(b.length>=10)return toast('Tối đa 10 hạt');b.push(i);W.br.pre=-1;R()};
+Z.bdh=k=>{const e=document.getElementById('hxt_'+k),h=hx(e&&e.value);if(!h)return toast('Mã hex không hợp lệ, ví dụ #ffb6c1');const b=W.br.beads;if(b.length>=10)return toast('Tối đa 10 hạt');b.push(h);W.br.pre=-1;R()};
+Z.hex=(t,k,v)=>{const h=hx(v);if(!h)return toast('Mã hex không hợp lệ, ví dụ #ffb6c1');W[t][k]=h;if(['ca','po'].includes(t))W[t].pre=-1;R()};
+Z.hexV=hx;Z.bdx=()=>{W.br.beads.pop();W.br.pre=-1;R()};Z.bdc=()=>{W.br.beads=[];W.br.pre=-1;R()};
 Z.pre=(t,i)=>{const d=W[t];
  if(t=='br'){const r=BRP[i];W.br={cord:r[1],charm:r[2],beads:r[3].slice(),pre:i}}
  else if(t=='ca'){const r=CAP3[i],m=r[1].find(id=>!fl().some(f=>f.id==id));if(m)return toast('Chưa mở khóa '+nm(m));W.ca={wax:r[2],jar:r[3],col:r[4],fl:r[1].slice(),pre:i}}
@@ -3113,19 +3129,19 @@ pf(){if(WP.length<3)return toast('Chọn đủ 3 hương');const need=WC+1,m=WP.
  const fams=new Set(WP.map(id=>FAM[id]||id)).size,Q=Math.min(100,Math.round(35+14*fams+6*wl('pf')+Math.random()*12)),p=Math.round(mat*(1.5+Q/100)/1000)*1000,rc=rcOf(WP);
  crt('pf',pdur(WC),{id:uid(),t:'pf',n:rc?`${CN[WC-1]} ${rc.n}`:nmOf('pf',`${CN[WC-1]} ${nm(WP[0])} & ${nm(WP[1])}`),q:Q,p,on:0,cl:WP.map(id=>FC[id]||'#b39ddb'),v:WC,cr:crn(),mt:WP.map(id=>nm(id)+' ×'+need).join(', ')+' · lọ '+CN[WC-1]},12+WC*4,8+WC*3);WP=[];W.nm.pf='';R()},
 br(){const b=W.br,n=b.beads.length;if(n<5)return toast('Cần ít nhất 5 hạt (đang có '+n+')');const cd=CORD[b.cord],ch=CHARM[b.charm],mat=cd[1]+ch[1]+n*BEADC;if(s.money<mat)return toast('Không đủ tiền ('+$(mat)+')');
- s.money-=mat;L('out','Workshop','Vật liệu vòng tay',1,mat);const cols=new Set(b.beads).size,Q=Math.min(100,Math.round(28+4*Math.min(n,9)+4*cols+5*wl('br')+Math.random()*12+(b.pre>=0?6:0))),p=Math.round(mat*(1.6+Q/100)*cd[2]*ch[2]/1000)*1000;
- crt('br',90+12*n,{id:uid(),t:'br',n:b.pre>=0?BRP[b.pre][0]:nmOf('br',`Vòng ${cd[0].toLowerCase().replace('dây ','')} ${cols} màu`),q:Q,p,on:0,cl:b.beads.map(i=>BP[i]),v:b.cord,ex:b.charm,cr:crn(),mt:n+' hạt ('+cols+' màu) · '+cd[0]+' · charm: '+ch[0]},10+n,5+n);W.br={cord:0,charm:0,beads:[],pre:-1};W.nm.br='';R()},
+ s.money-=mat;L('out','Workshop','Vật liệu vòng tay',1,mat);const cols=new Set(bcs(b)).size,Q=Math.min(100,Math.round(28+4*Math.min(n,9)+4*cols+5*wl('br')+Math.random()*12+(b.pre>=0?6:0))),p=Math.round(mat*(1.6+Q/100)*cd[2]*ch[2]/1000)*1000;
+ crt('br',90+12*n,{id:uid(),t:'br',n:b.pre>=0?BRP[b.pre][0]:nmOf('br',`Vòng ${cd[0].toLowerCase().replace('dây ','')} ${cols} màu`),q:Q,p,on:0,cl:bcs(b),v:b.cord,ex:b.charm,cr:crn(),mt:n+' hạt ('+cols+' màu) · '+cd[0]+' · charm: '+ch[0]},10+n,5+n);W.br={cord:0,charm:0,beads:[],pre:-1};W.nm.br='';R()},
 ca(){const c=W.ca;if(!c.fl.length)return toast('Chọn 1–2 loại hoa làm hương');const m=c.fl.find(id=>(s.st[id]||0)<2);if(m)return toast('Thiếu '+nm(m)+' (cần 2 bông)');const w=WAX[c.wax],j=JAR[c.jar],cost=w[1]+j[1],mat=cost+c.fl.reduce((a,id)=>a+C[id]*2,0);if(s.money<cost)return toast('Không đủ tiền mua sáp & hũ');
  c.fl.forEach(id=>s.st[id]-=2);s.money-=cost;L('out','Workshop','Vật liệu nến thơm',1,cost);const fams=new Set(c.fl.map(id=>FAM[id]||id)).size,Q=Math.min(100,Math.round(30+16*fams+5*wl('ca')+Math.random()*12+(c.pre>=0?6:0))),p=Math.round(mat*(1.6+Q/100)*w[2]*j[2]/1000)*1000;
- crt('ca',150+60*c.wax,{id:uid(),t:'ca',n:c.pre>=0?'Nến '+CAP3[c.pre][0]:nmOf('ca','Nến '+c.fl.map(nm).join(' & ')),q:Q,p,on:0,cl:[CC[c.col]],v:c.jar,ex:c.wax,sc:c.fl.map(nm).join(', '),cr:crn(),mt:c.fl.map(nm).join(', ')+' ×2 · '+w[0]+' · '+j[0]},12+c.wax*3,6+c.wax);W.ca={wax:0,jar:0,col:0,fl:[],pre:-1};W.nm.ca='';R()},
+ crt('ca',150+60*c.wax,{id:uid(),t:'ca',n:c.pre>=0?'Nến '+CAP3[c.pre][0]:nmOf('ca','Nến '+c.fl.map(nm).join(' & ')),q:Q,p,on:0,cl:[cvl(CC,c.col)],v:c.jar,ex:c.wax,sc:c.fl.map(nm).join(', '),cr:crn(),mt:c.fl.map(nm).join(', ')+' ×2 · '+w[0]+' · '+j[0]},12+c.wax*3,6+c.wax);W.ca={wax:0,jar:0,col:0,fl:[],pre:-1};W.nm.ca='';R()},
 po(){const d=W.po,sh=SHAPE[d.shape],cl=CLAY[d.clay],cost=sh[1]+cl[1]+GLZC,m=d.fl.find(id=>(s.st[id]||0)<1);if(m)return toast('Thiếu '+nm(m));if(s.money<cost)return toast('Không đủ tiền ('+$(cost)+')');
  const mat=cost+d.fl.reduce((a,id)=>a+C[id],0);d.fl.forEach(id=>s.st[id]-=1);s.money-=cost;L('out','Workshop','Vật liệu đồ gốm',1,cost);
  const Q=Math.min(100,Math.round(32+5*wl('po')+6*d.fl.length+Math.random()*14+(d.pre>=0?8:4))),p=Math.round(mat*(1.6+Q/100)*sh[2]*cl[2]/1000)*1000;
- crt('po',sh[3]+60*d.clay,{id:uid(),t:'po',n:d.pre>=0?POP[d.pre][0]:nmOf('po',`${sh[0]} gốm ${cl[0].toLowerCase().replace('đất ','')}`),q:Q,p,on:0,cl:[PAL[d.glaze]].concat(d.fl.map(id=>FC[id]||'#ffb6c1')),v:d.shape,ex:d.clay,cr:crn(),mt:sh[0]+' · '+cl[0]+(d.fl.length?' · hoa: '+d.fl.map(nm).join(', '):'')},12+d.shape*3,7+d.shape*2);W.po={shape:0,clay:0,glaze:0,fl:[],pre:-1};W.nm.po='';R()},
+ crt('po',sh[3]+60*d.clay,{id:uid(),t:'po',n:d.pre>=0?POP[d.pre][0]:nmOf('po',`${sh[0]} gốm ${cl[0].toLowerCase().replace('đất ','')}`),q:Q,p,on:0,cl:[cvl(PALP,d.glaze)].concat(d.fl.map(id=>FC[id]||'#ffb6c1')),v:d.shape,ex:d.clay,cr:crn(),mt:sh[0]+' · '+cl[0]+(d.fl.length?' · hoa: '+d.fl.map(nm).join(', '):'')},12+d.shape*3,7+d.shape*2);W.po={shape:0,clay:0,glaze:0,fl:[],pre:-1};W.nm.po='';R()},
 sh(){const d=W.sh,cu=d.pre<0;if(cu&&!d.img)return toast('Hãy chọn mẫu có sẵn hoặc tự thiết kế (vẽ / chèn ảnh)');const ty=TEE[d.ty],mat=ty[1];if(s.money<mat)return toast('Không đủ tiền ('+$(mat)+')');
- const im=cu?d.img:motifImg(d.pre,TC[d.col]);s.money-=mat;L('out','Workshop','Vật liệu áo phông',1,mat);
+ const im=cu?d.img:motifImg(d.pre,cvl(TC,d.col));s.money-=mat;L('out','Workshop','Vật liệu áo phông',1,mat);
  const Q=Math.min(100,Math.round(35+5*wl('sh')+(cu?10+Math.min(30,Math.round(d.cov*80)):14)+Math.random()*12)),p=Math.round(mat*(1.7+Q/100)*ty[2]/1000)*1000;
- crt('sh',300,{id:uid(),t:'sh',n:cu?nmOf('sh','Áo phông tự thiết kế'):'Áo '+MOT[d.pre],q:Q,p,on:0,cl:[TC[d.col]],v:d.ty,im,cr:crn(),cu:cu?1:0,mt:ty[0]+' · '+(cu?'in hình tự thiết kế':'mẫu '+MOT[d.pre])},14+d.ty*3,9+d.ty*2);W.sh={ty:0,col:0,pre:-1,img:null,cov:0};W.nm.sh='';R()},
+ crt('sh',300,{id:uid(),t:'sh',n:cu?nmOf('sh','Áo phông tự thiết kế'):'Áo '+MOT[d.pre],q:Q,p,on:0,cl:[cvl(TC,d.col)],v:d.ty,im,cr:crn(),cu:cu?1:0,mt:ty[0]+' · '+(cu?'in hình tự thiết kế':'mẫu '+MOT[d.pre])},14+d.ty*3,9+d.ty*2);W.sh={ty:0,col:0,pre:-1,img:null,cov:0};W.nm.sh='';R()},
 ar(){const d=W.ar,cu=d.pre<0;if(cu&&!d.img)return toast('Hãy chọn mẫu có sẵn hoặc tự vẽ / chèn ảnh');const sz=SIZE[d.size],fr=FRAME[d.frame],mat=sz[1]+fr[1];if(s.money<mat)return toast('Không đủ tiền ('+$(mat)+')');
  const im=cu?d.img:motifImg(d.pre,'#fffdf7');s.money-=mat;L('out','Workshop','Vật liệu tranh',1,mat);
  const Q=Math.min(100,Math.round(35+5*wl('ar')+(cu?10+Math.min(30,Math.round(d.cov*80)):14)+Math.random()*12)),p=Math.round(mat*(1.7+Q/100)*sz[2]*fr[2]/1000)*1000;
@@ -3295,6 +3311,7 @@ setInterval(gRT,3000);setTimeout(gRT,1500);
 {const o=window.loadWallThread;if(typeof o=='function')window.loadWallThread=async function(){const r=await o.apply(this,arguments),f=m=>!String(m.message||'').startsWith('JSGIFT1:');r.roots=r.roots.filter(f);r.replies=r.replies.filter(f);return r}}
 
 /* ----- giao diện từng bàn workshop ----- */
+const hexRow=(t,k,cur,add)=>{const h=hx(cur)||'#ffffff',id=t+k;return `<div class=hxr><span class=hxl>Mã hex</span><input type=color class=hxn id="hxn_${id}" value="${h}" oninput="document.getElementById('hxt_${id}').value=this.value" ${add?'':`onchange="XB.hex('${t}','${k}',this.value)"`} aria-label="Chọn màu"><input class=hxi id="hxt_${id}" maxlength=7 value="${h}" placeholder="#RRGGBB" autocapitalize=off autocomplete=off spellcheck=false oninput="var v=XB.hexV(this.value);if(v)document.getElementById('hxn_${id}').value=v" ${add?'':`onchange="XB.hex('${t}','${k}',this.value)"`}>${add?`<button class=s onclick="XB.bdh('${id}')">＋ Thêm hạt</button>`:''}</div>`};
 const cb=(on,t,fn)=>`<button class="s ${on?'on2':''}" onclick="${fn}">${t}</button>`,sw2=(c,on,fn)=>`<button class="sw ${on?'on':''}" style="background:${c};width:30px;height:30px" onclick="${fn}" aria-label="${c}"></button>`;
 const hdr=t=>`<div class=row><h3>${TY[t].e} ${TY[t].n}</h3><span>${dm(t)} <b>Cấp ${wl(t)}</b></span></div>${wbar(t)}`,
  nmIn=(t,ph)=>`<input maxlength=24 placeholder="${ph}" value="${esc(W.nm[t]||'')}" oninput="XB.nm('${t}',this.value)" style="width:100%;margin:6px 0 2px">`,
@@ -3313,15 +3330,15 @@ const BUILD={
 fa(){const lv=L2(),have=fl().filter(f=>(s.st[f.id]||0)>0),fm=WF.reduce((a,id)=>a+C[id]*3,0)+VS[WV][1];
  return hdr('fa')+(lk('fa')||`<p class=mut style="margin:6px 0 2px">1. Chọn 2–4 loại hoa (mỗi loại 3 bông)</p>${have.length?`<div class=strip2>${have.map(f=>`<button class="s ${WF.includes(f.id)?'on2':''}" onclick="XB.tf('${f.id}')">${fw(f.id,20)} ${f.n} <b>${s.st[f.id]}</b></button>`).join('')}</div>`:'<p class=mut>Kho đang trống, hãy nhập hoa trước.</p>'}<p class=mut style="margin:6px 0 2px">2. Chọn kiểu cắm</p><div class=strip2>${VS.map((v,i)=>`<button class="s ${WV==i?'on2':''}" onclick="XB.vs(${i})">${v[0]} <span class=mut>${$(v[1])}</span></button>`).join('')}</div>${pv({t:'fa',cl:WF.map(id=>FC[id]||'#ff8fab'),v:WV})}${nmIn('fa','Tên sản phẩm của bạn (tuỳ chọn)')}${mkBtn('fa','Vật liệu ~'+$(fm),fdur(Math.max(2,WF.length),WV),WF.length<2)}`)},
 br(){const b=W.br,mat=CORD[b.cord][1]+CHARM[b.charm][1]+b.beads.length*BEADC;
- return hdr('br')+(lk('br')||`<p class=mut style="margin:6px 0 2px">Công thức có sẵn</p><div class=strip2>${BRP.map((r,i)=>cb(b.pre==i,esc(r[0]),`XB.pre('br',${i})`)).join('')}</div><p class=mut style="margin:6px 0 2px">1. Chọn dây</p>${sel('br','cord',CORD,wpc)}<p class=mut style="margin:6px 0 2px">2. Xâu hạt (${b.beads.length}/10, tối thiểu 5, ${$(BEADC)}/hạt), chạm màu để thêm</p><div class=sws style="margin-top:0">${BP.map((c,i)=>sw2(c,0,`XB.bd(${i})`)).join('')}</div><div class=row style="justify-content:flex-start;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px">${b.beads.map(i=>`<span style="width:20px;height:20px;border-radius:50%;background:${BP[i]};box-shadow:0 0 0 1px #0003"></span>`).join('')}<button class=s onclick="XB.bdx()">⌫</button><button class=s onclick="XB.bdc()">Xóa hết</button></div><p class=mut style="margin:6px 0 2px">3. Charm</p>${sel('br','charm',CHARM,wpc)}${pv({t:'br',cl:b.beads.map(i=>BP[i]).concat(b.beads.length?[]:['#ddd']),v:b.cord,ex:b.charm})}${b.pre<0?nmIn('br','Tên vòng tay của bạn (tuỳ chọn)'):`<p class=mut style="margin:2px 0">Công thức: <b>${esc(BRP[b.pre][0])}</b></p>`}${mkBtn('br','Vật liệu ~'+$(mat),90+12*b.beads.length,b.beads.length<5)}`)},
+ return hdr('br')+(lk('br')||`<p class=mut style="margin:6px 0 2px">Công thức có sẵn</p><div class=strip2>${BRP.map((r,i)=>cb(b.pre==i,esc(r[0]),`XB.pre('br',${i})`)).join('')}</div><p class=mut style="margin:6px 0 2px">1. Chọn dây</p>${sel('br','cord',CORD,wpc)}<p class=mut style="margin:6px 0 2px">2. Xâu hạt (${b.beads.length}/10, tối thiểu 5, ${$(BEADC)}/hạt), chạm màu để thêm</p><div class=sws style="margin-top:0">${BP.map((c,i)=>sw2(c,0,`XB.bd(${i})`)).join('')}</div>${hexRow('br','bead','#f4a6a3',1)}<div class=row style="justify-content:flex-start;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px">${b.beads.map(i=>`<span style="width:20px;height:20px;border-radius:50%;background:${bc(i)};box-shadow:0 0 0 1px #0003"></span>`).join('')}<button class=s onclick="XB.bdx()">⌫</button><button class=s onclick="XB.bdc()">Xóa hết</button></div><p class=mut style="margin:6px 0 2px">3. Charm</p>${sel('br','charm',CHARM,wpc)}${pv({t:'br',cl:bcs(b).concat(b.beads.length?[]:['#ddd']),v:b.cord,ex:b.charm})}${b.pre<0?nmIn('br','Tên vòng tay của bạn (tuỳ chọn)'):`<p class=mut style="margin:2px 0">Công thức: <b>${esc(BRP[b.pre][0])}</b></p>`}${mkBtn('br','Vật liệu ~'+$(mat),90+12*b.beads.length,b.beads.length<5)}`)},
 ca(){const c=W.ca,mat=WAX[c.wax][1]+JAR[c.jar][1];
- return hdr('ca')+(lk('ca')||`<p class=mut style="margin:6px 0 2px">Công thức có sẵn (mờ = chưa mở khóa hoa)</p><div class=strip2>${CAP3.map((r,i)=>`<button class="s ${c.pre==i?'on2':''}" ${r[1].every(id=>fl().some(f=>f.id==id))?'':'style="opacity:.5"'} onclick="XB.pre('ca',${i})">${esc(r[0])}</button>`).join('')}</div><p class=mut style="margin:6px 0 2px">1. Chọn 1–2 loại hoa làm hương (mỗi loại 2 bông)</p>${haveFl('ca')}<p class=mut style="margin:6px 0 2px">2. Loại sáp</p>${sel('ca','wax',WAX,wpc)}<p class=mut style="margin:6px 0 2px">3. Hũ đựng</p>${sel('ca','jar',JAR,wpc)}<p class=mut style="margin:6px 0 2px">4. Màu nến</p><div class=sws style="margin-top:0">${CC.map((x,i)=>sw2(x,c.col==i,`XB.set('ca','col',${i})`)).join('')}</div>${pv({t:'ca',cl:[CC[c.col]],v:c.jar})}${c.pre<0?nmIn('ca','Tên cây nến của bạn (tuỳ chọn)'):`<p class=mut style="margin:2px 0">Công thức: <b>${esc(CAP3[c.pre][0])}</b></p>`}${mkBtn('ca','Sáp + hũ ~'+$(mat),150+60*c.wax,!c.fl.length)}`)},
+ return hdr('ca')+(lk('ca')||`<p class=mut style="margin:6px 0 2px">Công thức có sẵn (mờ = chưa mở khóa hoa)</p><div class=strip2>${CAP3.map((r,i)=>`<button class="s ${c.pre==i?'on2':''}" ${r[1].every(id=>fl().some(f=>f.id==id))?'':'style="opacity:.5"'} onclick="XB.pre('ca',${i})">${esc(r[0])}</button>`).join('')}</div><p class=mut style="margin:6px 0 2px">1. Chọn 1–2 loại hoa làm hương (mỗi loại 2 bông)</p>${haveFl('ca')}<p class=mut style="margin:6px 0 2px">2. Loại sáp</p>${sel('ca','wax',WAX,wpc)}<p class=mut style="margin:6px 0 2px">3. Hũ đựng</p>${sel('ca','jar',JAR,wpc)}<p class=mut style="margin:6px 0 2px">4. Màu nến</p><div class=sws style="margin-top:0">${CC.map((x,i)=>sw2(x,c.col==i,`XB.set('ca','col',${i})`)).join('')}</div>${hexRow('ca','col',cvl(CC,c.col))}${pv({t:'ca',cl:[cvl(CC,c.col)],v:c.jar})}${c.pre<0?nmIn('ca','Tên cây nến của bạn (tuỳ chọn)'):`<p class=mut style="margin:2px 0">Công thức: <b>${esc(CAP3[c.pre][0])}</b></p>`}${mkBtn('ca','Sáp + hũ ~'+$(mat),150+60*c.wax,!c.fl.length)}`)},
 ar(){const d=W.ar,mat=SIZE[d.size][1]+FRAME[d.frame][1],cu=d.pre<0;
  return hdr('ar')+(lk('ar')||`<p class=mut style="margin:6px 0 2px">1. Khổ tranh</p>${sel('ar','size',SIZE,wpc)}<p class=mut style="margin:6px 0 2px">2. Khung</p>${sel('ar','frame',FRAME,wpc)}${dsn('ar')}${pv({t:'ar',cl:[FRC[d.frame]],ex:d.frame,im:cu?d.img:motifImg(d.pre,'#fffdf7')})}${mkBtn('ar','Vật liệu ~'+$(mat),180+60*d.size,cu&&!d.img)}`)},
 po(){const d=W.po,mat=SHAPE[d.shape][1]+CLAY[d.clay][1]+GLZC;
- return hdr('po')+(lk('po')||`<p class=mut style="margin:6px 0 2px">Công thức có sẵn</p><div class=strip2>${POP.map((r,i)=>cb(d.pre==i,esc(r[0]),`XB.pre('po',${i})`)).join('')}</div><p class=mut style="margin:6px 0 2px">1. Dáng gốm</p>${sel('po','shape',SHAPE,wpc)}<p class=mut style="margin:6px 0 2px">2. Loại đất</p>${sel('po','clay',CLAY,wpc)}<p class=mut style="margin:6px 0 2px">3. Màu men (${$(GLZC)})</p><div class=sws style="margin-top:0">${PAL.map((x,i)=>sw2(x,d.glaze==i,`XB.set('po','glaze',${i})`)).join('')}</div><p class=mut style="margin:6px 0 2px">4. Hoa ép trang trí (tuỳ chọn, tối đa 2 loại, 1 bông mỗi loại)</p>${haveFl('po')}${pv({t:'po',cl:[PAL[d.glaze]].concat(d.fl.map(id=>FC[id]||'#ffb6c1')),v:d.shape})}${d.pre<0?nmIn('po','Tên món gốm của bạn (tuỳ chọn)'):`<p class=mut style="margin:2px 0">Công thức: <b>${esc(POP[d.pre][0])}</b></p>`}${mkBtn('po','Vật liệu ~'+$(mat),SHAPE[d.shape][3]+60*d.clay)}`)},
+ return hdr('po')+(lk('po')||`<p class=mut style="margin:6px 0 2px">Công thức có sẵn</p><div class=strip2>${POP.map((r,i)=>cb(d.pre==i,esc(r[0]),`XB.pre('po',${i})`)).join('')}</div><p class=mut style="margin:6px 0 2px">1. Dáng gốm</p>${sel('po','shape',SHAPE,wpc)}<p class=mut style="margin:6px 0 2px">2. Loại đất</p>${sel('po','clay',CLAY,wpc)}<p class=mut style="margin:6px 0 2px">3. Màu men (${$(GLZC)})</p><div class=sws style="margin-top:0">${PALP.map((x,i)=>sw2(x,d.glaze==i,`XB.set('po','glaze',${i})`)).join('')}</div>${hexRow('po','glaze',cvl(PALP,d.glaze))}<p class=mut style="margin:6px 0 2px">4. Hoa ép trang trí (tuỳ chọn, tối đa 2 loại, 1 bông mỗi loại)</p>${haveFl('po')}${pv({t:'po',cl:[cvl(PALP,d.glaze)].concat(d.fl.map(id=>FC[id]||'#ffb6c1')),v:d.shape})}${d.pre<0?nmIn('po','Tên món gốm của bạn (tuỳ chọn)'):`<p class=mut style="margin:2px 0">Công thức: <b>${esc(POP[d.pre][0])}</b></p>`}${mkBtn('po','Vật liệu ~'+$(mat),SHAPE[d.shape][3]+60*d.clay)}`)},
 sh(){const d=W.sh,mat=TEE[d.ty][1],cu=d.pre<0;
- return hdr('sh')+(lk('sh')||`<p class=mut style="margin:6px 0 2px">1. Kiểu áo</p>${sel('sh','ty',TEE,wpc)}<p class=mut style="margin:6px 0 2px">2. Màu áo</p><div class=sws style="margin-top:0">${TC.map((x,i)=>sw2(x,d.col==i,`XB.set('sh','col',${i})`)).join('')}</div>${dsn('sh')}${pv({t:'sh',cl:[TC[d.col]],v:d.ty,im:cu?d.img:motifImg(d.pre,TC[d.col])})}${mkBtn('sh','Vật liệu ~'+$(mat),300,cu&&!d.img)}`)},
+ return hdr('sh')+(lk('sh')||`<p class=mut style="margin:6px 0 2px">1. Kiểu áo</p>${sel('sh','ty',TEE,wpc)}<p class=mut style="margin:6px 0 2px">2. Màu áo</p><div class=sws style="margin-top:0">${TC.map((x,i)=>sw2(x,d.col==i,`XB.set('sh','col',${i})`)).join('')}</div>${hexRow('sh','col',cvl(TC,d.col))}${dsn('sh')}${pv({t:'sh',cl:[cvl(TC,d.col)],v:d.ty,im:cu?d.img:motifImg(d.pre,cvl(TC,d.col))})}${mkBtn('sh','Vật liệu ~'+$(mat),300,cu&&!d.img)}`)},
 pf(){const lv=L2(),have=fl().filter(f=>(s.st[f.id]||0)>0),pm=WP.reduce((a,id)=>a+C[id]*(WC+1),0)+BOT[WC-1];
  return hdr('pf')+(lk('pf')||`${rcUI()}<p class=mut style="margin:6px 0 2px">1. Hoặc tự chọn đúng 3 hương (khác nhóm thì chất lượng cao hơn)</p>${have.length?`<div class=strip2>${have.map(f=>`<button class="s ${WP.includes(f.id)?'on2':''}" onclick="XB.tp('${f.id}')">${fw(f.id,20)} ${f.n} <b>${s.st[f.id]}</b></button>`).join('')}</div>`:'<p class=mut>Kho đang trống, hãy nhập hoa trước.</p>'}${WP.length?`<p class=mut style="margin:2px 0">${WP.map(id=>nm(id)+' · '+FAM[id]).join(' | ')}</p>`:''}${rcSave()}<div class=row><span>2. Nồng độ</span><span>${CN.map((c,i)=>`<button class="s ${WC==i+1?'on2':''}" onclick="XB.c(${i+1})">${c}</button>`).join(' ')}</span></div>${pv({t:'pf',cl:WP.map(id=>FC[id]||'#b39ddb'),v:WC})}${mkBtn('pf','Cần '+(WC+1)+' bông mỗi hương · ~'+$(pm),pdur(WC),WP.length<3)}`)}};
 
@@ -5059,10 +5076,10 @@ window.PRES=(function(){
 
 <style>
 /* Các nút thao tác trong trò chơi có nền bán trong suốt */
-#menu button{background-color:color-mix(in srgb,var(--card) 45%,transparent)!important;color:var(--ink)!important;
- -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-color:color-mix(in srgb,var(--g2) 45%,transparent)!important}
-#menu button.p{background:color-mix(in srgb,var(--g2) 72%,transparent)!important;color:#fff!important}
-#menu button.on2{background:color-mix(in srgb,var(--g2) 40%,transparent)!important}
+#menu button{background-color:rgba(255,255,255,.34)!important;
+ -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-color:rgba(255,255,255,.48)!important}
+#menu button.p{background:color-mix(in srgb,var(--g2) 66%,transparent)!important;color:#fff;border-color:color-mix(in srgb,var(--g2) 55%,#fff)!important}
+#menu button.on2{background:color-mix(in srgb,var(--g2) 42%,transparent)!important}
 </style>
 <script>
 /* ===== Bổ sung Justaseed theo yêu cầu ===== */
@@ -6769,14 +6786,14 @@ window.FC=(()=>{
 
 <style>
 /* ===== v62: MÁY PHÁT ĐĨA THAN Ở TAB NHẠC ===== */
-.ttslot{position:relative;flex:0 0 1.32em;width:1.32em;height:1em;font-size:100px;margin-right:-.1em;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-@media(max-width:360px){.ttslot{font-size:86px}}
+.ttslot{position:relative;flex:0 0 1.32em;width:1.32em;height:1em;font-size:64px;margin-right:-.1em;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+@media(max-width:360px){.ttslot{font-size:56px}}
 .tt{position:absolute;left:0;top:0;width:1em;height:1em;perspective:7em}
 .tt .ttp{position:absolute;inset:0;z-index:1;display:none}
 .tt.intro .ttp{display:block;animation:ttpo 2.5s linear both;animation-delay:var(--ttd,0s)}
 .tt .ttd{position:absolute;border-radius:50%;background:repeating-radial-gradient(circle at 50% 50%,#15151a 0 .012em,#2a2a31 .012em .019em);box-shadow:0 .02em .05em rgba(0,0,0,.45)}
 .tt .ttd::after{content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;background:conic-gradient(from 20deg,rgba(255,255,255,.2),transparent 25%,rgba(255,255,255,.15) 50%,transparent 75%,rgba(255,255,255,.2))}
-.tt .ttp .ttd{left:.03em;top:.03em;width:.94em;height:.94em}
+.tt .ttp .ttd{left:.08em;top:.08em;width:.84em;height:.84em}
 .tt .ttl{position:absolute;left:31%;top:31%;width:38%;height:38%;border-radius:50%;overflow:hidden;background:var(--g2);display:grid;place-items:center;color:#fff;font-size:.12em;z-index:1}
 .tt .ttl img{width:100%;height:100%;object-fit:cover;display:block}
 .tt .tts{position:absolute;left:47.5%;top:47.5%;width:5%;height:5%;border-radius:50%;background:#f4f4f4;z-index:2}
@@ -6787,17 +6804,17 @@ window.FC=(()=>{
 .tt .ttf{background:linear-gradient(135deg,var(--g),var(--sk1));box-shadow:0 .03em .09em rgba(0,0,0,.4)}
 .tt .ttf img{width:100%;height:100%;object-fit:cover;display:block}
 .tt .ttf::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.22),transparent 40%,rgba(0,0,0,.12))}
-.tt .ttb{transform:rotateY(180deg);background:linear-gradient(145deg,#ece5d6,#c9bda6);box-shadow:0 .03em .09em rgba(0,0,0,.4),inset 0 0 0 .012em rgba(0,0,0,.18)}
-.tt .ttpl{position:absolute;left:.02em;top:.19em;width:.70em;height:.70em;border-radius:50%;background:radial-gradient(circle,#3a3a40,#1f1f24);box-shadow:inset 0 0 0 .012em #555}
-.tt .ttv{left:.04em;top:.21em;width:.66em;height:.66em}
-.tt .tta{position:absolute;left:.88em;top:.12em;width:0;height:0;z-index:3;transform:rotate(95deg);filter:drop-shadow(.03em .045em .03em rgba(0,0,0,.38));transition:transform .9s cubic-bezier(.3,1.35,.5,1),filter .9s}
-.tt.dn .tta{transform:rotate(139deg);filter:drop-shadow(.008em .012em .01em rgba(0,0,0,.4))}
+.tt .ttb{transform:rotateY(180deg);background:linear-gradient(145deg,color-mix(in srgb,var(--g2) 22%,#fff),color-mix(in srgb,var(--g2) 55%,#fff));box-shadow:0 .03em .09em rgba(0,0,0,.35),inset 0 0 0 .014em color-mix(in srgb,var(--g3) 45%,transparent)}
+.tt .ttpl{position:absolute;left:.06em;top:.06em;width:.88em;height:.88em;border-radius:50%;background:radial-gradient(circle,#3a3a40,#1f1f24);box-shadow:inset 0 0 0 .012em #555}
+.tt .ttv{left:.08em;top:.08em;width:.84em;height:.84em}
+.tt .tta{position:absolute;left:.9em;top:.1em;width:0;height:0;z-index:3;transform:rotate(85deg);filter:drop-shadow(.03em .045em .03em rgba(0,0,0,.38));transition:transform .9s cubic-bezier(.3,1.35,.5,1),filter .9s}
+.tt.dn .tta{transform:rotate(135deg);filter:drop-shadow(.008em .012em .01em rgba(0,0,0,.4))}
 .tt .tta span{position:absolute;display:block}
-.tt .tta .tb{left:-.055em;top:-.055em;width:.11em;height:.11em;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f3f3f6,#8d929b);box-shadow:0 0 0 .012em #666}
-.tt .tta .tr{left:0;top:-.014em;width:.45em;height:.028em;border-radius:.02em;background:linear-gradient(#f1f1f5,#8f949c)}
-.tt .tta .th{left:.42em;top:-.03em;width:.075em;height:.058em;border-radius:.012em;background:#2a2a30}
-.tt .tta .tw{left:-.1em;top:-.026em;width:.07em;height:.052em;border-radius:.012em;background:#55585f}
-@keyframes ttpo{0%,8%{transform:translateX(0);opacity:1;animation-timing-function:cubic-bezier(.2,.7,.3,1)}40%,48%{transform:translateX(.34em);opacity:1;animation-timing-function:cubic-bezier(.5,0,.3,1)}69%{transform:translateX(0);opacity:1}70%,100%{transform:translateX(0);opacity:0}}
+.tt .tta .tb{left:-.07em;top:-.07em;width:.14em;height:.14em;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f3f3f6,#8d929b);box-shadow:0 0 0 .012em #666}
+.tt .tta .tr{left:0;top:-.017em;width:.4em;height:.034em;border-radius:.02em;background:linear-gradient(#f1f1f5,#8f949c)}
+.tt .tta .th{left:.37em;top:-.035em;width:.09em;height:.07em;border-radius:.012em;background:#2a2a30}
+.tt .tta .tw{left:-.12em;top:-.03em;width:.08em;height:.06em;border-radius:.012em;background:#55585f}
+@keyframes ttpo{0%,8%{transform:translateX(0);opacity:1;animation-timing-function:cubic-bezier(.2,.7,.3,1)}40%,48%{transform:translateX(.3em);opacity:1;animation-timing-function:cubic-bezier(.5,0,.3,1)}69%{transform:translateX(0);opacity:1}70%,100%{transform:translateX(0);opacity:0}}
 @keyframes ttcf{0%,70%{transform:rotateY(0) scale(1);animation-timing-function:cubic-bezier(.45,0,.2,1)}85%{transform:rotateY(90deg) scale(1.1)}100%{transform:rotateY(180deg) scale(1)}}
 @media(prefers-reduced-motion:reduce){.tt .tta{transition:none}}
 </style>

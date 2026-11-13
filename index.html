@@ -7593,10 +7593,10 @@ const fmtE=m=>{const a=(m&&m.errs)||[];if(!a.length)return (m&&m.err||'lỗi')+(
 const CF_DEFAULT='https://justaseed-img.huynhgiadat000.workers.dev/';
 const CFU=()=>{try{return (localStorage.getItem('jsCfImgUrl')||window.CF_IMG_URL||CF_DEFAULT).trim()}catch(e){return String(window.CF_IMG_URL||CF_DEFAULT).trim()}};
 const imgOn=()=>!!CFU()||aiOn();
-async function cfImg(prompt){
+async function cfImg(prompt,vi){
  const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),60000);
  try{
-  const r=await fetch(CFU(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:String(prompt).slice(0,2000),steps:4}),signal:ac.signal});
+  const r=await fetch(CFU(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:String(prompt).slice(0,2000),vi:vi||{},steps:4}),signal:ac.signal});
   let j=null;try{j=await r.json()}catch(e){}
   if(!r.ok||!j||!j.image){const msg=String((j&&(j.error||j.message))||'').slice(0,160);const e={err:r.status==429?'quota':'http',st:r.status,msg,model:'cloudflare'};return{err:e.err,st:e.st,msg:e.msg,model:e.model,errs:[e]}}
   return{ok:1,images:[{mime:j.mime||'image/jpeg',data:j.image}],model:'cloudflare'}
@@ -7604,11 +7604,11 @@ async function cfImg(prompt){
  finally{clearTimeout(tm)}}
 function cfPrompt(design,f,prev){
  const ty=TY[f.type]||TY.ring,gm=GEMS[f.gem||'none'];
- return `cute flat vector item icon for a casual mobile game: a ${ty[6]} made of polished ${TONEEN[f.tone||'y']} (${f.k}K), ${gm[2]}. Design details: ${design}.`+(prev&&prev.note?` Requested change: ${cl(prev.note,200)}.`:'')+` Style: soft rounded chunky shapes, simple bold flat colours with a slightly darker outline, tiny white highlight marks, kawaii casual-game look, not photorealistic, no 3D render, no heavy gradients. Layout: a single object centered, filling about 80% of a square canvas, on a plain pure white (#FFFFFF) background. No ground shadow, no text, no watermark, no people or hands, no sparkles or stars.`}
+ return `cute flat vector item icon for a casual mobile game: a ${ty[6]} made of polished ${TONEEN[f.tone||'y']} (${f.k}K), ${gm[2]}. Design details: [[DESIGN]].`+(prev&&prev.note?` Requested change: [[NOTE]].`:'')+` Style: soft rounded chunky shapes, simple bold flat colours with a slightly darker outline, tiny white highlight marks, kawaii casual-game look, not photorealistic, no 3D render, no heavy gradients. Layout: a single object centered, filling about 80% of a square canvas, on a plain pure white (#FFFFFF) background. No ground shadow, no text, no watermark, no people or hands, no sparkles or stars.`}
 async function makeImg(design,f,prev){
  if(!imgOn())return{err:'off'};
  if(CFU()){
-  const r=await cfImg(cfPrompt(design,f,prev));
+  const r=await cfImg(cfPrompt(design,f,prev),{design:String(design||'').slice(0,300),note:prev&&prev.note?cl(prev.note,200):''});
   if(!r.ok)return{err:r.err||'fail',st:r.st,msg:r.msg||'',model:r.model,errs:r.errs||[]};
   try{const blob=await keyOut('data:'+r.images[0].mime+';base64,'+r.images[0].data);if(!blob)return{err:'proc'};return{blob}}catch(e){return{err:'proc'}}}
  const refs=await styleRefs(),n=refs.length,ty=TY[f.type]||TY.ring,gm=GEMS[f.gem||'none'];
@@ -7850,18 +7850,23 @@ const CSS=`
 .gcat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
 .gc{background:var(--card);border:2px solid var(--ln);border-radius:18px;padding:8px;text-align:center;position:relative}.gc.gh{border-color:#e3a000;box-shadow:0 0 0 3px rgba(255,213,74,.45)}
 .gpr{font:700 1.05rem 'Baloo 2',sans-serif;color:var(--g3);margin-top:2px}
-.gsp{position:relative;display:inline-block;width:var(--z);height:var(--z);vertical-align:middle}
-.gsp img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;-webkit-user-select:none;user-select:none;filter:drop-shadow(0 2px 0 rgba(160,105,0,.22))}
-.gsh{position:absolute;inset:0;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.95) 49%,rgba(255,248,190,.9) 53%,transparent 64%);background-size:320% 100%;background-position:160% 0;animation:gsh 3.4s ease-in-out infinite}
+.gsp{position:relative;display:inline-block;width:var(--z);height:var(--z);vertical-align:middle;border-radius:18%;overflow:hidden;isolation:isolate;
+background:radial-gradient(circle at 16% 22%,rgba(255,214,90,.6) 0 1.2px,transparent 2.2px),radial-gradient(circle at 80% 16%,rgba(255,200,60,.55) 0 1px,transparent 2px),radial-gradient(circle at 72% 80%,rgba(255,210,80,.55) 0 1.4px,transparent 2.4px),radial-gradient(circle at 28% 86%,rgba(255,190,50,.5) 0 1px,transparent 2px),radial-gradient(circle at 50% 8%,rgba(255,225,130,.45) 0 .8px,transparent 1.8px),radial-gradient(120% 70% at 88% 108%,rgba(255,196,60,.55),transparent 58%),radial-gradient(90% 60% at 8% -6%,rgba(214,162,40,.38),transparent 62%),linear-gradient(160deg,#1a140a 0%,#050403 55%,#1c1508 100%);
+box-shadow:inset 0 0 0 1px rgba(255,205,80,.4),0 2px 6px rgba(0,0,0,.28)}
+.gsp::before{content:"";position:absolute;inset:-20%;z-index:0;pointer-events:none;background:repeating-radial-gradient(ellipse at 92% 104%,rgba(255,205,80,0) 0 6px,rgba(255,205,80,.22) 7px,rgba(255,205,80,0) 8.5px),repeating-radial-gradient(ellipse at 4% -8%,rgba(255,215,110,0) 0 9px,rgba(255,215,110,.12) 10px,rgba(255,215,110,0) 11.5px);animation:gdr 14s ease-in-out infinite alternate}
+@keyframes gdr{from{transform:translate(0,0) scale(1)}to{transform:translate(-4%,3%) scale(1.06)}}
+.gsp.gst::before{animation:none}
+.gsp img{position:relative;z-index:1;box-sizing:border-box;padding:8%;width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;-webkit-user-select:none;user-select:none;filter:drop-shadow(0 0 3px rgba(255,214,110,.35))}
+.gsh{position:absolute;inset:8%;z-index:2;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.95) 49%,rgba(255,248,190,.9) 53%,transparent 64%);background-size:320% 100%;background-position:160% 0;animation:gsh 3.4s ease-in-out infinite}
 @keyframes gsh{0%,35%{background-position:160% 0}75%,100%{background-position:-60% 0}}
-.gsp b{position:absolute;width:20%;aspect-ratio:1;background:radial-gradient(circle,#fff 30%,#fff3a8 70%);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:gtw 2.6s ease-in-out infinite;opacity:0;pointer-events:none}
+.gsp b{position:absolute;z-index:3;width:20%;aspect-ratio:1;background:radial-gradient(circle,#fff 30%,#fff3a8 70%);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:gtw 2.6s ease-in-out infinite;opacity:0;pointer-events:none}
 .gsp .gs1{left:8%;top:14%}.gsp .gs2{right:6%;top:30%;width:15%;animation-delay:.9s}.gsp .gs3{left:42%;bottom:8%;width:17%;animation-delay:1.7s}.gsp .gs4{right:30%;top:2%;width:12%;animation-delay:2.2s}
 @keyframes gtw{0%,100%{transform:scale(0) rotate(0);opacity:0}50%{transform:scale(1) rotate(50deg);opacity:1}}
 .gwait{display:flex;gap:6px;justify-content:center;margin:8px 0}.gwait i{width:10px;height:10px;background:#ffd54a;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:gtw 1.2s ease-in-out infinite}.gwait i:nth-child(2){animation-delay:.2s}.gwait i:nth-child(3){animation-delay:.4s}
 .gchat{display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto;padding:6px 2px;margin:6px 0}
 .gm{max-width:86%;padding:8px 12px;border-radius:16px;line-height:1.35;font-size:.94rem;white-space:pre-wrap;overflow-wrap:anywhere}.gm.ow{background:var(--pk);align-self:flex-start;border-bottom-left-radius:4px}.gm.me{background:var(--g2);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
 @media(min-width:420px){.gcat{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
-@media(prefers-reduced-motion:reduce){.gsh,.gwait i{animation:none}.gsp b{animation:none;opacity:.9}.gsp .gs2,.gsp .gs4{display:none}}`;
+@media(prefers-reduced-motion:reduce){.gsp::before{animation:none}.gsh,.gwait i{animation:none}.gsp b{animation:none;opacity:.9}.gsp .gs2,.gsp .gs4{display:none}}`;
 document.head.insertAdjacentHTML('beforeend','<style>'+CSS+'</style>');
 
 /* ================= GẮN VÀO NGĂN CỘNG ĐỒNG ================= */
@@ -7887,7 +7892,7 @@ window.GOLD.att=(()=>{
   return{k:'g',n:cl(o.n,40).replace(/[\u27e6\u27e7]/g,'')||'Vàng',kd,ty,kk:kd=='jew'?kk:24,w:Math.max(0,Math.min(1000,Math.round((+o.w||0)*100)/100)),gem:typeof o.gem=='string'&&own(GEMS,o.gem)?o.gem:'none',tone:typeof o.tone=='string'&&own(TC,o.tone)?o.tone:'y',lab:cl(o.lab,12).replace(/[\u27e6\u27e7]/g,''),cu:o.cu?1:0,vl:nn(o.vl,0,1e11)}};
  const snap=i=>clean({k:'g',n:i.name,kd:i.kind,ty:i.type,kk:i.k,w:i.w,gem:i.gem,tone:i.tone,lab:i.lab,cu:i.custom,vl:val(i)});
  const list=()=>G0().items.slice(0,60).map(i=>({id:i.id,sn:snap(i)})).filter(r=>r.sn);
- const art=(a,z,fx)=>{const u=procURL({type:a.ty,tone:a.tone,gem:a.gem,lab:a.lab});return fx?spk(u,z):`<img src="${u}" alt="" draggable=false style="width:${z}px;height:${z}px;object-fit:contain;display:block">`};
+ const art=(a,z,fx)=>{const u=procURL({type:a.ty,tone:a.tone,gem:a.gem,lab:a.lab});return fx?spk(u,z):`<span class="gsp gst" style="--z:${z}px"><img src="${u}" alt="" draggable=false></span>`};
  const kl=a=>a.kd=='jew'?KL[a.kk]:'24K · 9999';
  const info=a=>{const jew=a.kd=='jew',loai=jew&&own(TY,a.ty)?TY[a.ty][0]:KIND[a.kd],now=val({kind:a.kd,w:a.w,k:a.kk});
   return `<div class=row><h2>${E(a.n)}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${art(a,170,true)}</div>
@@ -7904,13 +7909,24 @@ const gInfo=i=>{const jew=i.kind=='jew';return{
  gem:i.gem&&i.gem!='none'&&GEMS[i.gem]?GEMS[i.gem][0]:'',
  tone:jew?(TONE[i.tone]||''):''}};
 GOLD.info=gInfo;GOLD.val=val;GOLD.fw=fw2;
+function goldBgCv(g,x,y,w,h,r){
+ g.save();rrCv(g,x,y,w,h,r);g.clip();
+ const b=g.createLinearGradient(x,y,x+w*.4,y+h);b.addColorStop(0,'#1a140a');b.addColorStop(.55,'#050403');b.addColorStop(1,'#1c1508');g.fillStyle=b;g.fillRect(x,y,w,h);
+ let a=g.createRadialGradient(x+w*.88,y+h*1.06,0,x+w*.88,y+h*1.06,w*.75);a.addColorStop(0,'rgba(255,196,60,.6)');a.addColorStop(1,'rgba(255,196,60,0)');g.fillStyle=a;g.fillRect(x,y,w,h);
+ a=g.createRadialGradient(x+w*.08,y-h*.06,0,x+w*.08,y-h*.06,w*.65);a.addColorStop(0,'rgba(214,162,40,.42)');a.addColorStop(1,'rgba(214,162,40,0)');g.fillStyle=a;g.fillRect(x,y,w,h);
+ g.lineWidth=2;
+ for(let k=0;k<22;k++){const t=k/21;g.strokeStyle='rgba(255,208,90,'+(0.07+0.2*Math.sin(t*Math.PI))+')';g.beginPath();g.moveTo(x-20,y+h*(.55+t*.5));g.bezierCurveTo(x+w*.3,y+h*(.2+t*.5),x+w*.55,y+h*(.65+t*.2),x+w+20,y+h*(.1+t*.55));g.stroke()}
+ let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+ for(let k=0;k<90;k++){const px=x+rnd()*w,py=y+rnd()*h,pr=1+rnd()*2.6;g.fillStyle='rgba(255,'+(190+Math.round(rnd()*40))+',80,'+(0.35+rnd()*.5)+')';g.beginPath();g.arc(px,py,pr,0,7);g.fill()}
+ g.restore();
+ g.save();g.strokeStyle='rgba(255,205,80,.45)';g.lineWidth=3;rrCv(g,x,y,w,h,r);g.stroke();g.restore()}
 GOLD.photo=async id=>{
  const i=G0().items.find(x=>x.id==id);if(!i)return toast('Không tìm thấy món này');
  GPI=id;toast('Đang tạo ảnh...');
  try{
   const Wd=1080,Ht=1350,K=themeK(),[c,g]=paperC(Wd,Ht,K),f=gInfo(i);
   g.textAlign='center';g.fillStyle=K.m;g.font='30px Onest,sans-serif';g.fillText('✿ Tiệm vàng · '+f.loai+' ✿',Wd/2,170);
-  g.fillStyle=K.box;rrCv(g,150,210,780,780,40);g.fill();
+  g.fillStyle=K.box;rrCv(g,150,210,780,780,40);g.fill();goldBgCv(g,150,210,780,780,40);
   try{const im=await gLoadImg(imgURL(i)),r=Math.min(700/im.width,700/im.height),w=im.width*r,h=im.height*r;g.drawImage(im,(Wd-w)/2,210+(780-h)/2,w,h)}catch(e){}
   g.fillStyle=K.d;g.font='700 56px "Baloo 2",sans-serif';g.fillText(i.name,Wd/2,1080,880);
   g.fillStyle=K.q;g.font='600 34px Onest,sans-serif';g.fillText(fw2(i.w)+' · '+f.kl+(f.gem?' · '+f.gem:''),Wd/2,1140,880);

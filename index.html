@@ -8124,14 +8124,16 @@ document.addEventListener('wheel',e=>{
 .cpb canvas{display:block;margin:8px auto;background:#0002;border-radius:12px;touch-action:none;cursor:grab;max-width:100%}
 .cpb canvas.rd{border-radius:50%}.cpb input[type=range]{width:100%;padding:0;border:0}
 .stl{position:relative;margin:16px 0 10px}
-.sta{position:absolute;left:-4px;top:-8px;width:54px;height:54px;border-radius:50%;border:3px solid var(--card);background:var(--g2) center/cover;color:#fff;display:grid;place-items:center;font:700 1.3rem 'Baloo 2';z-index:1;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.sta{position:absolute;left:-4px;top:-8px;width:56px;height:56px;border-radius:50%;z-index:1;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.sta .fr{position:absolute;inset:0;border-radius:50%}
+.sta .sai{position:absolute;inset:4px;border-radius:50%;background:var(--g) center/cover;color:var(--g3);display:grid;place-items:center;font:700 1.3rem 'Baloo 2';overflow:hidden}
 .stn{margin:0 0 4px 56px;font:700 1.05rem 'Baloo 2';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stb{display:grid;grid-template-columns:1fr 50px;gap:6px 8px;padding:8px;background:var(--sk2);border-radius:16px;align-items:center}
+.stb{display:grid;grid-template-columns:1fr 50px;gap:6px 8px;padding:8px;background:color-mix(in srgb,var(--g) 38%,var(--card));border-radius:16px;align-items:center}
 .sti{padding-left:48px;min-height:40px;font-size:.88rem;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .stg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;grid-column:1}
 .stt{aspect-ratio:1;border-radius:12px;background:var(--card);border:2px solid var(--ln);display:grid;place-items:center;position:relative;overflow:hidden}
 .stt.e{background:transparent;border-style:dashed}.stt small{position:absolute;right:4px;bottom:1px;font-weight:700;color:var(--mut)}
-.sto{grid-column:2;grid-row:1/3;width:46px;height:46px;border:0;border-radius:14px;background:var(--pk);color:var(--ink);display:grid;place-items:center;justify-self:center;box-shadow:0 3px 0 #ff9fb2}
+.sto{grid-column:2;grid-row:1/3;width:46px;height:46px;border:0;border-radius:14px;background:var(--g2);color:#fff;display:grid;place-items:center;justify-self:center;box-shadow:0 3px 0 var(--g3)}
 .sto:active{transform:translateY(2px);box-shadow:none}
 .mkr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px dashed var(--ln)}
 .mkr .nm{flex:1 1 90px;display:flex;gap:6px;align-items:center}
@@ -8183,10 +8185,25 @@ async function load(){
  }catch(e){MK.err=e.message||'Lỗi tải dữ liệu';MK.stalls=MK.stalls||[]}
  MK.load=0;if(tab=='forum'&&MK.mode=='mk')R();
 }
-function avHtml(x){const a=x.avatar||'';return `<div class=sta style="${a?`background-image:url('${H(a)}')`:''}">${a?'':H((x.name||'?')[0].toUpperCase())}</div>`}
+/* khung avatar sạp: lưu kèm trong trường avatar dạng ~f<số>~<ảnh> (không cần đổi database) */
+const FR=()=>typeof FRM!='undefined'?FRM:[{n:'Chủ đề',c:'background:var(--g2)'}];
+const AVP=a=>{const m=/^~f(\d)~/.exec(a||'');return{fr:m?+m[1]:0,src:m?a.slice(m[0].length):(a||'')}};
+const frCur=()=>{const p=s.pf||{},f=p.sfr!=null?p.sfr:(p.fr||0),F=FR()[f];return F&&!(F.a&&!p.afr)?f:0};
+const avWith=a=>{const f=frCur();return f>0?'~f'+f+'~'+(a||''):a};
+function avHtml(x,st){const p=AVP(x.avatar),f=FR()[p.fr]||FR()[0];return `<div class=sta style="${st||''}"><span class="fr ${f.a?'frA':''}" style="${f.c||''}"></span><span class=sai style="${p.src?`background-image:url('${H(p.src)}')`:''}">${p.src?'':H((x.name||'?')[0].toUpperCase())}</span></div>`}
+/* món workshop trên sạp: id = 'w:' + snapshot mã hóa */
+const PMX={fa:4e5,pf:5e5,br:2e5,ca:25e4,po:35e4,sh:4e5,ar:45e4};
+const b64e=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const WC={};
+const wsOf=id=>{if(typeof id!='string'||id.slice(0,2)!='w:')return null;if(id in WC)return WC[id];let r=null;
+ try{let b=id.slice(2).replace(/-/g,'+').replace(/_/g,'/');while(b.length%4)b+='=';const o=JSON.parse(decodeURIComponent(escape(atob(b))));r=XB.att.clean(o);if(r)r.p=Math.max(1000,Math.min(PMX[r.t]||1e5,Math.round(+o.p)||r.vl||1000))}catch(e){r=null}return WC[id]=r};
+const ART=id=>{const w=wsOf(id);return w?WSI.icon(w,30):art(id)};
+async function wsPack(x){const sn=XB.att.snap(x);if(!sn)return null;let u=x.u||'';
+ if(!u&&x.im&&(x.t=='sh'||x.t=='ar')){try{const j=await feedJpeg('data:'+x.im),up=await feedUp(j),pf=FEEDPFX();if(typeof up=='string'&&up.startsWith(pf))u=up.slice(pf.length)}catch(e){}}
+ const o={k:'w',t:sn.t,n:sn.n,q:sn.q,vl:sn.vl,p:x.p,cl:sn.cl,v:sn.v,ex:sn.ex,sc:sn.sc,mt:(sn.mt||'').slice(0,60),cr:sn.cr,gf:0};if(u)o.u=u;return o}
 function stallCard(x,i){
  const it=(x.items||[]).filter(t=>t.qty>0),t4=it.slice(0,4);
- let g=t4.map(t=>`<div class=stt>${art(t.id)}<small>${t.qty}</small></div>`).join('');for(let k=t4.length;k<4;k++)g+='<div class="stt e"></div>';
+ let g=t4.map(t=>`<div class=stt>${ART(t.id)}<small>${t.qty}</small></div>`).join('');for(let k=t4.length;k<4;k++)g+='<div class="stt e"></div>';
  return `<div class=stl>${avHtml(x)}<div class=stn>${H(x.name)}</div><div class=stb><div class=sti>${H(x.intro||'Sạp chưa có lời giới thiệu.')}</div><div class=stg>${g}</div><button class=sto onclick="MKT.view('${x.user_id}')" aria-label="Xem đầy đủ sạp ${H(x.name)}">${ic('shop',24)}</button></div></div>`}
 function mkView(){
  if(MK.stalls===null&&!MK.load)load();
@@ -8201,29 +8218,39 @@ const modal=h=>{Q('modal').innerHTML=`<div class=mb onclick="if(event.target==th
 const find=u=>MK.stalls&&MK.stalls.find(x=>x.user_id==u);
 window.MKT={
  mode(m){MK.mode=m;if(m=='mk')MK.stalls=null;R()},
- async reg(){const nm=(s.name||'Sạp của tôi').slice(0,40);const av=s.pf&&s.pf.av||(currentUser.user_metadata&&currentUser.user_metadata.avatar_url)||null;
+ async reg(){const nm=(s.name||'Sạp của tôi').slice(0,40);const av=avWith(s.pf&&s.pf.av||(currentUser.user_metadata&&currentUser.user_metadata.avatar_url)||null);
   if(await call('stall_open',{p_name:nm,p_intro:'',p_avatar:av})===null)return;await load();toast('Đã mở sạp!');MKT.manage()},
- async info(){const av=s.pf&&s.pf.av||MK.mine.avatar||null;
+ async info(){const av=avWith(s.pf&&s.pf.av||AVP(MK.mine.avatar).src||null);
   if(await call('stall_open',{p_name:Q('mn').value.trim()||'Sạp',p_intro:Q('mi').value.trim(),p_avatar:av})===null)return;await load();toast('Đã lưu thông tin sạp');MKT.manage()},
  manage(){const m=MK.mine;if(!m)return;const N=names(),on=(m.items||[]).filter(t=>t.qty>0),bag=Object.keys(s.st).filter(k=>N[k]&&(s.st[k]||0)>0);
   modal(`<div class=row><h2>Sạp của tôi</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>
   <div class=card><input id=mn value="${H(m.name)}" maxlength=40 placeholder="Tên sạp" style="width:100%"><textarea id=mi maxlength=200 rows=2 placeholder="Giới thiệu sạp" style="width:100%;margin:6px 0">${H(m.intro)}</textarea><button class=p onclick="MKT.info()">Lưu thông tin</button></div>
-  <div class=card><h3>Đang bán</h3>${on.map(t=>`<div class=mkr><span class=nm>${art(t.id)}<b>${H(t.n)}</b></span><span class=mut>${t.qty} × ${money(t.price)}</span><button class=s onclick="MKT.unlist('${t.id}')">Rút về túi</button></div>`).join('')||'<p class=mut>Chưa đưa món nào lên sạp.</p>'}</div>
+  <div class=card><h3>Khung avatar sạp</h3><div class=row style="justify-content:flex-start;flex-wrap:wrap">${FR().map((f,i)=>{const lk=f.a&&!(s.pf&&s.pf.afr);return `<button class="s ${AVP(m.avatar).fr==i?'on2':''}" ${lk?'disabled':''} onclick="MKT.frame(${i})">${f.n}${lk?' 🔒':''}</button>`}).join('')}</div></div>
+  <div class=card><h3>Đang bán</h3>${on.map(t=>`<div class=mkr><span class=nm>${ART(t.id)}<b>${H(t.n)}</b></span><span class=mut>${t.qty} × ${money(t.price)}</span><button class=s onclick="MKT.unlist('${t.id}')">Rút về túi</button></div>`).join('')||'<p class=mut>Chưa đưa món nào lên sạp.</p>'}</div>
+  <div class=card><h3>🎓 Túi đồ workshop</h3>${(s.shelf||[]).slice().reverse().slice(0,40).map((x,i)=>{const sn=XB.att.snap(x)||{};return `<div class=mkr><span class=nm>${WSI.icon(x,34)}<b>${H(x.n)}</b></span><span class=mut>CL ${x.q}/100</span><input id=wp${i} type=number min=1 value=${sn.vl||''} placeholder="Giá" aria-label="Giá bán"><button class=p onclick="MKT.lw('${x.id}',${i})">Bán</button></div>`}).join('')||'<p class=mut>Túi workshop trống. Hãy làm sản phẩm ở các bàn workshop.</p>'}</div>
   <div class=card><h3>Trong Túi đồ</h3>${bag.map((k,i)=>`<div class=mkr><span class=nm>${art(k)}<b>${H(N[k])}</b></span><span class=mut>có ${s.st[k]}</span><input id=lq${i} type=number min=1 max=${s.st[k]} value=${s.st[k]} aria-label="Số lượng"><input id=lp${i} type=number min=1 placeholder="Giá/cái" aria-label="Giá mỗi cái"><button class=p onclick="MKT.list('${k}',${i})">Bán</button></div>`).join('')||'<p class=mut>Túi đồ đang trống.</p>'}</div>`)},
  async list(k,i){const N=names(),q=Math.min(s.st[k]||0,parseInt(Q('lq'+i).value)||0),p=parseInt(Q('lp'+i).value)||0;
   if(q<1)return toast('Nhập số lượng');if(p<1)return toast('Nhập giá bán');
   if(await call('stall_list',{p_item:k,p_n:N[k],p_qty:q,p_price:p})===null)return;
   s.st[k]-=q;save();await load();MKT.manage();toast('Đã đưa '+q+' '+N[k]+' lên sạp')},
+ addW(w){s.shelf=s.shelf||[];s.shelf.push({id:'w'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),t:w.t,n:w.n,q:w.q,p:w.p,on:0,cl:w.cl||[],v:w.v,ex:w.ex,sc:w.sc,mt:w.mt,im:'',u:w.u||'',cr:w.cr,crd:'',gfd:'',gf:'',gm:''})},
+ async frame(i){s.pf=s.pf||{};s.pf.sfr=i;save();await MKT.info()},
+ async lw(id,i){const x=(s.shelf||[]).find(y=>y.id==id);if(!x)return;const p=parseInt(Q('wp'+i).value)||0;if(p<1)return toast('Nhập giá bán');
+  toast('Đang đưa lên sạp…');const o=await wsPack(x);if(!o)return toast('Không đưa được món này lên sạp');
+  const pid='w:'+b64e(o);if(pid.length>1500)return toast('Món quá nặng để bán trên sạp');
+  if(await call('stall_list',{p_item:pid,p_n:String(x.n).slice(0,40),p_qty:1,p_price:p})===null)return;
+  const j=s.shelf.findIndex(y=>y.id==id);if(j>=0)s.shelf.splice(j,1);save();await load();MKT.manage();toast('Đã đưa '+x.n+' lên sạp')},
  async unlist(k){const r=await call('stall_unlist',{p_item:k,p_qty:999999});if(r===null)return;
+  const w=wsOf(k);if(w){for(let n=0;n<(r.qty|0);n++)MKT.addW(w);save();await load();MKT.manage();return toast(r.qty>0?'Đã rút '+r.qty+' món về túi workshop':'Món đã được bán')}
   s.st[k]=(s.st[k]||0)+r.qty;save();await load();MKT.manage();toast('Đã rút '+r.qty+' về túi')},
  view(u){const x=find(u);if(!x)return;const it=(x.items||[]).filter(t=>t.qty>0),me=u==uid();
-  modal(`<div class=row><h2>${H(x.name)}</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><div class=card><div style="display:flex;gap:10px;align-items:center"><div class=sta style="position:static;flex:none;${x.avatar?`background-image:url('${H(x.avatar)}')`:''}">${x.avatar?'':H((x.name||'?')[0])}</div><span>${H(x.intro||'Sạp chưa có lời giới thiệu.')}</span></div></div>
-  <div class=card>${it.map((t,i)=>`<div class=mkr><span class=nm>${art(t.id)}<b>${H(t.n)}</b></span><span class=mut>còn ${t.qty} · ${money(t.price)}</span>${me?'':`<input id=bq${i} type=number min=1 max=${t.qty} value=1 aria-label="Số lượng"><button class=p onclick="MKT.buy('${u}',${i})">Mua</button>`}</div>`).join('')||'<p class=mut>Sạp đang trống.</p>'}</div>`)},
+  modal(`<div class=row><h2>${H(x.name)}</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><div class=card><div style="display:flex;gap:10px;align-items:center">${avHtml(x,'position:static;flex:none')}<span>${H(x.intro||'Sạp chưa có lời giới thiệu.')}</span></div></div>
+  <div class=card>${it.map((t,i)=>`<div class=mkr><span class=nm>${ART(t.id)}<b>${H(t.n)}</b></span><span class=mut>còn ${t.qty} · ${money(t.price)}</span>${me?'':`<input id=bq${i} type=number min=1 max=${t.qty} value=1 aria-label="Số lượng"><button class=p onclick="MKT.buy('${u}',${i})">Mua</button>`}</div>`).join('')||'<p class=mut>Sạp đang trống.</p>'}</div>`)},
  async buy(u,i){const x=find(u),t=x&&(x.items||[]).filter(t=>t.qty>0)[i];if(!t)return;
   const q=Math.max(1,Math.min(t.qty,parseInt(Q('bq'+i).value)||1));
   if(s.money<q*t.price&&!s.dev)return toast('Không đủ tiền');
   const r=await call('stall_buy',{p_seller:u,p_item:t.id,p_qty:q});if(r===null){await load();return MKT.view(u)}
-  if(!s.dev)s.money-=r.total;s.st[t.id]=(s.st[t.id]||0)+q;try{L('out','Sạp '+x.name,'Mua '+t.n,q,r.total)}catch(e){}
+  if(!s.dev)s.money-=r.total;const bw=wsOf(t.id);if(bw){for(let n=0;n<q;n++)MKT.addW(bw)}else s.st[t.id]=(s.st[t.id]||0)+q;try{L('out','Sạp '+x.name,'Mua '+t.n,q,r.total)}catch(e){}
   save();toast('Đã mua '+q+' '+t.n);await load();MKT.view(u)}
 };
 

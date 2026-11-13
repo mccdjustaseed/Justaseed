@@ -3199,7 +3199,7 @@ Z.wdisc=async()=>{if(WDB)return;const x=findIt(WPI);if(!x)return toast('Không t
   const ok=await dcSend('workshop',SHC.toDataURL('image/png'),{name:String(x.n||'').slice(0,60),type:ty.n||'',emoji:ty.e||'🎁',quality:x.q|0,materials:String(x.mt||'').slice(0,300),scent:String(x.sc||'').slice(0,80),value:val(x)|0,
    maker_name:String(x.cr||crn()).slice(0,40),maker_id:dcSnow(x.crd)||(mine?me:null),
    gifter_name:x.gf?String(x.gf).slice(0,40):null,gifter_id:x.gf?dcSnow(x.gfd):null,gift_msg:String(x.gm||'').slice(0,80),
-   shop_name:String(s.name||'Tiệm hoa').slice(0,60),caption:String(WPC||'').replace(/[ \t]+/g,' ').trim().slice(0,300)},true);
+   workshop_type:ty.n||'',mention_ids:[...new Set([dcSnow(x.crd)||(mine?me:null),x.gf?dcSnow(x.gfd):null].filter(Boolean))],ping:[...new Set([dcSnow(x.crd)||(mine?me:null),x.gf?dcSnow(x.gfd):null].filter(Boolean))].map(i=>'<@'+i+'>').join(' '),shop_name:String(s.name||'Tiệm hoa').slice(0,60),caption:String(WPC||'').replace(/[ \t]+/g,' ').trim().slice(0,300)},true);
   if(ok)toast('Đã gửi yêu cầu. Bot sẽ đăng lên Discord trong giây lát!')
  }catch(e){toast('Không gửi được: '+(e&&e.message||e))}
  WDB=0;const b2=document.getElementById('wdb');if(b2){b2.disabled=false;b2.textContent='💬 Gửi lên Discord'}};

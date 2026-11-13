@@ -6908,16 +6908,16 @@ async function syncAcc(want){
  else if(accOn()){const ok=await accDel();lset(LSA,'');toast(ok?'Đã xóa khóa khỏi tài khoản':'Chưa xóa được khóa trên tài khoản')}}
 
 /* ---- v61: cổng gọi Gemini dùng chung cho Tiệm vàng (văn bản có ảnh đính kèm + tạo ảnh), dùng chung nhóm khóa, giãn cách và hạn mức ngày ---- */
-const IMGM=['gemini-nano-banana-2.1','gemini-3.1-flash-image','gemini-2.5-flash-image','gemini-3-pro-image-preview','gemini-3.1-flash-image-preview','gemini-2.5-flash-image-preview'],LSI='jsGemImgM';
+const IMGM=['gemini-3.1-flash-image','gemini-3-pro-image','gemini-2.5-flash-image','gemini-3.1-flash-lite-image'],LSI='jsGemImgM';
 let chainI=Promise.resolve();
 function xgen(parts,o){o=o||{};
  if(!isOn())return Promise.resolve({err:'off'});
  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  const run=async()=>{
-  let lastErr={err:'fail'};
+  let lastErr={err:'fail'};const errs=[];
   const tried=new Set();
   for(let t=0;t<pool().length+1;t++){
-   const ke=nextKey();if(!ke)return lastErr.err=='fail'?{err:'nokey'}:lastErr;
+   const ke=nextKey();if(!ke)return Object.assign({},lastErr.err=='fail'?{err:'nokey'}:lastErr,{errs});
    if(tried.has(ke.k))break;tried.add(ke.k);
    const w=last+gapNow()-Date.now();if(w>0)await sleep(w);
    last=Date.now();mut(ke.k,x=>{if(x.d!=day()){x.d=day();x.n=0}x.n=(x.n||0)+1});
@@ -6931,26 +6931,26 @@ function xgen(parts,o){o=o||{};
     const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),o.timeout||(o.image?90000:20000));
     let r;
     try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':ke.k},body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:gc}),signal:ac.signal})}
-    catch(e){clearTimeout(tm);lastErr={err:'net',msg:String(e&&e.message||e)};continue}
+    catch(e){clearTimeout(tm);lastErr={err:'net',msg:String(e&&e.message||e),model:m};errs.push(lastErr);continue}
     clearTimeout(tm);
     if(!r.ok){
      let msg='';try{msg=String(((await r.json()).error||{}).message||'')}catch(e){}
      console.warn('[gemini-x]',m,r.status,msg);
-     lastErr={err:r.status==429?'quota':'http',st:r.status,msg,model:m};
+     lastErr={err:r.status==429?'quota':'http',st:r.status,msg,model:m};errs.push(lastErr);
      if(r.status==401||r.status==403||(r.status==400&&/api.?key/i.test(msg))){mut(ke.k,x=>{x.bad=1});keyBad=1;break}
      if(r.status==429){mut(ke.k,x=>{x.cd=Date.now()+(/PerDay|per day|daily/i.test(msg)?72e5:6e5)});if(!o.image)break;continue}
      /* model không tồn tại / không hỗ trợ ảnh → thử model kế */
      if(r.status==404||(r.status==400&&/not (found|supported)|invalid model|unknown model/i.test(msg)))continue;
      continue}
-    let j;try{j=await r.json()}catch(e){lastErr={err:'parse'};continue}
+    let j;try{j=await r.json()}catch(e){lastErr={err:'parse',model:m};errs.push(lastErr);continue}
     const ps=(j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[];
     const text=ps.map(x=>x.text||'').join(''),imgs=ps.filter(x=>x.inlineData&&x.inlineData.data).map(x=>({mime:x.inlineData.mimeType||'image/png',data:x.inlineData.data}));
-    if(o.image){if(imgs.length){lset(LSI,m===IMGM[0]?'':m);return{ok:1,text,images:imgs,model:m}}lastErr={err:'noimg',msg:(text||'').slice(0,160)||('model '+m+' không trả ảnh'),model:m};continue}
+    if(o.image){if(imgs.length){lset(LSI,m===IMGM[0]?'':m);return{ok:1,text,images:imgs,model:m}}lastErr={err:'noimg',msg:(text||'').slice(0,160)||('model '+m+' không trả ảnh'),model:m};errs.push(lastErr);continue}
     try{return{ok:1,json:JSON.parse(text.replace(/```json|```/g,'').trim()),text}}catch(e){lastErr={err:'parse',msg:text.slice(0,120)};return lastErr}
    }
    if(!keyBad&&lastErr.err!='quota')break;
   }
-  return lastErr};
+  return Object.assign({},lastErr,{errs})};
  if(o.image){const p=chainI.then(run);chainI=p.then(()=>{},()=>{});return p}
  const p=chain.then(run);chain=p.then(()=>{},()=>{});return p}
 window.GEM={cfg:CFG,used:()=>qget().n,ready,X:{gen:xgen,on:isOn,day},
@@ -7587,6 +7587,8 @@ async function keyOut(dataUrl){
  if(frac>.04&&frac<.97&&x1>x0&&y1>y0){const bw=x1-x0+1,bh=y1-y0+1,side=Math.round(Math.max(bw,bh)*1.12),cx=(x0+x1)/2,cy=(y0+y1)/2;sx=Math.round(cx-side/2);sy=Math.round(cy-side/2);sw=sh=side}
  const o=document.createElement('canvas');o.width=o.height=320;const ox=o.getContext('2d');ox.imageSmoothingQuality='high';ox.drawImage(c,sx,sy,sw,sh,0,0,320,320);
  return new Promise(res=>o.toBlob(b=>res(b),'image/png'))}
+const fmtE=m=>{const a=(m&&m.errs)||[];if(!a.length)return (m&&m.err||'lỗi')+(m&&m.st?' '+m.st:'')+(m&&m.msg?': '+String(m.msg).slice(0,100):'');
+ return a.map(x=>'• '+(x.model||'?')+': '+(x.err=='net'?'lỗi mạng':x.err=='noimg'?'không trả ảnh':x.err=='parse'?'phản hồi lỗi':'HTTP '+(x.st||'?'))+(x.msg?' — '+String(x.msg).replace(/\s+/g,' ').slice(0,110):'')).join('\n')};
 async function makeImg(design,f,prev){
  if(!aiOn())return{err:'off'};
  const refs=await styleRefs(),n=refs.length,ty=TY[f.type]||TY.ring,gm=GEMS[f.gem||'none'];
@@ -7601,7 +7603,7 @@ The PREVIOUS DRAFT is attached: keep it as the base and apply this change reques
  if(prev&&prev.b64){parts.push({text:'PREVIOUS DRAFT:'});parts.push({inlineData:{mimeType:'image/png',data:prev.b64}})}
  if(f.refB){parts.push({text:'CUSTOMER REFERENCE PHOTO:'});parts.push({inlineData:{mimeType:f.refB.mime,data:f.refB.b64}})}
  const r=await X().gen(parts,{image:true,temp:.9});
- if(!r||!r.ok||!r.images||!r.images.length)return{err:(r&&r.err)||'fail',st:r&&r.st,msg:(r&&r.msg)||'',model:r&&r.model};
+ if(!r||!r.ok||!r.images||!r.images.length)return{err:(r&&r.err)||'fail',st:r&&r.st,msg:(r&&r.msg)||'',model:r&&r.model,errs:(r&&r.errs)||[]};
  try{const blob=await keyOut('data:'+r.images[0].mime+';base64,'+r.images[0].data);if(!blob)return{err:'proc'};return{blob}}catch(e){return{err:'proc'}}}
 
 /* ================= CHỦ TIỆM ================= */
@@ -7705,12 +7707,12 @@ async function startOrder(){
  if(br.feasible===false){GD.busy='';GD.msg=br.reason;ui();return}
  GD.busy='img';ui();
  let blob=null,why='';
- if(aiOn()){const m=await makeImg(br.design,fx,null);blob=m.blob;why=m.err?(m.err+(m.st?' '+m.st:'')+(m.msg?': '+String(m.msg).slice(0,80):'')):''}else why='off';
+ if(aiOn()){const m=await makeImg(br.design,fx,null);blob=m.blob;why=m.err?fmtE(m):''}else why='off';
  const id='o'+Date.now().toString(36)+Math.floor(Math.random()*90+10);
  if(blob)await putImg(id,blob);
  const o={id,st:'quote',day:s.day,req:{type:f.type,k:f.k,tone:f.tone,w,gem:f.gem,desc,ref:!!GD.ref},br:{name:br.name,note:br.note,design:br.design,cx:br.cx},img:!!blob,rev:0};
  o.q=quoteOf(o);G0().orders.unshift(o);try{save()}catch(e){}
- GD.busy='';GD.msg=blob?'':(why=='off'?'Chưa bật Gemini nên thợ chỉ phác thảo nhanh bằng hình mẫu tạm.':'Chưa vẽ được ảnh bằng Gemini ('+why+'), thợ phác thảo tạm bằng hình mẫu. Bạn có thể bấm "Vẽ lại".');
+ GD.busy='';GD.msg=blob?'':(why=='off'?'Chưa bật Gemini nên thợ chỉ phác thảo nhanh bằng hình mẫu tạm.':'Chưa vẽ được ảnh bằng Gemini. Lỗi từng model:\n'+why+'\nThợ phác thảo tạm bằng hình mẫu. Bạn có thể bấm "Vẽ lại".');
  GD.ref=null;GD.t='order';ui()}
 async function reviseOrder(id,redo){
  const o=G0().orders.find(x=>x.id==id);if(!o||GD.busy)return;
@@ -7722,7 +7724,7 @@ async function reviseOrder(id,redo){
  const prev=IMG[id]?{b64:await blobB64(IMG[id].blob),note}:null;
  const r=o.req,m=await makeImg(o.br.design,{type:r.type,k:r.k,tone:r.tone,gem:r.gem},redo?null:prev);
  if(m.blob){await putImg(id,m.blob);o.img=true;if(!redo){o.rev++;GD.rv[id]=''}GD.msg='';toast('Thợ đã vẽ mẫu mới')}
- else GD.msg='Chưa vẽ được ảnh ('+(m.err||'lỗi')+(m.st?' '+m.st:'')+(m.msg?': '+String(m.msg).slice(0,80):'')+'). Thử lại sau nhé.';
+ else GD.msg='Chưa vẽ được ảnh. Lỗi từng model:\n'+fmtE(m)+'\nThử lại sau nhé.';
  GD.busy='';try{save()}catch(e){}ui()}
 function acceptOrder(id){
  const o=G0().orders.find(x=>x.id==id);if(!o||o.st!='quote')return;
@@ -7793,7 +7795,7 @@ function vOrder(){
  <div class=row><span class=sec style="margin:0">Trọng lượng (chỉ)</span><input type=number inputmode=decimal min="${ty[2]}" max="${ty[3]}" step="${ty[4]}" value="${w}" onchange="GOLD.f('w',this.value)" style="width:90px"></div>
  <div class=sec>Mô tả mẫu</div><textarea rows=3 maxlength=300 style="width:100%" placeholder="Ví dụ: nhẫn đôi cánh bướm, đính một viên đá nhỏ ở giữa, mặt hoa mai…" oninput="GOLD.d(this.value)">${E(f.desc)}</textarea>
  <div class=row><span>${GD.ref?`<img src="${GD.ref.url}" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:10px;border:2px solid var(--g);vertical-align:middle"> <button class=s onclick="GOLD.unref()">Bỏ ảnh</button>`:`<span class=mut>Chưa có ảnh mẫu</span>`}</span><label class=lb>${ic('up',16)}&nbsp;Tải ảnh mẫu<input type=file accept="image/*" hidden onchange="GOLD.pick(this)"></label></div>
- <div class=inq><div class=row><span class=mut>Giá tham khảo (mẫu vừa)</span><b>~ ${$(est.total)}</b></div><div class=row><button class=p style="width:100%" ${busy?'disabled':''} onclick="GOLD.start()">${busy=='brief'?'Thợ đang xem yêu cầu…':busy=='img'?'Thợ đang vẽ mẫu…':'Gửi tiệm xem mẫu & báo giá'}</button></div>${busy=='brief'||busy=='img'?'<div class=gwait><i></i><i></i><i></i></div>':''}${GD.msg&&GD.t=='order'?`<div class=bub>${E(GD.msg)}</div>`:''}${aiOn()?'':'<p class=mut style="margin:4px 0 0">Chưa bật Gemini: thợ chỉ phác thảo bằng hình mẫu có sẵn. Bật Gemini ở Cài đặt để tạo ảnh theo yêu cầu và ảnh mẫu.</p>'}</div></div>`;
+ <div class=inq><div class=row><span class=mut>Giá tham khảo (mẫu vừa)</span><b>~ ${$(est.total)}</b></div><div class=row><button class=p style="width:100%" ${busy?'disabled':''} onclick="GOLD.start()">${busy=='brief'?'Thợ đang xem yêu cầu…':busy=='img'?'Thợ đang vẽ mẫu…':'Gửi tiệm xem mẫu & báo giá'}</button></div>${busy=='brief'||busy=='img'?'<div class=gwait><i></i><i></i><i></i></div>':''}${GD.msg&&GD.t=='order'?`<div class=bub style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.82rem">${E(GD.msg)}</div>`:''}${aiOn()?'':'<p class=mut style="margin:4px 0 0">Chưa bật Gemini: thợ chỉ phác thảo bằng hình mẫu có sẵn. Bật Gemini ở Cài đặt để tạo ảnh theo yêu cầu và ảnh mẫu.</p>'}</div></div>`;
  const od=g.orders.map(o=>{
   const q=o.q,u=imgURL({id:o.id,type:o.req.type,tone:o.req.tone,gem:o.req.gem,kind:'jew'}),rb=busy=='rev:'+o.id;
   const lines=`<div class=row><span>Tiền vàng ${KL[o.req.k]} (${fw2(o.req.w)})</span><span>${$(q.gold)}</span></div><div class=row><span>Công chế tác</span><span>${$(q.labor)}</span></div><div class=row><span>Công thiết kế</span><span>${$(q.design)}</span></div>${q.gem?`<div class=row><span>Đá (${GEMS[o.req.gem][0]})</span><span>${$(q.gem)}</span></div>`:''}${q.disc?`<div class=row><span>Ưu đãi tiền công (-${q.pc}%)</span><span class=ok>-${$(q.disc)}</span></div>`:''}<div class=row><b>Tạm tính</b><b>${$(q.total)}</b></div>`;

@@ -5322,11 +5322,11 @@ window.PRES=(function(){
    const c=supabaseClient.channel('jas-online',{config:{presence:{key:uid}}});ch=c;
    c.on('presence',{event:'sync'},()=>{try{const nw=new Set(Object.keys(c.presenceState()));try{favChk(nw)}catch(e){}on=nw;me=on.has(uid)?1:0;paint()}catch(e){}});
    c.subscribe(async st=>{
-    if(st==='SUBSCRIBED'){try{if(document.visibilityState!=='hidden')await c.track({at:Date.now()})}catch(e){}}
+    if(st==='SUBSCRIBED'){try{await c.track({at:Date.now()})}catch(e){}}
     else if(st==='CLOSED'||st==='CHANNEL_ERROR'||st==='TIMED_OUT'){me=0;paint()}});
   }catch(e){ch=null;uid=null}}
- document.addEventListener('visibilitychange',()=>{if(!ch)return;try{if(document.visibilityState==='hidden')ch.untrack();else ch.track({at:Date.now()})}catch(e){}});
- addEventListener('pagehide',()=>{try{ch&&ch.untrack()}catch(e){}});
+ /* Vẫn online khi ẩn tab/chuyển app; chỉ offline khi tab bị đóng (kết nối tự ngắt). Quay lại tab thì track lại cho chắc */
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')return;try{start();ch&&ch.track({at:Date.now()})}catch(e){}});
  setInterval(start,3000);setTimeout(start,1500);
  return{paint,meHtml,isOn:id=>on.has(id)};
 })();

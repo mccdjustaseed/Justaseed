@@ -3052,7 +3052,7 @@ const MD=h=>{$q('modal').innerHTML=`<div class=mb onclick="if(event.target==this
 
 /* ----- hình vẽ vật phẩm (SVG, gốc ở giữa đáy, cao ~30) ----- */
 const cc=(x,i)=>{const a=x.cl&&x.cl.length?x.cl:['#ff8fab'];return a[i%a.length]};
-const dim=x=>x.im?`data:${x.im}`:'';
+const dim=x=>x.im?`data:${x.im}`:(x.u&&typeof FEEDPFX=='function'?FEEDPFX()+x.u:'');
 const frag=x=>{const c=i=>cc(x,i),v=x.v|0,e=x.ex|0;switch(x.t){
  case 'br':{let g=`<ellipse cx="0" cy="-15" rx="12" ry="11" fill="none" stroke="${CORDC[v]||CORDC[0]}" stroke-width="1.6"/>`;for(let i=0;i<12;i++){const a=i/12*6.283+1.5708;g+=`<circle cx="${(Math.cos(a)*12).toFixed(1)}" cy="${(-15+Math.sin(a)*11).toFixed(1)}" r="2.9" fill="${c(i)}" stroke="#0003" stroke-width=".5"/>`}
   if(e==1)g+=`<path transform="translate(0 -1)" d="M0 -3.4L1 -1L3.6 -1L1.6 .6L2.3 3.2L0 1.7L-2.3 3.2L-1.6 .6L-3.6 -1L-1 -1Z" fill="#ffd54f" stroke="#b8860b" stroke-width=".4"/>`;
@@ -3067,8 +3067,8 @@ const frag=x=>{const c=i=>cc(x,i),v=x.v|0,e=x.ex|0;switch(x.t){
   for(let i=1;i<(x.cl||[]).length&&i<3;i++)o+=`<circle cx="${i==1?-3.5:3.5}" cy="${v==1?-3:-8}" r="2" fill="${c(i)}" stroke="#fff" stroke-width=".4"/>`;
   return o}
  case 'ca':{const jf=['#dff1fb','#e8d5bd','#cfd8dc'][v]||'#dff1fb';return `<rect x="-10" y="-20" width="20" height="20" rx="${v==2?2:4}" fill="${jf}" stroke="#0003" stroke-width=".6"/><rect x="-9" y="-17" width="18" height="16" rx="3" fill="${c(0)}"/><rect x="-5" y="-13" width="10" height="6" rx="1" fill="#fff" opacity=".7"/><path d="M0 -20V-23" stroke="#444" stroke-width="1"/><path d="M0 -29Q-3 -25 0 -23Q3 -25 0 -29Z" fill="#ffb300"/><ellipse cx="0" cy="-25.5" rx="1.2" ry="1.8" fill="#fff59d"/>`}
- case 'sh':return `<path d="M-8 -28L-3 -29Q0 -25 3 -29L8 -28L14 -21L10 -17L8 -19V0H-8V-19L-10 -17L-14 -21Z" fill="${c(0)}" stroke="#0004" stroke-width=".7"/>`+(x.im?`<image href="${dim(x)}" x="-5.5" y="-23" width="11" height="11" preserveAspectRatio="xMidYMid slice"/>`:`<circle cx="0" cy="-17" r="3" fill="#fff" opacity=".6"/>`);
- case 'ar':{const w=e?2.2:.8;return `<rect x="-12" y="-27" width="24" height="24" rx="1" fill="${FRC[e]||'#fff'}" stroke="#0004" stroke-width=".6"/><rect x="${-12+w}" y="${-27+w}" width="${24-2*w}" height="${24-2*w}" fill="#fffdf7"/>`+(x.im?`<image href="${dim(x)}" x="${-12+w}" y="${-27+w}" width="${24-2*w}" height="${24-2*w}" preserveAspectRatio="xMidYMid slice"/>`:`<circle cx="0" cy="-15" r="5" fill="#cfe8d5"/>`)+`<rect x="-3" y="-3" width="6" height="3" fill="#0002"/>`}
+ case 'sh':return `<path d="M-8 -28L-3 -29Q0 -25 3 -29L8 -28L14 -21L10 -17L8 -19V0H-8V-19L-10 -17L-14 -21Z" fill="${c(0)}" stroke="#0004" stroke-width=".7"/>`+((x.im||x.u)?`<image href="${dim(x)}" x="-5.5" y="-23" width="11" height="11" preserveAspectRatio="xMidYMid slice"/>`:`<circle cx="0" cy="-17" r="3" fill="#fff" opacity=".6"/>`);
+ case 'ar':{const w=e?2.2:.8;return `<rect x="-12" y="-27" width="24" height="24" rx="1" fill="${FRC[e]||'#fff'}" stroke="#0004" stroke-width=".6"/><rect x="${-12+w}" y="${-27+w}" width="${24-2*w}" height="${24-2*w}" fill="#fffdf7"/>`+((x.im||x.u)?`<image href="${dim(x)}" x="${-12+w}" y="${-27+w}" width="${24-2*w}" height="${24-2*w}" preserveAspectRatio="xMidYMid slice"/>`:`<circle cx="0" cy="-15" r="5" fill="#cfe8d5"/>`)+`<rect x="-3" y="-3" width="6" height="3" fill="#0002"/>`}
  case 'pf':{const h=[14,18,22][Math.max(0,Math.min(2,v-1))]||14;return `<rect x="-9" y="${-h}" width="18" height="${h}" rx="4" fill="${c(0)}" stroke="#0004" stroke-width=".7"/><rect x="-9" y="${-h*.62}" width="18" height="${h*.62}" rx="3" fill="${c(1)}" opacity=".7"/><rect x="-5" y="${-h*.48}" width="10" height="5" rx="1" fill="#fff" opacity=".8"/><rect x="-3.5" y="${-h-4}" width="7" height="4" rx="1" fill="#e3b983"/>`}
  default:return `<path d="M-7 0L-9 -12H9L7 0z" fill="#cfe8f5" stroke="#0003" stroke-width=".6"/><path d="M-3 -12V-22M0 -13V-25M3 -12V-21" stroke="#58ad69" stroke-width="1.4"/><circle cx="-6" cy="-21" r="4.2" fill="${c(0)}"/><circle cx="0" cy="-26" r="4.8" fill="${c(1)}"/><circle cx="6" cy="-20" r="4.2" fill="${c(2)}"/>`}};
 const icon=(x,z)=>`<svg width="${z}" height="${Math.round(z*1.16)}" viewBox="-16 -34 32 37" style="flex:0 0 auto">${frag(x)}</svg>`;
@@ -3078,10 +3078,10 @@ Z.att=(()=>{
  const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k),tx=(v,n)=>String(v==null?'':v).replace(/[<>\u27e6\u27e7]/g,'').replace(/\s+/g,' ').trim().slice(0,n),
   nn=(v,a,b)=>Math.max(a,Math.min(b,Math.round(+v)||0));
  const clean=o=>{if(!o||typeof o!='object'||o.k!='w'||typeof o.t!='string'||!own(TY,o.t))return null;
-  return{k:'w',t:o.t,n:tx(o.n,40)||'Vật phẩm',q:nn(o.q,0,100),vl:nn(o.vl,0,1e10),cl:(Array.isArray(o.cl)?o.cl:[]).map(hx).filter(Boolean).slice(0,8),v:nn(o.v,0,5),ex:nn(o.ex,0,5),sc:tx(o.sc,40),mt:tx(o.mt,120),cr:tx(o.cr,30),gf:o.gf?1:0}};
- const snap=x=>clean({k:'w',t:x.t,n:x.n,q:x.q,vl:val(x),cl:x.cl,v:x.v,ex:x.ex,sc:x.sc,mt:x.mt,cr:x.cr||crn(),gf:x.gf});
+  return{k:'w',t:o.t,n:tx(o.n,40)||'Vật phẩm',q:nn(o.q,0,100),vl:nn(o.vl,0,1e10),cl:(Array.isArray(o.cl)?o.cl:[]).map(hx).filter(Boolean).slice(0,8),v:nn(o.v,0,5),ex:nn(o.ex,0,5),sc:tx(o.sc,40),mt:tx(o.mt,120),cr:tx(o.cr,30),gf:o.gf?1:0,u:(o.t=='sh'||o.t=='ar')&&typeof o.u=='string'&&/^[\w.-]{1,64}\/[\w.-]{1,64}\.(?:jpe?g|png)$/.test(o.u)?o.u:''}};
+ const snap=x=>{const c=clean({k:'w',t:x.t,n:x.n,q:x.q,vl:val(x),cl:x.cl,v:x.v,ex:x.ex,sc:x.sc,mt:x.mt,cr:x.cr||crn(),gf:x.gf});if(c&&(x.t=='sh'||x.t=='ar')&&x.im)c.im=x.im;return c};
  const list=()=>{ws();return s.shelf.slice().reverse().slice(0,60).map(x=>({id:x.id,sn:snap(x)})).filter(r=>r.sn)};
- const info=a=>{const ty=TY[a.t];return `<div class=row><h2>${ty.e} ${esc(a.n)}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${icon(a,170)}</div>
+ const info=a=>{const ty=TY[a.t];return `<div class=row><h2>${ty.e} ${esc(a.n)}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div><div style="text-align:center">${icon(a,170)}</div>${(a.im||a.u)&&(a.t=='sh'||a.t=='ar')?`<p class=mut style="margin:10px 0 2px;text-align:center">Hình do người chơi tạo</p><img src="${dim(a)}" alt="" loading=lazy style="width:100%;max-width:260px;border-radius:14px;display:block;margin:4px auto 10px;box-shadow:0 0 0 2px var(--ln)">`:''}
  <div class=row><span class=mut>Loại</span><b>${ty.n}</b></div><div class=row><span class=mut>Chất lượng</span><b>${a.q}/100</b></div><div class=row><span class=mut>Giá trị lúc khoe</span><b>${$(a.vl)}</b></div>
  ${a.sc?`<div class=row><span class=mut>Hương</span><b>${esc(a.sc)}</b></div>`:''}${a.mt?`<div class=row style="align-items:flex-start"><span class=mut>Nguyên liệu</span><b style="text-align:right;max-width:70%">${esc(a.mt)}</b></div>`:''}<div class=row><span class=mut>Người làm</span><b>${esc(a.cr||'—')}</b></div>${a.gf?`<div class=row><span class=mut>Nguồn gốc</span><b>Quà tặng từ bạn bè</b></div>`:''}`};
  return{label:'Workshop',empty:'Túi workshop trống. Hãy làm sản phẩm ở các bàn workshop nhé.',clean,snap,list,info,art:(a,z)=>icon(a,z),sum:a=>TY[a.t].n+' · CL '+a.q+'/100 · '+$(a.vl)}})();
@@ -5693,7 +5693,10 @@ async function feedComment(pid){
  const at0=(FEED.att||{})[pid];
  if(!v&&!at0)return toast('Nhập nội dung hoặc đính kèm món đồ');
  if(i)i.disabled=true;FEED.lk=Date.now();
- const rp0=(FEED.rp||{})[pid],bd=((rp0&&(FEED.cm[pid]||[]).some(x=>x.id===rp0))?'↩'+rp0+'|'+v:v)+(at0?'\u27e6A:'+encodeURIComponent(JSON.stringify(at0)).replace(/'/g,'%27')+'\u27e7':'');
+ let at1=null;
+ if(at0){at1=Object.assign({},at0);delete at1.im;
+  if(at0.im&&!at0.u){try{const j=await feedJpeg('data:'+at0.im),up=await feedUp(j),pf=FEEDPFX();if(typeof up=='string'&&up.startsWith(pf))at1.u=up.slice(pf.length)}catch(e){}}}
+ const rp0=(FEED.rp||{})[pid],bd=((rp0&&(FEED.cm[pid]||[]).some(x=>x.id===rp0))?'↩'+rp0+'|'+v:v)+(at1?'\u27e6A:'+encodeURIComponent(JSON.stringify(at1)).replace(/'/g,'%27')+'\u27e7':'');
  const {data,error}=await supabaseClient.from('feed_comments').insert({post_id:pid,user_id:currentUser.id,body:bd}).select('id, post_id, user_id, body, created_at').single();
  if(error){if(i)i.disabled=false;return toast('Lỗi: '+error.message)}
  FEED.lk=Date.now();(FEED.cm[pid]=FEED.cm[pid]||[]).push(data);FEED.open[pid]=true;if(FEED.rp)delete FEED.rp[pid];if(FEED.att)delete FEED.att[pid];
@@ -5701,9 +5704,10 @@ async function feedComment(pid){
  const n=document.getElementById('fci-'+pid);if(n)n.focus()}
 async function feedDelCm(pid,cid){
  FEED.lk=Date.now();
+ const c0=((FEED.cm||{})[pid]||[]).find(x=>x.id===cid),u0=c0&&feedCmParse(c0).att;
  const {error}=await supabaseClient.from('feed_comments').delete().eq('id',cid);
  if(error)return toast('Lỗi: '+error.message);
- FEED.lk=Date.now();FEED.cm[pid]=(FEED.cm[pid]||[]).filter(c=>c.id!==cid);feedCmRefresh(pid)}
+ FEED.lk=Date.now();FEED.cm[pid]=(FEED.cm[pid]||[]).filter(c=>c.id!==cid);try{if(u0&&u0.u)feedRm(FEEDPFX()+u0.u)}catch(e){}feedCmRefresh(pid)}
 async function feedDelPost(pid){
  if(!confirm('Xóa bài đăng này?'))return;
  const oi=await feedImgOf(pid);

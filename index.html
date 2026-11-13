@@ -2016,6 +2016,7 @@ function kick(c){
   else if(!document.hidden){MS.show=1;ui();toast('Trình duyệt chặn tự phát — hãy bấm Play trong khung YouTube')}};
  setTimeout(f,250)}
 function go(t,at){
+ if(MS.now&&t&&MS.now.id===t.id&&!(at>2000))MS.rst=(MS.rst|0)+1;
  stAt=at>2000?Math.floor(at/1000):0;MS.now=t;MS.ended=0;MS.pos=at||0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
  sv();ui();
  const fin=c=>{if(loaded!==t.id){loaded=t.id;try{c.loadVideoById(at>2000?{videoId:t.id,startSeconds:Math.floor(at/1000)}:t.id)}catch(e){}}kick(c)};
@@ -2040,7 +2041,7 @@ function onErr(e){
  if(MS.q.length)next(1);else if(MS.ap&&MS.now)autoNext();else{ui();duck()}}
 function end(){
  if(ending)return;ending=1;setTimeout(()=>{ending=0},2500);
- if(MS.rep&&MS.now){MS.pos=0;MS.want=1;try{ctl.seekTo(0,true);ctl.playVideo()}catch(e){}kick(ctl);return}
+ if(MS.rep&&MS.now){MS.rst=(MS.rst|0)+1;MS.pos=0;MS.want=1;try{ctl.seekTo(0,true);ctl.playVideo()}catch(e){}kick(ctl);return}
  if(MS.q.length)next(1);
  else if(MS.ap&&MS.now)autoNext();
  else halt('Đã hết hàng đợi')}
@@ -2050,7 +2051,7 @@ function next(auto){
  const t=MS.q.shift();if(MS.now){MS.hist.push(MS.now);if(MS.hist.length>30)MS.hist.shift()}go(t)}
 function prev(){
  if(MS.pos>3000||!MS.hist.length){
-  if(!MS.now)return;MS.pos=0;MS.evT=Date.now();
+  if(!MS.now)return;MS.rst=(MS.rst|0)+1;MS.pos=0;MS.evT=Date.now();
   if(ctl&&loaded===MS.now.id){try{ctl.seekTo(0,true)}catch(e){}if(!MS.playing){MS.want=1;kick(ctl)}}else go(MS.now);
   return tickUI(0)}
  const t=MS.hist.pop();if(MS.now)MS.q.unshift(MS.now);go(t)}
@@ -2059,7 +2060,7 @@ function tog(){
  if(!t){if(MS.q.length)return next();return toast('Chưa có bài nào — hãy tìm và thêm bài hát')}
  if(!ctl||loaded!==t.id){go(t);return}
  if(MS.playing){MS.pos=est();MS.evT=Date.now();MS.want=0;kid++;MS.playing=0;try{ctl.pauseVideo()}catch(e){}ui();duck()}
- else{MS.want=1;try{ctl.playVideo()}catch(e){}kick(ctl)}}
+ else{if(MS.ended){MS.ended=0;MS.rst=(MS.rst|0)+1;}MS.want=1;try{ctl.playVideo()}catch(e){}kick(ctl)}}
 function duck(){
  const p=MS.playing?1:0;if(p===dk)return;dk=p;
  try{if(p)clearInterval(MT);else if(s.mus&&scr=='game')music()}catch(e){}}
@@ -2068,6 +2069,7 @@ function sk(v,drag){
  const d=MS.dur||(MS.now&&MS.now.dur)||0,p=v/1000*d;
  if(drag){MS.seeking=1;const a=$e('mtl');if(a)a.textContent=fm(p);return}
  MS.seeking=0;if(!ctl||!d)return;
+ if(p<1500&&est()>3000)MS.rst=(MS.rst|0)+1;
  try{ctl.seekTo(p/1000,true)}catch(e){}MS.pos=p;MS.evT=Date.now();tickUI(p)}
 
 /* ---------- hàng đợi ---------- */
@@ -2172,6 +2174,7 @@ function seekMs(p){
  const t=MS.now;if(!t)return toast('Chưa có bài nào đang phát');
  if(!ctl||loaded!==t.id)return toast('Trình phát chưa sẵn sàng');
  const d=MS.dur||t.dur||0;p=Math.max(0,d?Math.min(d-500,p):p);
+ if(p<1500&&est()>3000)MS.rst=(MS.rst|0)+1;
  try{ctl.seekTo(p/1000,true)}catch(e){return}
  MS.pos=p;MS.evT=Date.now();tickUI(p);mediaSess()}
 const seekBy=d=>seekMs(est()+d*1000);
@@ -6752,7 +6755,7 @@ async function sendCardToDiscord(){
 /* ===== v62: máy phát đĩa than - bao bì -> đĩa trượt ra/vào -> lật thành máy phát; kim đè xuống khi phát ===== */
 (()=>{
 const T=2500,RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-let node=null,id=null,introAt=0,ang=0,vel=0,spin=0,dn=0,shown=0,raf=0,last=0,spinT=0,fresh=0;
+let node=null,id=null,rst=0,introAt=0,ang=0,vel=0,spin=0,dn=0,shown=0,raf=0,last=0,spinT=0,fresh=0;
 const E=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function build(t){
  const im=t&&t.img?'<img src="'+E(t.img)+'" alt="">':'',lb=im||'<span>♪</span>';
@@ -6772,7 +6775,8 @@ function sync(){
  if(!node){node=document.createElement('div');node.className='tt empty done'}
  const t=MS.now||null,tid=t?t.id:'';
  if(id===null){id=tid;build(t)}
- else if(tid!==id){id=tid;build(t);if(t&&!RM)introAt=Date.now()}
+ else if(tid!==id){id=tid;rst=MS.rst|0;build(t);if(t&&!RM)introAt=Date.now()}
+ else if((MS.rst|0)!==rst){rst=MS.rst|0;if(t&&!RM){introAt=Date.now();fresh=1}}   // nhạc chạy lại từ đầu -> lặp lại hiệu ứng bao bì + đĩa
  const slot=document.querySelector('.ttslot');let mounted=0;
  if(slot&&node.parentNode!==slot){slot.textContent='';slot.appendChild(node);mounted=1}
  const el=introAt?Date.now()-introAt:1e9,intro=el<T;

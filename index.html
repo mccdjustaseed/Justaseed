@@ -2232,9 +2232,9 @@ function movie(v){
  if(on&&!MS.now)return toast('Hãy chọn một bài trước');
  MS.movie=on?1:0;
  if(on&&!ctl&&MS.now)ensureCtl(MS.now.id).catch(()=>{});
- ui();toast(on?'Chế độ xem video — chạm hai lần vào đĩa để về nghe nhạc':'Chế độ nghe nhạc')}
+ ui();toast(on?'Chế độ xem video — kéo để di chuyển, chụm hai ngón để đổi cỡ':'Chế độ nghe nhạc')}
 function dtap(){const n=Date.now();if(n-dtT<380){dtT=0;clearTimeout(dtS);return 1}dtT=n;return 0}
-function dtCover(){if(dtap())movie()}
+function dtCover(){if(dtap())movie();else{try{window.TT&&TT.replay()}catch(e){}}}
 function dtMini(){if(dtap())return movie();clearTimeout(dtS);dtS=setTimeout(()=>{dtT=0;MU.mc(0)},380)}
 
 /* ---------- phát nền: Media Session + âm thanh im lặng giữ phiên âm thanh ---------- */
@@ -2273,14 +2273,14 @@ setTimeout(()=>{if(MS.arm&&!MS.playing&&scr=='game')toast('🎵 Chạm vào màn
 
 /* ---------- LỜI BÀI HÁT (tra từ LRCLIB theo tên bài, chạy theo thời gian của YouTube) ---------- */
 const LYC={};let LY={id:'',st:'',L:[],P:'',i:-2,off:0};
-document.head.insertAdjacentHTML('beforeend','<style>#mly .lyb{position:relative;height:210px;overflow:auto;text-align:center;scroll-behavior:smooth;padding:70px 0}#mly .lyl{padding:4px 8px;color:var(--mut);transition:color .2s,font-size .2s}#mly .lyl.on{color:var(--g3);font-weight:700;font-size:1.15rem}#mly pre{white-space:pre-wrap;font:inherit;margin:0;padding:0 8px}</style>');
+document.head.insertAdjacentHTML('beforeend','<style>#mly .lyb{position:relative;height:210px;overflow:auto;text-align:center;scroll-behavior:smooth;padding:70px 0}#mly .lyl{padding:4px 8px;color:var(--mut);transition:color .2s,font-size .2s}#mly .lyl.on{color:var(--g3);font-weight:700;font-size:1.15rem}#mly .lyb.ly1{height:auto;min-height:84px;overflow:visible;padding:18px 8px;display:flex;align-items:center;justify-content:center}#mly .ly1 .lyl{font-size:1.2rem;line-height:1.4}#mly pre{white-space:pre-wrap;font:inherit;margin:0;padding:0 8px}</style>');
 function lyClean(n){return String(n||'').replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|music video|mv|lyrics?|lyric video|audio|visualizer|hd|4k)\b.*$/i,' ').replace(/\s+/g,' ').trim()}
 function lyParse(s){const o=[];String(s||'').split('\n').forEach(l=>{const m=l.match(/^((?:\[\d+:\d+(?:\.\d+)?\])+)(.*)$/);if(!m)return;const tx=m[2].trim();m[1].replace(/\[(\d+):(\d+(?:\.\d+)?)\]/g,(_,a,b)=>{o.push({t:+a*60+ +b,s:tx})})});return o.sort((a,b)=>a.t-b.t)}
 function lyH(){
  if(!MS.now)return '<h3>🎤 Lời bài hát</h3><p class=mut style="margin:0">Phát một bài để xem lời.</p>';
- let h='<div class=row style="margin-top:0"><h3 style="margin:0">🎤 Lời bài hát</h3>'+(LY.L.length?'<span><button class=s onclick="LYO(-.5)" aria-label="Lời sớm hơn">−0.5s</button> <button class=s onclick="LYO(.5)" aria-label="Lời trễ hơn">+0.5s</button></span>':'')+'</div>';
+ let h='<div class=row style="margin-top:0"><h3 style="margin:0">🎤 Lời bài hát</h3>'+'</div>';
  if(LY.st=='load')return h+'<p class=mut style="margin:0">Đang tìm lời…</p>';
- if(LY.L.length)return h+'<div class=lyb id=mlb>'+LY.L.map((x,i)=>'<div class=lyl data-i='+i+'>'+(esc(x.s)||'♪')+'</div>').join('')+'</div>';
+ if(LY.L.length)return h+'<div class="lyb ly1" id=mlb><div class="lyl on" id=mll>♪</div></div>';
  if(LY.P)return h+'<div class=lyb id=mlb><pre>'+esc(LY.P)+'</pre></div><p class=mut style="margin:4px 0 0">Bài này chỉ có lời thường, không chạy theo nhạc.</p>';
  return h+'<p class=mut style="margin:0">'+(LY.st=='err'?'Không tải được lời (kiểm tra mạng).':'Chưa tìm thấy lời cho bài này.')+'</p>'}
 function lyUI(){const e=$e('mly');if(e){e.innerHTML=lyH();LY.i=-2}}
@@ -2310,9 +2310,7 @@ function lyTick(e){
  const s=e/1000+LY.off;let i=-1;for(let k=0;k<LY.L.length&&LY.L[k].t<=s;k++)i=k;
  if(i===LY.i)return;LY.i=i;
  const b=$e('mlb');if(!b)return;
- b.querySelectorAll('.lyl.on').forEach(x=>x.classList.remove('on'));
- const a=b.querySelector('.lyl[data-i="'+i+'"]');if(a){a.classList.add('on');b.scrollTop=a.offsetTop-b.clientHeight/2+a.clientHeight/2}}
-window.LYO=d=>{LY.off=Math.round((LY.off+d)*10)/10;LY.i=-2;toast('Lệch lời: '+(LY.off>0?'+':'')+LY.off+'s');try{lyTick(est())}catch(e){}};
+ const a=$e('mll');if(a)a.textContent=(i>=0&&LY.L[i].s)||'♪'}
 
 /* ---------- khởi tạo ---------- */
 document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></div><div id="spEmb"><div id="spEl"></div><button id="spX" aria-label="Quay lại nghe nhạc" onclick="MU.movie(0)">✕</button></div>');
@@ -2323,7 +2321,7 @@ document.body.insertAdjacentHTML('beforeend','<div id="mp"></div><div id="mv"></
  document.body.classList.toggle('mtab',scr=='game'&&tab=='music');
  if(k&&tab=='music'){const n=$e(kid_);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(p0,p1)}catch(e){}}}
  bodyCls();mini();placeMv();tickUI(est())}}
-window.addEventListener('resize',placeMv);window.addEventListener('load',placeMv);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&MS.movie)movie(0)});window.addEventListener('resize',placeMv);window.addEventListener('load',placeMv);
 setInterval(()=>{
  if(!MS.now)return;if(MS.mc)placeMv();
  if(ctl&&MS.playing&&loaded===MS.now.id){try{MS.pos=ctl.getCurrentTime()*1000;MS.evT=Date.now();const d=ctl.getDuration();if(d)MS.dur=d*1000}catch(e){}}
@@ -7063,7 +7061,7 @@ function sync(){
  fresh=0}
 try{new MutationObserver(sync).observe(document.body,{childList:true,subtree:true})}catch(e){}
 setInterval(sync,250);sync();
-window.TT={sync};
+window.TT={sync,replay(){if(RM||!node||typeof MS==='undefined'||!MS.now)return;introAt=Date.now();fresh=1;sync()}};
 })();
 </script>
 
@@ -8304,6 +8302,92 @@ V.forum=function(){
  const b=m=>`class="s ${MK.mode==m?'on2':''}" onclick="MKT.mode('${m}')"`;
  return `<div class=row style="justify-content:flex-start;gap:6px"><button ${b('feed')}>💬 Diễn đàn</button><button ${b('mk')}>🧺 Mua – bán</button></div>`+(MK.mode=='mk'?mkView():baseF());
 };
+})();
+</script>
+<style>
+/* ===== Xem video dạng cửa sổ nổi (kiểu Picture-in-Picture): kéo thả, hít vào góc, chụm để đổi cỡ ===== */
+#spEmb.show.movie{position:fixed;left:auto;top:auto;bottom:auto;transform:none;width:220px;height:124px;border-radius:14px;background:#000;box-shadow:0 8px 28px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.12);z-index:41;touch-action:none}
+#spEmb.movie.pin{animation:pipIn .24s cubic-bezier(.2,.9,.3,1.1)}
+@keyframes pipIn{from{opacity:0;transform:scale(.82)}}
+#spDr{display:none;position:absolute;inset:0;z-index:2;touch-action:none;cursor:grab}
+#spEmb.movie #spDr{display:block}
+#spCt{display:none;position:absolute;inset:0;z-index:2;pointer-events:none;background:rgba(0,0,0,.38);opacity:0;transition:opacity .18s;align-items:center;justify-content:center}
+#spEmb.movie #spCt{display:flex}
+#spEmb.movie.ctl #spCt{opacity:1}
+#spCt button{pointer-events:none;position:absolute;border:0;padding:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;line-height:1;font-family:inherit}
+#spEmb.movie.ctl #spCt button{pointer-events:auto}
+#spPp{width:44px;height:44px;font-size:1.15rem}
+#spSz{width:30px;height:30px;right:6px;bottom:6px;font-size:.95rem}
+#spEmb.movie:not(.ctl) #spX{opacity:0;pointer-events:none}
+#spEmb.movie #spX{z-index:3;transition:opacity .18s}
+@media(prefers-reduced-motion:reduce){#spEmb.movie.pin{animation:none}}
+</style>
+<script>
+(()=>{
+const em=document.getElementById('spEmb');if(!em)return;
+em.insertAdjacentHTML('beforeend','<div id="spDr"></div><div id="spCt"><button id="spPp" aria-label="Phát / tạm dừng"></button><button id="spSz" aria-label="Đổi cỡ cửa sổ">⤢</button></div>');
+const dr=document.getElementById('spDr'),pp=document.getElementById('spPp'),sz=document.getElementById('spSz');
+const pb=document.createElement('div');pb.style.cssText='position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';document.body.appendChild(pb);
+const ins=()=>{const c=getComputedStyle(pb);return{t:parseFloat(c.paddingTop)||0,b:parseFloat(c.paddingBottom)||0}};
+const M=10,RES=140,MINW=176;
+const maxW=()=>Math.max(MINW,Math.min(440,innerWidth-2*M));
+const defW=()=>Math.max(MINW,Math.min(230,Math.round(innerWidth*.58)));
+const st={c:'br',w:0,on:0,x:0,y:0,ct:0,tm:0};
+const H=w=>Math.round(w*9/16);
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+function corner(c,w){const h=H(w),i=ins();
+ const bot=Math.max(i.t+M,innerHeight-h-i.b-RES);
+ return{x:c[1]=='l'?M:innerWidth-w-M,y:c[0]=='t'?i.t+M:bot}}
+function put(x,y,w,anim){
+ em.style.transition=anim?'left .3s cubic-bezier(.2,.9,.3,1),top .3s cubic-bezier(.2,.9,.3,1),width .22s ease,height .22s ease':'none';
+ em.style.width=w+'px';em.style.height=H(w)+'px';em.style.left=x+'px';em.style.top=y+'px';st.x=x;st.y=y}
+function snap(anim){
+ const w=st.w,h=H(w),cx=st.x+w/2,cy=st.y+h/2;
+ st.c=(cy<innerHeight/2?'t':'b')+(cx<innerWidth/2?'l':'r');
+ const p=corner(st.c,w);put(p.x,p.y,w,anim)}
+function ctl(on){
+ clearTimeout(st.tm);st.ct=on?1:0;em.classList.toggle('ctl',!!on);
+ if(on){pp.textContent=(window.MS&&MS.playing)?'⏸':'▶';st.tm=setTimeout(()=>ctl(0),3200)}}
+function toggleSize(){
+ const mx=maxW(),df=defW();st.w=st.w<(mx+df)/2?mx:df;
+ const w=st.w,p=corner(st.c,w);put(p.x,p.y,w,1)}
+const P=new Map();let g=null;
+dr.addEventListener('pointerdown',e=>{
+ try{dr.setPointerCapture(e.pointerId)}catch(_){}
+ P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(P.size==1)g={sx:e.clientX,sy:e.clientY,ox:st.x,oy:st.y,moved:0};
+ else if(P.size==2){const a=[...P.values()];g=g||{};g.pd=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);g.pw=st.w;g.pinch=1;g.moved=1;ctl(0)}
+ e.preventDefault()});
+dr.addEventListener('pointermove',e=>{
+ if(!P.has(e.pointerId)||!g)return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(g.pinch&&P.size>=2){const a=[...P.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+  const w=Math.round(cl(g.pw*d/(g.pd||1),MINW,maxW())),cx=st.x+st.w/2,cy=st.y+H(st.w)/2;st.w=w;
+  put(cx-w/2,cy-H(w)/2,w,0);return}
+ if(P.size==1&&!g.pinch){const dx=e.clientX-g.sx,dy=e.clientY-g.sy;
+  if(!g.moved&&Math.hypot(dx,dy)<6)return;
+  if(!g.moved){g.moved=1;ctl(0)}
+  const i=ins();put(cl(g.ox+dx,0,innerWidth-st.w),cl(g.oy+dy,i.t,innerHeight-H(st.w)-i.b),st.w,0)}});
+function end(e){
+ if(!P.has(e.pointerId))return;P.delete(e.pointerId);
+ try{dr.releasePointerCapture(e.pointerId)}catch(_){}
+ if(!g||P.size>0)return;
+ const gg=g;g=null;
+ if(!gg.moved){
+  const n=Date.now();
+  if(st.lt&&n-st.lt<320){st.lt=0;toggleSize();ctl(0)}else{st.lt=n;ctl(!st.ct)}
+  return}
+ snap(1)}
+dr.addEventListener('pointerup',end);dr.addEventListener('pointercancel',end);
+pp.addEventListener('click',e=>{e.stopPropagation();try{MU.tog()}catch(_){};setTimeout(()=>{pp.textContent=(window.MS&&MS.playing)?'⏸':'▶'},250);clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),3200)});
+sz.addEventListener('click',e=>{e.stopPropagation();toggleSize();clearTimeout(st.tm);st.tm=setTimeout(()=>ctl(0),3200)});
+function clear(){['width','height','left','top','transition'].forEach(k=>em.style[k]='');st.on=0;ctl(0)}
+function sync(){
+ const mv=em.classList.contains('movie')&&em.classList.contains('show');
+ if(mv&&!st.on){st.on=1;if(!st.w)st.w=defW();st.w=cl(st.w,MINW,maxW());const p=corner(st.c,st.w);put(p.x,p.y,st.w,0);em.classList.add('pin');setTimeout(()=>em.classList.remove('pin'),300)}
+ else if(!mv&&st.on)clear()}
+try{new MutationObserver(sync).observe(em,{attributes:true,attributeFilter:['class']})}catch(e){}
+addEventListener('resize',()=>{if(!st.on)return;st.w=cl(st.w,MINW,maxW());snap(0)});
+sync();
 })();
 </script>
 </body></html>

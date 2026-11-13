@@ -8179,6 +8179,10 @@ async function load(){
   if(error)throw error;
   MK.stalls=data||[];MK.mine=MK.stalls.find(x=>x.user_id==uid())||null;
   if(!MK.mine){const r=await sb().from('stalls').select('user_id,name,intro,avatar,items').eq('user_id',uid()).maybeSingle();MK.mine=r.data;if(r.data)MK.stalls.unshift(r.data)}
+  if(MK.mine){const key=frCur()+'|'+((s.pf&&s.pf.av)||'').length;
+   if(MK.sk!==key&&(AVP(MK.mine.avatar).fr!==frCur()||(s.pf&&s.pf.av&&AVP(MK.mine.avatar).src!==s.pf.av))){MK.sk=key;
+    const want=avWith((s.pf&&s.pf.av)||AVP(MK.mine.avatar).src||null);
+    try{const r2=await sb().rpc('stall_open',{p_name:MK.mine.name,p_intro:MK.mine.intro||'',p_avatar:want});if(!r2.error)MK.mine.avatar=want}catch(e){}}}
   const c=await sb().from('stall_orders').update({claimed:true}).eq('seller',uid()).eq('claimed',false).select('qty,total');
   if(c.data&&c.data.length){const sum=c.data.reduce((a,x)=>a+x.total,0);s.money+=sum;save();toast('🧺 Sạp vừa bán được '+money(sum));}
   MK.err='';
@@ -8188,9 +8192,9 @@ async function load(){
 /* khung avatar sạp: lưu kèm trong trường avatar dạng ~f<số>~<ảnh> (không cần đổi database) */
 const FR=()=>typeof FRM!='undefined'?FRM:[{n:'Chủ đề',c:'background:var(--g2)'}];
 const AVP=a=>{const m=/^~f(\d)~/.exec(a||'');return{fr:m?+m[1]:0,src:m?a.slice(m[0].length):(a||'')}};
-const frCur=()=>{const p=s.pf||{},f=p.sfr!=null?p.sfr:(p.fr||0),F=FR()[f];return F&&!(F.a&&!p.afr)?f:0};
+const frCur=()=>{const p=s.pf||{},f=p.fr||0,F=FR()[f];return F&&!(F.a&&!p.afr)?f:0};
 const avWith=a=>{const f=frCur();return f>0?'~f'+f+'~'+(a||''):a};
-function avHtml(x,st){const p=AVP(x.avatar),f=FR()[p.fr]||FR()[0];return `<div class=sta style="${st||''}"><span class="fr ${f.a?'frA':''}" style="${f.c||''}"></span><span class=sai style="${p.src?`background-image:url('${H(p.src)}')`:''}">${p.src?'':H((x.name||'?')[0].toUpperCase())}</span></div>`}
+function avHtml(x,st){let p=AVP(x.avatar);try{if(x.user_id==uid())p={fr:frCur(),src:(s.pf&&s.pf.av)||p.src}}catch(e){}const f=FR()[p.fr]||FR()[0];return `<div class=sta style="${st||''}"><span class="fr ${f.a?'frA':''}" style="${f.c||''}"></span><span class=sai style="${p.src?`background-image:url('${H(p.src)}')`:''}">${p.src?'':H((x.name||'?')[0].toUpperCase())}</span></div>`}
 /* món workshop trên sạp: id = 'w:' + snapshot mã hóa */
 const PMX={fa:4e5,pf:5e5,br:2e5,ca:25e4,po:35e4,sh:4e5,ar:45e4};
 const b64e=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -8225,7 +8229,6 @@ window.MKT={
  manage(){const m=MK.mine;if(!m)return;const N=names(),on=(m.items||[]).filter(t=>t.qty>0),bag=Object.keys(s.st).filter(k=>N[k]&&(s.st[k]||0)>0);
   modal(`<div class=row><h2>Sạp của tôi</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>
   <div class=card><input id=mn value="${H(m.name)}" maxlength=40 placeholder="Tên sạp" style="width:100%"><textarea id=mi maxlength=200 rows=2 placeholder="Giới thiệu sạp" style="width:100%;margin:6px 0">${H(m.intro)}</textarea><button class=p onclick="MKT.info()">Lưu thông tin</button></div>
-  <div class=card><h3>Khung avatar sạp</h3><div class=row style="justify-content:flex-start;flex-wrap:wrap">${FR().map((f,i)=>{const lk=f.a&&!(s.pf&&s.pf.afr);return `<button class="s ${AVP(m.avatar).fr==i?'on2':''}" ${lk?'disabled':''} onclick="MKT.frame(${i})">${f.n}${lk?' 🔒':''}</button>`}).join('')}</div></div>
   <div class=card><h3>Đang bán</h3>${on.map(t=>`<div class=mkr><span class=nm>${ART(t.id)}<b>${H(t.n)}</b></span><span class=mut>${t.qty} × ${money(t.price)}</span><button class=s onclick="MKT.unlist('${t.id}')">Rút về túi</button></div>`).join('')||'<p class=mut>Chưa đưa món nào lên sạp.</p>'}</div>
   <div class=card><h3>🎓 Túi đồ workshop</h3>${(s.shelf||[]).slice().reverse().slice(0,40).map((x,i)=>{const sn=XB.att.snap(x)||{};return `<div class=mkr><span class=nm>${WSI.icon(x,34)}<b>${H(x.n)}</b></span><span class=mut>CL ${x.q}/100</span><input id=wp${i} type=number min=1 value=${sn.vl||''} placeholder="Giá" aria-label="Giá bán"><button class=p onclick="MKT.lw('${x.id}',${i})">Bán</button></div>`}).join('')||'<p class=mut>Túi workshop trống. Hãy làm sản phẩm ở các bàn workshop.</p>'}</div>
   <div class=card><h3>Trong Túi đồ</h3>${bag.map((k,i)=>`<div class=mkr><span class=nm>${art(k)}<b>${H(N[k])}</b></span><span class=mut>có ${s.st[k]}</span><input id=lq${i} type=number min=1 max=${s.st[k]} value=${s.st[k]} aria-label="Số lượng"><input id=lp${i} type=number min=1 placeholder="Giá/cái" aria-label="Giá mỗi cái"><button class=p onclick="MKT.list('${k}',${i})">Bán</button></div>`).join('')||'<p class=mut>Túi đồ đang trống.</p>'}</div>`)},
@@ -8234,7 +8237,6 @@ window.MKT={
   if(await call('stall_list',{p_item:k,p_n:N[k],p_qty:q,p_price:p})===null)return;
   s.st[k]-=q;save();await load();MKT.manage();toast('Đã đưa '+q+' '+N[k]+' lên sạp')},
  addW(w){s.shelf=s.shelf||[];s.shelf.push({id:'w'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),t:w.t,n:w.n,q:w.q,p:w.p,on:0,cl:w.cl||[],v:w.v,ex:w.ex,sc:w.sc,mt:w.mt,im:'',u:w.u||'',cr:w.cr,crd:'',gfd:'',gf:'',gm:''})},
- async frame(i){s.pf=s.pf||{};s.pf.sfr=i;save();await MKT.info()},
  async lw(id,i){const x=(s.shelf||[]).find(y=>y.id==id);if(!x)return;const p=parseInt(Q('wp'+i).value)||0;if(p<1)return toast('Nhập giá bán');
   toast('Đang đưa lên sạp…');const o=await wsPack(x);if(!o)return toast('Không đưa được món này lên sạp');
   const pid='w:'+b64e(o);if(pid.length>1500)return toast('Món quá nặng để bán trên sạp');
@@ -8244,7 +8246,7 @@ window.MKT={
   const w=wsOf(k);if(w){for(let n=0;n<(r.qty|0);n++)MKT.addW(w);save();await load();MKT.manage();return toast(r.qty>0?'Đã rút '+r.qty+' món về túi workshop':'Món đã được bán')}
   s.st[k]=(s.st[k]||0)+r.qty;save();await load();MKT.manage();toast('Đã rút '+r.qty+' về túi')},
  view(u){const x=find(u);if(!x)return;const it=(x.items||[]).filter(t=>t.qty>0),me=u==uid();
-  modal(`<div class=row><h2>${H(x.name)}</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><div class=card><div style="display:flex;gap:10px;align-items:center">${avHtml(x,'position:static;flex:none')}<span>${H(x.intro||'Sạp chưa có lời giới thiệu.')}</span></div></div>
+  modal(`<div class=row><h2>${H(x.name)}</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><div class=card><div style="display:flex;gap:10px;align-items:center">${avHtml(x,'position:relative;left:0;top:0;flex:none')}<span>${H(x.intro||'Sạp chưa có lời giới thiệu.')}</span></div></div>
   <div class=card>${it.map((t,i)=>`<div class=mkr><span class=nm>${ART(t.id)}<b>${H(t.n)}</b></span><span class=mut>còn ${t.qty} · ${money(t.price)}</span>${me?'':`<input id=bq${i} type=number min=1 max=${t.qty} value=1 aria-label="Số lượng"><button class=p onclick="MKT.buy('${u}',${i})">Mua</button>`}</div>`).join('')||'<p class=mut>Sạp đang trống.</p>'}</div>`)},
  async buy(u,i){const x=find(u),t=x&&(x.items||[]).filter(t=>t.qty>0)[i];if(!t)return;
   const q=Math.max(1,Math.min(t.qty,parseInt(Q('bq'+i).value)||1));

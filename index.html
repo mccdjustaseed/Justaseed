@@ -6335,7 +6335,7 @@ window.AD={
   if(r.error)r=await sb().from('admin_grants').select('*').limit(50);if(r.error)throw r.error;
   A.names=await namesOf(r.data.map(x=>x.user_id));A.grants=r.data},
  async _roles(){const r=await sb().from('shop_roles').select('*').order('sort');if(r.error)throw r.error;A.roles=r.data||[];const g=await sb().from('guild_roles').select('*').order('position',{ascending:false});A.groles=g.error?null:(g.data||[])},
- rolePick(id){const g=(A.groles||[]).find(x=>x.role_id==id);if(!g)return;const set=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v};set('rl-id',g.role_id);set('rl-n',g.name);if(g.color){set('rl-c',g.color);set('rl-c2',g.color)}},
+ rolePick(id){const g=(A.groles||[]).find(x=>x.role_id==id);if(!g)return;const set=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v};set('rl-id',g.role_id);set('rl-n',g.name);{const f=window.ROLEFX&&ROLEFX.dc?ROLEFX.dc(g):null;if(f){set('rl-c',f.color);set('rl-c2',f.color2);set('rl-e',f.effect)}else if(g.color){set('rl-c',g.color);set('rl-c2',g.color)}}},
  _rf(pre){const g=i=>{const e=document.getElementById(pre+i);return e?e.value:''},name=g('n').trim().slice(0,60),price=Math.floor(Number(g('p'))),d=g('d').trim().slice(0,120),sort=Math.floor(Number(g('s')))||0;if(!name){toast('Nhập tên role');return null}if(!(price>0)){toast('Giá phải lớn hơn 0');return null}const hx=/^#[0-9a-fA-F]{6}$/,c=g('c')||'#99aab5',c2=g('c2')||c,e=g('e')||'none';if(!hx.test(c)||!hx.test(c2))return toast('Màu không hợp lệ'),null;return{name,price,description:d||null,sort,color:c,color2:c2,effect:e}},
  async _rdone(r,m){if(r.error)throw r.error;toast(m);try{if(window.ROLES)ROLES.stale()}catch(e){}await AD.go('roles')},
  async roleAdd(){const id=String((document.getElementById('rl-id')||{}).value||'').trim();if(!/^\d{5,25}$/.test(id))return toast('ID role không đúng (dãy số lấy từ Discord)');const f=this._rf('rl-');if(!f)return;try{await this._rdone(await sb().from('shop_roles').insert({role_id:id,...f,active:true}),'Đã thêm role')}catch(er){fail(er)}},
@@ -7656,7 +7656,19 @@ const logged=()=>typeof currentUser!='undefined'&&!!currentUser&&!!window.DISCOR
 const HEX=/^#[0-9a-fA-F]{6}$/;
 function pill(it){const c=HEX.test(it.color||'')?it.color:'#99aab5',c2=HEX.test(it.color2||'')?it.color2:c,e=['gradient','shimmer','holo','glow'].includes(it.effect)?it.effect:'none';
   return '<span class="rp rp-'+e+'" style="--c:'+c+';--c2:'+c2+'"><i></i><span class=rnm>'+esc(it.name)+'</span></span>'}
-window.ROLEFX={pill};
+/* Lấy màu + hiệu ứng thật từ role Discord (bảng guild_roles). Chịu được nhiều kiểu cột: hex, số nguyên, JSON colors */
+function dcHex(v){if(v==null||v==='')return '';if(typeof v==='number'){return v>0?'#'+v.toString(16).padStart(6,'0').slice(-6):''}v=String(v).trim();if(/^\d+$/.test(v)){const n=Number(v);return n>0?'#'+n.toString(16).padStart(6,'0').slice(-6):''}if(/^#?[0-9a-fA-F]{6}$/.test(v))return (v[0]=='#'?v:'#'+v).toLowerCase();return ''}
+function dcFx(g){
+  if(!g)return null;
+  let cs=g.colors;if(typeof cs=='string'){try{cs=JSON.parse(cs)}catch(e){cs=null}}cs=cs||{};
+  const c1=dcHex(cs.primary_color??cs.primaryColor??g.primary_color??g.color),
+        c2=dcHex(cs.secondary_color??cs.secondaryColor??g.secondary_color??g.color2??g.color_secondary),
+        c3=dcHex(cs.tertiary_color??cs.tertiaryColor??g.tertiary_color??g.color3??g.color_tertiary),
+        holo=!!c3||/holo/i.test(String(g.style||g.effect||''))||g.holographic===true;
+  if(!c1&&!c2&&!c3)return null;
+  const base=c1||c2||c3;
+  return {color:base,color2:c2||base,effect:holo?'holo':(c2&&c2!==base?'gradient':'none')}}
+window.ROLEFX={pill,dc:dcFx};
 {const st=document.createElement('style');st.textContent='.rp{display:inline-flex;align-items:center;gap:6px;font-weight:700;max-width:100%;min-width:0;line-height:1.4;vertical-align:middle}.rp>i{width:11px;height:11px;border-radius:50%;background:var(--c);flex:none}.rp .rnm{color:var(--c);display:inline-block;min-width:0;line-height:1.4;padding:.08em .12em;overflow-wrap:anywhere}'
 +'.rp-gradient .rnm,.rp-shimmer .rnm{background:linear-gradient(90deg,var(--c),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}'
 +'.rp-shimmer .rnm{background-size:200% 100%;animation:rpm 2.2s ease-in-out infinite alternate}'
@@ -7675,22 +7687,17 @@ async function load(){
     const ids=(a.data||[]).map(x=>x.role_id);
     let colorMap={};
     if(ids.length){
-      const g=await sb().from('guild_roles').select('role_id,color').in('role_id',ids);
+      const g=await sb().from('guild_roles').select('*').in('role_id',ids);
       if(!g.error&&g.data){
-        g.data.forEach(r=>{ if(r.color) colorMap[r.role_id]=r.color; });
+        g.data.forEach(r=>{ const f=dcFx(r); if(f) colorMap[r.role_id]=f; });
       }
     }
 
     RL.items=(a.data||[]).map(it=>{
       const dc=colorMap[it.role_id];
-      return {
-        ...it,
-        // Ưu tiên màu từ Discord, không có thì dùng màu trong shop_roles
-        color: dc || it.color || '#99aab5',
-        color2: dc || it.color2 || it.color || '#99aab5',
-        // Hiệu ứng vẫn lấy từ shop_roles (Discord không có gradient/shimmer/holo/glow)
-        effect: it.effect || 'none'
-      };
+      // Màu và hiệu ứng lấy theo role trên Discord; không có dữ liệu Discord thì dùng cấu hình trong shop_roles
+      return dc?{...it,color:dc.color,color2:dc.color2,effect:dc.effect}
+              :{...it,color:it.color||'#99aab5',color2:it.color2||it.color||'#99aab5',effect:it.effect||'none'};
     });
 
     const b=await sb().from('role_purchases').select('id,role_id,status,refunded,price').eq('user_id',currentUser.id);

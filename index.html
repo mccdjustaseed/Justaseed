@@ -8118,4 +8118,121 @@ document.addEventListener('wheel',e=>{
  if(nx!==n.scrollLeft){n.scrollLeft=nx;e.preventDefault()}},{passive:false});
 })();
 </script>
+<style>
+.cpm{position:fixed;inset:0;z-index:99999;background:rgba(10,30,20,.62);display:grid;place-items:center;padding:16px}
+.cpb{background:var(--card);color:var(--ink);border-radius:22px;padding:14px;max-width:100%;width:fit-content}
+.cpb canvas{display:block;margin:8px auto;background:#0002;border-radius:12px;touch-action:none;cursor:grab;max-width:100%}
+.cpb canvas.rd{border-radius:50%}.cpb input[type=range]{width:100%;padding:0;border:0}
+.stl{position:relative;margin:16px 0 10px}
+.sta{position:absolute;left:-4px;top:-8px;width:54px;height:54px;border-radius:50%;border:3px solid var(--card);background:var(--g2) center/cover;color:#fff;display:grid;place-items:center;font:700 1.3rem 'Baloo 2';z-index:1;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.stn{margin:0 0 4px 56px;font:700 1.05rem 'Baloo 2';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stb{display:grid;grid-template-columns:1fr 50px;gap:6px 8px;padding:8px;background:var(--sk2);border-radius:16px;align-items:center}
+.sti{padding-left:48px;min-height:40px;font-size:.88rem;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.stg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;grid-column:1}
+.stt{aspect-ratio:1;border-radius:12px;background:var(--card);border:2px solid var(--ln);display:grid;place-items:center;position:relative;overflow:hidden}
+.stt.e{background:transparent;border-style:dashed}.stt small{position:absolute;right:4px;bottom:1px;font-weight:700;color:var(--mut)}
+.sto{grid-column:2;grid-row:1/3;width:46px;height:46px;border:0;border-radius:14px;background:var(--pk);color:var(--ink);display:grid;place-items:center;justify-self:center;box-shadow:0 3px 0 #ff9fb2}
+.sto:active{transform:translateY(2px);box-shadow:none}
+.mkr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px dashed var(--ln)}
+.mkr .nm{flex:1 1 90px;display:flex;gap:6px;align-items:center}
+.mkr input{width:72px}
+</style>
+<script>
+(()=>{
+const Q=i=>document.getElementById(i),H=x=>String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ok=()=>!!(typeof currentUser!=='undefined'&&currentUser&&window.DISCORD_OK&&typeof supabaseClient!=='undefined'&&supabaseClient);
+const sb=()=>supabaseClient,uid=()=>currentUser.id;
+const names=()=>{const m={};[...fl(),...P,...G].forEach(x=>m[x.id]=x.n);return m};
+const money=n=>(typeof $==='function'?$(n):Number(n).toLocaleString('vi-VN')+'đ');
+
+/* ===== 1. CẮT & CHỈNH ẢNH (avatar + bìa) ===== */
+function crop(file,w,h,round,done){
+ const r=new FileReader();r.onload=()=>{const im=new Image();im.onerror=()=>toast('Không đọc được ảnh');im.onload=()=>{
+  const W=Math.min(320,innerWidth-64),Hh=Math.round(W*h/w);let z=1,rot=0,ox=0,oy=0;
+  const m=document.createElement('div');m.className='cpm';
+  m.innerHTML=`<div class=cpb><h3>${round?'Cắt ảnh đại diện':'Cắt ảnh bìa'}</h3><canvas id=cpc class="${round?'rd':''}" width=${W} height=${Hh}></canvas><label class=mut>Phóng to<input id=cpz type=range min=1 max=4 step=.01 value=1></label><p class=mut style="margin:4px 0">Kéo ảnh để chỉnh vị trí.</p><div class=row><button class=s id=cpr>↻ Xoay</button><span><button class=s id=cpx>Hủy</button> <button class=p id=cpo>Lưu ảnh</button></span></div></div>`;
+  document.body.appendChild(m);const cv=Q('cpc');
+  const dims=()=>{const sw=rot%2;const iw=sw?im.height:im.width,ih=sw?im.width:im.height;return[iw,ih,Math.max(W/iw,Hh/ih)*z]};
+  const clamp=()=>{const[iw,ih,k]=dims(),mx=Math.max(0,(iw*k-W)/2),my=Math.max(0,(ih*k-Hh)/2);ox=Math.max(-mx,Math.min(mx,ox));oy=Math.max(-my,Math.min(my,oy))};
+  const draw=(c,f)=>{clamp();const k=dims()[2];c.setTransform(f,0,0,f,0,0);c.fillStyle='#fff';c.fillRect(0,0,W,Hh);c.translate(W/2+ox,Hh/2+oy);c.rotate(rot*Math.PI/2);c.scale(k,k);c.drawImage(im,-im.width/2,-im.height/2)};
+  const paint=()=>draw(cv.getContext('2d'),1);paint();
+  let d=null;cv.onpointerdown=e=>{d=[e.clientX,e.clientY,ox,oy];cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'};
+  cv.onpointermove=e=>{if(!d)return;ox=d[2]+e.clientX-d[0];oy=d[3]+e.clientY-d[1];paint()};
+  cv.onpointerup=cv.onpointercancel=()=>{d=null;cv.style.cursor='grab'};
+  Q('cpz').oninput=e=>{z=+e.target.value;paint()};
+  Q('cpr').onclick=()=>{rot=(rot+1)%4;ox=oy=0;paint()};
+  Q('cpx').onclick=()=>m.remove();
+  Q('cpo').onclick=()=>{const o=document.createElement('canvas');o.width=w;o.height=h;draw(o.getContext('2d'),w/W);m.remove();done(o)};
+ };im.src=r.result};r.readAsDataURL(file)}
+avUp=function(i){const f=i.files&&i.files[0];i.value='';if(f)crop(f,256,256,1,c=>{s.pf.av=c.toDataURL('image/jpeg',.85);save();if(scr=='game')R();pfm()})};
+coverUp=function(i){const f=i.files&&i.files[0];i.value='';if(f)crop(f,720,270,0,c=>cvSet(c))};
+
+/* ===== 2. MUA – BÁN (chỉ người đã đăng nhập Discord) ===== */
+const MK={mode:'feed',stalls:null,mine:null,load:0,err:''};
+const call=async(fn,a)=>{const{data,error}=await sb().rpc(fn,a);if(error){toast('Lỗi: '+error.message);return null}if(data&&data.ok===false){toast(data.msg||'Không thực hiện được');return null}return data};
+async function load(){
+ MK.load=1;
+ try{
+  const{data,error}=await sb().from('stalls').select('user_id,name,intro,avatar,items,updated_at').order('updated_at',{ascending:false}).limit(40);
+  if(error)throw error;
+  MK.stalls=data||[];MK.mine=MK.stalls.find(x=>x.user_id==uid())||null;
+  if(!MK.mine){const r=await sb().from('stalls').select('user_id,name,intro,avatar,items').eq('user_id',uid()).maybeSingle();MK.mine=r.data;if(r.data)MK.stalls.unshift(r.data)}
+  const c=await sb().from('stall_orders').update({claimed:true}).eq('seller',uid()).eq('claimed',false).select('qty,total');
+  if(c.data&&c.data.length){const sum=c.data.reduce((a,x)=>a+x.total,0);s.money+=sum;save();toast('🧺 Sạp vừa bán được '+money(sum));}
+  MK.err='';
+ }catch(e){MK.err=e.message||'Lỗi tải dữ liệu';MK.stalls=MK.stalls||[]}
+ MK.load=0;if(tab=='forum'&&MK.mode=='mk')R();
+}
+function avHtml(x){const a=x.avatar||'';return `<div class=sta style="${a?`background-image:url('${H(a)}')`:''}">${a?'':H((x.name||'?')[0].toUpperCase())}</div>`}
+function stallCard(x,i){
+ const it=(x.items||[]).filter(t=>t.qty>0),t4=it.slice(0,4);
+ let g=t4.map(t=>`<div class=stt>${art(t.id)}<small>${t.qty}</small></div>`).join('');for(let k=t4.length;k<4;k++)g+='<div class="stt e"></div>';
+ return `<div class=stl>${avHtml(x)}<div class=stn>${H(x.name)}</div><div class=stb><div class=sti>${H(x.intro||'Sạp chưa có lời giới thiệu.')}</div><div class=stg>${g}</div><button class=sto onclick="MKT.view('${x.user_id}')" aria-label="Xem đầy đủ sạp ${H(x.name)}">${ic('shop',24)}</button></div></div>`}
+function mkView(){
+ if(MK.stalls===null&&!MK.load)load();
+ const mine=MK.mine;
+ let h=`<div class=card><div class=row><h3>🧺 Chợ người chơi</h3>${mine?`<button class=p onclick="MKT.manage()">Sạp của tôi</button>`:`<button class=p onclick="MKT.reg()">Mở sạp</button>`}</div><p class=mut style="margin:0">Mỗi người một sạp. Bạn bán được mọi thứ đang có trong Túi đồ.</p></div>`;
+ if(MK.err)h+=`<div class=card><p class=bad>${H(MK.err)}</p><p class=mut>Nếu đây là lần đầu, hãy chạy file stall_setup.sql trong Supabase.</p></div>`;
+ if(MK.stalls===null)return h+'<p class=mut style="text-align:center">Đang tải các sạp…</p>';
+ const list=MK.stalls.filter(x=>x.user_id!=uid());
+ h+=`<div class=card style="padding:10px 12px 4px">${mine?stallCard(mine,0):''}${list.map(stallCard).join('')||(mine?'':'<p class=mut>Chưa có sạp nào. Hãy là người mở sạp đầu tiên!</p>')}</div>`;
+ return h}
+const modal=h=>{Q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms>${h}</div></div>`};
+const find=u=>MK.stalls&&MK.stalls.find(x=>x.user_id==u);
+window.MKT={
+ mode(m){MK.mode=m;if(m=='mk')MK.stalls=null;R()},
+ async reg(){const nm=(s.name||'Sạp của tôi').slice(0,40);const av=s.pf&&s.pf.av||(currentUser.user_metadata&&currentUser.user_metadata.avatar_url)||null;
+  if(await call('stall_open',{p_name:nm,p_intro:'',p_avatar:av})===null)return;await load();toast('Đã mở sạp!');MKT.manage()},
+ async info(){const av=s.pf&&s.pf.av||MK.mine.avatar||null;
+  if(await call('stall_open',{p_name:Q('mn').value.trim()||'Sạp',p_intro:Q('mi').value.trim(),p_avatar:av})===null)return;await load();toast('Đã lưu thông tin sạp');MKT.manage()},
+ manage(){const m=MK.mine;if(!m)return;const N=names(),on=(m.items||[]).filter(t=>t.qty>0),bag=Object.keys(s.st).filter(k=>N[k]&&(s.st[k]||0)>0);
+  modal(`<div class=row><h2>Sạp của tôi</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div>
+  <div class=card><input id=mn value="${H(m.name)}" maxlength=40 placeholder="Tên sạp" style="width:100%"><textarea id=mi maxlength=200 rows=2 placeholder="Giới thiệu sạp" style="width:100%;margin:6px 0">${H(m.intro)}</textarea><button class=p onclick="MKT.info()">Lưu thông tin</button></div>
+  <div class=card><h3>Đang bán</h3>${on.map(t=>`<div class=mkr><span class=nm>${art(t.id)}<b>${H(t.n)}</b></span><span class=mut>${t.qty} × ${money(t.price)}</span><button class=s onclick="MKT.unlist('${t.id}')">Rút về túi</button></div>`).join('')||'<p class=mut>Chưa đưa món nào lên sạp.</p>'}</div>
+  <div class=card><h3>Trong Túi đồ</h3>${bag.map((k,i)=>`<div class=mkr><span class=nm>${art(k)}<b>${H(N[k])}</b></span><span class=mut>có ${s.st[k]}</span><input id=lq${i} type=number min=1 max=${s.st[k]} value=${s.st[k]} aria-label="Số lượng"><input id=lp${i} type=number min=1 placeholder="Giá/cái" aria-label="Giá mỗi cái"><button class=p onclick="MKT.list('${k}',${i})">Bán</button></div>`).join('')||'<p class=mut>Túi đồ đang trống.</p>'}</div>`)},
+ async list(k,i){const N=names(),q=Math.min(s.st[k]||0,parseInt(Q('lq'+i).value)||0),p=parseInt(Q('lp'+i).value)||0;
+  if(q<1)return toast('Nhập số lượng');if(p<1)return toast('Nhập giá bán');
+  if(await call('stall_list',{p_item:k,p_n:N[k],p_qty:q,p_price:p})===null)return;
+  s.st[k]-=q;save();await load();MKT.manage();toast('Đã đưa '+q+' '+N[k]+' lên sạp')},
+ async unlist(k){const r=await call('stall_unlist',{p_item:k,p_qty:999999});if(r===null)return;
+  s.st[k]=(s.st[k]||0)+r.qty;save();await load();MKT.manage();toast('Đã rút '+r.qty+' về túi')},
+ view(u){const x=find(u);if(!x)return;const it=(x.items||[]).filter(t=>t.qty>0),me=u==uid();
+  modal(`<div class=row><h2>${H(x.name)}</h2><button class=s onclick="mdl()" aria-label="Đóng">✕</button></div><div class=card><div style="display:flex;gap:10px;align-items:center"><div class=sta style="position:static;flex:none;${x.avatar?`background-image:url('${H(x.avatar)}')`:''}">${x.avatar?'':H((x.name||'?')[0])}</div><span>${H(x.intro||'Sạp chưa có lời giới thiệu.')}</span></div></div>
+  <div class=card>${it.map((t,i)=>`<div class=mkr><span class=nm>${art(t.id)}<b>${H(t.n)}</b></span><span class=mut>còn ${t.qty} · ${money(t.price)}</span>${me?'':`<input id=bq${i} type=number min=1 max=${t.qty} value=1 aria-label="Số lượng"><button class=p onclick="MKT.buy('${u}',${i})">Mua</button>`}</div>`).join('')||'<p class=mut>Sạp đang trống.</p>'}</div>`)},
+ async buy(u,i){const x=find(u),t=x&&(x.items||[]).filter(t=>t.qty>0)[i];if(!t)return;
+  const q=Math.max(1,Math.min(t.qty,parseInt(Q('bq'+i).value)||1));
+  if(s.money<q*t.price&&!s.dev)return toast('Không đủ tiền');
+  const r=await call('stall_buy',{p_seller:u,p_item:t.id,p_qty:q});if(r===null){await load();return MKT.view(u)}
+  if(!s.dev)s.money-=r.total;s.st[t.id]=(s.st[t.id]||0)+q;try{L('out','Sạp '+x.name,'Mua '+t.n,q,r.total)}catch(e){}
+  save();toast('Đã mua '+q+' '+t.n);await load();MKT.view(u)}
+};
+
+const baseF=V.forum;
+V.forum=function(){
+ if(!ok()){MK.mode='feed';return baseF()}
+ const b=m=>`class="s ${MK.mode==m?'on2':''}" onclick="MKT.mode('${m}')"`;
+ return `<div class=row style="justify-content:flex-start;gap:6px"><button ${b('feed')}>💬 Diễn đàn</button><button ${b('mk')}>🧺 Mua – bán</button></div>`+(MK.mode=='mk'?mkView():baseF());
+};
+})();
+</script>
 </body></html>

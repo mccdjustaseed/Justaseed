@@ -1504,7 +1504,7 @@ ini();
 /* ===== BẢN CẬP NHẬT 5 ===== */
 const $q=id=>document.getElementById(id);
 let BKS=[],NOSIGN=0,BF='a',BQ=null,CO=null,CIM=null,CAV=null,CMI=null,CCV=null;
-function cardLoadMi(){CMI=null;if(!(CO&&CO.m&&CO.mt))return Promise.resolve();return new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{CMI=i;(window.FC?FC.box(i):Promise.resolve(null)).then(b=>{i._fc=b;r()},()=>r())};i.onerror=()=>r();i.src=CO.mt.th;setTimeout(r,4000)})}
+function cardLoadMi(){CMI=null;if(!(CO&&CO.m&&CO.mt))return Promise.resolve();return new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{CMI=i;r()};i.onerror=()=>r();i.src=CO.mt.th;setTimeout(r,4000)})}
 function cardLoadCv(){CCV=null;if(!(s.pf&&s.pf.cv))return Promise.resolve();return new Promise(r=>{const i=new Image();i.onload=()=>{CCV=i;r()};i.onerror=()=>r();i.src=s.pf.cv})}
 function cardMusic(){if(CO.m){CO.m=0;s.cd={...CO};save();cardUI();return}const c=window.MU&&MU.cur();if(!c)return toast('Chưa có bài nào đang nghe. Hãy mở một bài trong tab Nhạc trước');CO.m=1;CO.mt={id:c.id,name:c.name,ar:c.ar,th:c.th};s.cd={...CO};save();cardLoadMi().then(()=>{cardUI();toast('Đã gắn đĩa than: '+c.name)})}
 const lvOf=x=>{let l=1;while(30*l*(l+1)<=x)l++;return l},cum=l=>30*(l-1)*l,TT=[[1,'Hạt giống'],[3,'Chồi non'],[5,'Chủ tiệm hoa'],[8,'Nghệ nhân'],[12,'Bậc thầy'],[18,'Huyền thoại']],FR=['#bfe8c6','#4fb06f','#5aa9e6','#b39ddb','#ffc83d','#ff6fa0'];
@@ -6713,76 +6713,6 @@ async function sendCardToDiscord(){
 {const oj=XB.job;XB.job=function(t,sec,it){try{if(it&&!it.crd)it.crd=dcMyId()||''}catch(e){}return oj.apply(this,arguments)}}
 </script>
 
-<script>
-/* ===== v61: ẢNH ĐĨA THAN TỰ NHẬN DIỆN GƯƠNG MẶT / NGƯỜI ===== */
-window.FC=(()=>{
- const OUT=256,done=new Map(),busy=new Map(),boxes=new Map();
- const SEL='.mcv img,.mvd img,.vdisc img,.clipchip .cpd img,.tt .ttf img,.tt .ttl img';
- const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
- const load=u=>new Promise((res,rej)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=()=>rej(new Error('img'));i.src=u;setTimeout(()=>rej(new Error('t')),8000)});
- /* tìm vùng da lớn nhất (mặt/người) khi trình duyệt không có FaceDetector */
- function skin(x,w,h){
-  const d=x.getImageData(0,0,w,h).data,C=5,gw=Math.ceil(w/C),gh=Math.ceil(h/C),cell=new Float32Array(gw*gh),cnt=new Float32Array(gw*gh);
-  let tot=0;
-  for(let j=0;j<h;j++)for(let i=0;i<w;i++){
-   const k=(j*w+i)*4,r=d[k],g=d[k+1],b=d[k+2],Y=.299*r+.587*g+.114*b,Cb=128-.168736*r-.331264*g+.5*b,Cr=128+.5*r-.418688*g-.081312*b;
-   const sk=Y>55&&Cb>=77&&Cb<=127&&Cr>=135&&Cr<=173&&r>95&&g>40&&b>20&&r>g&&r>b&&(r-Math.min(g,b))>15;
-   const ci=((j/C)|0)*gw+((i/C)|0);cnt[ci]++;if(sk){cell[ci]++;tot++}}
-  if(tot/(w*h)>.6)return null;                       // gần như cả ảnh là màu da/nâu: không đáng tin
-  const on=new Uint8Array(gw*gh);for(let i=0;i<on.length;i++)on[i]=cell[i]/cnt[i]>=.5?1:0;
-  const seen=new Uint8Array(gw*gh);let best=null;
-  for(let st=0;st<on.length;st++){
-   if(!on[st]||seen[st])continue;
-   const q=[st];seen[st]=1;let n=0,x0=gw,y0=gh,x1=0,y1=0;
-   while(q.length){const c=q.pop(),cx=c%gw,cy=(c/gw)|0;n++;if(cx<x0)x0=cx;if(cx>x1)x1=cx;if(cy<y0)y0=cy;if(cy>y1)y1=cy;
-    if(cx>0&&on[c-1]&&!seen[c-1]){seen[c-1]=1;q.push(c-1)}if(cx<gw-1&&on[c+1]&&!seen[c+1]){seen[c+1]=1;q.push(c+1)}
-    if(cy>0&&on[c-gw]&&!seen[c-gw]){seen[c-gw]=1;q.push(c-gw)}if(cy<gh-1&&on[c+gw]&&!seen[c+gw]){seen[c+gw]=1;q.push(c+gw)}}
-   const bw=x1-x0+1,bh=y1-y0+1,frac=n/(gw*gh),fill=n/(bw*bh),ar=bh/bw;
-   if(frac<.004||frac>.5||fill<.45||ar<.5||ar>2.3)continue;
-   const cyN=(y0+bh/2)/gh,sc=Math.sqrt(n)*fill*(1.2-.4*cyN);
-   if(!best||sc>best.sc)best={sc,cx:(x0+bw/2)/gw,cy:(y0+bh/2)/gh,bw:bw/gw,bh:bh/gh}}
-  return best}
- async function find(im){
-  const W=im.naturalWidth||im.width,H=im.naturalHeight||im.height;if(!W||!H)return null;
-  const k=Math.min(1,200/Math.max(W,H)),w=Math.max(8,Math.round(W*k)),h=Math.max(8,Math.round(H*k));
-  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);
-  if('FaceDetector' in window){try{
-   const fs=await new FaceDetector({fastMode:true,maxDetectedFaces:6}).detect(c);
-   if(fs&&fs.length){let b=fs[0].boundingBox;for(const f of fs){const q=f.boundingBox;if(q.width*q.height>b.width*b.height)b=q}
-    return {cx:(b.x+b.width/2)/w,cy:(b.y+b.height/2)/h,bw:b.width/w,bh:b.height/h,face:1}}}catch(e){}}
-  return skin(x,w,h)}
- /* vùng cắt vuông, lấy gương mặt làm tâm (phóng to nếu mặt nhỏ) */
- function boxOf(im,f){
-  const W=im.naturalWidth||im.width,H=im.naturalHeight||im.height,m=Math.min(W,H);
-  if(!f)return null;
-  const fw=Math.max(f.bw*W,f.bh*H);
-  const s=Math.round(clamp(fw*(f.face?2.4:2),m*.55,m));
-  return {s,sx:Math.round(clamp(f.cx*W-s/2,0,W-s)),sy:Math.round(clamp(f.cy*H-s/2,0,H-s))}}
- async function box(im){try{return boxOf(im,await find(im))}catch(e){return null}}
- async function make(u){
-  const im=await load(u),b=await box(im);if(!b)return null;
-  const W=im.naturalWidth||im.width,H=im.naturalHeight||im.height;
-  if(W===H&&b.s===W)return null;                  // ảnh vuông, mặt đã vừa khung
-  const c=document.createElement('canvas');c.width=c.height=OUT;c.getContext('2d').drawImage(im,b.sx,b.sy,b.s,b.s,0,0,OUT,OUT);
-  return c.toDataURL('image/jpeg',.86)}
- function get(u){
-  if(done.has(u))return Promise.resolve(done.get(u));
-  if(busy.has(u))return busy.get(u);
-  const p=make(u).catch(()=>null).then(v=>{done.set(u,v);busy.delete(u);return v});
-  busy.set(u,p);return p}
- let run=0;
- function scan(){
-  if(run)return;run=1;
-  try{document.querySelectorAll(SEL).forEach(el=>{
-   let o=el.getAttribute('data-fo');if(!o){o=el.getAttribute('src')||'';if(!/^https?:/.test(o))return;el.setAttribute('data-fo',o)}
-   if(done.has(o)){const v=done.get(o);if(v&&el.getAttribute('src')!==v)el.src=v}
-   else if(!busy.has(o))get(o).then(()=>scan())})}
-  catch(e){}finally{run=0}}
- try{new MutationObserver(scan).observe(document.body,{childList:true,subtree:true})}catch(e){}
- setInterval(()=>{if(!document.hidden)scan()},1500);scan();
- return {get,box,scan,find}
-})();
-</script>
 
 <style>
 /* ===== v62: MÁY PHÁT ĐĨA THAN Ở TAB NHẠC ===== */

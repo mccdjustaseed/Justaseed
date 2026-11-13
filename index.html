@@ -7589,8 +7589,28 @@ async function keyOut(dataUrl){
  return new Promise(res=>o.toBlob(b=>res(b),'image/png'))}
 const fmtE=m=>{const a=(m&&m.errs)||[];if(!a.length)return (m&&m.err||'lỗi')+(m&&m.st?' '+m.st:'')+(m&&m.msg?': '+String(m.msg).slice(0,100):'');
  return a.map(x=>'• '+(x.model||'?')+': '+(x.err=='net'?'lỗi mạng':x.err=='noimg'?'không trả ảnh':x.err=='parse'?'phản hồi lỗi':'HTTP '+(x.st||'?'))+(x.msg?' — '+String(x.msg).replace(/\s+/g,' ').slice(0,110):'')).join('\n')};
+/* ---- Cloudflare Workers AI (qua Worker proxy): vẽ ảnh thay Gemini ---- */
+const CF_DEFAULT='https://justaseed-img.huynhgiadat000.workers.dev/';
+const CFU=()=>{try{return (localStorage.getItem('jsCfImgUrl')||window.CF_IMG_URL||CF_DEFAULT).trim()}catch(e){return String(window.CF_IMG_URL||CF_DEFAULT).trim()}};
+const imgOn=()=>!!CFU()||aiOn();
+async function cfImg(prompt){
+ const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),60000);
+ try{
+  const r=await fetch(CFU(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:String(prompt).slice(0,2000),steps:4}),signal:ac.signal});
+  let j=null;try{j=await r.json()}catch(e){}
+  if(!r.ok||!j||!j.image){const msg=String((j&&(j.error||j.message))||'').slice(0,160);const e={err:r.status==429?'quota':'http',st:r.status,msg,model:'cloudflare'};return{err:e.err,st:e.st,msg:e.msg,model:e.model,errs:[e]}}
+  return{ok:1,images:[{mime:j.mime||'image/jpeg',data:j.image}],model:'cloudflare'}
+ }catch(e){const x={err:'net',msg:String(e&&e.message||e),model:'cloudflare'};return{err:'net',msg:x.msg,model:x.model,errs:[x]}}
+ finally{clearTimeout(tm)}}
+function cfPrompt(design,f,prev){
+ const ty=TY[f.type]||TY.ring,gm=GEMS[f.gem||'none'];
+ return `cute flat vector item icon for a casual mobile game: a ${ty[6]} made of polished ${TONEEN[f.tone||'y']} (${f.k}K), ${gm[2]}. Design details: ${design}.`+(prev&&prev.note?` Requested change: ${cl(prev.note,200)}.`:'')+` Style: soft rounded chunky shapes, simple bold flat colours with a slightly darker outline, tiny white highlight marks, kawaii casual-game look, not photorealistic, no 3D render, no heavy gradients. Layout: a single object centered, filling about 80% of a square canvas, on a plain pure white (#FFFFFF) background. No ground shadow, no text, no watermark, no people or hands, no sparkles or stars.`}
 async function makeImg(design,f,prev){
- if(!aiOn())return{err:'off'};
+ if(!imgOn())return{err:'off'};
+ if(CFU()){
+  const r=await cfImg(cfPrompt(design,f,prev));
+  if(!r.ok)return{err:r.err||'fail',st:r.st,msg:r.msg||'',model:r.model,errs:r.errs||[]};
+  try{const blob=await keyOut('data:'+r.images[0].mime+';base64,'+r.images[0].data);if(!blob)return{err:'proc'};return{blob}}catch(e){return{err:'proc'}}}
  const refs=await styleRefs(),n=refs.length,ty=TY[f.type]||TY.ring,gm=GEMS[f.gem||'none'];
  const parts=[{text:
 `Design ONE piece of jewelry as a cute item icon for a casual mobile game.
@@ -7707,19 +7727,19 @@ async function startOrder(){
  if(br.feasible===false){GD.busy='';GD.msg=br.reason;ui();return}
  GD.busy='img';ui();
  let blob=null,why='';
- if(aiOn()){const m=await makeImg(br.design,fx,null);blob=m.blob;why=m.err?fmtE(m):''}else why='off';
+ if(imgOn()){const m=await makeImg(br.design,fx,null);blob=m.blob;why=m.err?fmtE(m):''}else why='off';
  const id='o'+Date.now().toString(36)+Math.floor(Math.random()*90+10);
  if(blob)await putImg(id,blob);
  const o={id,st:'quote',day:s.day,req:{type:f.type,k:f.k,tone:f.tone,w,gem:f.gem,desc,ref:!!GD.ref},br:{name:br.name,note:br.note,design:br.design,cx:br.cx},img:!!blob,rev:0};
  o.q=quoteOf(o);G0().orders.unshift(o);try{save()}catch(e){}
- GD.busy='';GD.msg=blob?'':(why=='off'?'Chưa bật Gemini nên thợ chỉ phác thảo nhanh bằng hình mẫu tạm.':'Chưa vẽ được ảnh bằng Gemini. Lỗi từng model:\n'+why+'\nThợ phác thảo tạm bằng hình mẫu. Bạn có thể bấm "Vẽ lại".');
+ GD.busy='';GD.msg=blob?'':(why=='off'?'Chưa bật Gemini nên thợ chỉ phác thảo nhanh bằng hình mẫu tạm.':'Chưa vẽ được ảnh. Lỗi:\n'+why+'\nThợ phác thảo tạm bằng hình mẫu. Bạn có thể bấm "Vẽ lại".');
  GD.ref=null;GD.t='order';ui()}
 async function reviseOrder(id,redo){
  const o=G0().orders.find(x=>x.id==id);if(!o||GD.busy)return;
  const note=cl(GD.rv[id],200);
  if(!redo&&o.rev>=2)return toast('Đã sửa mẫu tối đa 2 lần');
  if(!redo&&note.length<3)return toast('Hãy ghi rõ muốn sửa gì');
- if(!aiOn())return toast('Cần bật Gemini ở Cài đặt để vẽ lại mẫu');
+ if(!imgOn())return toast('Cần cấu hình vẽ ảnh (Cloudflare hoặc Gemini) để vẽ lại mẫu');
  GD.busy='rev:'+id;ui();
  const prev=IMG[id]?{b64:await blobB64(IMG[id].blob),note}:null;
  const r=o.req,m=await makeImg(o.br.design,{type:r.type,k:r.k,tone:r.tone,gem:r.gem},redo?null:prev);
@@ -7795,7 +7815,7 @@ function vOrder(){
  <div class=row><span class=sec style="margin:0">Trọng lượng (chỉ)</span><input type=number inputmode=decimal min="${ty[2]}" max="${ty[3]}" step="${ty[4]}" value="${w}" onchange="GOLD.f('w',this.value)" style="width:90px"></div>
  <div class=sec>Mô tả mẫu</div><textarea rows=3 maxlength=300 style="width:100%" placeholder="Ví dụ: nhẫn đôi cánh bướm, đính một viên đá nhỏ ở giữa, mặt hoa mai…" oninput="GOLD.d(this.value)">${E(f.desc)}</textarea>
  <div class=row><span>${GD.ref?`<img src="${GD.ref.url}" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:10px;border:2px solid var(--g);vertical-align:middle"> <button class=s onclick="GOLD.unref()">Bỏ ảnh</button>`:`<span class=mut>Chưa có ảnh mẫu</span>`}</span><label class=lb>${ic('up',16)}&nbsp;Tải ảnh mẫu<input type=file accept="image/*" hidden onchange="GOLD.pick(this)"></label></div>
- <div class=inq><div class=row><span class=mut>Giá tham khảo (mẫu vừa)</span><b>~ ${$(est.total)}</b></div><div class=row><button class=p style="width:100%" ${busy?'disabled':''} onclick="GOLD.start()">${busy=='brief'?'Thợ đang xem yêu cầu…':busy=='img'?'Thợ đang vẽ mẫu…':'Gửi tiệm xem mẫu & báo giá'}</button></div>${busy=='brief'||busy=='img'?'<div class=gwait><i></i><i></i><i></i></div>':''}${GD.msg&&GD.t=='order'?`<div class=bub style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.82rem">${E(GD.msg)}</div>`:''}${aiOn()?'':'<p class=mut style="margin:4px 0 0">Chưa bật Gemini: thợ chỉ phác thảo bằng hình mẫu có sẵn. Bật Gemini ở Cài đặt để tạo ảnh theo yêu cầu và ảnh mẫu.</p>'}</div></div>`;
+ <div class=inq><div class=row><span class=mut>Giá tham khảo (mẫu vừa)</span><b>~ ${$(est.total)}</b></div><div class=row><button class=p style="width:100%" ${busy?'disabled':''} onclick="GOLD.start()">${busy=='brief'?'Thợ đang xem yêu cầu…':busy=='img'?'Thợ đang vẽ mẫu…':'Gửi tiệm xem mẫu & báo giá'}</button></div>${busy=='brief'||busy=='img'?'<div class=gwait><i></i><i></i><i></i></div>':''}${GD.msg&&GD.t=='order'?`<div class=bub style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.82rem">${E(GD.msg)}</div>`:''}${imgOn()?'':'<p class=mut style="margin:4px 0 0">Chưa cấu hình vẽ ảnh: thợ chỉ phác thảo bằng hình mẫu có sẵn. Dán địa chỉ Worker Cloudflare (hoặc bật Gemini ở Cài đặt) để tạo ảnh theo yêu cầu.</p><button class=s onclick=\"var u=prompt(\'Dán địa chỉ Worker Cloudflare (https://....workers.dev)\',localStorage.getItem(\'jsCfImgUrl\')||\'\');if(u!==null){try{u.trim()?localStorage.setItem(\'jsCfImgUrl\',u.trim()):localStorage.removeItem(\'jsCfImgUrl\')}catch(e){}toast(u.trim()?\'Đã lưu địa chỉ vẽ ảnh\':\'Đã xóa địa chỉ\');try{ui()}catch(e){}}\">Cấu hình Cloudflare</button>'}</div></div>`;
  const od=g.orders.map(o=>{
   const q=o.q,u=imgURL({id:o.id,type:o.req.type,tone:o.req.tone,gem:o.req.gem,kind:'jew'}),rb=busy=='rev:'+o.id;
   const lines=`<div class=row><span>Tiền vàng ${KL[o.req.k]} (${fw2(o.req.w)})</span><span>${$(q.gold)}</span></div><div class=row><span>Công chế tác</span><span>${$(q.labor)}</span></div><div class=row><span>Công thiết kế</span><span>${$(q.design)}</span></div>${q.gem?`<div class=row><span>Đá (${GEMS[o.req.gem][0]})</span><span>${$(q.gem)}</span></div>`:''}${q.disc?`<div class=row><span>Ưu đãi tiền công (-${q.pc}%)</span><span class=ok>-${$(q.disc)}</span></div>`:''}<div class=row><b>Tạm tính</b><b>${$(q.total)}</b></div>`;
@@ -7804,7 +7824,7 @@ function vOrder(){
    return `<div class="card" style="border-color:var(--g2)"><span class=chip>${exp?'Báo giá hết hạn':'Chờ bạn chốt'}</span>${head}${lines}<div class=row><span>Đặt cọc 50%</span><b>${$(q.dep)}</b></div><p class=mut style="margin:2px 0">Hẹn ${q.days} ngày chơi sau khi cọc. Giá vàng được khóa lúc đặt cọc. Khi nhận, cân thực tế có thể lệch nhẹ.</p>
    ${o.rev<2?`<div class=row style="flex-wrap:nowrap"><input style="flex:1;min-width:0;width:auto" placeholder="Muốn sửa gì? (còn ${2-o.rev} lần)" value="${E(GD.rv[o.id]||'')}" oninput="GD_rv('${o.id}',this.value)"><button class=s ${rb?'disabled':''} onclick="GOLD.rev('${o.id}')">${rb?'Đang vẽ…':'Sửa mẫu'}</button></div>`:'<p class=mut style="margin:2px 0">Đã sửa mẫu tối đa.</p>'}
    ${rb?'<div class=gwait><i></i><i></i><i></i></div>':''}
-   <div class=row><button class=s onclick="GOLD.cancel('${o.id}')">Hủy</button>${!o.img&&aiOn()?`<button class=s ${rb?'disabled':''} onclick="GOLD.redo('${o.id}')">Vẽ lại bằng AI</button>`:''}${exp?`<button class=p onclick="GOLD.requote('${o.id}')">Báo giá lại</button>`:`<button class=p ${s.money<q.dep?'disabled':''} onclick="GOLD.accept('${o.id}')">${cf?'Xác nhận cọc '+$(q.dep):'Đặt cọc '+$(q.dep)}</button>`}</div></div>`}
+   <div class=row><button class=s onclick="GOLD.cancel('${o.id}')">Hủy</button>${!o.img&&imgOn()?`<button class=s ${rb?'disabled':''} onclick="GOLD.redo('${o.id}')">Vẽ lại bằng AI</button>`:''}${exp?`<button class=p onclick="GOLD.requote('${o.id}')">Báo giá lại</button>`:`<button class=p ${s.money<q.dep?'disabled':''} onclick="GOLD.accept('${o.id}')">${cf?'Xác nhận cọc '+$(q.dep):'Đặt cọc '+$(q.dep)}</button>`}</div></div>`}
   const done=s.day>=o.due,left=Math.max(0,o.due-s.day);
   return `<div class="card" style="border-color:${done?'#e3a000':'var(--ln)'}"><span class=chip style="${done?'background:#ffd54a;color:#5a4000':''}">${done?'Đã xong, mời nhận hàng':'Đang gia công · còn '+left+' ngày'}</span>${head}<div class=row><span>Đã cọc</span><span>${$(o.paid)}</span></div><div class=bar><i style="width:${Math.min(100,Math.round((s.day-o.acc)/Math.max(1,o.due-o.acc)*100))}%"></i></div><div class=row><span class=mut>Hẹn ngày ${o.due} · hôm nay là ngày ${s.day}</span><span>${done?`<button class=p onclick="GOLD.collect('${o.id}')">Nhận hàng & thanh toán nốt</button>`:`<button class=s onclick="GOLD.cancel('${o.id}')">Hủy (mất 30% cọc)</button>`}</span></div></div>`}).join('');
  return vRec()+form+(od?`<div class=sec style="margin-top:10px">Đơn của bạn</div>`+od:'')}

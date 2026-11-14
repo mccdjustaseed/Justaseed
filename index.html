@@ -10074,7 +10074,7 @@ CATV.dg=function(){dgLoad();
  let h='<div class=card><div class=row style="margin:0"><b>Daily Guild</b><button class=s onclick="DGX.reload()">Tải lại</button></div><p class=mut style="margin:4px 0 0;font-size:.82rem">Tin nhắn từ kênh Daily Guild trên Discord, tự cập nhật khi có tin mới hoặc tin được sửa.</p></div>';
  if(DG.rows==null)h+='<div class=card><p class=mut style="margin:0">'+(DG.err?E(DG.err):'Đang tải...')+'</p></div>';
  else if(!DG.rows.length)h+='<div class=card><p class=mut style="margin:0">'+(DG.err?E(DG.err):'Chưa có tin nhắn nào.')+'</p></div>';
- else h+=DG.rows.map(r=>dgCard(r)).join('');
+ else h+=DG.rows.map(r=>dgCard(r,TCYAV)).join('');
  return h};
 window.DGX={reload(){dgLoad(1)}};
 

@@ -9092,4 +9092,136 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  #app nav.fx button{flex:0 0 auto!important}
 }
 </style>
+<script>
+/* ===== Thẻ ngân hàng: chuyển tiền giữa người chơi (chỉ tài khoản đã liên kết Discord) ===== */
+(function(){
+ const MINT=1000,MAXT=10000000,PFX='JSGIFT1:',LIKE='JSGIFT1:{"v":1,"bank":1,%';
+ const ok=()=>{try{return !!(typeof currentUser!='undefined'&&currentUser&&typeof supabaseClient!='undefined'&&supabaseClient&&typeof selfVerified=='function'&&selfVerified())}catch(e){return false}};
+ const sb=()=>supabaseClient;
+ const B=()=>{const o=s.bk2||(s.bk2={});o.tx=o.tx||[];o.seen=o.seen||[];return o};
+ const h53=(str,seed)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,c;i<str.length;i++){c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)};
+ const mkNo=(uid,n)=>'9704'+String(h53(uid,n*2+1)%1000000).padStart(6,'0')+String(h53(uid,n*2+2)%1000000).padStart(6,'0');
+ const fmtNo=n=>String(n||'').replace(/(\d{4})(?=\d)/g,'$1 ');
+ const nameOf=p=>(p&&(p.display_name||p.username))||'Người chơi';
+ const C={busy:0,synced:0,tried:0,err:''},Q={no:'',who:null,amt:'',note:'',busy:0};
+ try{I.card='M3 6h18v12H3zM3 10h18M7 15h4'}catch(e){}
+ if(!TABS.some(x=>x[0]=='card'))TABS.push(['card','card','Thẻ NH']);
+
+ const setupErr=e=>{const m=String(e&&(e.message||e.code||e)||'');return /bank_cards|schema cache|does not exist|PGRST205|42P01/i.test(m+' '+(e&&e.code||''))};
+ async function ensure(){
+  if(!ok()||C.busy)return;const b=B();
+  if(b.uid&&b.uid!==currentUser.id){b.no='';b.uid=''}
+  if(b.no&&b.uid===currentUser.id&&C.synced)return;
+  C.busy=1;C.err='';
+  try{
+   const own=async()=>{const r=await sb().from('bank_cards').select('card_no').eq('user_id',currentUser.id).maybeSingle();if(r.error)throw r.error;return r.data&&r.data.card_no};
+   let no=await own();
+   if(!no){for(let n=0;n<6&&!no;n++){const c=mkNo(currentUser.id,n),i=await sb().from('bank_cards').insert({user_id:currentUser.id,card_no:c});
+     if(!i.error){no=c;break}
+     if(i.error.code=='23505'){no=await own();continue}
+     throw i.error}}
+   if(!no)throw new Error('Không tạo được số thẻ');
+   b.no=no;b.uid=currentUser.id;C.synced=1;try{save()}catch(e){}
+  }catch(e){C.err=setupErr(e)?'setup':String(e&&e.message||e);C.tried=1}
+  C.busy=0;if(typeof tab!='undefined'&&tab=='card'&&scr=='game')R()}
+
+ V.card=()=>{
+  if(!ok())return `<div class=card><h3>💳 Thẻ ngân hàng</h3><p class=mut>Tính năng này chỉ dành cho tài khoản đã <b>đăng ký (liên kết) Discord</b>. Hãy liên kết Discord ở màn hình chính để nhận thẻ và chuyển tiền cho người chơi khác.</p></div>`;
+  const b=B();if(!C.synced&&!C.busy&&!C.tried)setTimeout(ensure,0);
+  const own=(s.pf&&s.pf.nm)||s.name||'Chủ tiệm';
+  const card=`<div style="border-radius:18px;padding:16px 18px;color:#fff;background:linear-gradient(135deg,#2e7d57,#4fb06f 55%,#7fd0f5);box-shadow:0 8px 20px rgba(20,70,40,.3);margin-bottom:10px">
+<div style="display:flex;justify-content:space-between;align-items:center"><b style="letter-spacing:.12em;font-size:.85rem">JUSTASEED BANK</b><span style="width:36px;height:26px;border-radius:6px;background:linear-gradient(135deg,#ffe38a,#e0b43c);display:inline-block"></span></div>
+<div style="font-family:ui-monospace,Menlo,monospace;font-size:1.25rem;letter-spacing:.12em;margin:16px 0 10px">${b.no?fmtNo(b.no):(C.err?'—':'Đang tạo thẻ...')}</div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px"><span style="font-size:.9rem;text-transform:uppercase;letter-spacing:.05em">${esc(own)}</span><b style="font-size:1.05rem">${$(s.money)}</b></div></div>`;
+  const err=C.err=='setup'?`<p class=bad style="margin:6px 0">Máy chủ chưa bật tính năng thẻ (thiếu bảng <b>bank_cards</b>). Quản trị viên cần chạy file <b>bank_setup.sql</b> trong Supabase.</p>`:C.err?`<p class=bad style="margin:6px 0">Lỗi: ${esc(C.err)} <button class=s onclick="C_RETRY()">Thử lại</button></p>`:'';
+  const form=b.no?`<div class=card><h3>Chuyển tiền</h3>
+<div class=row><span>Số thẻ người nhận</span><input inputmode=numeric maxlength=19 placeholder="16 chữ số" value="${esc(Q.no)}" oninput="BKX.no(this.value)" style="width:11.5em"></div>
+<div class=row><button class=s ${Q.busy?'disabled':''} onclick="BKX.find()">Kiểm tra người nhận</button>${Q.who?`<b class=ok>✓ ${esc(Q.who.name)}</b>`:'<span class=mut>Chưa kiểm tra</span>'}</div>
+<div class=row><span>Số tiền</span><input type=number inputmode=numeric min=${MINT} step=1000 placeholder="Tối thiểu ${MINT}" value="${esc(Q.amt)}" oninput="BKX.amt(this.value)" style="width:11.5em"></div>
+<div class=row><button class=s onclick="BKX.pick(10000)">10.000</button><button class=s onclick="BKX.pick(100000)">100.000</button><button class=s onclick="BKX.pick(1000000)">1.000.000</button></div>
+<div class=row><input maxlength=60 placeholder="Lời nhắn (tuỳ chọn)" value="${esc(Q.note)}" oninput="BKX.note(this.value)" style="width:100%"></div>
+<div class=row><button class=p ${Q.busy||!Q.who?'disabled':''} onclick="BKX.send()">Chuyển tiền</button></div>
+<p class=mut style="margin:4px 0 0">Mỗi lần chuyển từ ${$(MINT)} đến ${$(MAXT)}. Tiền chuyển đi không thể thu hồi.</p></div>`:'';
+  const tx=b.tx.slice(0,15);
+  const hist=`<div class=card><h3>Lịch sử giao dịch</h3>${tx.length?tx.map(x=>`<div class=row><span>${x.k=='in'?'Nhận từ':'Chuyển cho'} <b>${esc(x.who)}</b><br><span class=mut>${new Date(x.t).toLocaleString('vi-VN')}${x.note?' · '+esc(x.note):''}</span></span><b class="${x.k=='in'?'ok':'bad'}">${x.k=='in'?'+':'-'}${$(x.amt)}</b></div>`).join(''):'<p class=mut>Chưa có giao dịch nào.</p>'}</div>`;
+  return `<div class=card><h3>💳 Thẻ ngân hàng</h3>${card}${b.no?`<div class=row><span class=mut>Số thẻ của bạn (đưa cho người khác để nhận tiền)</span><button class=s onclick="BKX.copy()">Sao chép</button></div>`:''}${err}</div>${form}${hist}`};
+ window.C_RETRY=()=>{C.tried=0;C.err='';ensure()};
+
+ /* ----- chuyển tiền ----- */
+ const del=id=>{try{sb().from('wall_messages').delete().eq('id',id).then(()=>{},()=>{})}catch(e){}};
+ const tid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+ window.BKX={
+  no(v){Q.no=String(v);const d=Q.no.replace(/\D/g,'');if(Q.who&&Q.who.no!==d)Q.who=null},
+  amt(v){Q.amt=String(v)},note(v){Q.note=String(v).slice(0,60)},
+  pick(n){Q.amt=String(n);R()},
+  async copy(){const b=B();try{await navigator.clipboard.writeText(b.no);toast('Đã sao chép số thẻ')}catch(e){toast('Số thẻ: '+b.no)}},
+  async find(){
+   if(!ok())return toast('Chỉ dành cho tài khoản đã liên kết Discord');
+   const d=Q.no.replace(/\D/g,'');if(d.length!==16)return toast('Số thẻ gồm 16 chữ số');
+   if(d===B().no)return toast('Đây là thẻ của bạn');
+   Q.busy=1;R();
+   try{
+    const r=await sb().from('bank_cards').select('user_id').eq('card_no',d).maybeSingle();if(r.error)throw r.error;
+    if(!r.data){Q.who=null;toast('Không tìm thấy thẻ này')}
+    else if(r.data.user_id===currentUser.id){Q.who=null;toast('Đây là thẻ của bạn')}
+    else{const p=await sb().from('profiles').select('display_name,username').eq('id',r.data.user_id).maybeSingle();Q.who={id:r.data.user_id,no:d,name:nameOf(p&&p.data)}}
+   }catch(e){Q.who=null;toast(setupErr(e)?'Máy chủ chưa bật tính năng thẻ ngân hàng':'Lỗi: '+(e&&e.message||e))}
+   Q.busy=0;R()},
+  async send(){
+   if(!ok())return toast('Chỉ dành cho tài khoản đã liên kết Discord');
+   if(Q.busy)return;if(!Q.who)return toast('Hãy nhập số thẻ rồi bấm Kiểm tra người nhận');
+   const amt=Math.floor(+Q.amt||0);
+   if(amt<MINT)return toast('Tối thiểu '+$(MINT));if(amt>MAXT)return toast('Tối đa '+$(MAXT)+' mỗi lần');
+   try{fixMoney()}catch(e){}if(amt>s.money)return toast('Không đủ tiền');
+   const who=Q.who,note=Q.note.trim().slice(0,60);
+   if(!confirm('Chuyển '+$(amt)+' cho '+who.name+'?'))return;
+   Q.busy=1;s.money-=amt;try{save()}catch(e){}R();
+   const pay={v:1,bank:1,tid:tid(),amt,note};let err=null;
+   try{const r=await sb().from('wall_messages').insert({from_user:currentUser.id,to_user:who.id,message:PFX+JSON.stringify(pay)});err=r&&r.error}catch(e){err=e}
+   if(err){s.money+=amt;try{save()}catch(e){}Q.busy=0;toast('Không chuyển được: '+(err.message||'lỗi mạng')+' (đã hoàn tiền)');R();return}
+   const b=B();b.tx.unshift({k:'out',amt,who:who.name,note,t:Date.now()});b.tx=b.tx.slice(0,50);
+   try{L('out','Chuyển khoản','Chuyển cho '+who.name,1,amt)}catch(e){}
+   try{const me=(s.pf&&s.pf.nm)||s.name||'Bạn bè';sb().from('push_jobs').upsert({user_id:who.id,ref:'bank-'+pay.tid,fire_at:new Date().toISOString(),title:'💳 Nhận tiền chuyển khoản',body:me+' vừa chuyển cho bạn '+Math.round(amt).toLocaleString('vi-VN')+'đ. Vào game để nhận nhé',sent:false},{onConflict:'user_id,ref'}).then(()=>{},()=>{})}catch(e){}
+   try{save()}catch(e){}
+   Q.amt='';Q.note='';Q.busy=0;toast('💳 Đã chuyển '+$(amt)+' cho '+who.name);R()}
+ };
+
+ /* ----- nhận tiền ----- */
+ let PL=0;
+ async function poll(){
+  if(PL||!ok()||typeof scr=='undefined'||scr!='game'||typeof s=='undefined')return;PL=1;
+  try{
+   const r=await sb().from('wall_messages').select('id,message,from_user').eq('to_user',currentUser.id).like('message',LIKE).order('created_at',{ascending:true}).limit(40);
+   if(r.error||!r.data||!r.data.length){PL=0;return}
+   const b=B(),rows=r.data,got=[];
+   const need=[...new Set(rows.map(x=>x.from_user).filter(Boolean))],nm={};
+   if(need.length){try{const p=await sb().from('profiles').select('id,display_name,username').in('id',need);(p.data||[]).forEach(x=>nm[x.id]=nameOf(x))}catch(e){}}
+   for(const row of rows){
+    let p=null;try{p=JSON.parse(String(row.message).slice(PFX.length))}catch(e){}
+    if(!p||!p.bank)continue;
+    if(b.seen.includes(row.id)){del(row.id);continue}
+    const amt=Math.floor(+p.amt),t='t:'+String(p.tid||'').slice(0,40);
+    b.seen.push(row.id);
+    if(!(amt>=MINT&&amt<=MAXT)||t=='t:'||b.seen.includes(t)){del(row.id);continue}
+    b.seen.push(t);s.money+=amt;
+    const who=nm[row.from_user]||'Người chơi',note=String(p.note||'').slice(0,60);
+    b.tx.unshift({k:'in',amt,who,note,t:Date.now()});got.push({amt,who});
+    try{L('in','Chuyển khoản','Nhận từ '+who,1,amt)}catch(e){}
+    try{save()}catch(e){}del(row.id);
+   }
+   if(b.seen.length>400)b.seen=b.seen.slice(-300);b.tx=b.tx.slice(0,50);
+   if(got.length){
+    try{s.notifs=s.notifs||[];got.forEach(g=>s.notifs.unshift({type:'bank',id:'bank'+Date.now()+Math.random(),text:'💳 '+g.who+' chuyển cho bạn '+$(g.amt),time:new Date().toISOString(),read:false}))}catch(e){}
+    try{fixMoney();save()}catch(e){}
+    const tot=got.reduce((a,g)=>a+g.amt,0);toast('💳 '+got[got.length-1].who+' chuyển cho bạn '+$(got[got.length-1].amt)+(got.length>1?' (+'+(got.length-1)+' lần nữa)':''));
+    const e=document.querySelector('.hd .bal');if(e)e.textContent=$(s.money);
+    const a=document.activeElement;if(tab=='card'&&!(a&&/INPUT|TEXTAREA/.test(a.tagName)))R();
+   }
+  }catch(e){}
+  PL=0}
+ setInterval(()=>{if(!document.hidden)poll()},15000);setTimeout(poll,6000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(poll,800)});
+})();
+</script>
 </body></html>

@@ -3196,6 +3196,13 @@ let BQV='';
 Z.find=v=>{BQV=(v||'').toLowerCase().trim();document.querySelectorAll('.xbi').forEach(r=>r.style.display=!BQV||r.dataset.n.includes(BQV)?'':'none')};
 Z.add=(si,id,d)=>setQ(si,id,(CART[si+id]||0)+d);
 Z.sup=i=>{sup=i;R()};
+ /* thêm tất cả hàng của nhà cung cấp đang xem: chia đều từng món (vòng tròn) cho tới khi hết suất hoặc hết tiền */
+ Z.all=()=>{if(s.ph!='prep')return;fixMoney();
+  const S=SP[sup],ids=S.it.filter(id=>!F.find(f=>f.id==id&&!fOK(f))).filter(id=>!BQV||nm(id).toLowerCase().includes(BQV));
+  const room=id=>{const k=sup+id,q=CART[k]||0;return isPp(id)?S.cap-q:remQ(sup,id,k,q)};
+  let n=0,go=true;
+  while(go){go=false;for(const id of ids){const p=pc(id,S.m);if(room(id)>0&&cartTotal()+p<=s.money){CART[sup+id]=(CART[sup+id]||0)+1;n++;go=true}}}
+  toast(n?'Đã thêm '+n+' món vào giỏ':'Không thể thêm nữa (hết suất hoặc không đủ tiền)');R()};
 V.buy=()=>{
  if(s.ph!='prep')return '<div class=card>Hãy kết thúc ngày hiện tại trước.</div>';
  const S=SP[sup],n=cartCount(),t=cartTotal(),after=s.money-t,sea=SE[season()];
@@ -3204,7 +3211,7 @@ V.buy=()=>{
   return `<div class=xbi data-n="${esc(nn.toLowerCase())}" ${hide?'style="display:none"':''}><div class=xba>${art(id)}</div><div class=xbt><b>${nn}</b><span class=mut>${$(u)} · kho ${s.st[id]||0}</span><div class=bar><i style="width:${isPp(id)?0:Math.min(100,(b+q)/S.cap*100)}%"></i></div><span class=mut>${isPp(id)?'Không giới hạn suất':'còn '+left+'/'+S.cap+' suất'}</span></div><div class=xbq><div class=xbs><button class=s onpointerdown="hold(${sup},'${id}',-1)">−</button><input class=qi type=number inputmode=numeric min=0 value="${q}" onchange="setQ(${sup},'${id}',this.value)"><button class=s onpointerdown="hold(${sup},'${id}',1)">+</button></div><div class=xbs><button class=s onclick="XB.add(${sup},'${id}',-5)">-5</button><button class=s onclick="XB.add(${sup},'${id}',5)">+5</button><button class=s onclick="buyAll(${sup},'${id}')">Tối đa</button></div></div></div>`};
  return `<div class=card><div class=bsum><div><span class=mut>Số dư</span><b>${$(s.money)}</b></div><div><span class=mut>Giỏ hàng</span><b>${n} món</b></div><div><span class=mut>Sau khi mua</span><b class="${after<0?'bad':'ok'}">${$(after)}</b></div></div><p class=mut style="margin:8px 0 0">${sea.i} Mùa ${sea.n}: hoa cơ bản đổi theo mùa, hoa nâng cấp luôn có.</p></div>
  <div class=bseg>${SP.map((x,i)=>`<button class="${i==sup?'on':''}" onclick="XB.sup(${i})"><b>${x.n}</b><small>${x.m>1?'Giá +'+Math.round((x.m-1)*100)+'%':'Giá gốc'} · ${x.cap}/món</small></button>`).join('')}</div>
- <div class=card><p class=mut style="margin:0 0 6px">${S.d}.</p><input placeholder="Tìm hàng..." value="${esc(BQV)}" oninput="XB.find(this.value)" style="width:100%;margin-bottom:4px">${ids.map(row).join('')}</div>
+ <div class=card><p class=mut style="margin:0 0 6px">${S.d}.</p><input placeholder="Tìm hàng..." value="${esc(BQV)}" oninput="XB.find(this.value)" style="width:100%;margin-bottom:4px"><button class=s style="width:100%;margin:2px 0 6px" onclick="XB.all()">➕ Thêm tất cả hàng vào giỏ</button>${ids.map(row).join('')}</div>
  ${cartBox()}<details class=card><summary><b>Menu hôm nay</b></summary>${menuBox().replace(/^<div class=card>/,'<div>')}</details>${n?`<div id=cbar><span><b>${n}</b> món · ${$(t)}</span><button class=p onclick="confirmBuy()">Thanh toán</button></div>`:''}`;
 };
 
@@ -8899,6 +8906,42 @@ sync();
  window.BGSALE={run,autoServe,active};
 })();
 </script>
+
+<script>
+/* ===== Ngày bán 1 giờ + gian hàng vẫn tự bán khi đóng hẳn tab/trình duyệt ===== */
+(function(){
+ const KEY='jas_live';
+ /* nút 1 giờ cạnh 4/8/15/30 phút */
+ {const o=V.shop;V.shop=function(){const h=o.apply(this,arguments);if(s.ph!='prep')return h;
+  const ok=lvOf(s.xp||0)>=50;
+  return h.replace(/(30 phút[^<]*<\/button>)/,'$1 '+(ok?'<button class="s '+(s.len==3600?'on2':'')+'" onclick="s.len=3600;R()">1 giờ</button>':'<button class=s disabled title="Đạt level 50 để mở khóa">🔒 1 giờ · Lv 50</button>'))}}
+ /* chặn ngày 1 giờ khi chưa đủ level 50 (kể cả dữ liệu cũ / mã khôi phục) */
+ {const o=openDay;openDay=function(){if(s.len==3600&&lvOf(s.xp||0)<50)s.len=lvOf(s.xp||0)>=20?1800:900;return o.apply(this,arguments)}}
+ const on=()=>typeof live!='undefined'&&live&&typeof s!='undefined'&&s&&s.ph=='open'&&s.bg!==0;
+ const clr=()=>{try{localStorage.removeItem(KEY)}catch(e){}};
+ /* lưu ảnh chụp ngày bán đang chạy (kèm save()) để lần mở lại chạy bù */
+ function snap(){try{if(!on())return;const o={};Object.keys(live).forEach(k=>{if(k!='iv')o[k]=live[k]});
+  save();localStorage.setItem(KEY,JSON.stringify({day:s.day,at:Date.now(),live:o}))}catch(e){}}
+ {const o=tick;tick=function(){const r=o.apply(this,arguments);try{if(live&&s.ph=='open'&&live.t%8==0)snap()}catch(e){}return r}}
+ {const o=endDay;endDay=function(){const r=o.apply(this,arguments);clr();return r}}
+ {const o=restart;restart=function(){clr();return o.apply(this,arguments)}}
+ {const o=load;load=function(){clr();return o.apply(this,arguments)}}
+ addEventListener('pagehide',snap);addEventListener('beforeunload',snap);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)snap()});
+ /* mở lại game: nếu hôm qua đóng trình duyệt giữa ngày bán thì khôi phục quầy và bán bù tới khi hết hàng / hết ngày */
+ function resume(){try{
+  if(typeof live!='undefined'&&live)return;if(s.ph!='prep'||s.bg===0)return;
+  const raw=localStorage.getItem(KEY);if(!raw)return;const o=JSON.parse(raw);
+  if(!o||!o.live||o.day!==s.day)return;
+  const lv=o.live;if(!(lv.len>0)||!(lv.t>=0))return;
+  s.ph='open';live=lv;live.iv=null;cur=null;try{bd=nb()}catch(e){}CART={};
+  const gap=Math.max(0,Math.floor((Date.now()-o.at)/1000)-1),n=Math.min(gap,3600,Math.max(0,live.len-live.t-1));
+  live.bgT=Date.now();live.iv=setInterval(tick,1000);
+  if(n>0&&window.BGSALE)BGSALE.run(n)
+ }catch(e){console.error('resume',e)}}
+ {const o=play;play=function(){resume();return o.apply(this,arguments)}}
+})();
+</script>
 <script>
 /* ===== Nhân viên · Chi nhánh · Ngân hàng ===== */
 (function(){
@@ -10063,5 +10106,965 @@ css.textContent+='@media(max-width:899px){nav.fx button[data-t=sky]{display:none
 css.textContent+='@media(max-width:899px){#sd{width:min(80vw,340px)}.sdt{padding:8px 10px 2px}.sdt b{font-size:1rem}#sdtabs{margin:2px 8px;padding:3px;gap:2px;border-radius:16px;overflow-x:auto;scrollbar-width:none}#sdtabs button{padding:4px 6px;font-size:.62rem;border-radius:12px;min-width:48px}#sdtabs svg{width:16px!important;height:16px!important}#sdbody{padding:2px 8px 18px;zoom:.88}#sdh{width:22px;height:54px}}';
 document.head.appendChild(css);
 })();
+</script>
+
+<style id="rx-style">
+/* ===== Relationship ===== */
+.rx-card{width:100%;display:block;border-radius:18px;box-shadow:0 0 0 2px var(--ln);background:var(--card)}
+.rx-bar{height:12px;border-radius:99px;background:color-mix(in srgb,var(--g2) 18%,transparent);overflow:hidden;margin:4px 0}
+.rx-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--g2),var(--g3));transition:width .3s}
+.rx-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.rx-stats>div{background:var(--g);border-radius:14px;padding:6px 4px;text-align:center;display:flex;flex-direction:column;line-height:1.2}
+.rx-stats span{font-size:.7rem}.rx-stats b{font-size:1.05rem}
+.rx-q{display:flex;gap:10px;align-items:center;border:2px solid var(--ln);border-radius:16px;padding:8px 10px;margin:6px 0;background:var(--card)}
+.rx-sw{width:34px;height:34px;min-height:0;padding:0;border-radius:50%;border:3px solid var(--ln);flex:0 0 auto}
+.rx-sw.on{border-color:var(--g3);box-shadow:0 0 0 2px var(--card) inset}
+.rx-chip{display:inline-flex;align-items:center;gap:6px;margin:6px 0;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--g2) 22%,var(--card));border:1.5px solid color-mix(in srgb,var(--g3) 45%,var(--ln));cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent}
+.rx-btn{white-space:nowrap}
+.rx-top{margin:4px 0 8px}
+html:not(.dcok) button[onclick*="RELX.share"]{display:none!important}
+</style>
+<script id="rx-core">
+/* rel-core.js — lõi relationship dùng CHUNG cho game (nhúng vào HTML) và bot (require).
+   Chỉ chứa: loại có sẵn, màu, công thức cấp độ, nhiệm vụ, và hàm vẽ card / sơ đồ lên canvas 2D.
+   Không phụ thuộc DOM hay Node: nhận ctx (CanvasRenderingContext2D) và ảnh đã tải sẵn từ bên ngoài. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.RELCORE = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  // ---------------------------------------------------------------- màu
+  const hexToRgb = (h) => {
+    h = String(h || '').trim();
+    if (/^#[0-9a-f]{3}$/i.test(h)) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+    const m = /^#([0-9a-f]{6})$/i.exec(h);
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const rgbToHex = (r, g, b) => '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const rgbToHsl = (r, g, b) => {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+    let h = 0, s = 0;
+    if (mx !== mn) {
+      const d = mx - mn;
+      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      if (mx === r) h = (g - b) / d + (g < b ? 6 : 0);
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    return [h, s, l];
+  };
+  const hslToHex = (h, s, l) => {
+    const f = (n) => {
+      const k = (n + h * 12) % 12, a = s * Math.min(l, 1 - l);
+      return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)));
+    };
+    return rgbToHex(f(0), f(8), f(4));
+  };
+  const alpha = (hex, a) => {
+    if (/^rgba?\(/i.test(hex)) return hex;
+    const c = hexToRgb(hex) || [0, 0, 0];
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  };
+  const lum = (hex) => {
+    const c = hexToRgb(hex) || [0, 0, 0];
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  };
+  const onColor = (hex) => (lum(hex) > 0.42 ? '#1b2a22' : '#ffffff');
+
+  // ---------------------------------------------------------------- loại có sẵn (kèm màu + hoa văn chìm)
+  // pal: bg1/bg2 nền chuyển sắc, ink chữ, mut chữ phụ, acc điểm nhấn, acc2 điểm nhấn nhạt, soft hoa văn chìm,
+  //      line màu đậm dùng trên nền sáng (sơ đồ), panel khung mờ, dark = nền tối
+  const PRESET_ORDER = ['bff', 'brother', 'sister', 'lover', 'tire', 'team', 'soul', 'rival'];
+  const PRESETS = {
+    bff: { name: 'Bạn thân', icon: 'star', pal: { bg1: '#cdeeff', bg2: '#eef9ff', ink: '#12384f', mut: '#4f7f99', acc: '#1f8fd0', acc2: '#7fd0f5', soft: '#8fd2f2', line: '#1f8fd0', panel: 'rgba(255,255,255,0.62)', dark: false } },
+    brother: { name: 'Anh em', icon: 'bolt', pal: { bg1: '#c6f0e4', bg2: '#eafbf6', ink: '#0f3b36', mut: '#4a8079', acc: '#16a08c', acc2: '#6fd8c4', soft: '#86dccb', line: '#12806f', panel: 'rgba(255,255,255,0.62)', dark: false } },
+    sister: { name: 'Chị em', icon: 'flower', pal: { bg1: '#ffd6e5', bg2: '#fff2f6', ink: '#5a2a3c', mut: '#b0768b', acc: '#e0567f', acc2: '#ff9db9', soft: '#ffb8cf', line: '#d23f6b', panel: 'rgba(255,255,255,0.62)', dark: false } },
+    lover: { name: 'Iu dấu', icon: 'heart', pal: { bg1: '#ffbfce', bg2: '#fff0f3', ink: '#5e1730', mut: '#a8506a', acc: '#e0245e', acc2: '#ff6b94', soft: '#ff9db5', line: '#d01f55', panel: 'rgba(255,255,255,0.62)', dark: false } },
+    tire: { name: 'Lốp xe tăng', icon: 'tire', pal: { bg1: '#2a331f', bg2: '#4d5e36', ink: '#f2f6e6', mut: '#bccaa3', acc: '#f2c21b', acc2: '#d8e07a', soft: '#8aa05c', line: '#4d5e36', panel: 'rgba(255,255,255,0.10)', dark: true } },
+    team: { name: 'Đồng đội', icon: 'shield', pal: { bg1: '#ffd8a3', bg2: '#fff3e0', ink: '#5a3320', mut: '#a87858', acc: '#e8742c', acc2: '#ffb067', soft: '#ffc58a', line: '#d9631c', panel: 'rgba(255,255,255,0.62)', dark: false } },
+    soul: { name: 'Tri kỷ', icon: 'moon', pal: { bg1: '#140d33', bg2: '#3d2c80', ink: '#f4efff', mut: '#bcaeef', acc: '#ffd54a', acc2: '#b39dff', soft: '#7f6cd6', line: '#5a43b0', panel: 'rgba(255,255,255,0.10)', dark: true } },
+    rival: { name: 'Kỳ phùng địch thủ', icon: 'swords', pal: { bg1: '#dde2ea', bg2: '#f7f8fb', ink: '#1f2430', mut: '#6b7385', acc: '#d9372b', acc2: '#7d8aa3', soft: '#b7c0d2', line: '#c42f24', panel: 'rgba(255,255,255,0.66)', dark: false } },
+  };
+  const ICON_ORDER = ['heart', 'star', 'flower', 'bolt', 'tire', 'shield', 'moon', 'swords', 'sprout'];
+  const ICON_EMOJI = { heart: '❤️', star: '⭐', flower: '🌸', bolt: '⚡', tire: '🛞', shield: '🛡️', moon: '🌙', swords: '⚔️', sprout: '🌱' };
+
+  // màu tùy chọn theo mã hex
+  function fromHex(hex) {
+    const rgb = hexToRgb(hex) || [79, 176, 111];
+    const [h, s0, l] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+    const s = Math.max(0.3, Math.min(0.95, s0));
+    const base = rgbToHex(rgb[0], rgb[1], rgb[2]);
+    if (l < 0.3) { // nền tối
+      return {
+        bg1: base, bg2: hslToHex(h, s0 * 0.9, Math.min(0.4, l + 0.2)), ink: '#f6f3ff', mut: hslToHex(h, s0 * 0.5, 0.8),
+        acc: hslToHex(h, Math.max(s, 0.6), 0.68), acc2: hslToHex(h, s, 0.8), soft: hslToHex(h, s0 * 0.8, 0.46),
+        line: base, panel: 'rgba(255,255,255,0.10)', dark: true,
+      };
+    }
+    const acc = l > 0.72 ? hslToHex(h, s, 0.55) : base;
+    return {
+      bg1: hslToHex(h, s, 0.86), bg2: hslToHex(h, s * 0.6, 0.955), ink: hslToHex(h, Math.min(s, 0.45), 0.16),
+      mut: hslToHex(h, s * 0.35, 0.4), acc, acc2: hslToHex(h, s, 0.72), soft: hslToHex(h, s, 0.78),
+      line: acc, panel: 'rgba(255,255,255,0.62)', dark: false,
+    };
+  }
+  // trả { pal, deco }: màu có sẵn đi kèm hoa văn chìm của loại đó; màu hex dùng hoa văn theo biểu tượng đã chọn
+  function paletteOf(r) {
+    const ck = r && r.color_key;
+    if (ck && PRESETS[ck]) return { pal: PRESETS[ck].pal, deco: PRESETS[ck].icon };
+    return { pal: fromHex(r && r.color_hex), deco: (r && r.icon && ICON_ORDER.includes(r.icon)) ? r.icon : 'star' };
+  }
+
+  // ---------------------------------------------------------------- cấp độ (khớp hàm rel_level trong SQL)
+  const cum = (l) => 20 * l * l + 60 * l - 80;           // XP tích lũy để đạt cấp l (cấp 1 = 0)
+  const lvOf = (xp) => { let l = 1; xp = Math.max(0, xp | 0); while (l < 99 && cum(l + 1) <= xp) l++; return l; };
+  const prog = (xp) => {
+    xp = Math.max(0, xp | 0);
+    const lv = lvOf(xp), a = cum(lv), b = cum(lv + 1);
+    return { lv, into: xp - a, need: b - a, pct: Math.max(0, Math.min(1, (xp - a) / (b - a))) };
+  };
+  const TITLES = [[1, 'Mới quen'], [4, 'Quen thân'], [8, 'Thân thiết'], [15, 'Gắn bó'], [25, 'Khắng khít'], [40, 'Định mệnh']];
+  const titleOf = (lv) => TITLES.filter(t => lv >= t[0]).pop()[1];
+
+  // ---------------------------------------------------------------- ngày (giờ Việt Nam, UTC+7)
+  const vnDay = (ts) => new Date((ts == null ? Date.now() : ts) + 7 * 3600e3).toISOString().slice(0, 10);
+  const dayMs = (ds) => Date.parse(ds + 'T00:00:00Z');
+  const addDay = (ds, n) => new Date(dayMs(ds) + n * 86400e3).toISOString().slice(0, 10);
+  const daysSince = (iso, now) => {
+    const t = Date.parse(iso);
+    if (!Number.isFinite(t)) return 1;
+    return Math.max(1, Math.round((dayMs(vnDay(now)) - dayMs(vnDay(t))) / 86400e3) + 1);
+  };
+  function isoWeek(ds) { // 'YYYY-Www' (khớp to_char(d,'IYYY-"W"IW') của Postgres)
+    const d = new Date(dayMs(ds));
+    const dn = (d.getUTCDay() + 6) % 7;
+    d.setUTCDate(d.getUTCDate() - dn + 3);
+    const year = d.getUTCFullYear(), thu = d.valueOf();
+    d.setUTCMonth(0, 1);
+    if (d.getUTCDay() !== 4) d.setUTCMonth(0, 1 + ((4 - d.getUTCDay()) + 7) % 7);
+    return year + '-W' + String(1 + Math.ceil((thu - d.valueOf()) / 604800000)).padStart(2, '0');
+  }
+  // chuỗi cùng điểm danh còn hiệu lực nếu ngày cuối >= hôm qua
+  const streakNow = (rel, now) => {
+    const today = vnDay(now);
+    if (!rel || !rel.streak || !rel.both_day) return 0;
+    return String(rel.both_day) >= addDay(today, -1) ? rel.streak : 0;
+  };
+
+  // ---------------------------------------------------------------- nhiệm vụ (khớp rel_quest_defs trong SQL)
+  const QUESTS = [
+    { id: 'd_both', sc: 'd', ev: 'both', need: 1, xp: 25, t: 'Cùng điểm danh hôm nay' },
+    { id: 'd_gift', sc: 'd', ev: 'gift', need: 1, xp: 20, t: 'Tặng nhau 1 món quà' },
+    { id: 'd_wall', sc: 'd', ev: 'wall', need: 2, xp: 15, t: 'Ký tường nhà nhau 2 lần' },
+    { id: 'w_both', sc: 'w', ev: 'both', need: 5, xp: 120, t: 'Cùng điểm danh 5 ngày trong tuần' },
+    { id: 'w_gift', sc: 'w', ev: 'gift', need: 5, xp: 100, t: 'Tặng nhau 5 món quà trong tuần' },
+    { id: 'w_buy', sc: 'w', ev: 'buy', need: 3, xp: 100, t: 'Mua đồ của nhau 3 lần trong tuần' },
+    { id: 'w_visit', sc: 'w', ev: 'visit', need: 7, xp: 60, t: 'Thăm nhà nhau 7 lần trong tuần' },
+    { id: 'w_wall', sc: 'w', ev: 'wall', need: 7, xp: 70, t: 'Ký tường nhà nhau 7 lần trong tuần' },
+  ];
+  function questList(rel, now) {
+    const today = vnDay(now), wk = isoWeek(today), q = (rel && rel.quests) || {};
+    const dOk = q.d === today, wOk = q.w === wk;
+    const dc = dOk ? (q.dc || {}) : {}, cd = dOk ? (q.cd || []) : [];
+    const wc = wOk ? (q.wc || {}) : {}, cw = wOk ? (q.cw || []) : [];
+    return QUESTS.map(def => {
+      const have = Math.min(def.need, ((def.sc === 'd' ? dc : wc)[def.ev]) | 0);
+      const claimed = (def.sc === 'd' ? cd : cw).includes(def.id);
+      return Object.assign({}, def, { have, claimed, ready: have >= def.need && !claimed });
+    });
+  }
+
+  // ---------------------------------------------------------------- vẽ cơ bản
+  const FONTS = { head: "'Baloo 2','Baloo2','Onest','Segoe UI',sans-serif", body: "Onest,'Segoe UI',sans-serif" };
+  const fontsOf = (o) => Object.assign({}, FONTS, (o && o.fonts) || {});
+  const fmtN = (n) => { try { return Number(n || 0).toLocaleString('vi-VN'); } catch (e) { return String(n | 0); } };
+
+  function rrect(ctx, x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, w / 2, h / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+  function fitFont(ctx, text, weight, size, family, maxW, minSize) {
+    let sz = size;
+    for (; ;) {
+      ctx.font = `${weight} ${sz}px ${family}`;
+      if (ctx.measureText(text).width <= maxW || sz <= (minSize || 14)) break;
+      sz -= 2;
+    }
+    return sz;
+  }
+  function clipText(ctx, text, maxW) {
+    text = String(text == null ? '' : text);
+    if (ctx.measureText(text).width <= maxW) return text;
+    while (text.length > 1 && ctx.measureText(text + '…').width > maxW) text = text.slice(0, -1);
+    return text + '…';
+  }
+  function mulberry(seed) {
+    let a = (seed | 0) + 0x6D2B79F5;
+    return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+
+  // ---------------------------------------------------------------- biểu tượng vẽ bằng nét vector (không cần font emoji)
+  function drawIcon(ctx, key, cx, cy, r, color) {
+    ctx.save();
+    ctx.fillStyle = color; ctx.strokeStyle = color;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    switch (key) {
+      case 'heart': {
+        const t = r;
+        ctx.moveTo(cx, cy + t * 0.92);
+        ctx.bezierCurveTo(cx - t * 1.55, cy - t * 0.05, cx - t * 0.95, cy - t * 1.15, cx, cy - t * 0.4);
+        ctx.bezierCurveTo(cx + t * 0.95, cy - t * 1.15, cx + t * 1.55, cy - t * 0.05, cx, cy + t * 0.92);
+        ctx.closePath(); ctx.fill(); break;
+      }
+      case 'star': {
+        for (let i = 0; i < 10; i++) {
+          const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.46 : r;
+          const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr + r * 0.06;
+          if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        }
+        ctx.closePath(); ctx.fill(); break;
+      }
+      case 'flower': {
+        for (let i = 0; i < 5; i++) {
+          const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
+          ctx.moveTo(cx + Math.cos(a) * r * 0.52 + r * 0.44, cy + Math.sin(a) * r * 0.52);
+          ctx.arc(cx + Math.cos(a) * r * 0.52, cy + Math.sin(a) * r * 0.52, r * 0.44, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.22, 0, Math.PI * 2);
+        ctx.globalAlpha *= 0.45; ctx.fillStyle = '#ffffff'; ctx.fill(); break;
+      }
+      case 'bolt': {
+        const p = [[0.18, -1], [-0.58, 0.12], [-0.06, 0.12], [-0.2, 1], [0.62, -0.22], [0.08, -0.22]];
+        p.forEach((q, i) => { const x = cx + q[0] * r, y = cy + q[1] * r; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+        ctx.closePath(); ctx.fill(); break;
+      }
+      case 'tire': {
+        ctx.moveTo(cx + r, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.moveTo(cx + r * 0.56, cy); ctx.arc(cx, cy, r * 0.56, 0, Math.PI * 2);
+        ctx.fill('evenodd');
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.22, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = Math.max(1, r * 0.08); ctx.globalAlpha *= 0.55; ctx.strokeStyle = '#000000';
+        for (let i = 0; i < 12; i++) { // gai lốp
+          const a = i * Math.PI / 6;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * r * 0.66, cy + Math.sin(a) * r * 0.66);
+          ctx.lineTo(cx + Math.cos(a) * r * 0.94, cy + Math.sin(a) * r * 0.94);
+          ctx.stroke();
+        }
+        break;
+      }
+      case 'shield': {
+        ctx.moveTo(cx, cy - r);
+        ctx.lineTo(cx + r * 0.82, cy - r * 0.62);
+        ctx.quadraticCurveTo(cx + r * 0.9, cy + r * 0.45, cx, cy + r);
+        ctx.quadraticCurveTo(cx - r * 0.9, cy + r * 0.45, cx - r * 0.82, cy - r * 0.62);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.lineWidth = Math.max(1.5, r * 0.14); ctx.globalAlpha *= 0.4; ctx.strokeStyle = '#ffffff';
+        ctx.moveTo(cx, cy - r * 0.55); ctx.lineTo(cx, cy + r * 0.55); ctx.moveTo(cx - r * 0.42, cy - r * 0.05); ctx.lineTo(cx + r * 0.42, cy - r * 0.05); ctx.stroke();
+        break;
+      }
+      case 'moon': {
+        ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
+        ctx.beginPath();
+        ctx.moveTo(cx + r, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.moveTo(cx + r * 0.45 + r * 0.82, cy - r * 0.18); ctx.arc(cx + r * 0.45, cy - r * 0.18, r * 0.82, 0, Math.PI * 2);
+        ctx.fill('evenodd'); break;
+      }
+      case 'swords': {
+        ctx.lineWidth = r * 0.2;
+        ctx.moveTo(cx - r * 0.8, cy - r * 0.8); ctx.lineTo(cx + r * 0.7, cy + r * 0.7);
+        ctx.moveTo(cx + r * 0.8, cy - r * 0.8); ctx.lineTo(cx - r * 0.7, cy + r * 0.7);
+        ctx.stroke();
+        ctx.beginPath(); ctx.lineWidth = r * 0.16;
+        ctx.moveTo(cx + r * 0.3, cy + r * 0.05); ctx.lineTo(cx + r * 0.05, cy + r * 0.3); // chắn kiếm
+        ctx.moveTo(cx - r * 0.3, cy + r * 0.05); ctx.lineTo(cx - r * 0.05, cy + r * 0.3);
+        ctx.stroke(); break;
+      }
+      case 'sprout': {
+        ctx.lineWidth = r * 0.16;
+        ctx.moveTo(cx, cy + r * 0.95); ctx.quadraticCurveTo(cx - r * 0.05, cy + r * 0.2, cx, cy - r * 0.2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(cx - r * 0.42, cy - r * 0.28, r * 0.5, r * 0.26, -Math.PI / 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx + r * 0.42, cy - r * 0.5, r * 0.5, r * 0.26, Math.PI / 5, 0, Math.PI * 2); ctx.fill(); break;
+      }
+      default: { // dự phòng: chấm tròn
+        ctx.arc(cx, cy, r * 0.7, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // hoa văn chìm: biểu tượng phù hợp loại relationship, rải đều, rất mờ
+  function drawDeco(ctx, W, H, key, color, seed, opt) {
+    const rnd = mulberry(seed || 1), cols = (opt && opt.cols) || 6, rows = (opt && opt.rows) || 4;
+    const cw = W / cols, ch = H / rows;
+    ctx.save();
+    for (let gy = 0; gy < rows; gy++) {
+      for (let gx = 0; gx < cols; gx++) {
+        if (rnd() < 0.18) continue;
+        const x = (gx + 0.2 + rnd() * 0.6) * cw, y = (gy + 0.2 + rnd() * 0.6) * ch;
+        const r = 20 + rnd() * 30, rot = (rnd() - 0.5) * 0.9;
+        ctx.save();
+        ctx.globalAlpha = 0.1 + rnd() * 0.09;
+        ctx.translate(x, y); ctx.rotate(rot);
+        drawIcon(ctx, key, 0, 0, r, color);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawAvatar(ctx, img, cx, cy, r, ring, fallbackColor, name, F) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+    let ok = false;
+    if (img) {
+      const iw = img.width || img.naturalWidth || 0, ih = img.height || img.naturalHeight || 0, m = Math.min(iw, ih);
+      if (m > 0) { try { ctx.drawImage(img, (iw - m) / 2, (ih - m) / 2, m, m, cx - r, cy - r, r * 2, r * 2); ok = true; } catch (e) { ok = false; } }
+    }
+    if (!ok) {
+      ctx.fillStyle = fallbackColor; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `700 ${Math.round(r * 0.95)}px ${F.head}`;
+      ctx.fillText(String(name || '?').trim().charAt(0).toUpperCase() || '?', cx, cy + r * 0.06);
+    }
+    ctx.restore();
+    ctx.lineWidth = Math.max(4, r * 0.06); ctx.strokeStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx, cy, r + ctx.lineWidth / 2, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = Math.max(4, r * 0.05); ctx.strokeStyle = ring;
+    ctx.beginPath(); ctx.arc(cx, cy, r + Math.max(4, r * 0.06) + ctx.lineWidth / 2, 0, Math.PI * 2); ctx.stroke();
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // ---------------------------------------------------------------- dữ liệu card
+  // a, b: { name, img }. rel: hàng relationships (hoặc bản nháp có kind/type_name/icon/color_key/color_hex/xp/started_at)
+  function buildCardData(rel, a, b, now) {
+    const pp = paletteOf(rel), pr = prog(rel.xp | 0);
+    return {
+      a, b, typeName: String(rel.type_name || '').slice(0, 24) || 'Bạn bè', icon: ICON_ORDER.includes(rel.icon) ? rel.icon : 'star',
+      pal: pp.pal, deco: pp.deco, seed: Number(rel.id) || 7,
+      days: rel.started_at ? daysSince(rel.started_at, now) : 1,
+      level: pr.lv, into: pr.into, need: pr.need, pct: pr.pct, xp: rel.xp | 0,
+      streak: streakNow(rel, now), title: titleOf(pr.lv),
+    };
+  }
+
+  // ---------------------------------------------------------------- vẽ CARD 1200x675
+  function drawCard(ctx, W, H, d, opt) {
+    const F = fontsOf(opt), pal = d.pal, onAcc = onColor(pal.acc);
+    ctx.save();
+    // nền + hoa văn chìm
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, pal.bg1); g.addColorStop(1, pal.bg2);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    drawDeco(ctx, W, H, d.deco, pal.soft, d.seed);
+    rrect(ctx, 16, 16, W - 32, H - 32, 36); ctx.lineWidth = 3; ctx.strokeStyle = alpha(pal.acc, 0.35); ctx.stroke();
+
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.font = `600 24px ${F.body}`; ctx.fillStyle = pal.mut;
+    ctx.fillText('JUSTASEED · RELATIONSHIP', W / 2, 64);
+
+    // hai người ở hai bên
+    const cy = 238, R = 116, lx = 220, rx = W - 220;
+    ctx.setLineDash([2, 18]); ctx.lineCap = 'round'; ctx.lineWidth = 9; ctx.strokeStyle = alpha(pal.acc, 0.75);
+    ctx.beginPath(); ctx.moveTo(lx + R + 28, cy); ctx.lineTo(rx - R - 28, cy); ctx.stroke();
+    ctx.setLineDash([]);
+    drawAvatar(ctx, d.a.img, lx, cy, R, pal.acc, pal.acc2, d.a.name, F);
+    drawAvatar(ctx, d.b.img, rx, cy, R, pal.acc, pal.acc2, d.b.name, F);
+    ctx.textAlign = 'center'; ctx.fillStyle = pal.ink;
+    [[lx, d.a.name], [rx, d.b.name]].forEach(([x, n]) => {
+      n = String(n || 'Người chơi');
+      fitFont(ctx, n, 700, 40, F.head, 340, 22);
+      ctx.fillText(clipText(ctx, n, 340), x, 428);
+    });
+
+    // giữa: biểu tượng + tên loại relationship
+    ctx.beginPath(); ctx.arc(W / 2, cy, 94, 0, Math.PI * 2);
+    ctx.fillStyle = pal.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.92)'; ctx.fill();
+    ctx.lineWidth = 8; ctx.strokeStyle = pal.acc; ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, cy, 78, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.strokeStyle = alpha(pal.acc, 0.3); ctx.stroke();
+    drawIcon(ctx, d.icon, W / 2, cy, 52, pal.acc);
+
+    ctx.textAlign = 'center'; ctx.fillStyle = pal.ink;
+    fitFont(ctx, d.typeName, 700, 44, F.head, 380, 22);
+    ctx.fillText(clipText(ctx, d.typeName, 380), W / 2, 394);
+
+    // số ngày
+    const dayTxt = `${fmtN(d.days)} ngày bên nhau`;
+    ctx.font = `600 28px ${F.body}`;
+    const tw = ctx.measureText(dayTxt).width + 48;
+    rrect(ctx, W / 2 - tw / 2, 414, tw, 46, 23); ctx.fillStyle = alpha(pal.acc, 0.18); ctx.fill();
+    ctx.fillStyle = pal.ink; ctx.fillText(dayTxt, W / 2, 446);
+
+    // khung cấp độ + thanh XP
+    rrect(ctx, 48, 490, W - 96, 140, 36); ctx.fillStyle = pal.panel; ctx.fill();
+    ctx.beginPath(); ctx.arc(142, 560, 50, 0, Math.PI * 2); ctx.fillStyle = pal.acc; ctx.fill();
+    ctx.fillStyle = onAcc; ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.85; ctx.font = `700 18px ${F.body}`; ctx.fillText('LV', 142, 535); ctx.globalAlpha = 1;
+    ctx.font = `700 46px ${F.head}`; ctx.fillText(String(d.level), 142, 582);
+
+    ctx.textAlign = 'left'; ctx.fillStyle = pal.ink; ctx.font = `700 30px ${F.head}`;
+    ctx.fillText(d.title, 220, 538);
+    ctx.textAlign = 'right'; ctx.fillStyle = pal.mut; ctx.font = `600 24px ${F.body}`;
+    ctx.fillText(`${fmtN(d.xp)} XP`, 900, 538);
+
+    const bx = 220, by = 552, bw = 680, bh = 28;
+    rrect(ctx, bx, by, bw, bh, 14); ctx.fillStyle = alpha(pal.ink, 0.13); ctx.fill();
+    if (d.pct > 0) {
+      const fw = Math.max(bh, bw * d.pct), bg = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+      bg.addColorStop(0, pal.acc); bg.addColorStop(1, pal.acc2);
+      rrect(ctx, bx, by, fw, bh, 14); ctx.fillStyle = bg; ctx.fill();
+    }
+    ctx.textAlign = 'left'; ctx.fillStyle = pal.mut; ctx.font = `500 24px ${F.body}`;
+    ctx.fillText(`${fmtN(d.into)} / ${fmtN(d.need)} XP để lên cấp ${d.level + 1}`, 220, 612);
+
+    ctx.beginPath(); ctx.moveTo(940, 518); ctx.lineTo(940, 602); ctx.lineWidth = 2; ctx.strokeStyle = alpha(pal.ink, 0.12); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.fillStyle = pal.mut; ctx.font = `500 22px ${F.body}`;
+    ctx.fillText('Chuỗi cùng nhau', 1020, 538);
+    ctx.fillStyle = pal.ink; ctx.font = `700 44px ${F.head}`;
+    ctx.fillText(d.streak > 0 ? String(d.streak) : '—', 1020, 586);
+    ctx.fillStyle = pal.mut; ctx.font = `500 22px ${F.body}`;
+    ctx.fillText(d.streak > 0 ? 'ngày liên tiếp' : 'chưa có chuỗi', 1020, 614);
+
+    ctx.fillStyle = alpha(pal.mut, 0.9); ctx.font = `500 20px ${F.body}`;
+    ctx.fillText('justaseed.xyz', W / 2, 660);
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- vẽ SƠ ĐỒ 1200x960
+  // d: { title, me:{name,img}, nodes:[{id,name,img,typeName,icon,pal,level}], links:[{a,b,pal}], more }
+  function drawMap(ctx, W, H, d, opt) {
+    const F = fontsOf(opt), GREEN = '#4fb06f';
+    ctx.save();
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#eef8ef'); g.addColorStop(1, '#e2f1fb');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(79,176,111,0.10)';
+    for (let y = 30; y < H; y += 40) for (let x = 30; x < W; x += 40) { ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill(); }
+
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#244033'; ctx.font = `700 50px ${F.head}`;
+    ctx.fillText('Sơ đồ relationship', W / 2, 74);
+    ctx.fillStyle = '#678a73'; ctx.font = `500 28px ${F.body}`;
+    ctx.fillText(clipText(ctx, d.title || '', W - 160), W / 2, 116);
+
+    const cx = W / 2, cy = Math.round(H * 0.545), MAXN = 14, RY = H > 960 ? 370 : 300;
+    const all = d.nodes || [];
+    d = Object.assign({}, d, { nodes: all.slice(0, MAXN), more: (d.more || 0) + Math.max(0, all.length - MAXN) });
+    const n = d.nodes.length, outer = n, inner = 0;
+    const pos = [];
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * 2 * Math.PI / Math.max(1, n);
+      pos.push({ x: cx + Math.cos(a) * 470, y: cy + Math.sin(a) * RY, r: n > 10 ? 46 : 52 });
+    }
+    const byId = {}; d.nodes.forEach((nd, i) => { byId[nd.id] = pos[i]; });
+    const lineOf = (p) => (p && (p.line || p.acc)) || '#4fb06f';
+
+    // cạnh giữa các node (hai người cùng có relationship với mình và với nhau)
+    (d.links || []).forEach(l => {
+      const A = byId[l.a], B = byId[l.b];
+      if (!A || !B) return;
+      ctx.save(); ctx.setLineDash([10, 10]); ctx.lineCap = 'round'; ctx.lineWidth = 3.5; ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = lineOf(l.pal);
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+      ctx.restore();
+    });
+    // cạnh nối về mình
+    d.nodes.forEach((nd, i) => {
+      const p = pos[i];
+      ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = lineOf(nd.pal); ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(p.x, p.y); ctx.stroke();
+      ctx.restore();
+    });
+    // huy hiệu biểu tượng trên cạnh
+    d.nodes.forEach((nd, i) => {
+      const p = pos[i], mx = cx + (p.x - cx) * 0.5, my = cy + (p.y - cy) * 0.5;
+      ctx.beginPath(); ctx.arc(mx, my, 27, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.lineWidth = 4; ctx.strokeStyle = lineOf(nd.pal); ctx.stroke();
+      drawIcon(ctx, nd.icon, mx, my, 15, lineOf(nd.pal));
+    });
+    // node (vòng ngoài: nhãn bên dưới; vòng trong: nhãn nằm cạnh để khỏi chồng nhau)
+    d.nodes.forEach((nd, i) => {
+      const p = pos[i], isInner = false;
+      drawAvatar(ctx, nd.img, p.x, p.y, p.r, lineOf(nd.pal), (nd.pal && nd.pal.acc2) || '#9bd7ad', nd.name, F);
+      const bw = n > 10 ? 196 : 236, side = p.x >= cx ? 1 : -1;
+      const px = isInner ? (side > 0 ? p.x + p.r + 10 : p.x - p.r - 10 - bw) : p.x - bw / 2;
+      const py = isInner ? p.y - 33 : p.y + p.r + 8;
+      rrect(ctx, px, py, bw, 66, 18); ctx.fillStyle = 'rgba(255,255,255,0.86)'; ctx.fill();
+      const tx = px + bw / 2, tw = bw - 16;
+      ctx.textAlign = 'center'; ctx.fillStyle = '#244033';
+      fitFont(ctx, nd.name, 700, 26, F.head, tw, 16);
+      ctx.fillText(clipText(ctx, nd.name, tw), tx, py + 30);
+      ctx.fillStyle = lineOf(nd.pal);
+      const sub = `${nd.typeName} · Lv ${nd.level}`;
+      fitFont(ctx, sub, 600, 21, F.body, tw, 13);
+      ctx.fillText(clipText(ctx, sub, tw), tx, py + 56);
+    });
+    // mình ở giữa
+    drawAvatar(ctx, d.me.img, cx, cy, 76, GREEN, '#9bd7ad', d.me.name, F);
+    rrect(ctx, cx - 140, cy + 76 + 12, 280, 46, 18); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill();
+    ctx.textAlign = 'center'; ctx.fillStyle = '#244033';
+    fitFont(ctx, d.me.name, 700, 30, F.head, 260, 18);
+    ctx.fillText(clipText(ctx, d.me.name, 260), cx, cy + 76 + 44);
+    if (!n) {
+      ctx.fillStyle = '#678a73'; ctx.font = `500 28px ${F.body}`;
+      ctx.fillText('Chưa có relationship nào', cx, cy + 190);
+    }
+    if (d.more > 0) {
+      ctx.textAlign = 'right'; ctx.fillStyle = '#678a73'; ctx.font = `500 22px ${F.body}`;
+      ctx.fillText(`+${d.more} mối quan hệ nữa`, W - 40, H - 40);
+    }
+    ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(103,138,115,0.9)'; ctx.font = `500 20px ${F.body}`;
+    ctx.fillText('justaseed.xyz', 40, H - 40);
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- kiểm tra đầu vào dùng chung
+  const hexOk = (h) => /^#[0-9a-f]{6}$/i.test(String(h || ''));
+
+  return {
+    PRESETS, PRESET_ORDER, ICON_ORDER, ICON_EMOJI, QUESTS, TITLES,
+    hexToRgb, rgbToHex, hslToHex, alpha, onColor, fromHex, paletteOf, hexOk,
+    cum, lvOf, prog, titleOf, vnDay, addDay, daysSince, isoWeek, streakNow, questList,
+    drawIcon, drawDeco, drawAvatar, buildCardData, drawCard, drawMap, fmtN,
+    CARD_W: 1200, CARD_H: 675, MAP_W: 1200, mapHeight: (n) => (n > 8 ? 1120 : 960),
+  };
+});
+
+</script>
+<script id="rx-game">
+/* ===== RELATIONSHIP (game) =====
+   Cần: chạy relationship_setup.sql trong Supabase. Nút 💞 xuất hiện cạnh từng người bạn ở Cộng đồng → Bạn bè. */
+(function () {
+  'use strict';
+  const RC = window.RELCORE;
+  if (!RC) { console.error('[rel] thiếu RELCORE'); return; }
+  const SB = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+  const UID = () => (typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null);
+  const H = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const T = (m) => { try { toast(m); } catch (e) { /* bỏ qua */ } };
+  const gavOf = (raw) => { try { return typeof parseGav === 'function' ? parseGav(raw) : (String(raw || '').startsWith('gav:') ? JSON.parse(raw.slice(4)) : {}); } catch (e) { return {}; } };
+  const RX = { list: [], people: {}, at: 0, busy: null, cur: null, tab: 'ov', ed: null, inc: -1, err: '', missing: false };
+  const E = RC.ICON_EMOJI, PR = RC.PRESETS;
+
+  // ------------------------------------------------------------ dữ liệu
+  async function people(ids) {
+    const need = ids.filter((id) => !RX.people[id] || Date.now() - RX.people[id].t > 180000);
+    if (!need.length || !SB()) return;
+    try {
+      const [pr, sp] = await Promise.all([
+        SB().from('profiles').select('id,username,display_name').in('id', need),
+        SB().from('shop_public').select('user_id,game_avatar').in('user_id', need),
+      ]);
+      const P = {}, S = {};
+      (pr.data || []).forEach((x) => { P[x.id] = x; });
+      (sp.data || []).forEach((x) => { S[x.user_id] = x; });
+      need.forEach((id) => {
+        const g = gavOf(S[id] && S[id].game_avatar);
+        RX.people[id] = { t: Date.now(), id, name: String(g.nm || (P[id] && (P[id].display_name || P[id].username)) || 'Người chơi').slice(0, 40), username: (P[id] && P[id].username) || '', av: g.av || null };
+      });
+    } catch (e) { console.warn('[rel] tải người chơi lỗi', e); }
+  }
+  const person = (id) => RX.people[id] || { id, name: 'Người chơi', av: null };
+  async function load(force) {
+    if (!UID() || !SB()) return [];
+    if (RX.busy) return RX.busy;
+    if (!force && Date.now() - RX.at < 20000) return RX.list;
+    RX.busy = (async () => {
+      try {
+        const me = UID();
+        const r = await SB().from('relationships').select('*').or(`user_a.eq.${me},user_b.eq.${me}`).order('created_at', { ascending: true });
+        if (r.error) throw r.error;
+        const rows = (r.data || []).map((x) => Object.assign(x, { other: x.user_a === me ? x.user_b : x.user_a }));
+        await people(rows.map((x) => x.other));
+        RX.list = rows; RX.at = Date.now(); RX.err = ''; RX.missing = false;
+      } catch (e) {
+        RX.err = (e && e.message) || 'lỗi';
+        RX.missing = /relationships|PGRST|42P01|schema cache/i.test(RX.err);
+      }
+      RX.busy = null; return RX.list;
+    })();
+    return RX.busy;
+  }
+  const byOther = (id) => RX.list.find((x) => x.other === id) || null;
+  const active = () => RX.list.filter((x) => x.status === 'active');
+  const incoming = () => RX.list.filter((x) => x.status === 'pending' && x.requested_by !== UID());
+  async function call(fn, args) {
+    try {
+      const r = await SB().rpc(fn, args);
+      if (r.error) { T('Lỗi: ' + r.error.message); return null; }
+      if (r.data && r.data.ok === false) { T(r.data.msg || 'Không thực hiện được'); return null; }
+      return r.data;
+    } catch (e) { T('Lỗi mạng, thử lại sau'); return null; }
+  }
+  function push(userId, ref, title, body) {
+    try { SB().from('push_jobs').upsert({ user_id: userId, ref, fire_at: new Date().toISOString(), title, body, sent: false }, { onConflict: 'user_id,ref' }).then(() => {}, () => {}); } catch (e) { /* bỏ qua */ }
+  }
+  const myName = () => (typeof crn === 'function' ? crn() : ((s.pf && s.pf.nm) || s.name || 'Bạn bè'));
+
+  // ------------------------------------------------------------ vẽ ảnh
+  const loadImg = (src) => new Promise((res) => {
+    if (!src) return res(null);
+    const im = new Image();
+    if (!/^data:/.test(src)) im.crossOrigin = 'anonymous';
+    im.onload = () => res(im); im.onerror = () => res(null); im.src = src;
+  });
+  const selfInfo = () => {
+    const m = (currentUser && currentUser.user_metadata) || {};
+    return { name: myName() || m.full_name || m.name || 'Bạn', img: (s.pf && s.pf.av) || m.avatar_url || null };
+  };
+  async function fontsReady() { try { if (document.fonts && document.fonts.load) await document.fonts.load("700 40px 'Baloo 2'"); } catch (e) { /* bỏ qua */ } }
+  async function paintCard(rel, scale, noImg) {
+    await fontsReady();
+    const me = selfInfo(), ot = person(rel.other);
+    const [ia, ib] = noImg ? [null, null] : await Promise.all([loadImg(me.img), loadImg(ot.av)]);
+    const d = RC.buildCardData(rel, { name: me.name, img: ia }, { name: ot.name, img: ib }, Date.now());
+    const sc = scale || 1, cv = document.createElement('canvas');
+    cv.width = Math.round(RC.CARD_W * sc); cv.height = Math.round(RC.CARD_H * sc);
+    const ctx = cv.getContext('2d'); ctx.scale(sc, sc);
+    RC.drawCard(ctx, RC.CARD_W, RC.CARD_H, d, { fonts: { head: "'Baloo 2','Onest',sans-serif", body: "Onest,sans-serif" } });
+    return cv;
+  }
+  async function cardURL(rel, scale) { // ảnh có thể bị chặn xuất do khác nguồn -> vẽ lại không ảnh đại diện
+    try { return (await paintCard(rel, scale)).toDataURL('image/png'); } catch (e) { return (await paintCard(rel, scale, true)).toDataURL('image/png'); }
+  }
+  async function buildMap() {
+    await fontsReady();
+    await load(true);
+    const act = active().sort((a, b) => b.xp - a.xp), me = selfInfo();
+    let web = [];
+    try { const r = await SB().rpc('rel_web'); if (Array.isArray(r.data)) web = r.data; } catch (e) { /* bỏ qua */ }
+    const draw = async (noImg) => {
+      const imgs = noImg ? act.map(() => null) : await Promise.all(act.map((r) => loadImg(person(r.other).av)));
+      const mi = noImg ? null : await loadImg(me.img);
+      const nodes = act.map((r, i) => ({ id: r.other, name: person(r.other).name, img: imgs[i], typeName: r.type_name, icon: r.icon, pal: RC.paletteOf(r).pal, level: RC.lvOf(r.xp) }));
+      const ids = new Set(nodes.map((n) => n.id));
+      const links = web.filter((e) => ids.has(e.a) && ids.has(e.b)).map((e) => ({ a: e.a, b: e.b, pal: RC.paletteOf({ color_key: e.color_key, color_hex: e.color_hex, icon: e.icon }).pal }));
+      const Hh = RC.mapHeight(nodes.length), cv = document.createElement('canvas');
+      cv.width = RC.MAP_W; cv.height = Hh;
+      RC.drawMap(cv.getContext('2d'), RC.MAP_W, Hh, { title: `${me.name} · ${act.length} mối quan hệ`, me: { name: me.name, img: mi }, nodes, links, more: 0 },
+        { fonts: { head: "'Baloo 2','Onest',sans-serif", body: "Onest,sans-serif" } });
+      return cv;
+    };
+    let cv; try { cv = await draw(false); cv.toDataURL('image/png'); } catch (e) { cv = await draw(true); }
+    return { url: cv.toDataURL('image/png'), count: act.length };
+  }
+
+  // ------------------------------------------------------------ giao diện
+  const shell = (h) => { const m = document.getElementById('modal'); if (m) m.innerHTML = `<div class=mb onclick="if(event.target==this)mdl()"><div class=ms>${h}</div></div>`; };
+  const head = (t) => `<div class=row><h2>${t}</h2><button class=s onclick=mdl() aria-label="Đóng">✕</button></div>`;
+  const alive = (id) => RX.cur === id && document.getElementById('rx-root');
+  const draft = (rel) => {
+    const e = RX.ed;
+    return Object.assign({}, rel || {}, { id: (rel && rel.id) || 7, kind: e.kind, type_name: e.name || PR[e.kind] && PR[e.kind].name || 'Bạn bè', icon: e.icon, color_key: e.ck, color_hex: e.ck === 'custom' ? e.hex : null,
+      xp: rel ? rel.xp : 0, started_at: (rel && rel.started_at) || new Date().toISOString(), other: RX.cur });
+  };
+  function edInit(rel) {
+    RX.ed = rel
+      ? { kind: rel.kind, name: rel.type_name, icon: rel.icon, ck: rel.color_key, hex: rel.color_hex || '#4fb06f' }
+      : { kind: 'bff', name: PR.bff.name, icon: PR.bff.icon, ck: 'bff', hex: '#4fb06f' };
+  }
+  function edHtml() {
+    const e = RX.ed;
+    const chips = RC.PRESET_ORDER.map((k) => `<button class="s ${e.kind === k ? 'on2' : ''}" onclick="RELX.pick('${k}')">${E[PR[k].icon]} ${H(PR[k].name)}</button>`).join('')
+      + `<button class="s ${e.kind === 'custom' ? 'on2' : ''}" onclick="RELX.pick('custom')">✏️ Tự đặt</button>`;
+    const icons = RC.ICON_ORDER.map((k) => `<button class="s ${e.icon === k ? 'on2' : ''}" onclick="RELX.icon('${k}')" aria-label="${k}">${E[k]}</button>`).join('');
+    const sw = RC.PRESET_ORDER.map((k) => { const p = PR[k].pal; return `<button class="rx-sw ${e.ck === k ? 'on' : ''}" style="background:linear-gradient(135deg,${p.bg1},${p.acc})" title="${H(PR[k].name)}" onclick="RELX.color('${k}')" aria-label="Màu ${H(PR[k].name)}"></button>`; }).join('');
+    return `<p class=mut style="margin:8px 0 4px">Loại relationship</p><div class=strip2>${chips}</div>
+<input id=rx-name maxlength=24 placeholder="Tên loại relationship (tối đa 24 ký tự)" value="${H(e.name)}" oninput="RELX.name(this.value)" style="width:100%;margin:8px 0">
+<p class=mut style="margin:4px 0">Biểu tượng ở giữa card</p><div class=strip2>${icons}</div>
+<p class=mut style="margin:8px 0 4px">Màu card <span style="font-size:.8em">(màu có sẵn kèm hoa văn chìm theo loại)</span></p>
+<div class=strip2 style="align-items:center">${sw}</div>
+<div class=hxr style="margin-top:6px"><span class=hxl>Mã hex</span><input type=color class=hxn id=rx-hc value="${RC.hexOk(e.hex) ? e.hex : '#4fb06f'}" oninput="document.getElementById('rx-ht').value=this.value" onchange="RELX.hex(this.value)" aria-label="Chọn màu"><input class=hxi id=rx-ht maxlength=7 value="${H(e.ck === 'custom' ? e.hex : '')}" placeholder="#RRGGBB" autocapitalize=off autocomplete=off spellcheck=false onchange="RELX.hex(this.value)"></div>
+<p class=mut style="margin:8px 0 4px">Xem trước</p><img id=rx-prev class=rx-card alt="Xem trước card">`;
+  }
+  let pvT = null;
+  function previewSoon() {
+    clearTimeout(pvT);
+    pvT = setTimeout(async () => {
+      const el = document.getElementById('rx-prev'); if (!el || !RX.ed) return;
+      const rel = RX.ed.editing ? byOther(RX.cur) : null;
+      try { el.src = await cardURL(draft(rel), 0.5); } catch (e) { /* bỏ qua */ }
+    }, 180);
+  }
+  function tabs(t) {
+    const b = (k, l) => `<button class="s ${t === k ? 'on2' : ''}" onclick="RELX.tab('${k}')">${l}</button>`;
+    return `<div class=strip2 style="margin:6px 0">${b('ov', '💞 Tổng quan')}${b('qs', '🎯 Nhiệm vụ')}${b('cs', '🎨 Tùy chỉnh')}</div>`;
+  }
+  async function render() {
+    const id = RX.cur, root = document.getElementById('rx-root'); if (!id || !root) return;
+    const ot = person(id), rel = byOther(id), me = UID();
+    let h = '';
+    if (RX.missing) { root.innerHTML = head('💞 Relationship') + `<p class=bad>Chưa cài đặt hệ thống relationship.</p><p class=mut>Hãy chạy file relationship_setup.sql trong Supabase (SQL Editor).</p>`; return; }
+    if (!rel) {
+      if (!RX.ed || RX.ed.editing) edInit(null);
+      root.innerHTML = head('💞 Relationship') + `<p class=mut style="margin:0">Tạo relationship với <b>${H(ot.name)}</b>. Bạn ấy cần chấp nhận lời mời.</p>${edHtml()}<button class=p style="width:100%;margin-top:10px" onclick="RELX.send()">💌 Gửi lời mời</button>`;
+      previewSoon(); return;
+    }
+    if (rel.status === 'pending') {
+      const mine = rel.requested_by === me;
+      root.innerHTML = head('💞 Relationship') + `<img id=rx-img class=rx-card alt="Card relationship">
+<p style="margin:8px 0">${mine ? `Đã gửi lời mời <b>${H(rel.type_name)}</b> cho <b>${H(ot.name)}</b>. Đang chờ bạn ấy chấp nhận.` : `<b>${H(ot.name)}</b> muốn tạo relationship <b>${H(rel.type_name)}</b> với bạn.`}</p>
+<div class=row>${mine ? `<button class=s onclick="RELX.decline()">Hủy lời mời</button>` : `<button class=p onclick="RELX.accept()">💞 Chấp nhận</button><button class=s onclick="RELX.decline()">Từ chối</button>`}</div>`;
+      const im = document.getElementById('rx-img'); if (im) cardURL(rel, 0.5).then((u) => { if (alive(id)) im.src = u; });
+      return;
+    }
+    // đang hoạt động
+    const pr = RC.prog(rel.xp), now = Date.now(), today = RC.vnDay(now), isA = rel.user_a === me;
+    const mineDay = isA ? rel.a_day : rel.b_day, theirDay = isA ? rel.b_day : rel.a_day;
+    const done = mineDay === today, theirs = theirDay === today, streak = RC.streakNow(rel, now);
+    let body = '';
+    if (RX.tab === 'qs') {
+      const ql = RC.questList(rel, now);
+      const row = (q) => `<div class=rx-q><div style="flex:1;min-width:0"><b>${H(q.t)}</b><div class=rx-bar><i style="width:${Math.round(100 * q.have / q.need)}%"></i></div><span class=mut style="font-size:.8rem">${q.have}/${q.need} · +${q.xp} XP</span></div>${q.claimed ? '<span class=mut>✅ Đã nhận</span>' : `<button class="${q.ready ? 'p' : 's'}" ${q.ready ? '' : 'disabled'} onclick="RELX.claim('${q.id}')">Nhận</button>`}</div>`;
+      body = `<h4 style="margin:6px 0">Hôm nay</h4>${ql.filter((q) => q.sc === 'd').map(row).join('')}<h4 style="margin:10px 0 6px">Tuần này</h4>${ql.filter((q) => q.sc === 'w').map(row).join('')}<p class=mut style="font-size:.8rem">Nhiệm vụ làm mới lúc 0 giờ (giờ Việt Nam), tuần bắt đầu từ thứ Hai. Việc của cả hai người đều được tính.</p>`;
+    } else if (RX.tab === 'cs') {
+      if (!RX.ed || !RX.ed.editing) { edInit(rel); RX.ed.editing = 1; }
+      body = `${edHtml()}<button class=p style="width:100%;margin-top:10px" onclick="RELX.save()">💾 Lưu thay đổi</button><button class=s style="width:100%;margin-top:8px" onclick="RELX.end()">💔 Kết thúc relationship</button>`;
+    } else {
+      body = `<img id=rx-img class=rx-card alt="Card relationship">
+<div class=rx-stats><div><span class=mut>Cấp</span><b>${pr.lv}</b></div><div><span class=mut>XP</span><b>${RC.fmtN(rel.xp)}</b></div><div><span class=mut>Ngày bên nhau</span><b>${RC.fmtN(RC.daysSince(rel.started_at, now))}</b></div><div><span class=mut>Chuỗi</span><b>${streak || '—'}</b></div></div>
+<div class=rx-bar style="margin:6px 0"><i style="width:${Math.round(pr.pct * 100)}%"></i></div><span class=mut style="font-size:.85rem">${RC.titleOf(pr.lv)} · ${pr.into}/${pr.need} XP lên cấp ${pr.lv + 1}</span>
+<div class=card style="margin:10px 0"><div class=row style="margin:0"><div><b>✅ Điểm danh cùng nhau</b><br><span class=mut>Bạn: ${done ? '✅' : '⬜'} · ${H(ot.name)}: ${theirs ? '✅' : '⬜'}</span></div><button class=p ${done ? 'disabled' : ''} onclick="RELX.checkin()">${done ? 'Đã điểm danh' : 'Điểm danh'}</button></div><p class=mut style="margin:6px 0 0;font-size:.8rem">Mỗi người +8 XP. Cả hai cùng điểm danh trong ngày: thưởng thêm và giữ chuỗi.</p></div>
+<div class=row style="flex-wrap:wrap;gap:6px;justify-content:flex-start"><button class=s onclick="RELX.go()">🏠 Thăm nhà</button><button class=s onclick="RELX.share('card')">📣 Khoe lên Discord</button><button class=s onclick="RELX.dl()">⬇️ Lưu ảnh</button><button class=s onclick="RELX.openMap()">🕸️ Sơ đồ</button></div>
+<p class=mut style="font-size:.8rem;margin-top:8px">Tăng XP: 🎁 tặng quà (+20) · 🧺 mua đồ của nhau (+15) · ✍️ ký tường (+5) · 🏠 thăm nhà (+3) · ✅ điểm danh · 🎯 nhiệm vụ. Có giới hạn mỗi ngày.</p>`;
+    }
+    root.innerHTML = head(`${E[rel.icon] || '💞'} ${H(rel.type_name)} · ${H(ot.name)}`) + tabs(RX.tab) + body;
+    if (RX.tab === 'ov') { const im = document.getElementById('rx-img'); if (im) cardURL(rel, 0.6).then((u) => { RX.lastCard = u; if (alive(id)) im.src = u; }); }
+    if (RX.tab === 'cs') previewSoon();
+  }
+
+  // ------------------------------------------------------------ hành động
+  const levelMsg = (name, d) => { if (d && d.level_up) T(`🎉 Relationship với ${name} lên cấp ${d.level}!`); };
+  const api = {
+    async open(otherId, tab) {
+      if (!UID()) return T('Hãy liên kết Discord');
+      RX.cur = otherId; RX.tab = tab || 'ov'; RX.ed = null;
+      shell('<div id=rx-root><p class=mut>Đang tải...</p></div>');
+      await load(true); await people([otherId]);
+      if (RX.cur === otherId) render();
+    },
+    tab(k) { RX.tab = k; if (k !== 'cs') RX.ed = null; render(); },
+    pick(k) {
+      const e = RX.ed, was = PR[e.kind] && PR[e.kind].name;
+      e.kind = k;
+      if (k !== 'custom') {
+        if (!e.name || e.name === was || RC.PRESET_ORDER.some((x) => PR[x].name === e.name)) e.name = PR[k].name;
+        e.icon = PR[k].icon; e.ck = k;
+      } else if (e.ck !== 'custom' && !RC.hexOk(e.hex)) e.hex = '#4fb06f';
+      render();
+    },
+    name(v) { RX.ed.name = String(v).slice(0, 24); previewSoon(); },
+    icon(k) { RX.ed.icon = k; render(); },
+    color(k) { RX.ed.ck = k; render(); },
+    hex(v) { v = String(v || '').trim(); if (/^[0-9a-f]{6}$/i.test(v)) v = '#' + v; if (!RC.hexOk(v)) return T('Mã màu phải dạng #RRGGBB'); RX.ed.hex = v.toLowerCase(); RX.ed.ck = 'custom'; render(); },
+    async send() {
+      const e = RX.ed, id = RX.cur;
+      const r = await call('rel_request', { p_friend: id, p_kind: e.kind, p_name: e.name, p_icon: e.icon, p_color_key: e.ck, p_color_hex: e.ck === 'custom' ? e.hex : null });
+      if (!r) return;
+      push(id, 'relreq-' + r.id, '💌 Lời mời relationship', `${myName()} muốn tạo relationship "${String(e.name).slice(0, 24)}" với bạn. Vào game để trả lời nhé`);
+      T('Đã gửi lời mời'); RX.ed = null; await load(true); render(); decorate();
+    },
+    async accept() {
+      const rel = byOther(RX.cur); if (!rel) return;
+      const r = await call('rel_respond', { p_id: rel.id, p_accept: true }); if (!r) return;
+      push(RX.cur, 'relok-' + rel.id, '💞 Relationship được chấp nhận', `${myName()} đã chấp nhận relationship "${rel.type_name}" với bạn`);
+      T('💞 Đã chấp nhận'); await load(true); render(); decorate();
+    },
+    async decline() {
+      const rel = byOther(RX.cur); if (!rel) return;
+      const r = await call('rel_respond', { p_id: rel.id, p_accept: false }); if (!r) return;
+      T('Đã đóng lời mời'); await load(true); RX.ed = null; render(); decorate();
+    },
+    async save() {
+      const rel = byOther(RX.cur), e = RX.ed; if (!rel || !e) return;
+      const r = await call('rel_update', { p_id: rel.id, p_kind: e.kind, p_name: e.name, p_icon: e.icon, p_color_key: e.ck, p_color_hex: e.ck === 'custom' ? e.hex : null });
+      if (!r) return;
+      T('Đã lưu'); RX.ed = null; RX.tab = 'ov'; await load(true); render(); decorate();
+    },
+    async end() {
+      const rel = byOther(RX.cur); if (!rel) return;
+      if (!confirm('Kết thúc relationship này? XP, cấp độ và chuỗi sẽ mất, không khôi phục được.')) return;
+      const r = await call('rel_end', { p_id: rel.id }); if (!r) return;
+      T('Đã kết thúc relationship'); RX.ed = null; RX.tab = 'ov'; await load(true); render(); decorate();
+    },
+    async checkin() {
+      const rel = byOther(RX.cur); if (!rel) return;
+      const r = await call('rel_checkin', { p_rel: rel.id }); if (!r) return;
+      T(r.both ? `✅ Cả hai đã điểm danh: +${r.add + r.bonus} XP · chuỗi ${r.streak} ngày` : `✅ +${r.add} XP · chờ ${person(RX.cur).name} điểm danh để nhận thêm`);
+      levelMsg(person(RX.cur).name, r); await load(true); render(); decorate();
+    },
+    async claim(q) {
+      const rel = byOther(RX.cur); if (!rel) return;
+      const r = await call('rel_claim', { p_rel: rel.id, p_quest: q }); if (!r) return;
+      T(`🎯 +${r.add} XP`); levelMsg(person(RX.cur).name, r); await load(true); render();
+    },
+    go() { const id = RX.cur; mdl(); try { if (typeof tab !== 'undefined' && tab !== 'friends') { tab = 'friends'; R(); } } catch (e) { /* bỏ qua */ } setTimeout(() => { try { visitFriend(id); } catch (e) { /* bỏ qua */ } }, 150); },
+    async dl() {
+      const rel = byOther(RX.cur); if (!rel) return;
+      const a = document.createElement('a'); a.href = await cardURL(rel, 1); a.download = 'justaseed-relationship.png'; document.body.appendChild(a); a.click(); a.remove();
+    },
+    async share(kind) {
+      if (typeof dcSend !== 'function') return T('Chưa hỗ trợ chia sẻ lên Discord');
+      try {
+        if (kind === 'map') {
+          T('Đang tạo sơ đồ...'); const m = await buildMap();
+          if (!m.count) return T('Bạn chưa có relationship nào');
+          if (await dcSend('relmap', m.url, { count: m.count }, false)) T('Đã gửi yêu cầu. Bot sẽ đăng sơ đồ lên Discord trong giây lát!');
+          return;
+        }
+        const rel = byOther(RX.cur); if (!rel || rel.status !== 'active') return;
+        T('Đang gửi lên Discord...');
+        if (await dcSend('relcard', await cardURL(rel, 1), { rel_id: rel.id, type_name: rel.type_name }, false)) T('Đã gửi yêu cầu. Bot sẽ đăng card lên Discord trong giây lát!');
+      } catch (e) { T('Không gửi được: ' + ((e && e.message) || e)); }
+    },
+    async openMap() {
+      if (!UID()) return T('Hãy liên kết Discord');
+      RX.cur = null;
+      shell('<div id=rx-map>' + head('🕸️ Sơ đồ relationship') + '<p class=mut>Đang vẽ sơ đồ...</p></div>');
+      const m = await buildMap(); RX.mapUrl = m.url;
+      const root = document.getElementById('rx-map'); if (!root) return;
+      root.innerHTML = head('🕸️ Sơ đồ relationship') + (m.count ? `<img class=rx-card src="${m.url}" alt="Sơ đồ relationship"><div class=row style="flex-wrap:wrap;gap:6px;justify-content:flex-start;margin-top:8px"><button class=s onclick="RELX.share('map')">📣 Khoe lên Discord</button><button class=s onclick="RELX.dlMap()">⬇️ Lưu ảnh</button></div>` : '<p class=mut>Bạn chưa có relationship nào. Bấm nút 💞 cạnh một người bạn để bắt đầu.</p>');
+    },
+    dlMap() { if (!RX.mapUrl) return; const a = document.createElement('a'); a.href = RX.mapUrl; a.download = 'justaseed-so-do-relationship.png'; document.body.appendChild(a); a.click(); a.remove(); },
+    async inbox() {
+      shell('<div id=rx-inb>' + head('💌 Lời mời relationship') + '<p class=mut>Đang tải...</p></div>');
+      await load(true);
+      const pend = RX.list.filter((x) => x.status === 'pending');
+      const row = (x) => `<div class=row><span>${E[x.icon] || '💞'} <b>${H(x.type_name)}</b> · ${H(person(x.other).name)}<br><small class=mut>${x.requested_by === UID() ? 'Bạn đã gửi, đang chờ' : 'Đang chờ bạn trả lời'}</small></span><button class=p onclick="RELX.open('${x.other}')">Mở</button></div>`;
+      const root = document.getElementById('rx-inb'); if (root) root.innerHTML = head('💌 Lời mời relationship') + (pend.length ? pend.map(row).join('') : '<p class=mut>Không có lời mời nào.</p>');
+    },
+  };
+  window.RELX = api;
+
+  // ------------------------------------------------------------ nút trong danh sách bạn bè
+  function btnLabel(fid) {
+    const r = byOther(fid);
+    if (!r) return '💞';
+    if (r.status === 'active') return `${E[r.icon] || '💞'} Lv${RC.lvOf(r.xp)}`;
+    return r.requested_by === UID() ? '⏳' : '💌';
+  }
+  function decorate() {
+    try {
+      const root = document.getElementById('friend-content'); if (!root || !UID()) return;
+      let n = 0;
+      root.querySelectorAll('button[onclick^="visitFriend("]').forEach((b) => {
+        const row = b.parentElement;
+        if (!row || !row.querySelector('button[onclick^="favFriend("]')) return; // chỉ hàng bạn bè
+        const m = /visitFriend\('([^']+)'\)/.exec(b.getAttribute('onclick') || ''); if (!m) return;
+        n++;
+        let rb = b.previousElementSibling;
+        if (!(rb && rb.classList && rb.classList.contains('rx-btn'))) {
+          b.insertAdjacentHTML('beforebegin', `<button class="s rx-btn" onclick="RELX.open('${m[1]}')" aria-label="Relationship"></button> `);
+          rb = b.previousElementSibling;
+        }
+        const lbl = btnLabel(m[1]); if (rb.innerHTML !== lbl) rb.innerHTML = lbl;
+      });
+      if (!n) return;
+      const inc = incoming().length, top = root.querySelector('.rx-top');
+      const html = `<button class=s onclick="RELX.openMap()">🕸️ Sơ đồ relationship</button><button class=s onclick="RELX.inbox()">💌 Lời mời${inc ? ` (${inc})` : ''}</button>`;
+      if (!top) root.insertAdjacentHTML('afterbegin', `<div class="row rx-top" style="gap:6px;flex-wrap:wrap;justify-content:flex-start">${html}</div>`);
+      else if (top.innerHTML !== html) top.innerHTML = html;
+    } catch (e) { console.warn('[rel] decorate', e); }
+  }
+  let dT = null;
+  const decorateSoon = () => { clearTimeout(dT); dT = setTimeout(() => { if (document.getElementById('friend-content') && !RX.at) load(false).then(decorate); else decorate(); }, 150); };
+  try { new MutationObserver(() => { if (document.getElementById('friend-content')) decorateSoon(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) { /* bỏ qua */ }
+
+  // chip trên trang nhà bạn bè
+  function visitChip(id) {
+    try {
+      const card = document.querySelector('#friend-content .card'); if (!card || card.querySelector('.rx-chip')) return;
+      const r = byOther(id), t = r && r.status === 'active' ? `${E[r.icon] || '💞'} ${H(r.type_name)} · Lv${RC.lvOf(r.xp)}` : '💞 Tạo relationship';
+      const first = card.querySelector('.row'); if (first) first.insertAdjacentHTML('afterend', `<div class=rx-chip onclick="RELX.open('${id}')">${t}</div>`);
+    } catch (e) { /* bỏ qua */ }
+  }
+
+  // ------------------------------------------------------------ cộng XP từ hành động trong game
+  async function event(other, source) {
+    try {
+      if (!UID() || !SB() || !other) return;
+      if (!RX.at) await load(false);
+      let r = byOther(other);
+      if ((!r || r.status !== 'active') && Date.now() - RX.at > 60000) { await load(true); r = byOther(other); }
+      if (!r || r.status !== 'active') return;
+      const res = await SB().rpc('rel_add_xp', { p_other: other, p_source: source, p_ref: null });
+      const d = res && res.data; if (!d || !d.ok) return;
+      r.xp = d.total; RX.at = 0;
+      T(`${E[r.icon] || '💞'} +${d.add} XP relationship với ${person(other).name}`);
+      levelMsg(person(other).name, d);
+      decorateSoon();
+    } catch (e) { /* bỏ qua */ }
+  }
+  function watchToast(re) { // biết hành động có thành công không qua thông báo toast của game
+    const orig = window.toast; let hit = false;
+    window.toast = function (t) { try { if (re.test(String(t))) hit = true; } catch (e) { /* bỏ qua */ } return orig.apply(this, arguments); };
+    return { stop() { window.toast = orig; return hit; } };
+  }
+  let giftTo = null;
+  function hooks() {
+    try {
+      if (window.XB && !window.XB.__rx) { // tặng quà
+        window.XB.__rx = 1;
+        const pk = window.XB.pick, sd = window.XB.send;
+        window.XB.pick = function (id) { giftTo = id; return pk.apply(this, arguments); };
+        window.XB.send = async function () {
+          const to = giftTo, w = watchToast(/Đã tặng/);
+          try { return await sd.apply(this, arguments); } finally { if (w.stop()) event(to, 'gift'); }
+        };
+      }
+      if (window.MKT && !window.MKT.__rx) { // mua đồ ở sạp của bạn
+        window.MKT.__rx = 1;
+        const bu = window.MKT.buy;
+        window.MKT.buy = async function (u) {
+          const w = watchToast(/^Đã mua /);
+          try { return await bu.apply(this, arguments); } finally { if (w.stop()) event(u, 'buy'); }
+        };
+      }
+      if (typeof window.postWall === 'function' && !window.postWall.__rx) { // ký tường
+        const pw = window.postWall;
+        window.postWall = async function (to) {
+          const w = watchToast(/Đã ký tường/);
+          try { return await pw.apply(this, arguments); } finally { if (w.stop()) event(to, 'wall'); }
+        };
+        window.postWall.__rx = 1;
+      }
+      if (typeof window.visitFriend === 'function' && !window.visitFriend.__rx) { // thăm nhà
+        const vf = window.visitFriend;
+        window.visitFriend = async function (id) {
+          const r = await vf.apply(this, arguments);
+          try { if (!RX.at) await load(false); visitChip(id); event(id, 'visit'); } catch (e) { /* bỏ qua */ }
+          return r;
+        };
+        window.visitFriend.__rx = 1;
+      }
+    } catch (e) { console.warn('[rel] hooks', e); }
+  }
+  setInterval(hooks, 2000); setTimeout(hooks, 500);
+
+  // thăm dò lời mời mới
+  async function poll() {
+    if (!UID() || document.hidden) return;
+    await load(true);
+    const n = incoming().length;
+    if (RX.inc >= 0 && n > RX.inc) { const x = incoming()[n - 1]; T(`💌 ${person(x.other).name} muốn tạo relationship với bạn`); }
+    RX.inc = n; decorate();
+  }
+  setInterval(poll, 45000); setTimeout(poll, 5000);
+})();
+
 </script>
 </body></html>

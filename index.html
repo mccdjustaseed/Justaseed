@@ -10042,8 +10042,8 @@ function dgName(id,mn){id=String(id);
 function dgBody(c,hasTh){c=String(c==null?'':c);
  let mn='';const f=c.match(/\|\s*([^\n|]+?)\s+bạn vừa/)||c.match(/∟\s*([^\n┐]+?)\s*┐/)||c.match(/∟\s*([^\n]+?)\s*[┐┘]/);if(f)mn=f[1].replace(/[*_~`]/g,'').trim();
  const th=hasTh?'<span class=dgth></span>':'';
- const lines=c.split('\n');let k=lines.findIndex(l=>/<@!?\d+>/.test(l));
- if(k<0)return th+dgTxt(c,mn);
+ const lines=c.split('\n').filter(l=>!/mầm non/i.test(l));let k=lines.findIndex(l=>/<@!?\d+>/.test(l));
+ if(k<0)return th+dgTxt(lines.join('\n'),mn);
  return '<div>'+dgTxt(lines.slice(0,k).join('\n'),mn)+'</div>'+th+dgTxt(lines.slice(k).join('\n'),mn)}
 function dgImg(el){try{const w=el.naturalWidth,h=el.naturalHeight;if(!w||!h||w/h>=1.8)return;
  const t=el.closest('.card').querySelector('.dgth');if(t&&!t.firstChild){t.appendChild(el);el.className='dgi dgi-t'}}catch(e){}}
@@ -10180,7 +10180,7 @@ const css=document.createElement('style');css.textContent=
 +'.skcv{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--ln)}.skw a{color:var(--g3)}'
 +'.skst{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.72rem;font-weight:700;color:#fff;background:var(--g2);vertical-align:1px}.skst.soon{background:#e8a33d}';
 css.textContent+='.dgt{font-size:.9rem;line-height:1.5;word-break:break-word}.dgt a{word-break:break-all}.dgc{margin:8px 0 4px;padding:4px 10px;background:var(--bg);border:1px solid var(--ln);border-left:4px solid var(--g2);border-radius:8px;font:700 .76rem/1.35 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:var(--g3)}.dgic{padding:1px 5px;background:var(--bg);border-radius:5px;font:.82em ui-monospace,Menlo,monospace}.dgq{display:inline-block;border-left:3px solid var(--ln);padding-left:8px;color:var(--mut)}.dgsp{background:var(--ink);color:transparent;border-radius:4px;cursor:pointer}.dgsp.on{background:var(--bg);color:inherit}';
-css.textContent+='.dge{display:inline-block;width:1.4em;height:1.4em;vertical-align:-.3em;object-fit:contain}.dgi{display:block;max-width:100%;border-radius:12px;margin-top:8px;pointer-events:none;-webkit-touch-callout:none;user-select:none}.dgth{float:right;margin:0 0 6px 10px}.dgth:empty{display:none}.dgm{background:rgba(88,101,242,.16);color:#5865f2;border-radius:4px;padding:0 3px;font-weight:600}.dgi-t{width:84px;max-width:30vw;margin:0;image-rendering:pixelated}';
+css.textContent+='.dge{display:inline-block;width:1.4em;height:1.4em;vertical-align:-.3em;object-fit:contain}.dgi{display:block;max-width:100%;border-radius:12px;margin-top:8px;pointer-events:none;-webkit-touch-callout:none;user-select:none}.dgth{float:right;margin:0 0 6px 10px}.dgth:empty{display:none}.dgm{background:var(--g);color:var(--g3);border-radius:4px;padding:0 3px;font-weight:600}.dgi-t{width:84px;max-width:30vw;margin:0;image-rendering:pixelated}';
 css.textContent+='@media(max-width:899px){nav.fx button[data-t=sky]{display:none!important}}@media(min-width:900px){#sdtabs button[onclick*="\'sky\'"]{display:none!important}}'
 +'#sknw{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 10px);z-index:80;width:min(420px,calc(100% - 20px));display:flex;flex-direction:column;gap:8px;pointer-events:none}'
 +'.sknb{pointer-events:auto;display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:18px;background:var(--card);color:var(--ink);border:2px solid var(--g2);box-shadow:0 10px 28px rgba(20,70,40,.4);cursor:pointer;animation:sknin .3s ease-out;transition:opacity .25s,transform .25s}'

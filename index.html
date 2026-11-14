@@ -5306,21 +5306,30 @@ async function up(force){
  if(!window.DISCORD_OK||!currentUser||!CS.ready||CS.busy||CS.off||CS.uid!=currentUser.id)return;
  const j=cj();if(!force&&j===CS.last)return;
  CS.busy=1;
- try{const code=await enc(j),r=await supabaseClient.from('game_saves').upsert({user_id:currentUser.id,data:code,xp:Math.round(s.xp||0),day:s.day||1,money:Math.round(s.money||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
-  if(r&&r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: kiểm tra bảng game_saves trên Supabase (chạy justaseed-game-saves.sql)')}}else{CS.last=j;CS.t=Date.now()}}catch(e){}
+ try{const code=await enc(j),nr=(CS.rev||0)+1,row={user_id:currentUser.id,data:code,xp:Math.round(s.xp||0),day:s.day||1,money:Math.round(s.money||0),updated_at:new Date().toISOString()};
+  let r;
+  if(CS.norev){r=await supabaseClient.from('game_saves').upsert(row,{onConflict:'user_id'})}
+  else if(CS.hasRow){r=await supabaseClient.from('game_saves').update(Object.assign({rev:nr},row)).eq('user_id',currentUser.id).eq('rev',CS.rev||0).select('user_id');
+   if(r&&!r.error&&(!r.data||!r.data.length)){CS.uid=null;CS.ready=0;CS.retry=0;CS.busy=0;return}} /* bot đã sửa save trước: tải lại bản đám mây */
+  else{r=await supabaseClient.from('game_saves').upsert(Object.assign({rev:nr},row),{onConflict:'user_id'})}
+  if(r&&r.error){if(/\brev\b/.test(r.error.message||'')&&!CS.norev){CS.norev=1}else if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: kiểm tra bảng game_saves trên Supabase (chạy justaseed-game-saves.sql)')}}
+  else{CS.last=j;CS.t=Date.now();if(!CS.norev){CS.rev=nr;CS.hasRow=1;try{localStorage.setItem('jsRev_'+currentUser.id,String(nr))}catch(e){}}}}catch(e){}
  CS.busy=0}
 async function sync(){
  if(!window.DISCORD_OK||!currentUser)return;const uid=currentUser.id;CS.uid=uid;CS.ready=0;
  let row=null;
- try{const r=await supabaseClient.from('game_saves').select('data,xp,day,money').eq('user_id',uid).maybeSingle();
+ try{const r=await supabaseClient.from('game_saves').select('data,xp,day,money,rev').eq('user_id',uid).maybeSingle();
+  if(r.error&&/\brev\b/.test(r.error.message||'')){CS.norev=1;CS.uid=null;CS.retry=0;return}
   if(r.error){if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: kiểm tra bảng game_saves trên Supabase (chạy justaseed-game-saves.sql)')}else{CS.uid=null;CS.retry=Date.now()}return}
   row=r.data}catch(e){CS.uid=null;CS.retry=Date.now();return}
  if(!currentUser||currentUser.id!=uid)return;
  if(row&&row.data){
   const lx=s.xp||0,ld=s.day||1,cx=row.xp||0,cd=row.day||1;
-  if(cx>lx||(cx==lx&&cd>ld)){
+  const cr=+row.rev||0;let lr=0;try{lr=+localStorage.getItem('jsRev_'+uid)||0}catch(e){}
+  CS.rev=cr;CS.hasRow=1;
+  if(cr>lr||cx>lx||(cx==lx&&cd>ld)){
    try{const o=await qrParse(row.data);try{localStorage.setItem('jas2_bak',JSON.stringify(s))}catch(e){}
-    QRO=o;qrDo();save();CS.last=cj();CS.ready=1;CS.t=Date.now();toast('☁️ Đã khôi phục tiến trình từ tài khoản Discord');return}
+    QRO=o;qrDo();save();CS.last=cj();CS.ready=1;CS.t=Date.now();try{localStorage.setItem('jsRev_'+uid,String(cr))}catch(e){}toast('☁️ Đã khôi phục tiến trình từ tài khoản Discord');return}
    catch(e){CS.off=1;warn('Không đọc được bản lưu đám mây, vẫn giữ tiến trình trong máy');return}
   }
  }

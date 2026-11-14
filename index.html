@@ -5298,7 +5298,7 @@ setInterval(()=>{
  if(!window.DISCORD_OK||!currentUser){CS.uid=null;CS.ready=0;CS.off=0;return}
  if(CS.off)return;
  if(CS.uid!=currentUser.id&&!CS.syncing&&Date.now()-CS.retry>15000){CS.syncing=1;sync().finally(()=>CS.syncing=0);return}
- if(CS.ready&&Date.now()-CS.t>20000)up()},3000);
+ if(CS.ready&&Date.now()-CS.t>8000)up()},3000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden'){try{save()}catch(e){}up()}});
 addEventListener('pagehide',()=>{up()});
 CS.flush=async function(){
@@ -9228,7 +9228,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
 /* ===== Cầu nối Discord bot -> game: nhận lệnh từ bảng bot_actions (cần chạy economy_setup.sql) =====
    Game là nơi duy nhất sửa tiền/kho; bot chỉ xếp lệnh vào hàng đợi, game kiểm tra rồi mới thực hiện. */
 (function(){
- const TTL={credit:0,transfer:6*3600e3,restock:15*60e3,open_day:15*60e3,hire_day:15*60e3,hire_month:15*60e3};
+ const TTL={sync:20e3,credit:0,transfer:6*3600e3,restock:15*60e3,open_day:15*60e3,hire_day:15*60e3,hire_month:15*60e3};
  const sb=()=>typeof supabaseClient!='undefined'?supabaseClient:null;
  const cloudOk=()=>{try{return !!(window.CLOUD&&CLOUD.ready&&CLOUD.uid===currentUser.id)}catch(e){return false}};
  const ready=()=>{try{return !!(sb()&&typeof currentUser!='undefined'&&currentUser&&window.DISCORD_OK&&typeof s!='undefined'&&s&&typeof scr!='undefined'&&scr=='game'&&cloudOk())}catch(e){return false}};
@@ -9240,6 +9240,12 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  async function apply(a){
   const p=a.payload||{};
   switch(a.kind){
+   case 'sync':{ /* bot cần số liệu mới nhất: lưu ngay lên đám mây */
+    try{save()}catch(e){}
+    const ok=window.CLOUD&&CLOUD.flush?await CLOUD.flush():false;
+    if(!ok)throw new Error('Chưa lưu được lên đám mây');
+    return 'ok';
+   }
    case 'credit':{
     const amt=Math.floor(+p.amt);
     if(!(amt>=1&&amt<=5000000))throw new Error('Số tiền không hợp lệ');
@@ -9344,7 +9350,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    RTB=sb().channel('bot-actions-'+RTBU).on('postgres_changes',{event:'INSERT',schema:'public',table:'bot_actions',filter:'user_id=eq.'+RTBU},()=>run()).subscribe();
   }catch(e){}
  }
- setInterval(()=>{watch();if(!document.hidden)run()},8000);
+ setInterval(()=>{watch();if(!document.hidden)run()},4000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(run,600)});
  setTimeout(()=>{watch();run()},7000);
 })();

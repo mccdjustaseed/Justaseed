@@ -1047,7 +1047,7 @@ if(s.mkn)t.push(s.mkn);if(s.lo)t.push('🤝 Mấy hôm nay tiệm lỗ nên ch�
 if(!t.length)t.push('Giá bán mặc định là vốn + 215%. Khách mặc cả nhiều hơn nếu bạn tăng giá quá cao. Chợ Quảng Bá đắt hơn Vườn Đà Lạt 25%.');return t.join(' ')}
 function nxt(){if(s.ph=='end')return['shop','Xem tổng kết'];if(s.ph=='open')return['shop','Quay lại quầy'];return menu().length?['shop','Mở gian hàng']:['buy','Nhập hàng đầu tiên']}
 function R(){if(scr!='game'){save();return}const ni=s.ph=='open'?2:s.ph=='end'?3:menu().length?1:0,sp=['Nhập hàng','Đặt giá','Bán hàng','Tổng kết'].map((x,i)=>`<span class="chip ${i==ni?'on':''}">${x}</span>`).join(''),cc=cartCount();
-document.getElementById('app').innerHTML=`<div class=hd><div><h2 style="display:flex;gap:6px;align-items:center">${catF(38)}${esc(s.name)}</h2><b class=bal>${$(s.money)}</b></div><span><button class=s style="padding:2px" onclick="pfmT()" aria-label="Hồ sơ">${avH(30)}</button> <button class=s id=nbell onclick="ntm()" aria-label="Thông báo">${ic('bell')}<i class=rdot></i></button> <button class="s bk" onclick="goMenu()" aria-label="Màn hình chính">${ic('home')}</button> <button class=s onclick="toggleDark(event)">${ic(s.dark?'sun':'moon')}</button> <button class=s onclick="mdl('s')" aria-label="Cài đặt">${ic('gear')}</button></span></div><nav role=tablist class=fx>${TABS.map(t=>{const isBeta=(t[0]==='team');return `<button role=tab class="${tab==t[0]?'on':''}" onclick="tab='${t[0]}';R()">${ic(t[1],20)}<span>${t[2]}${isBeta?' <small class=beta>BETA</small>':''}</span>${t[0]=='buy'&&cc?'<b class=bd>'+cc+'</b>':''}</button>`}).join('')}</nav><main id=tc>${V[tab]()}</main>`;{const n=document.querySelector('nav'),a=n&&n.querySelector('.on');if(a)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;if(tab!==LT){const ix=k=>TABS.findIndex(x=>x[0]==k),d=ix(tab)<ix(LT)?-1:1;LT=tab;const m=document.getElementById('tc');m.style.setProperty('--dx',d*36+'px');m.classList.add('tin');if(a)a.classList.add('pop')}}
+document.getElementById('app').innerHTML=`<div class=hd><div><h2 style="display:flex;gap:6px;align-items:center">${catF(38)}${esc(s.name)}</h2><b class=bal>${$(s.money)}</b></div><span><button class=s style="padding:2px" onclick="pfmT()" aria-label="Hồ sơ">${avH(30)}</button> <button class=s id=nbell onclick="ntm()" aria-label="Thông báo">${ic('bell')}<i class=rdot></i></button> <button class="s bk" onclick="goMenu()" aria-label="Màn hình chính">${ic('home')}</button> <button class=s onclick="toggleDark(event)">${ic(s.dark?'sun':'moon')}</button> <button class=s onclick="mdl('s')" aria-label="Cài đặt">${ic('gear')}</button></span></div><nav role=tablist class=fx>${TABS.map(t=>{const isBeta=(t[0]==='team');return `<button role=tab data-t="${t[0]}" class="${tab==t[0]?'on':''}" onclick="tab='${t[0]}';R()">${ic(t[1],20)}<span>${t[2]}${isBeta?' <small class=beta>BETA</small>':''}</span>${t[0]=='buy'&&cc?'<b class=bd>'+cc+'</b>':''}</button>`}).join('')}</nav><main id=tc>${V[tab]()}</main>`;{const n=document.querySelector('nav'),a=n&&n.querySelector('.on');if(a)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;if(tab!==LT){const ix=k=>TABS.findIndex(x=>x[0]==k),d=ix(tab)<ix(LT)?-1:1;LT=tab;const m=document.getElementById('tc');m.style.setProperty('--dx',d*36+'px');m.classList.add('tin');if(a)a.classList.add('pop')}}
 const tt=s.tut>=0&&s.tut<T.length?T[s.tut]:null;document.getElementById('tutw').innerHTML=tt?`<div id=tut><b>${tt[0]} (${s.tut+1}/${T.length})</b><br>${tt[1]}<div class=row><button class=tskip onclick="s.tut=-1;R()">✕ Bỏ qua hướng dẫn</button><button class=p onclick="s.tut++;tab='${T[Math.min(s.tut+1,T.length-1)][2]}';R()">Tiếp</button></div></div>`:'';save()}
 function th(){document.documentElement.dataset.theme=s.dark?'dark':'light';R()}
 /* ===== ĐÁNH GIÁ ===== */
@@ -5262,7 +5262,7 @@ if(window.SL)SL.menu=function(){document.getElementById('modal').innerHTML='<div
 </script>
 <script>
 /* V28: tab Giá bán xuống cuối thanh tab */
-(function(){const fix=()=>{const i=TABS.findIndex(x=>x[0]=='price');if(i>=0&&i!==TABS.length-1){const x=TABS.splice(i,1)[0];TABS.push(x)}};fix();const o=R;R=function(){fix();return o.apply(this,arguments)}})();
+(function(){const fix=()=>{const i=TABS.findIndex(x=>x[0]=='price');if(i>=0&&i!==TABS.length-1){const x=TABS.splice(i,1)[0];TABS.push(x)}const k=TABS.findIndex(x=>x[0]=='sky');if(k>=0&&k!==TABS.length-1)TABS.push(TABS.splice(k,1)[0])};fix();const o=R;R=function(){fix();return o.apply(this,arguments)}})();
 </script>
 <script>
 /* ===== V28: đồng bộ tiến trình với tài khoản Discord (bảng Supabase game_saves) ===== */
@@ -9516,5 +9516,493 @@ if(!vis){h.style.transition='none';box(h,b);h.offsetWidth;h.style.transition=''}
 document.addEventListener('mouseout',e=>{const n=e.target.closest&&e.target.closest('nav');if(n&&!n.contains(e.relatedTarget)){const h=n.querySelector('.nvH');if(h)h.style.opacity=0}},true);
 setTimeout(()=>{try{place()}catch(e){}},300);
 }catch(e){console.error('navanim',e)}})();
+</script>
+<script>
+/* ===== v64: TAB SKY (thanh tab chính) + danh mục SKY SHARD =====
+   Dữ liệu Shard Eruption của "Sky: Children of the Light".
+   Thuật toán lấy từ https://github.com/PlutoyDev/sky-shards (MIT, src/data/shard.ts).
+   Repo không có REST API: nó tự tính màu / giờ / địa điểm shard theo ngày (giờ Los Angeles),
+   nên ở đây port nguyên logic sang JS, chạy offline, không cần mạng hay key.
+   Thêm danh mục mới: push vào SKYCATS + thêm hàm render trong CATV. */
+(function(){
+Object.assign(I,{
+ sky:'M6.5 18a4 4 0 01-.6-7.95 6 6 0 0111.5-1.3A4.6 4.6 0 0117.5 18z',
+ shard:'M12 2l6 6-6 14L6 8zM6 8h12M12 2l-2.5 6L12 22l2.5-14z',
+ clock:'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2',
+ cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'
+});
+const E=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TZ='America/Los_Angeles',H=3600000,MIN=60000;
+const WD={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:7};
+const fP=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric',weekday:'short'});
+function laP(ms){const o={};fP.formatToParts(new Date(ms)).forEach(p=>o[p.type]=p.value);return{y:+o.year,m:+o.month,d:+o.day,h:(+o.hour)%24,mi:+o.minute,s:+o.second,wd:WD[o.weekday]}}
+const laOff=ms=>{const t=Math.floor(ms/1000)*1000,p=laP(t);return Date.UTC(p.y,p.m-1,p.d,p.h,p.mi,p.s)-t};
+const inDST=ms=>laOff(ms)===-7*H;
+function laMid(y,m,d){const g=Date.UTC(y,m-1,d),t1=g-laOff(g);return g-laOff(t1)}
+
+/* ---- cấu hình shard (đúng như shard.ts) ---- */
+const REALMS=['prairie','forest','valley','wasteland','vault'];
+const RN={prairie:'Daylight Prairie',forest:'Hidden Forest',valley:'Valley of Triumph',wasteland:'Golden Wasteland',vault:'Vault of Knowledge'};
+const MN={'prairie.butterfly':'Butterfly Fields','prairie.village':'Village Islands','prairie.bird':'Bird Nest','prairie.island':'Sanctuary Island','prairie.cave':'Cave',
+ 'forest.brook':'Forest Brook','forest.boneyard':'Boneyard','forest.end':'Forest Garden','forest.tree':'Treehouse','forest.sunny':'Elevated Clearing',
+ 'valley.rink':'Ice Rink','valley.dreams':'Village of Dreams','valley.hermit':'Hermit Valley',
+ 'wasteland.temple':'Broken Temple','wasteland.battlefield':'Battlefield','wasteland.graveyard':'Graveyard','wasteland.crab':'Crab Fields','wasteland.ark':'Forgotten Ark',
+ 'vault.starlight':'Starlight Desert','vault.jelly':'Jellyfish Cove'};
+const LAND=8*MIN+40000,DUR=4*H,BI=8*H,RI=6*H;
+const INFO=[
+ {no:[6,7],iv:BI,off:H+50*MIN,maps:['prairie.butterfly','forest.brook','valley.rink','wasteland.temple','vault.starlight']},
+ {no:[7,1],iv:BI,off:2*H+10*MIN,maps:['prairie.village','forest.boneyard','valley.rink','wasteland.battlefield','vault.starlight']},
+ {no:[1,2],iv:RI,off:7*H+40*MIN,maps:['prairie.cave','forest.end','valley.dreams','wasteland.graveyard','vault.jelly'],ac:2},
+ {no:[2,3],iv:RI,off:2*H+20*MIN,maps:['prairie.bird','forest.tree','valley.dreams','wasteland.crab','vault.jelly'],ac:2.5},
+ {no:[3,4],iv:RI,off:3*H+30*MIN,maps:['prairie.island','forest.sunny','valley.hermit','wasteland.ark','vault.jelly'],ac:3.5}];
+const ACO={'forest.end':2.5,'valley.dreams':2.5,'forest.tree':3.5,'vault.jelly':3.5};
+
+function shardOn(y,m,d){
+ const dow=(new Date(Date.UTC(y,m-1,d)).getUTCDay())||7,red=d%2===1,ri=(d-1)%5,
+  gi=red?((((d-1)/2)%3)+2):((d/2)%2),c=INFO[gi],map=c.maps[ri],mid=laMid(y,m,d);
+ let first=mid+c.off;
+ if(dow===7&&inDST(mid)!==inDST(first))first+=inDST(first)?-H:H;
+ const occ=[0,1,2].map(i=>{const st=first+c.iv*i;return{start:st,land:st+LAND,end:st+DUR}});
+ return{y,m,d,dow,red,has:!c.no.includes(dow),realm:REALMS[ri],map,ac:red?(ACO[map]!=null?ACO[map]:c.ac):null,occ,lastEnd:occ[2].end}
+}
+const addD=(y,m,d,n)=>{const x=new Date(Date.UTC(y,m-1,d+n));return[x.getUTCFullYear(),x.getUTCMonth()+1,x.getUTCDate()]};
+function nextShard(now){const p=laP(now);for(let k=0;k<20;k++){const a=addD(p.y,p.m,p.d,k),f=shardOn(a[0],a[1],a[2]);if(f.has&&now<f.lastEnd)return f}return null}
+
+/* ---- định dạng ---- */
+const DOW=['','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy','Chủ nhật'],p2=n=>String(n).padStart(2,'0');
+const hm=ms=>new Date(ms).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+const cd=ms=>{const t=Math.max(0,Math.floor(ms/1000)),h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;
+ return h>=24?Math.floor(h/24)+' ngày '+(h%24)+'g '+p2(m)+'p':(h?h+'g ':'')+p2(m)+'p '+p2(s)+'s'};
+const cdS=ms=>'<span class=skcd data-cd="'+ms+'"></span>';
+const tm=(ms,f)=>{const x=new Date(ms),o=(x.getDate()!=f.d||x.getMonth()+1!=f.m)?' <small class=mut>'+x.getDate()+'/'+(x.getMonth()+1)+'</small>':'';return hm(ms)+o};
+const badge=f=>'<span class="skb '+(f.red?'r':'k')+'">'+ic('shard',15)+(f.red?'Shard đỏ':'Shard đen')+'</span>';
+const reward=f=>f.red?'<span class=mut>Thưởng: '+f.ac+' Ascended Candle</span>':'<span class=mut>Thưởng: nến thường (wax)</span>';
+function occRow(o,f,now,i){
+ let st,txt;
+ if(now>=o.end){st='done';txt='Đã kết thúc'}
+ else if(now>=o.land){st='on';txt='Đang diễn ra · kết thúc sau '+cdS(o.end)}
+ else if(now>=o.start){st='soon';txt='Đã xuất hiện · đáp xuống sau '+cdS(o.land)}
+ else{st='wait';txt='Bắt đầu sau '+cdS(o.start)}
+ return '<div class="skr '+st+'"><div><b>Lượt '+(i+1)+'</b> · '+tm(o.start,f)+' → '+tm(o.end,f)+'<br><span class=mut>Đáp xuống lúc '+tm(o.land,f)+'</span></div><div class=sks>'+txt+'</div></div>'}
+
+/* ---- ảnh lịch tháng (vẽ canvas, tự đổi theo tháng vì tính từ thuật toán) ---- */
+const hmLA=ms=>{const p=laP(ms);return p2(p.h)+':'+p2(p.mi)};
+function drawMonth(cv,y,m){
+ const CW=180,CH=118,TOP=100,WH=40,W=CW*7,fi=(new Date(Date.UTC(y,m-1,1)).getUTCDay()+6)%7,dim=new Date(Date.UTC(y,m,0)).getUTCDate(),rows=Math.ceil((fi+dim)/7),HT=TOP+WH+rows*CH+14;
+ cv.width=W;cv.height=HT;const g=cv.getContext('2d'),F='Onest,"Segoe UI",Arial,sans-serif',lp=laP(Date.now());
+ g.fillStyle='#fffdf7';g.fillRect(0,0,W,HT);
+ g.fillStyle='#244033';g.textBaseline='alphabetic';g.font='700 38px '+F;g.fillText('Lịch Shard Eruption · Tháng '+m+'/'+y,24,50);
+ g.font='400 19px '+F;g.fillStyle='#678a73';g.fillText('Giờ theo thiết bị của bạn · Đỏ: Red Shard (có Ascended Candle) · Đen: Black Shard',24,82);
+ const wd=['T2','T3','T4','T5','T6','T7','CN'];g.font='700 20px '+F;g.textAlign='center';
+ wd.forEach((w,i)=>{g.fillStyle='#4fb06f';g.fillRect(i*CW+2,TOP+4,CW-4,WH-8);g.fillStyle='#fff';g.fillText(w,i*CW+CW/2,TOP+WH-12)});
+ for(let d=1;d<=dim;d++){
+  const c=(fi+d-1)%7,r=Math.floor((fi+d-1)/7),x=c*CW+3,yy=TOP+WH+r*CH+3,w=CW-6,h=CH-6,f=shardOn(y,m,d);
+  const bg=!f.has?'#eef2ee':f.red?'#ffdbe5':'#2b2b36',fg=!f.has?'#8aa394':f.red?'#7a1f3a':'#ffffff';
+  g.fillStyle=bg;g.beginPath();g.roundRect?g.roundRect(x,yy,w,h,12):g.rect(x,yy,w,h);g.fill();
+  if(f.has&&f.red){g.strokeStyle='#e0446f';g.lineWidth=2;g.stroke()}
+  if(lp.y==y&&lp.m==m&&lp.d==d){g.strokeStyle='#388a55';g.lineWidth=5;g.stroke()}
+  g.fillStyle=fg;g.textAlign='left';g.font='700 22px '+F;g.fillText(d,x+10,yy+28);
+  g.textAlign='center';
+  if(!f.has){g.font='500 16px '+F;g.fillText('Nghỉ',x+w/2,yy+h/2+8);continue}
+  g.textAlign='right';g.font='700 15px '+F;g.fillText(f.red?f.ac+' AC':'Wax',x+w-10,yy+26);
+  const nm=MN[f.map];let fs=18;g.textAlign='center';g.font='700 '+fs+'px '+F;while(fs>11&&g.measureText(nm).width>w-14){fs--;g.font='700 '+fs+'px '+F}
+  g.fillText(nm,x+w/2,yy+66);
+  g.font='500 13px '+F;g.globalAlpha=.85;g.fillText(f.occ.map(o=>hm(o.start)).join(' · '),x+w/2,yy+94);g.globalAlpha=1}
+ cv.dataset.y=y;cv.dataset.m=m;cv.dataset.d=1}
+const monYM=()=>{const lp=laP(Date.now()),a=new Date(Date.UTC(lp.y,lp.m-1+S.mon,1));return[a.getUTCFullYear(),a.getUTCMonth()+1]};
+
+/* ---- trạng thái + danh mục ---- */
+const S={cat:'shard',off:0,open:false,mon:0};
+const SKYCATS=[['shard','shard','Sky Shard'],['clock','clock','Đồng hồ sự kiện'],['events','cal','Lịch sự kiện lớn'],['dg','chat','Daily Guild'],['size','ruler','Sky Size'],['snot','bell','Thông báo nổi']];
+const CATV={shard(){
+ const now=Date.now(),lp=laP(now),a=addD(lp.y,lp.m,lp.d,S.off),f=shardOn(a[0],a[1],a[2]),nx=nextShard(now);
+ let h='';
+ if(nx){const o=nx.occ.find(x=>now<x.end)||nx.occ[2],isToday=nx.y==lp.y&&nx.m==lp.m&&nx.d==lp.d;
+  h+='<div class="card skhi"><div class=row style="margin:0 0 6px"><b>Shard tiếp theo</b>'+badge(nx)+'</div>'
+   +'<div class=skmap>'+E(MN[nx.map])+'</div><div class=mut>'+E(RN[nx.realm])+' · '+reward(nx)+'</div>'
+   +'<div class=skbig>'+(now>=o.start?(now>=o.land?'Đang diễn ra · kết thúc sau ':'Đáp xuống sau ')+cdS(now>=o.land?o.end:o.land):'Bắt đầu sau '+cdS(o.start))+'</div>'
+   +'<div class=mut>'+(isToday?'Hôm nay':DOW[nx.dow]+' '+nx.d+'/'+nx.m)+' · '+tm(o.start,nx)+' (đáp '+tm(o.land,nx)+')</div></div>'}
+ const lab=S.off==0?'Hôm nay':S.off==1?'Ngày mai':S.off==-1?'Hôm qua':'',
+  dl=DOW[f.dow]+', '+p2(f.d)+'/'+p2(f.m)+'/'+f.y;
+ h+='<div class=card><div class=row style="margin:0"><b>Lịch trong ngày</b><button class=s onclick="SKY.tog()" aria-expanded="'+(S.open?'true':'false')+'" aria-label="Thu gọn hoặc mở rộng"><span style="display:inline-block;transform:rotate('+(S.open?'-90':'90')+'deg)">'+ic('chev',16)+'</span></button></div>';
+ if(!S.open){
+  h+='<div class=row style="margin:6px 0 0"><span>'+dl+'<br><span class=mut>'+(f.has?E(MN[f.map]):'Không có shard')+'</span></span>'+(f.has?badge(f):'')+'</div></div>'}
+ else{
+  h+='<div class=row style="margin:8px 0 6px"><button class=s onclick="SKY.day(-1)" aria-label="Ngày trước"><span style="display:inline-block;transform:rotate(180deg)">'+ic('chev',16)+'</span></button>'
+   +'<span style="text-align:center"><b>'+dl+'</b><br><span class=mut>'+lab+'</span></span>'
+   +'<button class=s onclick="SKY.day(1)" aria-label="Ngày sau">'+ic('chev',16)+'</button></div>'
+   +(S.off?'<div style="text-align:center;margin-bottom:6px"><button class=s onclick="SKY.day(0)">Về hôm nay</button></div>':'');
+  if(!f.has)h+='<p class=mut style="margin:6px 0 0;text-align:center">Ngày này không có shard eruption.</p></div>';
+  else h+='<div class=row style="margin:6px 0">'+badge(f)+reward(f)+'</div><div class=skmap>'+E(MN[f.map])+'</div><div class=mut style="margin-bottom:8px">'+E(RN[f.realm])+'</div>'
+   +f.occ.map((o,i)=>occRow(o,f,now,i)).join('')+'</div>'}
+ const ym=monYM();
+ h+='<div class=card><div class=row style="margin:0 0 6px"><button class=s onclick="SKY.mon(-1)" aria-label="Tháng trước"><span style="display:inline-block;transform:rotate(180deg)">'+ic('chev',16)+'</span></button>'
+  +'<span style="text-align:center"><b>Lịch shard tháng '+ym[1]+'/'+ym[0]+'</b><br><span class=mut>Tự đổi mỗi đầu tháng</span></span>'
+  +'<button class=s onclick="SKY.mon(1)" aria-label="Tháng sau">'+ic('chev',16)+'</button></div>'
+  +(S.mon?'<div style="text-align:center;margin-bottom:6px"><button class=s onclick="SKY.mon(0)">Về tháng này</button></div>':'')
+  +'<canvas id=skcv class=skcv></canvas>'
+  +'</div>';
+ 
+ return h}};
+
+/* ---- v65: ĐỒNG HỒ SỰ KIỆN + LỊCH SỰ KIỆN LỚN (tab Sky) ----
+   Sự kiện lặp (Dầu / Bánh bà / Rùa - sò, tên gốc Polluted Geyser / Grandma's Dinner / Sanctuary Turtle): cứ 2 giờ một lượt, tính theo giờ chẵn của Los Angeles (mốc reset 00:00).
+   Giờ chính xác là quy luật cộng đồng, các nguồn lệch nhau vài phút. Cần chỉnh thì sửa EVT:
+     off = số phút sau giờ chẵn, dur = số phút kéo dài.
+   Sự kiện lớn: sửa/thêm vào EVBIG. s = ngày bắt đầu, e = ngày kết thúc (tính cả ngày đó), theo ngày ở Los Angeles.
+     t: season | event | ts | bonus | update | comm.
+   Dữ liệu EVBIG cập nhật ngày 14/11/2026 (thông báo "This Month in Sky" tháng 11/2026 và wiki Sky). */
+const EVT=[
+ {n:'Dầu',p:'Sanctuary Islands · Daylight Prairie',off:5,dur:10},
+ {n:'Bánh bà',p:'Elevated Clearing · Hidden Forest',off:35,dur:10},
+ {n:'Rùa / sò',p:'Sanctuary Islands · Daylight Prairie',off:50,dur:10}];
+const EVBIG=[
+ {n:'Season of Pearl',t:'season',s:'2026-10-16',e:'2026-12-31',note:'mùa thứ 31'},
+ {n:'Days of Mischief',t:'event',s:'2026-10-23',e:'2026-11-12',note:'sự kiện Halloween'},
+ {n:'Traveling Spirit',t:'ts',s:'2026-11-05',e:'2026-11-08',note:'Hairtousle Teen (Forest)'},
+ {n:'Double Hearts',t:'bonus',s:'2026-11-13',e:'2026-11-26',note:'tim tặng qua Friendship / Constellation Menu nhân đôi'},
+ {n:'Traveling Spirits (Dreams + Performance)',t:'ts',s:'2026-11-13',e:'2026-11-26',note:'nhóm Spirit từ Season of Dreams và Season of Performance'},
+ {n:'Traveling Spirit',t:'ts',s:'2026-11-19',e:'2026-11-22'},
+ {n:'Community Eden Run',t:'comm',s:'2026-11-20',e:'2026-11-20',at:[2026,11,20,17,0]},
+ {n:'Update 35.5',t:'update',s:'2026-11-24',e:'2026-11-24'},
+ {n:'Days of Style',t:'event',s:'2026-11-27',e:'2026-12-10'}];
+const EVT_TYPE={season:['Mùa','#7a5bd6'],event:['Sự kiện','#e0446f'],ts:['Traveling Spirit','#e8a33d'],bonus:['Thưởng đôi','#2f8fb8'],update:['Cập nhật','#6b7a72'],comm:['Cộng đồng','#388a55']};
+let NXT=0;
+const laAt=(y,m,d,h,mi)=>{const g=Date.UTC(y,m-1,d,h,mi),t1=g-laOff(g);return g-laOff(t1)};
+const ymd=s=>s.split('-').map(Number);
+const ld=ms=>{const x=new Date(ms);return x.getDate()+'/'+(x.getMonth()+1)+(x.getFullYear()!=new Date().getFullYear()?'/'+x.getFullYear():'')};
+const fd=(s,y)=>{const a=ymd(s);return a[2]+'/'+a[1]+(a[0]!=y?'/'+a[0]:'')};
+const tmx=ms=>{const x=new Date(ms),n=new Date(),o=x.toDateString()!==n.toDateString()?' <small class=mut>'+x.getDate()+'/'+(x.getMonth()+1)+'</small>':'';return hm(ms)+o};
+
+CATV.clock=function(){
+ const now=Date.now(),lp=laP(now);let nxt=Infinity;
+ const rows=EVT.map(e=>{const a=[];
+  for(let k=-1;k<=1;k++){const d=addD(lp.y,lp.m,lp.d,k);for(let h=0;h<24;h+=2){const st=laAt(d[0],d[1],d[2],h,e.off);if(st+e.dur*MIN>now)a.push({st,en:st+e.dur*MIN})}}
+  a.sort((x,y)=>x.st-y.st);const on=a[0]&&a[0].st<=now?a[0]:null;
+  return{e,on,next:on?a[1]:a[0],list:a.slice(on?1:0,(on?1:0)+3),key:on?on.en:a[0].st}});
+ rows.sort((x,y)=>x.key-y.key);
+ let h='';
+ rows.forEach((r,i)=>{const t=r.on?r.on.en:r.next.st;nxt=Math.min(nxt,t);
+  h+='<div class="card'+(i==0?' skhi':'')+'"><div class=row style="margin:0 0 4px"><b>'+E(r.e.n)+'</b><span class="skst '+(r.on?'on':'soon')+'">'+(r.on?'Đang diễn ra':'Sắp diễn ra')+'</span></div>'
+   +'<div class=mut>'+E(r.e.p)+'</div>'
+   +'<div class=skbig>'+(r.on?'Kết thúc sau '+cdS(r.on.en):'Bắt đầu sau '+cdS(r.next.st))+'</div>'
+   +'<div class=mut>'+(r.on?'Lượt tới: ':'Các lượt tới: ')+r.list.map(x=>tmx(x.st)).join(' · ')+' (mỗi lượt '+r.e.dur+' phút)</div></div>'});
+ const dN=addD(lp.y,lp.m,lp.d,1),daily=laMid(dN[0],dN[1],dN[2]),ek=lp.wd==7?7:7-lp.wd,eN=addD(lp.y,lp.m,lp.d,ek),eden=laMid(eN[0],eN[1],eN[2]);
+ nxt=Math.min(nxt,daily,eden);NXT=isFinite(nxt)?nxt+1000:0;
+ h+='<div class=card><b>Reset</b>'
+  +'<div class=skr><div><b>Reset hằng ngày</b><br><span class=mut>Lúc '+tmx(daily)+'</span></div><div class=sks>còn '+cdS(daily)+'</div></div>'
+  +'<div class=skr><div><b>Eden reset hằng tuần</b><br><span class=mut>Lúc '+DOW[new Date(eden).getDay()||7]+' '+tmx(eden)+'</span></div><div class=sks>còn '+cdS(eden)+'</div></div></div>';
+ 
+ return h};
+
+CATV.events=function(){
+ const now=Date.now(),lp=laP(now);let nxt=Infinity;
+ const L=EVBIG.map(v=>{const a=ymd(v.s),b=ymd(v.e),c=addD(b[0],b[1],b[2],1);return Object.assign({st:laMid(a[0],a[1],a[2]),en:laMid(c[0],c[1],c[2])},v)});
+ const on=L.filter(v=>v.st<=now&&now<v.en).sort((a,b)=>a.en-b.en),
+  up=L.filter(v=>v.st>now).sort((a,b)=>a.st-b.st),
+  past=L.filter(v=>v.en<=now&&now-v.en<=21*864e5).sort((a,b)=>b.en-a.en);
+ L.forEach(v=>{if(v.st>now)nxt=Math.min(nxt,v.st);if(v.en>now)nxt=Math.min(nxt,v.en)});
+ NXT=isFinite(nxt)?nxt+1000:0;
+ const item=(v,k)=>{const t=EVT_TYPE[v.t]||EVT_TYPE.event;
+  return '<div class="skr'+(k=='past'?' done':'')+'" style="align-items:flex-start"><div><b>'+E(v.n)+'</b> <span class=skst style="background:'+t[1]+'">'+t[0]+'</span><br>'
+   +'<span class=mut>'+ld(v.st)+(ld(v.st)==ld(v.en-1)?'':' – '+ld(v.en-1))+(v.at?' · lúc '+tmx(laAt.apply(null,v.at)):'')+(v.note?' · '+E(v.note):'')+'</span></div>'
+   +'<div class=sks>'+(k=='on'?'Kết thúc sau '+cdS(v.en):k=='up'?'Bắt đầu sau '+cdS(v.st):'Đã kết thúc')+'</div></div>'};
+ const sec=(t,a,k,em)=>'<div class=card><b>'+t+'</b>'+(a.length?a.map(v=>item(v,k)).join(''):'<p class=mut style="margin:6px 0 0">'+em+'</p>')+'</div>';
+ return sec('Đang diễn ra',on,'on','Hiện không có sự kiện lớn nào.')
+  +sec('Sắp tới',up,'up','Chưa có sự kiện nào được thông báo thêm.')
+  +(past.length?sec('Vừa kết thúc',past,'past',''):'')
+  };
+
+/* ---- Sky Size: đo chiều cao qua mã QR tạo hình (port từ dream10325/sky-cotl-height-tool, MIT) ----
+   Công thức cộng đồng: cao hiện tại = 7.6 - 8.3*scale - 3*height; cao nhất (height=+2) = 1.6 - 8.3*scale;
+   thấp nhất (height=-2) = 13.6 - 8.3*scale; mặt nạ người lùn = 16.6 - 8.3*scale. Số càng nhỏ càng cao. */
+I.ruler='M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2';
+const SZ={txt:'',sc:'',ht:'',res:null,err:'',busy:0,name:'',bg:2,tc:'#ffffff',al:'center',rng:true,bgimg:null,pot:{n:0,h:null,cur:null},cust:false,hist:false,raw:false,dbg:''};
+const GR=[['#a18cd1','#fbc2eb'],['#ff9a9e','#fecfef'],['#667eea','#764ba2'],['#43e97b','#38f9d7'],['#f6d365','#fda085'],['#1f2a44','#4b3b6b']];
+const num=n=>(Math.round(n*1000)/1000).toFixed(3).replace('.',',');
+function szCalc(S,H){return{S,H,cur:7.6-8.3*S-3*H,tall:1.6-8.3*S,short:13.6-8.3*S,dwarf:16.6-8.3*S}}
+const fix=v=>{v=+v;return Math.abs(v)>100?v/1e10:v};
+function szFind(o,k,fz){if(!o||typeof o!='object')return;for(const x of Object.keys(o)){const lx=x.toLowerCase();if((fz?lx.includes(k):lx==k)&&typeof o[x]!='object'&&isFinite(+o[x])&&o[x]!=='')return +o[x]}
+ for(const x of Object.keys(o)){const r=szFind(o[x],k,fz);if(r!==undefined)return r}}
+const szB64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/').replace(/[\s]/g,'');while(s.length%4)s+='=';const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
+const szTxt=u=>new TextDecoder('utf-8',{fatal:false}).decode(u);
+function szLz4(src){const out=[];let i=0;const n=src.length;
+ while(i<n){const t=src[i++];let ll=t>>4;
+  if(ll==15){let x;do{if(i>=n)throw 0;x=src[i++];ll+=x}while(x==255)}
+  if(i+ll>n)throw 0;for(let k=0;k<ll;k++)out.push(src[i+k]);i+=ll;
+  if(i>=n)break;
+  if(i+1>=n)throw 0;const off=src[i]|src[i+1]<<8;i+=2;
+  if(!off||off>out.length)throw 0;
+  let ml=t&15;if(ml==15){let x;do{if(i>=n)throw 0;x=src[i++];ml+=x}while(x==255)}
+  ml+=4;if(out.length+ml>4e6)throw 0;
+  for(let k=0;k<ml;k++)out.push(out[out.length-off])}
+ return new Uint8Array(out)}
+async function szInfl(u,f){const ds=new DecompressionStream(f),w=ds.writable.getWriter();w.write(u).catch(()=>{});w.close().catch(()=>{});return new Uint8Array(await new Response(ds.readable).arrayBuffer())}
+function szExt(txt){
+ let S,H;
+ try{const j=JSON.parse(txt);if(j&&typeof j=='object'&&!Array.isArray(j)&&typeof j.s=='number'&&typeof j.h=='number'){S=j.s;H=j.h}
+  if(S===undefined)S=szFind(j,'scale');if(H===undefined)H=szFind(j,'height');if(S===undefined)S=szFind(j,'scale',1);if(H===undefined)H=szFind(j,'height',1)}catch(e){}
+  const rx=k=>{const r=new RegExp(String.raw`[\w"']*`+k+String.raw`[\w"']*\s*[:=]\s*["']?(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)`,'i').exec(txt);return r?+r[1]:undefined};
+ if(S===undefined)S=rx('scale');if(H===undefined)H=rx('height');
+ return(S!==undefined&&H!==undefined&&isFinite(S)&&isFinite(H))?[S,H]:null}
+const szPrev=t=>String(t).replace(/[\u0000-\u0008\u000e-\u001f\u007f-\u009f\ufffd]/g,'·').slice(0,400);
+async function szParse(inp){
+ let t=String(inp||'').trim();if(!t)throw new Error('Chưa có dữ liệu để đọc.');
+ const cands=[t],seen=new Set([t]),add=x=>{if(x&&!seen.has(x)){seen.add(x);cands.push(x)}};
+ const vals=[];
+ const m=/[?&/]o=([^&\s#]+)/.exec(t)||/^o=([^&\s#]+)/.exec(t);
+ if(m)vals.push(m[1]);
+ else{const q=/[?&][^=&\s#]+=([A-Za-z0-9+/_=%-]{16,})/g;let x;while((x=q.exec(t)))vals.push(x[1]);
+  const seg=t.split(/[?#]/)[0].split('/').pop();if(seg&&/^[A-Za-z0-9+/_=%-]{16,}$/.test(seg))vals.push(seg);
+  if(!vals.length&&/^[A-Za-z0-9+/_=%-]{16,}$/.test(t))vals.push(t)}
+ const work=vals.map(v=>[v,0]);
+ while(work.length){let[v,d]=work.shift();try{v=decodeURIComponent(v)}catch(e){}
+  let u;try{u=szB64(v)}catch(e){continue}
+  const tx=szTxt(u);add(tx);
+  try{add(szTxt(szLz4(u)))}catch(e){}
+  for(const f of ['gzip','deflate','deflate-raw']){try{const z=szTxt(await szInfl(u,f));add(z);if(d<2&&/^[A-Za-z0-9+/_=%-]{16,}$/.test(z.trim()))work.push([z.trim(),d+1])}catch(e){}}
+  if(d<2&&/^[A-Za-z0-9+/_=%-]{16,}$/.test(tx.trim()))work.push([tx.trim(),d+1])}
+ for(const c of cands){const r=szExt(c);if(r){const o=szCalc(fix(r[0]),fix(r[1]));o.raw=c;return o}}
+ const e=new Error('Không tìm thấy scale/height trong dữ liệu QR. Hãy dùng mã QR tạo hình (không phải QR kết bạn).');
+ e.dbg=cands.map((c,i)=>'['+(i?'giải mã '+i:'gốc')+'] '+szPrev(c)).join('\n');throw e}
+
+/* ---- đọc QR từ ảnh chụp màn hình ---- */
+let jq=null;
+const loadJq=()=>jq||(jq=new Promise((ok,no)=>{if(window.jsQR)return ok();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';sc.onload=()=>ok();sc.onerror=()=>{jq=null;no(new Error('Không tải được bộ đọc QR (cần mạng). Hãy dán link thay thế.'))};document.head.appendChild(sc)}));
+async function szQR(file){
+ const bmp=await createImageBitmap(file);
+ if('BarcodeDetector' in window){try{const r=await new BarcodeDetector({formats:['qr_code']}).detect(bmp);if(r&&r[0]&&r[0].rawValue)return r[0].rawValue}catch(e){}}
+ await loadJq();
+ for(const mx of [1400,900,2000]){
+  const k=Math.min(1,mx/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+  const g=c.getContext('2d');g.drawImage(bmp,0,0,c.width,c.height);const d=g.getImageData(0,0,c.width,c.height),r=window.jsQR(d.data,c.width,c.height);
+  if(r&&r.data)return r.data}
+ throw new Error('Không tìm thấy mã QR trong ảnh. Hãy chụp rõ mã QR tạo hình.')}
+
+/* ---- lịch sử (lưu trong save của game) ---- */
+const HL=()=>{if(!Array.isArray(s.skyh))s.skyh=[];return s.skyh};
+const sv=()=>{try{save()}catch(e){}};
+function setRes(r){SZ.res=r;SZ.err='';const L=HL(),i=L.findIndex(x=>x.S==r.S&&x.H==r.H);if(i>=0)L.splice(i,1);
+ L.unshift({t:Date.now(),S:r.S,H:r.H,n:SZ.name||''});if(L.length>20)L.length=20;sv();SZ.pot={n:0,h:null,cur:null};rd()}
+const tos=m=>{try{toast(m)}catch(e){}};
+
+/* ---- ảnh chia sẻ ---- */
+const szRR=(g,x,y,w,h,r)=>{g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()};
+const szSp=(g,cx,cy,r)=>{g.beginPath();g.moveTo(cx,cy-r);g.quadraticCurveTo(cx,cy,cx+r,cy);g.quadraticCurveTo(cx,cy,cx,cy+r);g.quadraticCurveTo(cx,cy,cx-r,cy);g.quadraticCurveTo(cx,cy,cx,cy-r);g.closePath();g.fill()};
+function drawShare(cv){
+ const r=SZ.res;if(!r)return;const W=1080,Hh=1080;cv.width=W;cv.height=Hh;const g=cv.getContext('2d'),F='Onest,"Segoe UI",Arial,sans-serif';
+ const light=SZ.tc=='#ffffff',tc=SZ.tc;
+ /* nền */
+ if(SZ.bg==-1&&SZ.bgimg){const im=SZ.bgimg,k=Math.max(W/im.width,Hh/im.height),w=im.width*k,h=im.height*k;g.drawImage(im,(W-w)/2,(Hh-h)/2,w,h);
+  const ov=g.createLinearGradient(0,0,0,Hh);ov.addColorStop(0,'rgba(0,0,0,.25)');ov.addColorStop(1,'rgba(0,0,0,.5)');g.fillStyle=ov;g.fillRect(0,0,W,Hh)}
+ else{const c=GR[SZ.bg]||GR[0],gr=g.createLinearGradient(0,0,W,Hh);gr.addColorStop(0,c[0]);gr.addColorStop(1,c[1]);g.fillStyle=gr;g.fillRect(0,0,W,Hh);
+  [[.15,.1,620,.38],[.95,.95,560,.28]].forEach(a=>{const rg=g.createRadialGradient(W*a[0],Hh*a[1],0,W*a[0],Hh*a[1],a[2]);rg.addColorStop(0,'rgba(255,255,255,'+a[3]+')');rg.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=rg;g.fillRect(0,0,W,Hh)})}
+ /* sao lấp lánh */
+ let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;g.fillStyle='#fff';
+ for(let i=0;i<46;i++){const x=rnd()*W,y=rnd()*Hh,q=rnd();g.globalAlpha=.25+rnd()*.5;if(q>.78)szSp(g,x,y,8+rnd()*10);else{g.beginPath();g.arc(x,y,1.5+rnd()*2.5,0,7);g.fill()}}
+ g.globalAlpha=1;
+ /* khung kính mờ */
+ szRR(g,60,60,W-120,Hh-120,56);g.fillStyle=light?'rgba(255,255,255,.16)':'rgba(255,255,255,.55)';g.fill();
+ g.lineWidth=2.5;g.strokeStyle=light?'rgba(255,255,255,.45)':'rgba(255,255,255,.85)';g.stroke();
+ szRR(g,78,78,W-156,Hh-156,40);g.lineWidth=1.5;g.strokeStyle=light?'rgba(255,255,255,.18)':'rgba(255,255,255,.5)';g.stroke();
+ /* chữ */
+ const al=SZ.al,x=al=='left'?130:al=='right'?W-130:W/2,off=al=='left'?20:al=='right'?-20:0;
+ g.textAlign=al;g.textBaseline='alphabetic';g.fillStyle=tc;
+ g.shadowColor=light?'rgba(0,0,0,.28)':'rgba(255,255,255,.5)';g.shadowBlur=14;g.shadowOffsetY=3;
+ g.globalAlpha=.9;szSp(g,x+off,150,20);g.globalAlpha=1;
+ let nm=SZ.name||'Sky Kid',fs=64;g.font='700 '+fs+'px '+F;while(fs>34&&g.measureText(nm).width>W-260){fs-=2;g.font='700 '+fs+'px '+F}
+ g.fillText(nm,x,246);
+ g.shadowBlur=0;g.shadowOffsetY=0;
+ g.font='600 28px '+F;g.globalAlpha=.8;try{g.letterSpacing='5px'}catch(e){}g.fillText('CHIỀU CAO HIỆN TẠI',x,330);try{g.letterSpacing='0px'}catch(e){}g.globalAlpha=1;
+ const big=num(r.cur),ny=SZ.rng?572:640;let bs=250;g.font='800 '+bs+'px '+F;while(bs>120&&g.measureText(big).width>W-260){bs-=8;g.font='800 '+bs+'px '+F}
+ g.shadowColor=light?'rgba(0,0,0,.3)':'rgba(255,255,255,.55)';g.shadowBlur=26;g.shadowOffsetY=6;g.fillText(big,x,ny);g.shadowBlur=0;g.shadowOffsetY=0;
+ /* thanh khoảng cao – thấp */
+ if(SZ.rng){
+  const bx=130,bw=W-260,by=690,bh=20,pos=Math.max(0,Math.min(1,(r.cur-r.tall)/(r.short-r.tall)));
+  szRR(g,bx,by,bw,bh,bh/2);const bg=g.createLinearGradient(bx,0,bx+bw,0);bg.addColorStop(0,'#4fb06f');bg.addColorStop(.5,'#f6d365');bg.addColorStop(1,'#e0446f');g.fillStyle=bg;g.fill();
+  const mx=bx+pos*bw,my=by+bh/2;
+  g.shadowColor='rgba(0,0,0,.3)';g.shadowBlur=12;g.shadowOffsetY=3;g.beginPath();g.arc(mx,my,25,0,7);g.fillStyle='#fff';g.fill();g.shadowBlur=0;g.shadowOffsetY=0;
+  g.beginPath();g.arc(mx,my,11,0,7);g.fillStyle='#e0446f';g.fill();
+  g.fillStyle=tc;g.textAlign='left';g.font='500 26px '+F;g.globalAlpha=.75;g.fillText('Cao nhất',bx,780);
+  g.textAlign='right';g.fillText('Thấp nhất',bx+bw,780);g.globalAlpha=1;
+  g.font='700 46px '+F;g.textAlign='left';g.fillText(num(r.tall),bx,836);g.textAlign='right';g.fillText(num(r.short),bx+bw,836)}
+ /* chân ảnh */
+ g.fillStyle=tc;g.textAlign='center';g.font='500 24px '+F;g.globalAlpha=.65;g.fillText('Sky: Children of the Light  ·  Justaseed',W/2,970);g.globalAlpha=1}
+
+/* ---- render danh mục ---- */
+const tgl=(k,t)=>'<button class="s '+(SZ[k]?'on2':'')+'" onclick="SKZ.t(\''+k+'\')">'+t+'</button>';
+CATV.size=()=>{
+ const r=SZ.res,L=HL();
+ let h='<div class=card><h3 style="margin:0 0 4px">Đo chiều cao Sky</h3>'
+  +'<p class=mut style="margin:0 0 8px">Trong game: Cài đặt → Tài khoản → Thông tin tài khoản → mã QR tạo hình (không phải QR kết bạn). Chụp màn hình rồi tải ảnh lên, hoặc dán link bắt đầu bằng sky.thatg.co/o=. Mọi tính toán chạy ngay trên máy bạn, không gửi dữ liệu đi đâu.</p>'
+  +'<textarea id=szt rows=3 style="width:100%" placeholder="Dán link https://sky.thatg.co/o=... vào đây" oninput="SKZ.in(\'txt\',this.value)">'+E(SZ.txt)+'</textarea>'
+  +'<div class=row style="justify-content:flex-start;flex-wrap:wrap;gap:6px;margin:8px 0 0"><button class=p onclick="SKZ.go()"'+(SZ.busy?' disabled':'')+'>'+(SZ.busy?'Đang đọc...':'Tính chiều cao')+'</button>'
+  +'<button class=s onclick="document.getElementById(\'szf\').click()">Chọn ảnh QR</button><input id=szf type=file accept="image/*" style="display:none" onchange="SKZ.file(this)"></div>'
+  +(SZ.err?'<p class=bad style="margin:8px 0 0">'+E(SZ.err)+'</p>'+(SZ.dbg?'<p class=mut style="margin:6px 0 2px;font-size:.78rem">Nội dung đọc được từ QR (gửi cho dev để chỉnh):</p><pre class=szpre>'+E(SZ.dbg)+'</pre>':''):'')
+  +'</div>';
+ if(r){
+  const pos=Math.max(0,Math.min(1,(r.cur-r.tall)/(r.short-r.tall)));
+  h+='<div class="card skhi"><div class=mut>Chiều cao hiện tại</div><div class=skbig style="font-size:1.8rem;margin:2px 0 8px">'+num(r.cur)+'</div>'
+   +'<div class=row style="margin:0"><span class=mut>Cao nhất của bạn</span><b>'+num(r.tall)+'</b></div>'
+   +'<div class=row style="margin:0"><span class=mut>Thấp nhất của bạn</span><b>'+num(r.short)+'</b></div>'
+   +'<div class=row style="margin:0"><span class=mut>Mặt nạ người lùn</span><b>'+num(r.dwarf)+'</b></div>'
+   +'<div class=szbar><i style="left:'+(pos*100).toFixed(1)+'%"></i></div><div class=row style="margin:0"><span class=mut style="font-size:.75rem">Cao</span><span class=mut style="font-size:.75rem">Thấp</span></div>'
+   +'<p class=mut style="margin:6px 0 0;font-size:.78rem">Số càng nhỏ càng cao. scale = '+r.S+' · height = '+r.H+'. Kết quả chỉ mang tính tham khảo theo công thức cộng đồng.</p>'
+   +'<div class=row style="justify-content:flex-start;flex-wrap:wrap;gap:6px;margin:8px 0 0">'+tgl('cust','Tạo ảnh chia sẻ')+'</div></div>';
+  if(SZ.cust){
+   h+='<div class=card><h3 style="margin:0 0 6px">Ảnh chia sẻ</h3><canvas id=szcv class=skcv></canvas>'
+    +'<input placeholder="Tên hiển thị" value="'+E(SZ.name)+'" oninput="SKZ.in(\'name\',this.value)" onchange="SKZ.rd()" style="width:100%;margin:8px 0">'
+    +'<p class=mut style="margin:0 0 4px">Nền</p><div class=strip2>'+GR.map((c,i)=>'<button class="s '+(SZ.bg==i?'on2':'')+'" style="width:34px;height:34px;padding:0;background:linear-gradient(135deg,'+c[0]+','+c[1]+')" onclick="SKZ.bgs('+i+')" aria-label="Nền '+(i+1)+'"></button>').join('')
+    +'<button class="s '+(SZ.bg==-1?'on2':'')+'" onclick="document.getElementById(\'szb\').click()">Ảnh của bạn</button><input id=szb type=file accept="image/*" style="display:none" onchange="SKZ.bgf(this)"></div>'
+    +'<p class=mut style="margin:6px 0 4px">Chữ</p><div class=strip2><button class="s '+(SZ.tc=='#ffffff'?'on2':'')+'" onclick="SKZ.set(\'tc\',\'#ffffff\')">Trắng</button><button class="s '+(SZ.tc=='#222222'?'on2':'')+'" onclick="SKZ.set(\'tc\',\'#222222\')">Đen</button>'
+    +['left','center','right'].map((a,i)=>'<button class="s '+(SZ.al==a?'on2':'')+'" onclick="SKZ.set(\'al\',\''+a+'\')">'+['Trái','Giữa','Phải'][i]+'</button>').join('')+tgl('rng','Hiện khoảng cao/thấp')+'</div>'
+    +'<div style="text-align:center;margin-top:10px"><button class=p onclick="SKZ.save()">Lưu / chia sẻ ảnh</button></div></div>'}
+ }
+ /* lịch sử */
+ h+='<div class=card><div class=row style="margin:0"><b>Lịch sử đo ('+L.length+')</b>'+tgl('hist',SZ.hist?'Thu gọn':'Mở')+'</div>';
+ if(SZ.hist){
+  h+=L.length?L.map((x,i)=>{const c=szCalc(x.S,x.H);return '<div class=row style="margin:6px 0 0"><span><b>'+num(c.cur)+'</b>'+(x.n?' · '+E(x.n):'')+'<br><span class=mut style="font-size:.75rem">'+new Date(x.t).toLocaleString('vi-VN')+'</span></span><span><button class=s onclick="SKZ.load('+i+')">Xem</button> <button class=s onclick="SKZ.del('+i+')" aria-label="Xóa">'+ic('close',14)+'</button></span></div>'}).join('')+'<div style="text-align:center;margin-top:8px"><button class=s onclick="SKZ.clr()">Xóa toàn bộ lịch sử</button></div>':'<p class=mut style="margin:6px 0 0">Chưa có lần đo nào.</p>'}
+ h+='</div>';
+ return h};
+
+window.SKZ={
+ in(k,v){SZ[k]=v},rd(){rd()},
+ t(k){SZ[k]=!SZ[k];rd()},set(k,v){SZ[k]=v;rd()},
+ bgs(i){SZ.bg=i;rd()},
+ bgf(inp){const f=inp.files&&inp.files[0];if(!f)return;const im=new Image();im.onload=()=>{SZ.bgimg=im;SZ.bg=-1;rd()};im.onerror=()=>tos('Không mở được ảnh nền');im.src=URL.createObjectURL(f)},
+ async go(){try{SZ.dbg='';setRes(await szParse(SZ.txt))}catch(e){SZ.err=e.message;SZ.dbg=e.dbg||'';rd()}},
+ man(){try{const S=parseFloat(String(SZ.sc).replace(',','.')),H=parseFloat(String(SZ.ht).replace(',','.'));if(!isFinite(S)||!isFinite(H))throw new Error('Hãy nhập đủ scale và height (số).');setRes(szCalc(fix(S),fix(H)))}catch(e){SZ.err=e.message;rd()}},
+ async file(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)return;SZ.busy=1;SZ.err='';rd();
+  try{SZ.dbg='';const v=await szQR(f);SZ.txt=v;SZ.busy=0;setRes(await szParse(v))}catch(e){SZ.busy=0;SZ.err=e.message||'Không đọc được ảnh.';SZ.dbg=e.dbg||'';rd()}},
+ copy(){const r=SZ.res;if(!r)return;const t='Chiều cao: '+num(r.cur)+' (cao nhất '+num(r.tall)+', thấp nhất '+num(r.short)+')\nscale='+r.S+' height='+r.H;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>tos('Đã sao chép'),()=>tos('Không sao chép được'))},
+ save(){saveCv('szcv','sky-height.png','Chiều cao Sky')},
+ drink(){const r=SZ.res;if(!r){tos('Hãy tính chiều cao trước để có scale');return}const i=Math.floor(Math.random()*13),H=-2+i*(4/12);
+  SZ.pot={n:SZ.pot.n+1,h:i,cur:szCalc(r.S,H).cur};rd()},
+ reset(){SZ.pot={n:0,h:null,cur:null};rd()},
+ load(i){const x=HL()[i];if(!x)return;SZ.res=szCalc(x.S,x.H);SZ.name=x.n||SZ.name;rd()},
+ del(i){HL().splice(i,1);sv();rd()},
+ clr(){s.skyh=[];sv();rd()}};
+
+V.sky=()=>{
+ const chips='<div class=skc>'+SKYCATS.map(c=>'<button class="s '+(S.cat==c[0]?'on2':'')+'" onclick="SKY.go(\''+c[0]+'\')">'+ic(c[1],16)+' '+c[2]+'</button>').join('')+'</div>';
+ let b='';try{b=(CATV[S.cat]||CATV.shard)()}catch(e){console.error('sky',e);b='<div class=card><p class=mut>Không tính được dữ liệu Sky.</p></div>'}
+ return '<div class=skw>'+chips+b+'</div>'};
+
+const rd=()=>{try{R()}catch(e){}};
+function saveCv(id,fn,title){const cv=document.getElementById(id);if(!cv)return;
+ cv.toBlob(async b=>{if(!b)return;
+  try{const f=new File([b],fn,{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:title});return}}catch(e){if(e&&e.name=='AbortError')return}
+  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)},'image/png')}
+const save=()=>{const cv=document.getElementById('skcv');if(cv)saveCv('skcv','sky-shard-'+cv.dataset.y+'-'+p2(cv.dataset.m)+'.png','Lịch Sky Shard')};
+window.SKY={go(c){S.cat=c;S.off=0;rd()},day(n){S.off=n==0?0:Math.max(-31,Math.min(31,S.off+n));rd()},
+ mon(n){S.mon=n==0?0:Math.max(-12,Math.min(12,S.mon+n));rd()},tog(){S.open=!S.open;rd()},save,calc:shardOn,next:nextShard};
+
+/* đồng hồ đếm ngược + vẽ ảnh lịch: V.sky giữ HTML ổn định, chỉ đổi chữ trong các span */
+function fill(){try{const n=Date.now();if(NXT&&n>=NXT&&document.querySelector('.skw')&&(S.cat=='clock'||S.cat=='events')){NXT=0;rd();return}document.querySelectorAll('.skcd').forEach(e=>{const t=cd(+e.dataset.cd-n);if(e.textContent!==t)e.textContent=t});
+ const cv=document.getElementById('skcv');if(cv&&!cv.dataset.d){const ym=monYM();drawMonth(cv,ym[0],ym[1])}
+ const sc=document.getElementById('szcv');if(sc&&!sc.dataset.d){drawShare(sc);sc.dataset.d=1}}catch(e){console.error('sky',e)}}
+try{const b=document.getElementById('app');if(b)new MutationObserver(fill).observe(b,{childList:true})}catch(e){}
+setInterval(fill,1000);
+
+/* đăng ký tab Sky vào thanh tab chính, ngay sau Nhạc */
+/* ---- Daily Guild: tin nhắn kênh Discord (bot ghi vào bảng daily_guild, web đọc + Realtime) ---- */
+const DG={rows:null,busy:0,at:0,err:'',rt:0};
+function dgTxt(t){
+ let h=E(t);
+ h=h.replace(/&lt;t:(\d+)(?::([a-zA-Z]))?&gt;/g,(m,n,f)=>{const d=new Date(n*1000);
+  if(f=='R'){const x=Math.round((d-Date.now())/60000),a=Math.abs(x),u=a>=1440?Math.round(a/1440)+' ngày':a>=60?Math.round(a/60)+' giờ':a+' phút';return '<b>'+(x>=0?'sau '+u:u+' trước')+'</b>'}
+  const o=(f=='t'||f=='T')?{hour:'2-digit',minute:'2-digit'}:f=='d'?{day:'numeric',month:'numeric',year:'numeric'}:{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'};
+  return '<b>'+d.toLocaleString('vi-VN',o)+'</b>'});
+ h=h.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target=_blank rel=noopener>$1</a>');
+ h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#{1,3}\s+(.+)$/gm,'<b>$1</b>').replace(/^-#\s+/gm,'').replace(/\n/g,'<br>');
+ return h}
+function dgCard(r){
+ const d=new Date(r.created_at),w=d.toLocaleString('vi-VN',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+(r.edited_at?' · đã sửa':'');
+ const im=(Array.isArray(r.images)?r.images:[]).filter(u=>/^https:\/\//.test(u)).slice(0,6).map(u=>'<img class=dgi loading=lazy src="'+E(u)+'" alt="">').join('');
+ return '<div class=card><div class=row style="margin:0 0 6px;justify-content:flex-start;gap:8px">'
+  +(/^https:\/\//.test(r.author_avatar||'')?'<img src="'+E(r.author_avatar)+'" alt="" width=26 height=26 style="border-radius:50%">':'')
+  +'<b>'+E(r.author_name||'Discord')+'</b><span class=mut style="font-size:.76rem;margin-left:auto;text-align:right">'+w+'</span></div>'
+  +'<div style="word-break:break-word;line-height:1.45">'+dgTxt(r.content||'')+'</div>'+im+'</div>'}
+async function dgLoad(force){
+ const c=typeof supabaseClient!='undefined'?supabaseClient:null;
+ if(!c){DG.err='Chưa kết nối được máy chủ.';return}
+ if(DG.busy||(!force&&Date.now()-DG.at<60000))return;
+ DG.busy=1;
+ try{const r=await c.from('daily_guild').select('message_id,author_name,author_avatar,content,images,created_at,edited_at').order('created_at',{ascending:false}).limit(30);
+  if(r.error)throw r.error;DG.rows=r.data||[];DG.err='';DG.at=Date.now()}
+ catch(e){const m=e&&(e.message||e.details||e.hint)||String(e),cd=e&&e.code?' ['+e.code+']':'';console.error('dg',m+cd,e);DG.err='Không tải được tin nhắn Daily Guild: '+m+cd;DG.at=Date.now()-50000}
+ DG.busy=0;
+ if(!DG.rt){DG.rt=1;try{c.channel('daily-guild-rt').on('postgres_changes',{event:'*',schema:'public',table:'daily_guild'},()=>dgLoad(1)).subscribe()}catch(e){}}
+ if(S.cat=='dg'&&document.querySelector('.skw'))rd()}
+CATV.dg=function(){dgLoad();
+ let h='<div class=card><div class=row style="margin:0"><b>Daily Guild</b><button class=s onclick="DGX.reload()">Tải lại</button></div><p class=mut style="margin:4px 0 0;font-size:.82rem">Tin nhắn từ kênh Daily Guild trên Discord, tự cập nhật khi có tin mới hoặc tin được sửa.</p></div>';
+ if(DG.rows==null)h+='<div class=card><p class=mut style="margin:0">'+(DG.err?E(DG.err):'Đang tải...')+'</p></div>';
+ else if(!DG.rows.length)h+='<div class=card><p class=mut style="margin:0">'+(DG.err?E(DG.err):'Chưa có tin nhắn nào.')+'</p></div>';
+ else h+=DG.rows.map(dgCard).join('');
+ return h};
+window.DGX={reload(){dgLoad(1)}};
+
+/* Máy tính (>=900px): tab Sky nằm CUỐI thanh tab chính. Điện thoại: tab Sky nằm ĐẦU thanh tab của ngăn Cộng đồng (nút ở thanh chính bị ẩn bằng CSS). */
+if(!TABS.some(t=>t[0]=='sky'))TABS.push(['sky','sky','Sky']);
+try{if(window.SDX&&!SDX.TS.some(t=>t[0]=='sky'))SDX.TS.unshift(['sky','sky','Sky'])}catch(e){}
+/* Điện thoại: bấm nút / vuốt mở Cộng đồng (không chỉ định tab) thì luôn vào Sky trước */
+try{const oo=SD.open;SD.open=function(k){if(!k&&innerWidth<900)k='sky';return oo.call(this,k)}}catch(e){}
+{const o=R;R=function(){try{const mob=innerWidth<900,sd=document.getElementById('sd'),open=sd&&sd.classList.contains('on'),onSky=!!document.querySelector('#sdtabs button.on[onclick*="\'sky\'"]');
+ if(tab=='sky'&&mob){tab='home';SD.open('sky')}
+ else if(!mob&&open&&onSky){SD.close();tab='sky'}}catch(e){}return o.apply(this,arguments)}}
+
+/* ---- Thông báo nổi cho Sky (lưu trong s.skn, lần báo gần nhất trong s.sknl) ---- */
+const SKN=[['geyser','Dầu','Thông báo khi đến giờ Dầu'],['grandma','Bánh bà','Thông báo khi đến giờ Bánh bà'],['turtle','Rùa / sò','Thông báo khi đến giờ Rùa / sò'],['daily','Reset hằng ngày','Thông báo khi đến giờ reset hằng ngày'],['eden','Reset Eden','Thông báo khi đến giờ reset Eden']];
+const sknC=()=>{if(!s.skn||typeof s.skn!='object')s.skn={};return s.skn},sknL=()=>{if(!s.sknl||typeof s.sknl!='object')s.sknl={};return s.sknl};
+function sknShow(title,body,tag){
+ try{let w=document.getElementById('sknw');if(!w){w=document.createElement('div');w.id='sknw';document.body.appendChild(w)}
+  const d=document.createElement('div');d.className='sknb';d.setAttribute('role','alert');
+  d.innerHTML='<span class=sknI>'+ic('bell',20)+'</span><div><b>'+E(title)+'</b><div>'+E(body)+'</div></div>';
+  const x=()=>{d.classList.add('out');setTimeout(()=>d.remove(),250)};d.onclick=x;w.appendChild(d);setTimeout(x,15000);
+  while(w.children.length>4)w.firstChild.remove()}catch(e){}
+ try{beep(880)}catch(e){}
+ try{if('Notification' in window&&Notification.permission=='granted'&&document.hidden)new Notification(title,{body:body,tag:tag||'sky',icon:''})}catch(e){}}
+function sknChk(){try{
+ if(typeof s=='undefined'||!s||typeof scr=='undefined'||scr!='game')return;const c=s.skn;if(!c)return;
+ const now=Date.now(),L=sknL(),lp=laP(now);let ch=0;
+ const go=(k,st,title,body)=>{if(st<=now&&now-st<3*MIN&&st>(L[k]||0)){L[k]=st;ch=1;sknShow(title,body,'sky-'+k)}};
+ [['geyser',0],['grandma',1],['turtle',2]].forEach(a=>{if(!c[a[0]])return;const e=EVT[a[1]];
+  for(let k=-1;k<=1;k++){const d=addD(lp.y,lp.m,lp.d,k);for(let h=0;h<24;h+=2)go(a[0],laAt(d[0],d[1],d[2],h,e.off),'Đến giờ '+e.n+'!',e.p+' · kéo dài '+e.dur+' phút')}});
+ if(c.daily)go('daily',laMid(lp.y,lp.m,lp.d),'Đã reset hằng ngày','Nhiệm vụ và nến hằng ngày đã làm mới.');
+ if(c.eden){const b=addD(lp.y,lp.m,lp.d,-(lp.wd%7));go('eden',laMid(b[0],b[1],b[2]),'Đã reset Eden','Eden reset hằng tuần đã làm mới.')}
+ if(ch)sv()}catch(e){console.error('skn',e)}}
+setInterval(sknChk,1000);
+const permTxt=()=>{if(!('Notification' in window))return 'Trình duyệt này không hỗ trợ thông báo hệ thống, chỉ hiện thông báo nổi trong app.';
+ const p=Notification.permission;return p=='granted'?'Thông báo hệ thống: đã bật (hiện cả khi bạn đang ở tab/app khác nhưng trang vẫn đang mở).':p=='denied'?'Thông báo hệ thống: đang bị chặn trong trình duyệt. Thông báo nổi vẫn hiện trong app.':'Thông báo hệ thống: chưa cấp quyền. Bật một mục bên trên để được hỏi quyền.'};
+CATV.snot=function(){const c=sknC();
+ return '<div class=card><h3 style="margin:0 0 4px">Thông báo nổi Sky</h3><p class=mut style="margin:0 0 6px;font-size:.82rem">Bật mục nào thì app sẽ hiện thông báo nổi đúng giờ đó. Giờ hiển thị theo thiết bị của bạn.</p>'
+ +SKN.map(x=>'<label class=skr style="cursor:pointer"><span><b>'+E(x[1])+'</b><br><span class=mut>'+E(x[2])+'</span></span><input type=checkbox style="width:22px;height:22px;accent-color:var(--g2);flex:0 0 auto" '+(c[x[0]]?'checked':'')+' onchange="SKN.tog(\''+x[0]+'\',this.checked)"></label>').join('')
+ +'<div style="text-align:center;margin-top:10px"><button class=s onclick="SKN.test()">Gửi thông báo thử</button></div></div>'
+ +'<div class=card><p class=mut style="margin:0;font-size:.78rem">'+permTxt()+' Thông báo chỉ hoạt động khi trang Justaseed đang mở (kể cả thu nhỏ); đóng hẳn trang thì trình duyệt không cho web tự báo.</p></div>'};
+window.SKN={tog(k,v){const c=sknC();c[k]=v?1:0;if(v)sknL()[k]=Date.now();sv();
+  if(v&&'Notification' in window&&Notification.permission=='default'){try{const r=Notification.requestPermission(()=>rd());if(r&&r.then)r.then(()=>rd())}catch(e){}}},
+ test(){sknShow('Thông báo thử','Thông báo nổi của Sky đang hoạt động.','sky-test');try{if('Notification' in window&&Notification.permission=='default')Notification.requestPermission().then(rd)}catch(e){}}};
+
+const css=document.createElement('style');css.textContent=
+'.skc{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}.skc .s{display:inline-flex;align-items:center;gap:6px}'
++'.skb{display:inline-flex;align-items:center;gap:6px;padding:3px 12px;border-radius:99px;color:#fff;font-weight:700;font-size:.9rem}'
++'.skb.r{background:#e0446f}.skb.k{background:#2b2b36;border:1px solid #5a5a70}'
++'.skmap{font:700 1.25rem "Baloo 2",sans-serif;line-height:1.2}'
++'.skhi{border:2px solid var(--g2)}.skbig{font-weight:700;font-size:1.05rem;margin:8px 0 2px;color:var(--g3)}'
++'.skr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px dashed var(--ln)}'
++'.sks{text-align:right;font-size:.85rem;color:var(--mut);max-width:48%}.skr.on .sks,.skr.soon .sks{color:var(--g3);font-weight:700}.skr.done{opacity:.55}'
++'.szbar{position:relative;height:10px;border-radius:6px;margin:10px 0 2px;background:linear-gradient(90deg,#4fb06f,#f6d365,#e0446f)}.szbar i{position:absolute;top:-4px;width:6px;height:18px;border-radius:3px;background:var(--ink);border:2px solid var(--card);transform:translateX(-50%)}.szpre{white-space:pre-wrap;word-break:break-all;background:var(--bg);border-radius:10px;padding:8px;font-size:.75rem;margin:8px 0 0}'
++'.skcv{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--ln)}.skw a{color:var(--g3)}'
++'.skst{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.72rem;font-weight:700;color:#fff;background:var(--g2);vertical-align:1px}.skst.soon{background:#e8a33d}';
+css.textContent+='.dgi{display:block;max-width:100%;border-radius:12px;margin-top:8px}';
+css.textContent+='@media(max-width:899px){nav.fx button[data-t=sky]{display:none!important}}@media(min-width:900px){#sdtabs button[onclick*="\'sky\'"]{display:none!important}}'
++'#sknw{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 10px);z-index:80;width:min(420px,calc(100% - 20px));display:flex;flex-direction:column;gap:8px;pointer-events:none}'
++'.sknb{pointer-events:auto;display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:18px;background:var(--card);color:var(--ink);border:2px solid var(--g2);box-shadow:0 10px 28px rgba(20,70,40,.4);cursor:pointer;animation:sknin .3s ease-out;transition:opacity .25s,transform .25s}'
++'.sknb.out{opacity:0;transform:translateY(-12px)}.sknb b{font-size:.95rem}.sknb div div{font-size:.8rem;color:var(--mut)}.sknI{color:var(--g2);display:flex}'
++'@keyframes sknin{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.sknb{animation:none}}';
+css.textContent+='@media(max-width:899px){#sd{width:min(80vw,340px)}.sdt{padding:8px 10px 2px}.sdt b{font-size:1rem}#sdtabs{margin:2px 8px;padding:3px;gap:2px;border-radius:16px;overflow-x:auto;scrollbar-width:none}#sdtabs button{padding:4px 6px;font-size:.62rem;border-radius:12px;min-width:48px}#sdtabs svg{width:16px!important;height:16px!important}#sdbody{padding:2px 8px 18px;zoom:.88}#sdh{width:22px;height:54px}}';
+document.head.appendChild(css);
+})();
 </script>
 </body></html>

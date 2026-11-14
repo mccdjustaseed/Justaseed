@@ -9108,7 +9108,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  try{I.card='M3 6h18v12H3zM3 10h18M7 15h4'}catch(e){}
  if(!TABS.some(x=>x[0]=='card'))TABS.push(['card','card','Thẻ NH']);
 
- const setupErr=e=>{const m=String(e&&(e.message||e.code||e)||'');return /bank_cards|schema cache|does not exist|PGRST205|42P01/i.test(m+' '+(e&&e.code||''))};
+ const setupErr=e=>{const m=String(e&&(e.message||'')||''),c=String(e&&e.code||'');return c=='PGRST205'||c=='42P01'||/schema cache|does not exist/i.test(m)};
  async function ensure(){
   if(!ok()||C.busy)return;const b=B();
   if(b.uid&&b.uid!==currentUser.id){b.no='';b.uid=''}

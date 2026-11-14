@@ -968,7 +968,7 @@ const F=[{id:'cuc',n:'Cúc họa mi',c:3000,u:0},{id:'hong',n:'Hồng',c:4000,u:
 F.sort((a,b)=>a.u-b.u);
 const P=[{id:'S',n:'Giấy S',c:5000,k:3},{id:'M',n:'Giấy M',c:8000,k:5},{id:'L',n:'Giấy L',c:12000,k:10}];
 const G=[{id:'keo',n:'Kẹo',c:1000},{id:'thu',n:'Thư tay',c:3000},{id:'anh',n:'Ảnh in',c:6000}];
-const C={},K={S:3,M:5,L:10},MARK=1.1,UPN=()=>(typeof s!='undefined'&&s&&s.up)||0,LOW=()=>(typeof s!='undefined'&&s&&s.lo)?.8:1,rentN=()=>Math.round(40000*(1+.3*UPN())*LOW()/1000)*1000,utilN=()=>Math.round(20000*(1+.25*UPN())*LOW()/1000)*1000,fixN=()=>rentN()+utilN(),mkN=()=>(typeof s!='undefined'&&s&&s.mk)||1,taxOf=pf=>{pf=Math.max(0,pf);return Math.round((Math.max(0,Math.min(pf,1e6)-3e5)*.1+Math.max(0,pf-1e6)*.2)/1000)*1000};[...F,...P,...G].forEach(x=>C[x.id]=x.c);
+const C={},K={S:3,M:5,L:10},MARK=1.1,UPN=()=>(typeof s!='undefined'&&s&&s.up)||0,LOW=()=>(typeof s!='undefined'&&s&&s.lo)?.8:1,rentN=()=>Math.round(40000*(1+.3*UPN())*LOW()/1000)*1000,utilN=()=>Math.round(20000*(1+.25*UPN())*LOW()/1000)*1000,fixN=()=>rentN()+utilN(),mkN=()=>{const m=(typeof s!='undefined'&&s)?s.mk:0;return typeof m=='number'&&m>0?m:1},taxOf=pf=>{pf=Math.max(0,pf);return Math.round((Math.max(0,Math.min(pf,1e6)-3e5)*.1+Math.max(0,pf-1e6)*.2)/1000)*1000};[...F,...P,...G].forEach(x=>C[x.id]=x.c);
 const SP=[{n:'Vườn Đà Lạt',d:'Hoa tươi, giá tốt, ít suất',m:1,cap:18,it:['cuc','hong','hd','cc','tul','dt','cth']},{n:'Chợ hoa Quảng Bá',d:'Đủ loại, giá cao hơn 25%',m:1.25,cap:40,it:F.map(f=>f.id)},{n:'Tiệm giấy & quà',d:'Giấy gói và quà tặng',m:1,cap:25,it:['S','M','L','keo','thu','anh']}];
 const pc=(id,m)=>Math.round((C[id]||0)*(m||1)*mkN()/100)*100,nm=id=>[...F,...P,...G].find(x=>x.id==id).n;
 const TABS=[['home','home','Tổng quan'],['buy','cart','Nhập hàng'],['price','tag','Giá bán'],['shop','shop','Quầy'],['bag','bag','Túi đồ'],['cat','cat','Mèo'],['dog','cat','Chó'],['furn','shop','Nội thất'],['rev','star','Đánh giá'],['stat','chart','Thống kê'],['quest','quest','Nhiệm vụ'],['up','up','Nâng cấp'],['friends','star','Bạn bè']];
@@ -3815,6 +3815,7 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
       window.DISCORD_OK = true;
       setMode('discord');
       toast(exists ? 'Tài khoản đã tồn tại, đã đăng nhập.' : 'Đã tạo tài khoản Discord. Tiến trình sẽ được lưu tự động.');
+      if (exists === false && window.JS_ONB && !hasProg()) setTimeout(function(){ try{ window.JS_ONB.start(); }catch(e){} }, 400);
       if (typeof scr !== 'undefined' && scr === 'game' && typeof R === 'function') R();
       else if (typeof renderMenu === 'function') renderMenu();
       // Kích hoạt đồng bộ đám mây
@@ -5116,7 +5117,7 @@ function friendAvTap(raw,z,uid){
 function buildProfileSnap(){
  const o={},skip=new Set(['wq','pf','led','rpt','cl','prev','cd','qc','bought','spent','wet','old','tut','snd','mus','bk','bt','cam']);
  for(const k of Object.keys(s)){
-  if(skip.has(k))continue;let v=s[k];
+  if(skip.has(k))continue;if(k=='money'&&s.pf&&s.pf.hb)continue;let v=s[k];
   if(k=='bills')v=(v||[]).slice(0,12).map(b=>({nm:b.nm,pr:b.pr,xp:b.xp,tip:b.tip,run:b.run?1:0}));
   else if(k=='rv')v=(v||[]).slice(0,12).map(r=>({st:r.st,p:r.p,t:r.t,u:r.u,d:r.d}));
   try{const j=JSON.stringify(v);if(j===undefined||j.length>4000)continue}catch(e){continue}
@@ -5125,14 +5126,14 @@ function buildProfileSnap(){
  return o}
 function buildGav(){
  const p=s.pf||{};
- return 'gav:'+JSON.stringify({av:p.av||null,pre:p.pre||null,fr:p.fr||0,cv:(p.cv&&p.cvs)||null,afr:p.afr?1:0,nm:p.nm||null,bio:p.bio||null,col:p.col||null,
+ return 'gav:'+JSON.stringify({av:p.av||null,pre:p.pre||null,fr:p.fr||0,cv:(p.cv&&p.cvs)||null,afr:p.afr?1:0,hb:p.hb?1:0,nm:p.nm||null,bio:p.bio||null,col:p.col||null,
   mu:(s.cd&&s.cd.m&&s.cd.mt)?{id:s.cd.mt.id,name:s.cd.mt.name,ar:s.cd.mt.ar,th:s.cd.mt.th,r:s.cd.l==2?1:0}:null,sn:buildProfileSnap()})}
 let LASTG='';
 async function syncProfile(force){
  try{
   if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||!s.pf)return;
   const g=buildGav();if(!force&&g===LASTG)return;
-  const {error}=await supabaseClient.from('shop_public').upsert({user_id:currentUser.id,game_avatar:g,shop_name:s.name||'Tiệm hoa',day:s.day||1,money:s.money||0,level:lvOf(s.xp||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  const {error}=await supabaseClient.from('shop_public').upsert({user_id:currentUser.id,game_avatar:g,shop_name:s.name||'Tiệm hoa',day:s.day||1,money:(s.pf&&s.pf.hb)?0:(s.money||0),level:lvOf(s.xp||0),updated_at:new Date().toISOString()},{onConflict:'user_id'});
   if(!error)LASTG=g;else console.warn('sync profile',error)
  }catch(e){console.warn(e)}}
 setInterval(()=>syncProfile(),60000);
@@ -9355,4 +9356,133 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  setTimeout(()=>{watch();run()},7000);
 })();
 </script>
+<script>
+/* ===== Ẩn số dư trên hồ sơ (giao diện + lệnh /profile của bot) ===== */
+function toggleHB(){s.pf=s.pf||{};s.pf.hb=s.pf.hb?0:1;save();try{syncProfile(true)}catch(e){}try{window.CLOUD&&CLOUD.flush&&CLOUD.flush()}catch(e){}pfm();toast(s.pf.hb?'🙈 Đã ẩn số dư trên hồ sơ':'👀 Đã hiện số dư trên hồ sơ')}
+{const o=window.pfmModal;window.pfmModal=function(){o();try{
+ const ms=document.querySelector('#modal .ms');if(!ms||ms.querySelector('#hbcard'))return;const on=!!(s.pf&&s.pf.hb);
+ ms.insertAdjacentHTML('beforeend',`<div class=card id=hbcard><div class=row style="margin:0"><div><b>${on?'🙈':'👀'} Ẩn số dư</b><br><span class=mut>${on?'Số dư đang bị ẩn trên hồ sơ và lệnh /profile':'Bật để ẩn số dư trên hồ sơ và lệnh /profile'}</span></div><button class="s ${on?'on2':''}" onclick="toggleHB()">${on?'Đang ẩn':'Đang hiện'}</button></div></div>`)
+}catch(e){console.error(e)}}}
+</script>
+<style>
+#onb{position:fixed;inset:0;z-index:95;display:none;overflow:auto;background:linear-gradient(var(--sk1),var(--bg) 65%);padding:calc(16px + env(safe-area-inset-top,0px)) 14px calc(20px + env(safe-area-inset-bottom,0px))}
+#onb.on{display:block}
+#onb .ob{max-width:520px;margin:0 auto}
+#onb .dots{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+#onb .dots i{width:30px;height:6px;border-radius:3px;background:var(--ln)}
+#onb .dots i.on{background:var(--g2)}
+#onb .sws2{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+#onb .sw2{width:44px;height:44px;border-radius:50%;border:3px solid transparent;padding:0}
+#onb .sw2.on{border-color:var(--ink)}
+#onb .fi{width:100%;padding:10px 12px;border-radius:12px;border:2px solid var(--ln);background:var(--card);color:var(--ink);font:inherit;margin:4px 0 10px}
+#onb .av2{width:84px;height:84px;border-radius:50%;overflow:hidden;background:var(--g);display:grid;place-items:center;border:3px solid var(--g2);flex:none}
+#onb .cv2{height:96px;border-radius:14px;background:linear-gradient(135deg,var(--g),var(--sk1)) center/cover;border:2px dashed var(--ln)}
+#onb .acts{display:flex;gap:8px;margin-top:12px}#onb .acts button{flex:1}
+#onbS,#onbD{position:fixed;inset:0;z-index:96;display:none;overflow:auto;background:linear-gradient(var(--sk1),var(--bg) 65%);padding:calc(14px + env(safe-area-inset-top,0px)) 14px 20px}#onbD{z-index:97}#onbS.on,#onbD.on{display:block}#onbS .ob,#onbD .ob{max-width:520px;margin:0 auto}#onbS .acts{display:flex;gap:8px;margin-top:10px}#onbS .acts button{flex:1}
+.hl{outline:3px solid #ffb300;animation:hlp 1s ease-in-out infinite}@keyframes hlp{50%{outline-offset:4px;outline-color:#ff7a00}}
+#onbT{position:fixed;left:12px;right:12px;top:calc(6px + env(safe-area-inset-top,0px));max-width:616px;margin:auto;z-index:8;background:var(--ink);color:var(--bg);border-radius:16px;padding:8px 10px;max-height:30vh;overflow:auto;font-size:.8rem;line-height:1.3;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#onbT[hidden],body.m #onbT{display:none}
+#onbT .tr{display:flex;gap:6px;margin-top:6px}#onbT .tr button{min-height:34px;padding:4px 12px;font-size:.8rem;border-radius:12px;font-weight:700}
+#onbT .tr .p{margin-left:auto;color:var(--bg)}#onbT .tr .k{background:var(--bg);color:var(--ink);border:2px solid var(--bg)}
+#onbT .wt{opacity:.8;font-size:.85rem;margin-top:4px}
+</style>
+<div id="onb"></div><div id="onbS"></div><div id="onbD"></div><div id="onbT" hidden></div>
+<script>
+/* ===== Onboarding người chơi mới: Chủ đề → Hồ sơ & Gian hàng → Tổng quan + hướng dẫn 1 ngày ===== */
+(function(){try{
+const $o=id=>document.getElementById(id),PC=['#4fb06f','#e0446f','#5aa9e6','#9b7fd6','#f0a030','#2ec4b6','#ff6fa0','#8d6e63'];
+let st={step:1,col:'#4fb06f',dark:0,pn:'',sn:'',av:null,cv:null},busy=0;
+const isNew=()=>!s.onb&&!hasProg();
+const ensurePf=()=>{s.pf=s.pf||{nm:'Chủ tiệm',av:null,pre:'cat'}};
+const dots=n=>`<div class=dots>${[1,2].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
+function start(){if(busy)return;busy=1;ensurePf();st={step:1,col:s.pf.col||PC[0],dark:s.dark?1:0,pn:'',sn:'',av:null,cv:null};$o('onb').classList.add('on');draw()}
+function draw(){const o=$o('onb');
+if(st.step==1){o.innerHTML=`<div class=ob>${dots(1)}<h1 style="text-align:center;margin:0">Chọn chủ đề cho game</h1><p class="mut" style="text-align:center;margin:4px 0 8px">Màu này áp lên nút, viền và hồ sơ của bạn. Đổi lại được trong Hồ sơ.</p>
+<div class=card><b>🎨 Màu chủ đạo</b><div class=sws2>${PC.map(c=>`<button class="sw2 ${c==st.col?'on':''}" style="background:${c}" onclick="JS_ONB.col('${c}')" aria-label="${c}"></button>`).join('')}</div>
+<label class=mut style="display:flex;gap:8px;align-items:center">Màu tùy chọn <input type=color value="${st.col}" onchange="JS_ONB.col(this.value)" style="width:40px;height:30px;padding:0;border:0;background:none"></label></div>
+<div class=card><b>🌗 Giao diện</b><div class=acts><button class="s ${st.dark?'':'on2'}" onclick="JS_ONB.mode(0)">☀️ Sáng</button><button class="s ${st.dark?'on2':''}" onclick="JS_ONB.mode(1)">🌙 Tối</button></div></div>
+<div class=card style="text-align:center"><span class=mut>Xem thử</span><div class=acts style="justify-content:center"><button class=p>Nút chính</button><button class=s>Nút phụ</button></div></div>
+<div class=acts><button class="p big" onclick="JS_ONB.go(2)">Tiếp theo →</button></div></div>`}
+else{o.innerHTML=`<div class=ob>${dots(2)}<h1 style="text-align:center;margin:0">Hồ sơ &amp; gian hàng</h1><p class=mut style="text-align:center;margin:4px 0 8px">Cho khách biết bạn là ai nhé.</p>
+<div class=card><div style="display:flex;gap:12px;align-items:center"><div class=av2>${st.av?`<img src="${st.av}" alt="" style="width:100%;height:100%;object-fit:cover">`:catSVG(s.cat,'face',70)}</div><label class=lb style="flex:1">Tải ảnh đại diện<input type=file accept="image/*" hidden onchange="JS_ONB.img(this,'av')"></label></div>
+<div class=cv2 style="margin-top:10px${st.cv?`;background-image:url(${st.cv})`:''}"></div><label class=lb style="display:block;margin-top:6px">Tải ảnh bìa<input type=file accept="image/*" hidden onchange="JS_ONB.img(this,'cv')"></label></div>
+<div class=card><label><b>Tên hồ sơ của bạn</b><input class=fi type=text maxlength=20 placeholder="Chủ tiệm" value="${esc(st.pn)}" oninput="JS_ONB.v('pn',this.value)"></label>
+<label><b>Tên gian hàng</b><input class=fi type=text maxlength=24 placeholder="VD: Tiệm hoa Mướp" value="${esc(st.sn)}" oninput="JS_ONB.v('sn',this.value)"></label></div>
+<div class=acts><button class="s big" onclick="JS_ONB.go(1)">← Quay lại</button><button class="p big" onclick="JS_ONB.fin()">Bắt đầu chơi</button></div></div>`}
+o.scrollTop=0}
+function proc(inp,k){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const a=k=='av',W=a?192:720,H=a?192:270,c=document.createElement('canvas');c.width=W;c.height=H;const q=Math.max(W/im.width,H/im.height);c.getContext('2d').drawImage(im,(W-im.width*q)/2,(H-im.height*q)/2,im.width*q,im.height*q);st[k]=c.toDataURL('image/jpeg',a?.85:.78);draw()};im.onerror=()=>toast('Không đọc được ảnh');im.src=r.result};r.readAsDataURL(f)}
+function fin(){const sn=st.sn.trim();if(!sn)return toast('Hãy đặt tên cho gian hàng của bạn');
+ensurePf();s.name=sn;s.pf.nm=st.pn.trim()||'Chủ tiệm';if(st.av){s.pf.av=st.av}if(st.cv){s.pf.cv=st.cv;try{cvThumb(st.cv,t=>{s.pf.cvs=t;save()})}catch(e){}}
+s.onb=1;s.tut=-1;s.otr=0;save();$o('onb').classList.remove('on');busy=0;tab='home';_play();R();scrollTo(0,0);setTimeout(tour,150)}
+window.JS_ONB={start,go:n=>{st.step=n;draw()},v:(k,x)=>{st[k]=x},img:proc,fin,
+col:c=>{st.col=c;ensurePf();s.pf.col=c;try{applyPT()}catch(e){}save();draw()},
+mode:m=>{st.dark=m;s.dark=m;try{th()}catch(e){}draw()},
+next:()=>{s.otr++;save();tour(1)},skip:()=>{s.otr=-1;save();tour()},
+end:()=>{s.otr=-1;save();tour();dc()}};
+/* ---- Hướng dẫn 1 ngày (tự chuyển bước khi bạn làm đúng) ---- */
+const stock=()=>Object.values(s.st||{}).reduce((a,b)=>a+(+b||0),0);
+const has=a=>Object.keys(CART).some(k=>CART[k]>0&&a.includes(k.replace(/^\d+/,'')));
+const TS=[
+{t:'Chào mừng đến tiệm hoa! 🌸',h:'<b>Tổng quan:</b> trên cùng là tên tiệm, số tiền và avatar (bấm vào để mở Hồ sơ). Thanh tab bên dưới dẫn tới mọi tính năng. Mỗi ngày gồm 4 bước: <b>Nhập hàng → Đặt giá → Bán hàng → Tổng kết</b>. Mèo ở tiệm luôn ở bên bạn, thử chạm vào nó nhé.',tab:'home'},
+{t:'Các tính năng của game',h:'<ul style="margin:4px 0;padding-left:18px"><li><b>Túi đồ, Nội thất:</b> quản lý vật phẩm, trang trí tiệm.</li><li><b>Đánh giá:</b> trả lời khách để giữ uy tín.</li><li><b>Hóa đơn, Thống kê:</b> theo dõi thu chi.</li><li><b>Thành tích, Nhiệm vụ:</b> nhận XP, tiền, vật phẩm.</li><li><b>Thú cưng, Bạn bè, Workshop, Âm nhạc</b> và nhiều thứ khác để khám phá dần.</li></ul>',tab:'home'},
+{t:'Mua hoa 🌷 (1/3)',h:'Đang ở <b>Vườn Đà Lạt</b> (hoa tươi, giá tốt, ít suất). Mỗi dòng là một loại hoa: <b>+</b> thêm 1 bông (giữ để thêm nhanh), <b>−</b> bớt, <b>+5</b>/<b>Tối đa</b> thêm nhiều. Giá gốc: Cúc họa mi 3.000đ, Hồng 4.000đ, Hướng dương 5.000đ. <b>Chợ hoa Quảng Bá</b> (nút bên cạnh) có nhiều loại hơn, nhiều suất hơn nhưng đắt hơn 25%. Hoa hiếm mở khóa dần khi bạn chơi. Bấm <b>+</b> thêm vài bông Hồng.',tab:'buy',sp:0,w:()=>has(['cuc','hong','hd','tul','oai','cc','dt','cth','lily','sen','mdon','lan']),wt:'Đang chờ bạn thêm hoa vào giỏ…'},
+{t:'Mua giấy gói 🎀 (2/3)',h:'Chuyển sang <b>Tiệm giấy &amp; quà</b>. Giấy dùng để gói hoa thành bó, và <b>cỡ giấy quyết định số bông</b>: <b>S gói 3 bông (5.000đ)</b>, <b>M gói 5 bông (8.000đ)</b>, <b>L gói 10 bông (12.000đ)</b>. Giấy không giới hạn suất. Hãy bấm <b>+</b> thêm vài tờ giấy S và M.',tab:'buy',sp:2,w:()=>has(['S','M','L']),wt:'Đang chờ bạn thêm giấy vào giỏ…'},
+{t:'Mua quà tặng 🍬 (3/3)',h:'Cũng ở <b>Tiệm giấy &amp; quà</b>: <b>Kẹo</b> 1.000đ, <b>Thư tay</b> 3.000đ, <b>Ảnh in</b> 6.000đ. Quà là món kèm theo khách có thể yêu cầu; một bó có thể tặng nhiều loại. Bấm <b>+</b> thêm một ít kẹo hoặc thư tay.',tab:'buy',sp:2,w:()=>has(['keo','thu','anh']),wt:'Đang chờ bạn thêm quà vào giỏ…'},
+{t:'Thanh toán 🧾',h:'Nhìn thanh phía dưới (số món và tổng tiền), bấm <b>Thanh toán</b> rồi xác nhận mua. Tiền chỉ bị trừ khi xác nhận. Nhập vừa đủ vì hoa dư sẽ hỏng.',tab:'buy',w:()=>stock()>0,wt:'Đang chờ bạn thanh toán…'},
+{t:'Đặt giá',h:'Sang tab <b>Giá bán</b>. Giá mặc định = giá vốn + 215%. Bạn chỉnh được từng size nhưng không bán thấp hơn vốn. Lần đầu cứ để mặc định rồi bấm Tiếp.',tab:'price'},
+{t:'Ngày bán giả lập 🎮',h:'Giờ hãy thử <b>một ngày bán giả lập</b>: không tốn hoa hay tiền thật. Mình sẽ chỉ bạn từng bước: mở quầy, chạm khách, chọn hoa, giấy, quà, giao hàng và xem tổng kết.',btn:['▶ Bắt đầu thực hành','JS_ONB.sbx()'],w:()=>s.sbx,wt:''},
+{t:'Sẵn sàng rồi! 🎉',h:'Bạn đã học xong. Khi muốn bán thật, vào tab <b>Quầy</b> và bấm <b>Mở gian hàng</b>. Nguyên liệu bạn mua lúc học sẽ được hoàn tiền và xoá khỏi Túi đồ. Nhận <b>+50.000</b> quà tân thủ!',fin:1}];
+let lastS=-9,sbo=0;
+function tour(f){const e=$o('onbT');if(!e)return;const i=s.otr;
+if(i==null||i<0||i>=TS.length||scr!='game'||busy||sbo){e.hidden=true;return}
+const T=TS[i];
+if(i!=lastS){lastS=i;let ch=0;if(T.sp!=null&&sup!=T.sp){sup=T.sp;ch=1}if(T.tab&&tab!=T.tab){tab=T.tab;ch=1}if(ch){R();scrollTo(0,0)}f=1}
+if(T.w&&T.w()){s.otr=i+1;save();return tour()}
+if(!f&&!e.hidden&&e.dataset.i==i+(JS_ONB.mn?'m':''))return;
+e.dataset.i=i+(JS_ONB.mn?'m':'');e.hidden=false;
+if(JS_ONB.mn){e.innerHTML=`<div class=tr style="margin:0;align-items:center"><b>${T.t} (${i+1}/${TS.length})</b><button class="k" style="margin-left:auto" onclick="JS_ONB.tg()">▾ Mở</button></div>`;return}
+e.innerHTML=`<b>${T.t} (${i+1}/${TS.length})</b><br>${T.fin&&s.nbg?T.h.replace(/ Nguyên liệu bạn mua.*$/,''):T.h}${T.w?`<div class=wt>⏳ ${T.wt}</div>`:''}<div class=tr><button class=k onclick="JS_ONB.tg()">▴ Thu gọn</button><button class=k onclick="JS_ONB.skip()">✕ Bỏ qua</button>${T.fin?`<button class=p onclick="JS_ONB.fin2()">Hoàn tất</button>`:T.btn?`<button class=p onclick="${T.btn[1]}">${T.btn[0]}</button>`:`<button class="${T.w?'k':'p'}" onclick="JS_ONB.next()">${T.w?'Bỏ qua bước':'Tiếp'}</button>`}</div>`}
+JS_ONB.tg=()=>{JS_ONB.mn=!JS_ONB.mn;tour(1)};JS_ONB.fin2=()=>{if(!s.nbg){s.nbg=1;try{const tb=s.tbuy||0;Object.keys(s.tst||{}).forEach(id=>{s.st[id]=Math.max(0,(s.st[id]||0)-s.tst[id]);if(!s.st[id])delete s.st[id]});Object.keys(s.tbk||{}).forEach(k=>{s.bought[k]=Math.max(0,(s.bought[k]||0)-s.tbk[k]);if(!s.bought[k])delete s.bought[k]});s.tbuy=0;s.tst={};s.tbk={};if(tb){s.money+=tb;s.spent=Math.max(0,(s.spent||0)-tb);L('in','Hoàn tiền tân thủ','Hoàn tiền nhập hàng khi học',1,tb)}}catch(e){}try{s.money+=50000;L('in','Quà tân thủ','Hoàn thành ngày đầu',1,50000)}catch(e){}}JS_ONB.end();R()};
+
+/* ---- Ngày bán giả lập ---- */
+let sg=0,tp=0,pk=[];const SGS=[
+{c:'Đây là <b>ngày bán giả lập</b>: không tốn hoa hay tiền thật. Mình sẽ chỉ bạn bấm vào đâu và để làm gì.',b:[['Bắt đầu','n']]},
+{c:'👆 Bấm <b>Mở gian hàng</b>: đồng hồ ngày bán chạy và khách bắt đầu đến. Ở game thật, nút này nằm ở tab <b>Quầy</b>.',b:[['🏪 Mở gian hàng','n']]},
+{c:'Khách đầu tiên đến! 👆 <b>Chạm vào khách</b> để xem họ cần gì.',cust:1},
+{c:'Đây là đơn: <b>3 bông Hồng + Giấy S + Kẹo</b>. Món khách yêu cầu sẽ được <b>viền màu</b> trong danh sách nên rất dễ tìm. Nút <b>Mặc cả</b> để thương lượng giá, lần này cứ <b>Nhận đơn</b>.',ord:1,b:[['Mặc cả (thử sau)',''],['✅ Nhận đơn','n']]},
+{c:'<b>Bước 1 · Chọn hoa.</b> 👆 Chạm <b>Hồng</b> đủ 3 lần. Thiếu hay thừa bông đều bị trừ điểm.',ord:1,pick:'f'},
+{c:'<b>Bước 2 · Chọn giấy gói.</b> Giấy S gói vừa 3 bông. 👆 Chạm <b>Giấy S</b>.',ord:1,pick:'p'},
+{c:'<b>Bước 3 · Chọn quà.</b> 👆 Chạm <b>Kẹo</b> (quà khách xin). Có thể tặng nhiều loại quà cùng lúc.',ord:1,pick:'g'},
+{c:'Gói xong rồi! 👆 Bấm <b>Giao hoa</b> để đưa cho khách.',ord:1,b:[['🎁 Giao hoa','n']]},
+{c:'Khách trả <b>56.700đ</b> (vốn 18.000đ, giá bán = vốn + 215%) và chấm ⭐5 sao. Đúng đơn thì nhận tiền, XP và uy tín.',res:1,b:[['Tiếp','n']]},
+{c:'Hết giờ! Màn <b>Tổng kết</b> cho thấy doanh thu và lợi nhuận. Ở đó bạn trả lời đánh giá, nâng cấp quầy rồi sang ngày mới.',sum:1,b:[['🎉 Hoàn thành thực hành','e']]}];
+const PK={f:[['cuc','Cúc họa mi','hong'],['hong','Hồng'],['hd','Hướng dương']],p:[['S','Giấy S'],['M','Giấy M'],['L','Giấy L']],g:[['keo','Kẹo'],['thu','Thư tay'],['anh','Ảnh in']]},TG={f:'hong',p:'S',g:'keo'};
+function sdraw(){const o=$o('onbS'),g=SGS[sg];let h='';
+if(g.cust)h=`<div class="card hl" onclick="JS_ONB.sg('n')" style="cursor:pointer;text-align:center">🧑‍🦰 <b>Cô Lan</b><br>“Cho cô một bó hoa nhé!”<br><span class=mut>👆 chạm vào đây</span></div>`;
+if(g.ord)h+=`<div class=card><b>📋 Đơn của Cô Lan</b><br>🌹 3 Hồng · 📜 Giấy S · 🍬 Kẹo<div class=mut>Đã chọn: ${pk.join(', ')||'chưa có'}</div></div>`;
+if(g.pick)h+=`<div class=card><div class=acts style="flex-wrap:wrap">${PK[g.pick].map(x=>{const on=x[0]==TG[g.pick];return `<button class="${on?'p hl':'s'}" ${on?`onclick="JS_ONB.sp('${g.pick}','${x[1]}')"`:'disabled'}>${x[1]}${on&&g.pick=='f'?' ('+tp+'/3)':''}</button>`}).join('')}</div></div>`;
+if(g.res)h=`<div class=card style="text-align:center"><div style="font-size:2.4rem">⭐⭐⭐⭐⭐</div><b>+56.700đ</b><div class=mut>+XP · +uy tín</div></div>`;
+if(g.sum)h=`<div class=card><b>📊 Tổng kết ngày (giả lập)</b><div class=row><span>Doanh thu</span><b>56.700đ</b></div><div class=row><span>Vốn nguyên liệu</span><b>18.000đ</b></div><div class=row><span>Lợi nhuận</span><b>38.700đ</b></div></div>`;
+const b=(g.b||[]).map(x=>`<button class="${x[1]?'p hl':'s'}" ${x[1]?`onclick="JS_ONB.sg('${x[1]}')"`:'disabled'} style="flex:1">${x[0]}</button>`).join('');
+o.innerHTML=`<div class=ob><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🎮 Ngày thực hành · ${sg+1}/${SGS.length}</b><button class=s onclick="JS_ONB.sx()">✕ Thoát</button></div><div class=card style="background:var(--ink);color:var(--bg)">${g.c}</div>${h}<div class=acts>${b}</div></div>`;o.scrollTop=0}
+Object.assign(JS_ONB,{
+sbx:()=>{sbo=1;sg=0;tp=0;pk=[];$o('onbS').classList.add('on');sdraw();tour()},
+sx:()=>{sbo=0;$o('onbS').classList.remove('on');tour(1)},
+sg:a=>{if(a=='e'){s.sbx=1;save();JS_ONB.sx();return}sg++;sdraw()},
+sp:(k,n)=>{if(k=='f'){tp++;pk=pk.filter(x=>x.indexOf('Hồng')<0).concat(['Hồng ×'+tp]);if(tp<3){sdraw();return}}else pk.push(n);sg++;sdraw()}});
+/* ---- Mời vào server Discord ---- */
+function dc(){const o=$o('onbD');o.innerHTML=`<div class=ob style="margin-top:10vh"><div class=card style="text-align:center"><div style="font-size:3rem">🎉</div><h2>Hoàn thành hướng dẫn!</h2><p>Tham gia server Discord <b>Justaseed</b> để mở khóa đầy đủ các chức năng trong game: kết bạn, cộng đồng, chia sẻ card và nhiều hơn nữa.</p><a class="p big" href="https://discord.gg/justaseed" target="_blank" rel="noopener" style="display:block;text-decoration:none;padding:12px;border-radius:14px;margin:8px 0">💬 Tham gia server Discord</a><button class="s big" style="width:100%" onclick="JS_ONB.dx()">Để sau</button></div></div>`;o.classList.add('on')}
+JS_ONB.dx=()=>$o('onbD').classList.remove('on');
+const _rm=renderMenu;renderMenu=function(){const r=_rm.apply(this,arguments);try{const mc=document.querySelector('#menu .mc');if(mc&&!mc.querySelector('.dclink'))mc.insertAdjacentHTML('beforeend','<a class="s dclink" href="https://discord.gg/justaseed" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;padding:8px;margin-top:6px;width:100%">💬 Server Discord Justaseed</a>')}catch(e){}return r};
+JS_ONB.replay=()=>{mdl();s.onb=1;s.tut=-1;s.otr=0;s.sbx=0;lastS=-9;save();tab='home';_play();R();setTimeout(()=>tour(1),150)};
+startTut=function(){if(isNew()){mdl();start();return}JS_ONB.replay()};
+setInterval(()=>{try{tour()}catch(e){}},700);
+/* ---- Móc vào nút chơi: người chơi mới → onboarding ---- */
+const _cb=confirmBuy;confirmBuy=function(){const tr=s.otr>=0&&!s.nbg,it=tr?cartItems():[],m=s.money;const r=_cb.apply(this,arguments);try{if(tr&&s.money<m){s.tbuy=(s.tbuy||0)+(m-s.money);s.tst=s.tst||{};s.tbk=s.tbk||{};it.forEach(i=>{s.tst[i.id]=(s.tst[i.id]||0)+i.q;s.tbk[i.k]=(s.tbk[i.k]||0)+i.q});save()}}catch(e){}return r};
+const _play=play;
+play=function(){if(isNew()){start();return}return _play.apply(this,arguments)};
+setTimeout(()=>{try{if(s.otr>=0&&s.onb&&scr=='game')tour(1)}catch(e){}},1200);
+}catch(e){console.error('onboarding',e)}})();
+</script>
+
 </body></html>

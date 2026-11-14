@@ -8891,7 +8891,7 @@ sync();
  const brShare=l=>.22+.07*(l-1);
  const brRent=l=>Math.round((rentN()+utilN())*(.6+.1*(l-1))/1000)*1000;
  const pc=v=>String(Math.round(v*100)/100).replace('.',',');
- const X=()=>{const o=s.x2||(s.x2={});o.stf=o.stf||[];o.br=o.br||[];o.bk=o.bk||[];o.bk.forEach(a=>{if(!a.u){a.m=Math.round((a.m||0)*MD);a.u=1}});o.sel=o.sel||{b:0,t:3,a:''};o.id=o.id||0;return o};
+ const X=()=>{const o=s.x2||(s.x2={});o.stf=o.stf||[];o.br=o.br||[];o.bk=o.bk||[];o.bk.forEach(a=>{if(!a.u){a.m=Math.round((a.m||0)*MD);a.u=1}});o.br.forEach(b=>{b.stf=b.stf||[];b.st=b.st||{};b.bought=b.bought||{};b.pause=b.pause?1:0});o.sel=o.sel||{b:0,t:3,a:''};o.id=o.id||0;return o};
  const rate=(b,t)=>t==0?DEMAND:BANKS[b][1][TERMS.indexOf(t)];
  const stfLv=()=>X().stf.reduce((a,x)=>a+x.l,0);
  const brNet=(b,rev)=>{const f=1+Math.min(.5,.03*stfLv());const r=Math.round(rev*brShare(b.l)*f);return{rev:r,cost:Math.round(r*.35),rent:brRent(b.l)}};
@@ -8925,8 +8925,12 @@ sync();
   const x=X(),rev=(s.rpt&&s.rpt.rev)||0,o={wage:0,brRev:0,brCost:0,brRent:0,intr:0,lines:[]};
   o.wage=x.stf.reduce((a,t)=>a+wage(t.l),0);
   if(o.wage){s.money-=o.wage;try{L('out','Lương nhân viên',x.stf.length+' nhân viên',1,o.wage)}catch(e){}}
-  x.br.forEach(b=>{const r=brNet(b,rev);const net=r.rev-r.cost-r.rent;b.last=net;o.brRev+=r.rev;o.brCost+=r.cost;o.brRent+=r.rent;
-   s.money+=net;try{net>=0?L('in','Chi nhánh','CN '+b.n,1,net):L('out','Chi nhánh','CN '+b.n+' lỗ',1,-net)}catch(e){}});
+  const spn=(typeof live!='undefined'&&live&&live.sp)||8;
+  x.br.forEach(b=>{const r=brDay(b,spn),net=r.rev-r.wage-r.rent;b.last=b.pause?null:net;o.brRev+=r.rev;o.brCost+=r.wage;o.brRent+=r.rent;
+   if(b.pause)return;
+   s.money+=net;try{net>=0?L('in','Chi nhánh','CN '+b.n,1,net):L('out','Chi nhánh','CN '+b.n+' lỗ',1,-net)}catch(e){}
+   o.lines.push('CN '+b.n+': bán '+r.n+' đơn'+(r.lost?', '+r.lost+' khách không được phục vụ (thiếu hàng hoặc nhân viên)':''))});
+  BT=0;
   x.bk=x.bk.filter(a=>{
    a.m=(a.m||0)+1;
    if(a.t==0){const i=Math.round(a.amt*a.r/100/365);a.amt+=i;o.intr+=i;return true}
@@ -8947,14 +8951,11 @@ sync();
  /* ---------- Giao diện ---------- */
  const bar=(v,m)=>`<span style="display:inline-block;width:70px;height:7px;border-radius:9px;background:rgba(0,0,0,.12);vertical-align:middle;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(v/m*100)}%;background:var(--g2,#4caf6a)"></i></span>`;
  V.staff=()=>{const x=X(),w=x.stf.reduce((a,t)=>a+wage(t.l),0),fast=x.stf.length?Math.min(...x.stf.map(t=>gap(t.l))):0;
-  return `<div class=card><h3>Nhân viên (${x.stf.length}/${MAXS})</h3><p class=mut>Nhân viên tự làm đơn của khách khi quầy đang mở, kể cả lúc bạn bận. Nâng cấp để làm đơn nhanh hơn; từ cấp 3 họ tự thương lượng giá. Họ không nhận đơn đại gia và khách bạn đang chọn.</p>
+  return `<div class=card><h3>Nhân viên quầy chính (${x.stf.length}/${MAXS})</h3><p class=mut>Nhân viên quầy chính tự làm đơn của khách khi quầy đang mở, kể cả lúc bạn bận. Nâng cấp để làm đơn nhanh hơn; từ cấp 3 họ tự thương lượng giá. Họ không nhận đơn đại gia và khách bạn đang chọn. Chi nhánh có nhân viên riêng (xem tab Chi nhánh).</p>
 <div class=row><span>Lương mỗi ngày</span><b>${$(w)}</b></div>${x.stf.length?`<div class=row><span>Làm đơn nhanh nhất</span><b>${fast} giây/đơn</b></div>`:''}
 <div class=row><button class=p ${x.stf.length>=MAXS||s.money<hireCost(x.stf.length)?'disabled':''} onclick="X2.hire()">Tuyển nhân viên (${$(hireCost(x.stf.length))})</button></div></div>
 ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · cấp ${t.l}/${MAXL}<br>${bar(t.l,MAXL)}<br><span class=mut>${gap(t.l)} giây/đơn · lương ${$(wage(t.l))}/ngày</span></span><span style="display:flex;flex-direction:column;gap:6px"><button class=p ${t.l>=MAXL||s.money<upCost(t.l)?'disabled':''} onclick="X2.up(${i})">${t.l>=MAXL?'Tối đa':'Nâng cấp '+$(upCost(t.l))}</button><button class=s onclick="X2.fire(${i})">Cho nghỉ</button></span></div></div>`).join('')}`};
- V.branch=()=>{const x=X(),rev=(s.rpt&&s.rpt.rev)||0;
-  return `<div class=card><h3>Chi nhánh (${x.br.length}/${MAXB})</h3><p class=mut>Mỗi chi nhánh tự bán và chia lời vào cuối ngày theo doanh thu của quầy chính (càng nhiều nhân viên cấp cao thì càng hiệu quả). Trừ 35% vốn hàng và tiền thuê mặt bằng của chi nhánh.</p>
-<div class=row><button class=p ${x.br.length>=MAXB||s.money<openCost(x.br.length)?'disabled':''} onclick="X2.openBr()">Mở chi nhánh${x.br.length<MAXB?' ('+$(openCost(x.br.length))+')':''}</button></div></div>
-${x.br.map((b,i)=>{const r=brNet(b,rev),net=r.rev-r.cost-r.rent;return `<div class=card><div class=row><span><b>CN ${esc(b.n)}</b> · cấp ${b.l}/${MAXBL}<br>${bar(b.l,MAXBL)}<br><span class=mut>Thị phần ${Math.round(brShare(b.l)*100)}% quầy chính · thuê ${$(r.rent)}/ngày</span><br><span class=mut>Ước tính theo doanh thu ngày gần nhất: <b class="${net>=0?'ok':'bad'}">${net>=0?'+':'-'}${$(Math.abs(net))}</b>/ngày${b.last!=null?' · hôm qua '+(b.last>=0?'+':'-')+$(Math.abs(b.last)):''}</span></span><button class=p ${b.l>=MAXBL||s.money<brUp(b.l)?'disabled':''} onclick="X2.upBr(${i})">${b.l>=MAXBL?'Tối đa':'Nâng cấp '+$(brUp(b.l))}</button></div></div>`}).join('')}`};
+ /*V.branch được định nghĩa lại bên dưới*/
  V.bank=()=>{const x=X(),se=x.sel,r=rate(se.b,se.t),amt=Math.max(0,Math.floor(+se.a)||0),ex=Math.round(amt*r/100*(se.t||1)/12);
   const tot=x.bk.reduce((a,t)=>a+t.amt,0);
   return `<div class=card><h3>Ngân hàng</h3><p class=mut>Lãi suất lấy từ biểu lãi tiết kiệm trực tuyến (lãi nhận cuối kỳ) tại các ngân hàng Việt Nam, cập nhật 10/11/2026, chỉ để tham khảo. Trong game, <b>1 ngày game = 1 ngày gửi tiết kiệm</b> (1 tháng = 30 ngày): gửi kỳ hạn 6 tháng thì sau 180 ngày game đáo hạn và nhận gốc + lãi. Rút trước hạn chỉ nhận lãi không kỳ hạn ${pc(DEMAND)}%/năm.</p>
@@ -8978,7 +8979,7 @@ ${x.br.map((b,i)=>{const r=brNet(b,rev),net=r.rev-r.cost-r.rent;return `<div cla
    s.money-=c;t.l++;try{L('out','Nhân viên','Nâng cấp '+t.n,1,c)}catch(e){}toast(t.n+' lên cấp '+t.l+' ('+gap(t.l)+' giây/đơn)');R()},
   fire(i){const x=X(),t=x.stf[i];if(!t)return;if(!confirm('Cho '+t.n+' nghỉ việc? Tiền tuyển và nâng cấp không được hoàn lại.'))return;x.stf.splice(i,1);R()},
   openBr(){const x=X();if(x.br.length>=MAXB)return;const c=openCost(x.br.length);if(s.money<c)return toast('Không đủ tiền');
-   s.money-=c;const n=BRN[x.br.length%BRN.length];x.br.push({id:++x.id,n,l:1});try{L('out','Chi nhánh','Mở chi nhánh '+n,1,c)}catch(e){}toast('Đã mở chi nhánh '+n);R()},
+   s.money-=c;const n=BRN[x.br.length%BRN.length];x.br.push({id:++x.id,n,l:1,stf:[],st:{},bought:{},pause:0});try{L('out','Chi nhánh','Mở chi nhánh '+n,1,c)}catch(e){}toast('Đã mở chi nhánh '+n);R()},
   upBr(i){const x=X(),b=x.br[i];if(!b||b.l>=MAXBL)return;const c=brUp(b.l);if(s.money<c)return toast('Không đủ tiền');
    s.money-=c;b.l++;try{L('out','Chi nhánh','Nâng cấp CN '+b.n,1,c)}catch(e){}toast('Chi nhánh '+b.n+' lên cấp '+b.l);R()},
   dep(){const x=X(),se=x.sel,amt=Math.floor(+se.a)||0;if(amt<MINDEP)return toast('Tối thiểu '+$(MINDEP));if(amt>s.money)return toast('Không đủ tiền');
@@ -8987,6 +8988,72 @@ ${x.br.map((b,i)=>{const r=brNet(b,rev),net=r.rev-r.cost-r.rent;return `<div cla
    if(a.t&&(a.m||0)<tdays(a.t)){if(!confirm('Rút trước hạn chỉ nhận lãi không kỳ hạn '+pc(DEMAND)+'%/năm. Tiếp tục?'))return;pay+=Math.round(a.amt*DEMAND/100*(a.m||0)/365)}
    s.money+=pay;x.bk.splice(i,1);toast('Đã rút '+$(pay));try{save()}catch(e){}R()}
  };
+ /* ---------- Chi nhánh: nhân viên + kho hàng riêng ---------- */
+ const MAXBS=4;let BT=0;
+ const brMenu=b=>{const m=[];F.forEach(f=>P.forEach(p=>{if((b.st[f.id]||0)>=p.k&&(b.st[p.id]||0)>=1)m.push({f,p})}));return m};
+ const brStock=b=>{let h=0,w=0;Object.keys(b.st).forEach(k=>{if(FH[k])h+=b.st[k]||0;else if(isPp(k))w+=b.st[k]||0});return{h,w}};
+ const brWage=b=>b.stf.reduce((a,t)=>a+wage(t.l),0);
+ const brWhy=b=>{const w=[];if(!b.stf.length)w.push('chưa có nhân viên');if(!brMenu(b).length)w.push('chưa nhập hàng');return w};
+ const brBlock=()=>X().br.map((b,i)=>({b,i,w:b.pause?[]:brWhy(b)})).filter(r=>r.w.length);
+ function brDay(b,sp){
+  const o={rev:0,n:0,lost:0,wage:0,rent:0};
+  if(!b.pause){
+   o.wage=brWage(b);o.rent=brRent(b.l);
+   const cust=Math.max(4,Math.round((sp||8)*(.55+.1*(b.l-1)+.1)));
+   let capy=b.stf.reduce((a,t)=>a+Math.floor((s.len||240)/gap(t.l)*.6),0);
+   for(let i=0;i<cust;i++){
+    const m=capy>0?brMenu(b):[];
+    if(!m.length){o.lost++;continue}
+    const it=rnd(m);b.st[it.f.id]-=it.p.k;b.st[it.p.id]-=1;
+    o.rev+=price(it.f.id,it.p.id);o.n++;capy--;
+   }}
+  Object.keys(b.st).forEach(k=>{if(FH[k])b.st[k]=Math.floor((b.st[k]||0)*.6)});
+  b.bought={};
+  return o}
+
+ /* nhập hàng cho chi nhánh: đổi tạm kho/suất nhập của quầy sang kho chi nhánh khi thao tác ở tab Nhập hàng */
+ let SW=null,SV=null;
+ const cbr=()=>{if(!BT||typeof tab=='undefined'||tab!='buy')return null;return X().br.find(b=>b.id==BT)||null};
+ function swWrap(fn){return function(){
+  if(SW)return fn.apply(this,arguments);
+  const b=cbr();if(!b)return fn.apply(this,arguments);
+  const sp0=s.spent;SV={st:s.st,bo:s.bought};SW=b;s.st=b.st;s.bought=b.bought;
+  try{return fn.apply(this,arguments)}
+  finally{b.st=s.st;b.bought=s.bought;s.st=SV.st;s.bought=SV.bo;s.spent=sp0;SW=null;SV=null}}}
+ ['chg','setQ','buyAll','addN','all','confirmBuy'].forEach(n=>{if(typeof window[n]=='function')window[n]=swWrap(window[n])});
+ {const o=V.buy;const w=swWrap(function(){return o.apply(this,arguments)});
+  V.buy=function(){const h=w.apply(this,arguments);if(s.ph!='prep')return h;const x=X();if(!x.br.length)return h;
+   const ch=(id,n)=>`<button class="s ${BT==id?'on2':''}" onclick="X2.tg(${id})">${n}</button>`,cb=x.br.find(b=>b.id==BT);
+   return `<div class=card><h3>Nhập hàng cho</h3><div class=tabs2>${ch(0,'Quầy chính')}${x.br.map(b=>ch(b.id,'CN '+esc(b.n)+(b.pause?' (nghỉ)':''))).join('')}</div>${cb?`<p class=mut style="margin:4px 0 0">Đang nhập vào <b>kho riêng của CN ${esc(cb.n)}</b> (suất nhập tính riêng). Kho và suất bên dưới là của chi nhánh này.</p>`:''}</div>`+h}}
+ {const o=V.shop;V.shop=function(){const h=o.apply(this,arguments);if(s.ph!='prep')return h;const x=X();if(!x.br.length)return h;
+  const rows=x.br.map((b,i)=>{const w=b.pause?[]:brWhy(b);return `<div class=row><span><b>CN ${esc(b.n)}</b><br><span class="${b.pause?'mut':w.length?'bad':'ok'}">${b.pause?'Tạm nghỉ':w.length?w.join(', '):'Sẵn sàng'}</span></span><span style="display:flex;gap:6px"><button class=s onclick="X2.bb(${i})">Nhập hàng</button><button class=s onclick="X2.bp(${i})">${b.pause?'Mở lại':'Tạm nghỉ'}</button></span></div>`}).join('');
+  return h+`<div class=card><h3>Chi nhánh trước giờ mở cửa</h3><p class=mut>Mọi chi nhánh đang hoạt động phải có nhân viên và đã nhập hàng thì mới mở được gian hàng. Không muốn nhập hàng thì cho chi nhánh tạm nghỉ.</p>${rows}</div>`}}
+ {const o=openDay;openDay=function(){const b=brBlock();
+  if(b.length){toast(b.map(r=>'CN '+r.b.n+' '+r.w.join(', ')).join('; ')+'. Hãy nhập hàng/tuyển nhân viên hoặc cho tạm nghỉ');tab='shop';try{R()}catch(e){}return}
+  BT=0;return o.apply(this,arguments)}}
+
+ V.branch=()=>{const x=X();
+  return `<div class=card><h3>Chi nhánh (${x.br.length}/${MAXB})</h3><p class=mut>Mỗi chi nhánh có <b>nhân viên</b> và <b>kho hàng riêng</b>. Trước khi mở gian hàng, mọi chi nhánh đang hoạt động phải có ít nhất 1 nhân viên và đã nhập hàng; nếu không muốn nhập thì cho chi nhánh <b>tạm nghỉ</b> (không tốn lương, tiền thuê, cũng không có doanh thu). Cuối ngày chi nhánh tự bán từ kho của mình: nhiều nhân viên, cấp cao thì phục vụ được nhiều khách hơn. Hoa còn dư trong kho héo 40% mỗi ngày.</p>
+<div class=row><button class=p ${x.br.length>=MAXB||s.money<openCost(x.br.length)?'disabled':''} onclick="X2.openBr()">Mở chi nhánh${x.br.length<MAXB?' ('+$(openCost(x.br.length))+')':''}</button></div></div>
+${x.br.map((b,i)=>{const st=brStock(b),why=b.pause?[]:brWhy(b);
+return `<div class=card><div class=row><span><b>CN ${esc(b.n)}</b> · cấp ${b.l}/${MAXBL}<br>${bar(b.l,MAXBL)}</span><b class="${b.pause?'mut':why.length?'bad':'ok'}">${b.pause?'Tạm nghỉ':why.length?'Chưa sẵn sàng':'Sẵn sàng'}</b></div>
+<p class=mut style="margin:4px 0">Thị phần ${Math.round(brShare(b.l)*100)}% · thuê ${$(brRent(b.l))}/ngày · Kho: ${st.h} hoa, ${st.w} giấy gói · làm được ${brMenu(b).length} loại bó${why.length?' · <b class=bad>'+why.join(', ')+'</b>':''}${b.last!=null?' · hôm qua '+(b.last>=0?'+':'-')+$(Math.abs(b.last)):''}</p>
+<div class=row><button class=p onclick="X2.bb(${i})">Nhập hàng</button><button class=s onclick="X2.bp(${i})">${b.pause?'Mở lại':'Tạm nghỉ'}</button><button class=s ${b.l>=MAXBL||s.money<brUp(b.l)?'disabled':''} onclick="X2.upBr(${i})">${b.l>=MAXBL?'Tối đa':'Nâng cấp '+$(brUp(b.l))}</button></div>
+<p style="margin:8px 0 2px"><b>Nhân viên (${b.stf.length}/${MAXBS})</b> · lương ${$(brWage(b))}/ngày</p>
+${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br><span class=mut>${gap(t.l)} giây/đơn · lương ${$(wage(t.l))}/ngày</span></span><span style="display:flex;gap:6px"><button class=p ${t.l>=MAXL||s.money<upCost(t.l)?'disabled':''} onclick="X2.bu(${i},${j})">${t.l>=MAXL?'Tối đa':'Nâng cấp '+$(upCost(t.l))}</button><button class=s onclick="X2.bf(${i},${j})">Nghỉ</button></span></div>`).join('')}
+<div class=row><button class=p ${b.stf.length>=MAXBS||s.money<hireCost(b.stf.length)?'disabled':''} onclick="X2.bh(${i})">Tuyển nhân viên (${$(hireCost(b.stf.length))})</button></div></div>`}).join('')}`};
+ Object.assign(window.X2,{
+  tg(id){BT=id;R()},
+  bb(i){const b=X().br[i];if(!b)return;BT=b.id;tab='buy';R()},
+  bp(i){const b=X().br[i];if(!b)return;if(s.ph=='open')return toast('Không đổi được khi đang bán');b.pause=b.pause?0:1;toast(b.pause?'CN '+b.n+' tạm nghỉ':'CN '+b.n+' đã mở lại');try{save()}catch(e){}R()},
+  bh(i){const b=X().br[i];if(!b||b.stf.length>=MAXBS)return;const c=hireCost(b.stf.length);if(s.money<c)return toast('Không đủ tiền');
+   s.money-=c;const used=b.stf.map(t=>t.n),n=NAMES.find(q=>!used.includes(q))||NAMES[b.stf.length%NAMES.length];b.stf.push({id:++X().id,n,l:1});
+   try{L('out','Nhân viên','Tuyển '+n+' (CN '+b.n+')',1,c)}catch(e){}toast('Đã tuyển '+n+' cho CN '+b.n);R()},
+  bu(i,j){const b=X().br[i],t=b&&b.stf[j];if(!t||t.l>=MAXL)return;const c=upCost(t.l);if(s.money<c)return toast('Không đủ tiền');
+   s.money-=c;t.l++;try{L('out','Nhân viên','Nâng cấp '+t.n+' (CN '+b.n+')',1,c)}catch(e){}toast(t.n+' lên cấp '+t.l);R()},
+  bf(i,j){const b=X().br[i],t=b&&b.stf[j];if(!t)return;if(!confirm('Cho '+t.n+' nghỉ việc?'))return;b.stf.splice(j,1);R()}
+ });
+
  try{Object.assign(I,{staff:'M12 11a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',bank:'M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18',branch:'M4 21V8l8-5 8 5v13M9 21v-6h6v6'})}catch(e){}
  [['staff','staff','Nhân viên'],['branch','branch','Chi nhánh'],['bank','bank','Ngân hàng']].forEach(t=>{if(!TABS.some(x=>x[0]==t[0]))TABS.push(t)});
 })();

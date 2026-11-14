@@ -9485,4 +9485,36 @@ setTimeout(()=>{try{if(s.otr>=0&&s.onb&&scr=='game')tour(1)}catch(e){}},1200);
 }catch(e){console.error('onboarding',e)}})();
 </script>
 
+<style>
+nav .nvI,nav .nvH{position:absolute;pointer-events:none;border-radius:16px;z-index:0;left:0;top:0;width:0;height:0}
+nav .nvI{background:var(--g2)}
+nav .nvH{background:color-mix(in srgb,var(--ink) 10%,transparent);opacity:0;transition:left .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),opacity .18s}
+nav.nvA button{z-index:1}
+nav.nvA button.on{background:transparent}
+@media(prefers-reduced-motion:reduce){nav .nvH{transition:none}}
+</style>
+<script>
+/* ===== Animation thanh tab: chỉ báo lướt đến tab được chọn (mobile) + vệt sáng lướt theo chuột (desktop) ===== */
+(function(){try{
+const RM=matchMedia('(prefers-reduced-motion:reduce)'),FINE=matchMedia('(hover:hover) and (pointer:fine)');
+let last=null,SL=0,busy=0;
+const mk=(n,c)=>{let e=n.querySelector('.'+c);if(!e){e=document.createElement('i');e.className=c;n.insertBefore(e,n.firstChild)}return e};
+const box=(e,b)=>{e.style.left=b.offsetLeft+'px';e.style.width=b.offsetWidth+'px';e.style.top=b.offsetTop+'px';e.style.height=b.offsetHeight+'px'};
+function place(){if(busy)return;document.querySelectorAll('nav').forEach(n=>{const on=n.querySelector('button.on');if(!on||n.querySelector('.nvI'))return;
+busy=1;n.classList.add('nvA');if(getComputedStyle(n).position=='static')n.style.position='relative';const I=mk(n,'nvI');box(I,on);
+const x1=on.offsetLeft,w1=on.offsetWidth,y1=on.offsetTop,h1=on.offsetHeight;
+if(SL)n.scrollLeft=SL;
+try{n.scrollTo({left:Math.max(0,x1-(n.clientWidth-w1)/2),behavior:RM.matches?'auto':'smooth'})}catch(e){}
+if(last&&!RM.matches&&(last.x!=x1||last.y!=y1)){const x0=last.x,w0=last.w,y0=last.y,h0=last.h,l=Math.min(x0,x1),r=Math.max(x0+w0,x1+w1),tp=Math.min(y0,y1),bt=Math.max(y0+h0,y1+h1);
+I.animate([{left:x0+'px',width:w0+'px',top:y0+'px',height:h0+'px'},{left:l+'px',width:(r-l)+'px',top:tp+'px',height:(bt-tp)+'px',offset:.45},{left:x1+'px',width:w1+'px',top:y1+'px',height:h1+'px'}],{duration:520,easing:'cubic-bezier(.3,.9,.4,1)'})}
+last={x:x1,w:w1,y:y1,h:h1};busy=0})}
+let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;try{place()}catch(e){busy=0}})}).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('scroll',e=>{if(e.target&&e.target.tagName=='NAV')SL=e.target.scrollLeft},true);
+/* desktop: vệt sáng lướt theo chuột */
+document.addEventListener('mouseover',e=>{if(!FINE.matches)return;const b=e.target.closest&&e.target.closest('nav button');if(!b)return;const n=b.closest('nav'),h=mk(n,'nvH'),vis=h.style.opacity==1;
+if(!vis){h.style.transition='none';box(h,b);h.offsetWidth;h.style.transition=''}else box(h,b);h.style.opacity=1},true);
+document.addEventListener('mouseout',e=>{const n=e.target.closest&&e.target.closest('nav');if(n&&!n.contains(e.relatedTarget)){const h=n.querySelector('.nvH');if(h)h.style.opacity=0}},true);
+setTimeout(()=>{try{place()}catch(e){}},300);
+}catch(e){console.error('navanim',e)}})();
+</script>
 </body></html>

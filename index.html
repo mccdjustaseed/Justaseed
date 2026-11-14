@@ -9914,6 +9914,8 @@ function dgTxt(t){
  h=h.replace(/```(?:[a-zA-Z0-9+#-]*\n)?([\s\S]*?)```/g,(m,c)=>ph('<pre class=dgc>'+E(c.replace(/^\n+|\s+$/g,''))+'</pre>'));
  h=h.replace(/`([^`\n]+)`/g,(m,c)=>ph('<code class=dgic>'+E(c)+'</code>'));
  h=E(h);
+ h=h.replace(/&lt;(https?:\/\/[^\s]+?)&gt;/g,'$1');
+ h=h.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,(m,l,u)=>ph('<a href="'+u+'" target=_blank rel=noopener>'+l+'</a>'));
  h=h.replace(/(https?:\/\/[^\s<\u0001]+)/g,(m,u)=>{let tail='';while(/[.,;:!?)\]]$/.test(u)&&!/&(amp|lt|gt|quot|#39)$/.test(u)){tail=u.slice(-1)+tail;u=u.slice(0,-1)}
   const raw=u.replace(/&amp;/g,'&'),lb=/^https:\/\/(?:\w+\.)?discord(?:app)?\.com\/channels\//.test(raw)?'Liên kết Discord':raw.replace(/^https?:\/\/(www\.)?/,'').slice(0,38)+(raw.length>46?'…':'');
   return ph('<a href="'+u+'" target=_blank rel=noopener>'+E(lb)+'</a>')+tail});

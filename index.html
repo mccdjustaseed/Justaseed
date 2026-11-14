@@ -9087,7 +9087,7 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
  const brWage=b=>b.stf.reduce((a,t)=>a+wage(t.l),0);
  const brWhy=b=>{const w=[];if(!b.stf.length)w.push('chưa có nhân viên');if(!brMenu(b).length)w.push('chưa nhập hàng');return w};
  const brBlock=()=>X().br.map((b,i)=>({b,i,w:b.pause?[]:brWhy(b)})).filter(r=>r.w.length);
- function brDay(b,sp){
+ function brCore(b,sp){
   const o={rev:0,n:0,lost:0,wage:0,rent:0};
   if(!b.pause){
    o.wage=brWage(b);o.rent=brRent(b.l);
@@ -9102,6 +9102,8 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
   Object.keys(b.st).forEach(k=>{if(FH[k])b.st[k]=Math.floor((b.st[k]||0)*.6)});
   b.bought={};
   return o}
+ function brDay(b,sp){if(b.plan){const pl=b.plan;b.plan=null;b.st=pl.st;b.bought={};return pl.r}return brCore(b,sp)}
+ function planBr(){X().br.forEach(b=>{b.plan=null;if(b.pause)return;const t={l:b.l,pause:b.pause,stf:b.stf,st:Object.assign({},b.st),bought:{}};b.plan={r:brCore(t,(typeof live!='undefined'&&live&&live.tot)||8),st:t.st}})}
 
  /* nhập hàng cho chi nhánh: đổi tạm kho/suất nhập của quầy sang kho chi nhánh khi thao tác ở tab Nhập hàng */
  let SW=null,SV=null;
@@ -9124,14 +9126,14 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
   return h+`<div class=card><h3>Chi nhánh trước giờ mở cửa</h3><p class=mut>Mọi chi nhánh đang hoạt động phải có nhân viên và đã nhập hàng thì mới mở được gian hàng. Không muốn nhập hàng thì cho chi nhánh tạm nghỉ.</p>${rows}</div>`}}
  {const o=openDay;openDay=function(){const b=brBlock();
   if(b.length){toast(b.map(r=>'CN '+r.b.n+' '+r.w.join(', ')).join('; ')+'. Hãy nhập hàng/tuyển nhân viên hoặc cho tạm nghỉ');tab='shop';try{R()}catch(e){}return}
-  BT=0;return o.apply(this,arguments)}}
+  BT=0;const rr=o.apply(this,arguments);try{planBr()}catch(e){console.warn('planBr',e)}return rr}}
 
  V.branch=()=>{const x=X();
   return `<div class=card><h3>Chi nhánh (${x.br.length}/${MAXB})</h3><p class=mut>Mỗi chi nhánh có <b>nhân viên</b> và <b>kho hàng riêng</b>. Trước khi mở gian hàng, mọi chi nhánh đang hoạt động phải có ít nhất 1 nhân viên và đã nhập hàng; nếu không muốn nhập thì cho chi nhánh <b>tạm nghỉ</b> (không tốn lương, tiền thuê, cũng không có doanh thu). Cuối ngày chi nhánh tự bán từ kho của mình: nhiều nhân viên, cấp cao thì phục vụ được nhiều khách hơn. Hoa còn dư trong kho héo 40% mỗi ngày.</p>
 <div class=row><button class=p ${x.br.length>=MAXB||s.money<openCost(x.br.length)?'disabled':''} onclick="X2.openBr()">Mở chi nhánh${x.br.length<MAXB?' ('+$(openCost(x.br.length))+')':''}</button></div></div>
 ${x.br.map((b,i)=>{const st=brStock(b),why=b.pause?[]:brWhy(b);
-return `<div class=card><div class=row><span><b>CN ${esc(b.n)}</b> · cấp ${b.l}/${MAXBL}<br>${bar(b.l,MAXBL)}</span><b class="${b.pause?'mut':why.length?'bad':'ok'}">${b.pause?'Tạm nghỉ':why.length?'Chưa sẵn sàng':'Sẵn sàng'}</b></div>
-<p class=mut style="margin:4px 0">Thị phần ${Math.round(brShare(b.l)*100)}% · thuê ${$(brRent(b.l))}/ngày · Kho: ${st.h} hoa, ${st.w} giấy gói · làm được ${brMenu(b).length} loại bó${why.length?' · <b class=bad>'+why.join(', ')+'</b>':''}${b.last!=null?' · hôm qua '+(b.last>=0?'+':'-')+$(Math.abs(b.last)):''}</p>
+return `<div class=card><div class=row><span><b>CN ${esc(b.n)}</b> · cấp ${b.l}/${MAXBL}<br>${bar(b.l,MAXBL)}</span>${brBadge(b,why)}</div>
+<p class=mut style="margin:4px 0">Thị phần ${Math.round(brShare(b.l)*100)}% · thuê ${$(brRent(b.l))}/ngày · Kho: ${st.h} hoa, ${st.w} giấy gói · làm được ${brMenu(b).length} loại bó${why.length?' · <b class=bad>'+why.join(', ')+'</b>':''}${b.last!=null?' · hôm qua '+(b.last>=0?'+':'-')+$(Math.abs(b.last)):''}</p>${brLive(b)}${brKho(b)}
 <div class=row><button class=p onclick="X2.bb(${i})">Nhập hàng</button><button class=s onclick="X2.bp(${i})">${b.pause?'Mở lại':'Tạm nghỉ'}</button><button class=s ${b.l>=MAXBL||s.money<brUp(b.l)?'disabled':''} onclick="X2.upBr(${i})">${b.l>=MAXBL?'Tối đa':'Nâng cấp '+$(brUp(b.l))}</button></div>
 <p style="margin:8px 0 2px"><b>Nhân viên (${b.stf.length}/${MAXBS})</b> · lương ${$(brWage(b))}/ngày</p>
 ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br><span class=mut>${gap(t.l)} giây/đơn · lương ${$(wage(t.l))}/ngày</span></span><span style="display:flex;gap:6px"><button class=p ${t.l>=MAXL||s.money<upCost(t.l)?'disabled':''} onclick="X2.bu(${i},${j})">${t.l>=MAXL?'Tối đa':'Nâng cấp '+$(upCost(t.l))}</button><button class=s onclick="X2.bf(${i},${j})">Nghỉ</button></span></div>`).join('')}
@@ -9147,6 +9149,26 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    s.money-=c;t.l++;try{L('out','Nhân viên','Nâng cấp '+t.n+' (CN '+b.n+')',1,c)}catch(e){}toast(t.n+' lên cấp '+t.l);R()},
   bf(i,j){const b=X().br[i],t=b&&b.stf[j];if(!t)return;if(!confirm('Cho '+t.n+' nghỉ việc?'))return;b.stf.splice(j,1);R()}
  });
+
+ /* ---------- Xem kho, trạng thái "đang bán hàng", tiến trình chi nhánh ---------- */
+ const BRO={};
+ const GRN='color:#2e9e57;font-weight:700';
+ const dayP=()=>{try{return(typeof live!='undefined'&&live&&s.ph=='open')?Math.max(0,Math.min(1,(live.sp-live.cs.length)/Math.max(1,live.tot))):0}catch(e){return 0}};
+ const isSell=b=>s.ph=='open'&&!b.pause&&!!b.plan;
+ const brTxt=b=>{const p=dayP(),r=b.plan.r,a=Math.floor(r.n*p),v=Math.round(r.rev*p),l=Math.floor(r.lost*p);return 'Đã bán '+a+'/'+r.n+' đơn · '+$(v)+(r.lost?' · '+l+'/'+r.lost+' khách chưa được phục vụ':'')};
+ const brBadge=(b,why)=>b.pause?'<b class=mut>Tạm nghỉ</b>':isSell(b)?'<b style="'+GRN+'">● Đang bán hàng</b>':why.length?'<b class=bad>Chưa sẵn sàng</b>':'<b class=ok>Sẵn sàng</b>';
+ const brLive=b=>{if(!isSell(b))return '';const pc=Math.round(dayP()*100);
+  return `<div style="margin:6px 0"><div class=row style="margin:0 0 3px"><span id="brt-${b.id}" class=mut>${esc(brTxt(b))}</span><span id="brp-${b.id}" class=mut>${pc}%</span></div><div style="height:8px;border-radius:9px;background:rgba(0,0,0,.12);overflow:hidden"><i id="brb-${b.id}" style="display:block;height:100%;width:${pc}%;background:#2e9e57;transition:width .6s"></i></div></div>`};
+ const stName=k=>{try{return nm(k)}catch(e){return String(k)}};
+ const brKho=b=>{const o=!!BRO[b.id];let h=`<div class=row style="margin:4px 0"><button class=s onclick="X2.kho(${b.id})">${o?'Ẩn kho':'Xem kho'}</button></div>`;if(!o)return h;
+  const ks=Object.keys(b.st).filter(k=>(b.st[k]||0)>0),fl=ks.filter(k=>FH[k]),pp=ks.filter(k=>isPp(k)),ot=ks.filter(k=>!FH[k]&&!isPp(k));
+  const sec=(t,a)=>a.length?`<p style="margin:6px 0 2px"><b>${t}</b></p>`+a.map(k=>`<div class=row style="margin:0"><span>${esc(stName(k))}</span><b>${b.st[k]}</b></div>`).join(''):'';
+  const body=sec('Hoa',fl)+sec('Giấy gói',pp)+sec('Khác',ot);
+  return h+`<div class=card style="margin:0 0 6px">${body||'<p class=mut style="margin:0">Kho trống.</p>'}${s.ph=='open'&&b.plan?'<p class=mut style="margin:6px 0 0;font-size:.78rem">Kho được trừ khi kết thúc ngày.</p>':''}</div>`};
+ {const o=V.shop;V.shop=function(){const h=o.apply(this,arguments);if(s.ph!='open')return h;const act=X().br.filter(isSell);if(!act.length)return h;
+  return h+`<div class=card><h3>Chi nhánh</h3>${act.map(b=>`<div class=row style="margin:0"><span><b>CN ${esc(b.n)}</b></span><b style="${GRN}">● Đang bán hàng</b></div>${brLive(b)}`).join('')}</div>`}}
+ {const o=tick;tick=function(){const r=o.apply(this,arguments);try{if(s.ph=='open'){X().dp=Math.round(dayP()*1000)/1000;const pc=Math.round(dayP()*100);X().br.filter(isSell).forEach(b=>{const t=document.getElementById('brt-'+b.id),q=document.getElementById('brp-'+b.id),f=document.getElementById('brb-'+b.id);if(t)t.textContent=brTxt(b);if(q)q.textContent=pc+'%';if(f)f.style.width=pc+'%'})}}catch(e){}return r}}
+ Object.assign(window.X2,{kho(id){BRO[id]=!BRO[id];R()}});
 
  try{Object.assign(I,{staff:'M12 11a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',bank:'M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18',branch:'M4 21V8l8-5 8 5v13M9 21v-6h6v6'})}catch(e){}
  [['staff','staff','Nhân viên'],['branch','branch','Chi nhánh'],['bank','bank','Ngân hàng']].forEach(t=>{if(!TABS.some(x=>x[0]==t[0]))TABS.push(t)});

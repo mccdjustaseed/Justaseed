@@ -4767,8 +4767,7 @@ nav.fx{gap:2px;padding:5px 4px}
 nav.fx button{flex:1 1 0;min-width:0;padding:5px 1px}
 nav.fx button span{font-size:.58rem;white-space:nowrap}
 @media(max-width:899px){
- nav.fx{scroll-snap-type:x proximity}
- nav.fx button{flex:0 0 calc((100% - 12px)/7);min-width:0;scroll-snap-align:start;overflow:hidden}
+ nav.fx button{flex:0 0 calc((100% - 12px)/7);min-width:0;overflow:hidden}
  nav.fx button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 }
 
@@ -9019,4 +9018,11 @@ ${x.br.map((b,i)=>{const r=brNet(b,rev),net=r.rev-r.cost-r.rent;return `<div cla
  SP.forEach(x=>{if(!/cấp/.test(x.d))x.d+=' · tăng suất khi lên cấp'});
 })();
 </script>
+<style>
+/* Máy tính: hiện đầy đủ mọi tab, không cần trượt (cuộn cùng trang) */
+@media (min-width:900px){
+ #app nav.fx,body.nh #app nav.fx,body.scrl #app nav.fx{position:static!important;max-height:none!important;overflow:visible!important;overflow-y:visible!important;align-self:start}
+ #app nav.fx button{flex:0 0 auto!important}
+}
+</style>
 </body></html>

@@ -9915,7 +9915,9 @@ function dgTxt(t){
   const o=(f=='t'||f=='T')?{hour:'2-digit',minute:'2-digit'}:f=='d'?{day:'numeric',month:'numeric',year:'numeric'}:{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'};
   return '<b>'+d.toLocaleString('vi-VN',o)+'</b>'});
  h=h.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target=_blank rel=noopener>$1</a>');
- h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#{1,3}\s+(.+)$/gm,'<b>$1</b>').replace(/^-#\s+/gm,'').replace(/\n/g,'<br>');
+ h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#{1,3}\s+(.+)$/gm,'<b>$1</b>').replace(/^-#\s+/gm,'')
+ .replace(/&lt;(a?):(\w+):(\d+)&gt;/g,(m,an,nm,id)=>'<img class=dge src="https://cdn.discordapp.com/emojis/'+id+(an?'.gif':'.webp')+'?size=48" alt=":'+nm+':" title=":'+nm+':">')
+ .replace(/\n/g,'<br>');
  return h}
 function dgCard(r){
  const d=new Date(r.created_at),w=d.toLocaleString('vi-VN',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+(r.edited_at?' · đã sửa':'');
@@ -9995,7 +9997,7 @@ const css=document.createElement('style');css.textContent=
 +'.szbar{position:relative;height:10px;border-radius:6px;margin:10px 0 2px;background:linear-gradient(90deg,#4fb06f,#f6d365,#e0446f)}.szbar i{position:absolute;top:-4px;width:6px;height:18px;border-radius:3px;background:var(--ink);border:2px solid var(--card);transform:translateX(-50%)}.szpre{white-space:pre-wrap;word-break:break-all;background:var(--bg);border-radius:10px;padding:8px;font-size:.75rem;margin:8px 0 0}'
 +'.skcv{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--ln)}.skw a{color:var(--g3)}'
 +'.skst{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.72rem;font-weight:700;color:#fff;background:var(--g2);vertical-align:1px}.skst.soon{background:#e8a33d}';
-css.textContent+='.dgi{display:block;max-width:100%;border-radius:12px;margin-top:8px}';
+css.textContent+='.dge{display:inline-block;width:1.4em;height:1.4em;vertical-align:-.3em;object-fit:contain}.dgi{display:block;max-width:100%;border-radius:12px;margin-top:8px}';
 css.textContent+='@media(max-width:899px){nav.fx button[data-t=sky]{display:none!important}}@media(min-width:900px){#sdtabs button[onclick*="\'sky\'"]{display:none!important}}'
 +'#sknw{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 10px);z-index:80;width:min(420px,calc(100% - 20px));display:flex;flex-direction:column;gap:8px;pointer-events:none}'
 +'.sknb{pointer-events:auto;display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:18px;background:var(--card);color:var(--ink);border:2px solid var(--g2);box-shadow:0 10px 28px rgba(20,70,40,.4);cursor:pointer;animation:sknin .3s ease-out;transition:opacity .25s,transform .25s}'

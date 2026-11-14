@@ -22,7 +22,7 @@ body.scrl nav{top:calc(env(safe-area-inset-top,0px) + 8px);background:color-mix(
 .row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:6px 0}
 button{cursor:pointer;color:var(--ink)}button.p{border:0;border-radius:14px;padding:9px 16px;background:var(--g2);color:#fff;font-size:1rem}
 button.p:active{transform:translateY(1px)}
-button.s{border:2px solid var(--g);border-radius:12px;padding:4px 10px;background:var(--card);font-size:1rem}button.s.on2{background:var(--pk);border-color:#ff9fb2}
+button.s{border:2px solid var(--g);border-radius:12px;padding:4px 10px;background:var(--card);font-size:1rem}button.s.on2{background:color-mix(in srgb,var(--g2) 28%,var(--card));border-color:color-mix(in srgb,var(--g3) 70%,var(--card))}
 button:disabled{opacity:.4}
 input,textarea{font:inherit;border:2px solid var(--g);border-radius:10px;padding:6px 8px;background:var(--card);color:var(--ink)}input{width:110px}
 .mut{color:var(--mut);font-size:.88rem}.bad{color:var(--bad)}.ok{color:var(--g3)}
@@ -869,17 +869,22 @@ async function loadFriendsUI() {
   const el = document.getElementById('friend-content');
   if (!el || !currentUser) return;
   const uid = currentUser.id;
+  const fc = window.__frCache;
+  if (fc && fc.uid === uid && /Đang tải/.test(el.textContent || '') && el.children.length < 2) { el.innerHTML = fc.html; try { window.PRES && PRES.paint(); } catch (e) {} }
   const { data: rows, error } = await supabaseClient
     .from('friends')
     .select('id, user_id, friend_id, status, created_at')
     .or(`user_id.eq.${uid},friend_id.eq.${uid}`);
-  if (error) { el.innerHTML = '<p class=bad>Lỗi tải dữ liệu</p>'; return; }
+  if (error) { if (!(fc && fc.uid === uid)) el.innerHTML = '<p class=bad>Lỗi tải dữ liệu</p>'; return; }
+  try { if (typeof FEED !== 'undefined') { FEED.idsT = 0; } } catch (e) {}
   const ids = [...new Set(rows.flatMap(r => [r.user_id, r.friend_id]))];
+  const fidsA = rows.filter(r => r.status === 'accepted').map(r => r.user_id === uid ? r.friend_id : r.user_id);
   let profiles = {};
-  if (ids.length) {
-    const { data: ps } = await supabaseClient.from('profiles').select('id, username, display_name').in('id', ids);
-    (ps || []).forEach(p => profiles[p.id] = p);
-  }
+  const avMap = {};
+  await Promise.all([
+    ids.length ? supabaseClient.from('profiles').select('id, username, display_name').in('id', ids).then(({ data: ps }) => { (ps || []).forEach(p => profiles[p.id] = p); }).catch(e => console.warn(e)) : null,
+    fidsA.length ? supabaseClient.from('shop_public').select('user_id, game_avatar').in('user_id', fidsA).then(({ data: sp }) => { (sp || []).forEach(r => avMap[r.user_id] = r.game_avatar); }).catch(e => console.warn(e)) : null
+  ]);
   const accepted = [], incoming = [], outgoing = [];
   rows.forEach(r => {
     const otherId = r.user_id === uid ? r.friend_id : r.user_id;
@@ -904,14 +909,6 @@ async function loadFriendsUI() {
         <button class=s onclick="removeFriend(${x.id})">Hủy</button></div>`;
     });
   }
-  const avMap = {};
-  try {
-    const fids = accepted.map(x => x.user_id === uid ? x.friend_id : x.user_id);
-    if (fids.length) {
-      const { data: sp } = await supabaseClient.from('shop_public').select('user_id, game_avatar').in('user_id', fids);
-      (sp || []).forEach(r => avMap[r.user_id] = r.game_avatar);
-    }
-  } catch (e) { console.warn(e); }
   html += '<h3>Bạn bè</h3>';
   if (!accepted.length) html += '<p class=mut>Chưa có bạn bè nào.</p>';
   else accepted.sort((a, b) => (((s.fav||{})[b.user_id === uid ? b.friend_id : b.user_id]) ? 1 : 0) - (((s.fav||{})[a.user_id === uid ? a.friend_id : a.user_id]) ? 1 : 0)).forEach(x => {
@@ -919,7 +916,8 @@ async function loadFriendsUI() {
     html += `<div class=row><span style="display:flex;align-items:center;gap:8px"><span style="position:relative;display:inline-block;line-height:0">${friendAvTap(avMap[fid], 34, fid)}<i class="pdot" data-pres="${fid}"></i></span><span><b>${esc(x.other.display_name)}</b> <span class=mut>@${esc(x.other.username)}</span><br><small class="mut ptxt" data-pt="${fid}">Offline</small></span></span>
       <span><button class="s ${(s.fav||{})[fid]?'on2':''}" onclick="favFriend('${fid}','${encodeURIComponent(x.other.display_name||x.other.username||'Bạn bè')}')" aria-label="Yêu thích">${(s.fav||{})[fid]?'⭐':'☆'}</button> <button class=p onclick="visitFriend('${fid}')">Thăm</button> <button class=s onclick="removeFriend(${x.id})">Xóa bạn</button></span></div>`;
   });
-  el.innerHTML = html;
+  window.__frCache = { uid, html };
+  if (document.getElementById('friend-content') === el) el.innerHTML = html;
   try { window.PRES && PRES.paint(); } catch (e) {}
 }
 
@@ -5764,9 +5762,8 @@ async function feedProfiles(uids){
  const need=[...new Set(uids)].filter(u=>u&&u!==(currentUser&&currentUser.id)&&!FEED.pmap[u]);
  if(!need.length)return;
  try{
-  const {data:ps}=await supabaseClient.from('profiles').select('id, display_name, username').in('id',need);
+  const [{data:ps},{data:sp}]=await Promise.all([supabaseClient.from('profiles').select('id, display_name, username').in('id',need),supabaseClient.from('shop_public').select('user_id, game_avatar').in('user_id',need)]);
   (ps||[]).forEach(p=>FEED.pmap[p.id]={...p});
-  const {data:sp}=await supabaseClient.from('shop_public').select('user_id, game_avatar').in('user_id',need);
   (sp||[]).forEach(r=>{const d=parseGav(r.game_avatar),p=FEED.pmap[r.user_id]||(FEED.pmap[r.user_id]={id:r.user_id});
    p.gav='gav:'+JSON.stringify({av:d.av||null,pre:d.pre||null,fr:d.fr||0,afr:d.afr?1:0})});
  }catch(e){console.warn(e)}
@@ -5879,9 +5876,9 @@ async function feedLoad(more){
  FEED.busy=1;if(!more)FEED.err='';feedPaint();
  try{
   const uid=currentUser.id;
-  if(!more){
+  if(!more&&!(FEED.ids&&FEED.ids.length&&FEED.idsT&&Date.now()-FEED.idsT<120000)){
    const {data:fr}=await supabaseClient.from('friends').select('user_id, friend_id, status').eq('status','accepted').or(`user_id.eq.${uid},friend_id.eq.${uid}`);
-   FEED.ids=[uid,...new Set((fr||[]).map(r=>r.user_id===uid?r.friend_id:r.user_id))]}
+   FEED.ids=[uid,...new Set((fr||[]).map(r=>r.user_id===uid?r.friend_id:r.user_id))];FEED.idsT=Date.now()}
   let q=supabaseClient.from('feed_posts').select('id, user_id, image, caption, music, created_at').in('user_id',FEED.ids).order('created_at',{ascending:false}).limit(FEED_PAGE);
   if(more&&FEED.posts.length)q=q.lt('created_at',FEED.posts[FEED.posts.length-1].created_at);
   const {data:ps,error}=await q;
@@ -5897,8 +5894,7 @@ async function feedLoad(more){
    ids.forEach(id=>{FEED.likes[id]={n:0,me:0};FEED.cm[id]=[]});
    (lk.data||[]).forEach(r=>{const L=FEED.likes[r.post_id];if(L){L.n++;if(r.user_id===uid)L.me=1}});
    (cm.data||[]).forEach(c=>{if(FEED.cm[c.post_id])FEED.cm[c.post_id].push(c)});
-   await feedProfiles([...got.map(p=>p.user_id),...(cm.data||[]).map(c=>c.user_id)]);
-   await feedClLoad(cm.data||[])}
+   await Promise.all([feedProfiles([...got.map(p=>p.user_id),...(cm.data||[]).map(c=>c.user_id)]),feedClLoad(cm.data||[])])}
   FEED.t=Date.now();
  }catch(e){FEED.err=(e&&e.message)||String(e)}
  finally{FEED.busy=0;feedPaint()}}
@@ -9558,34 +9554,35 @@ setTimeout(()=>{try{if(s.otr>=0&&s.onb&&scr=='game')tour(1)}catch(e){}},1200);
 </script>
 
 <style>
-nav .nvI,nav .nvH{position:absolute;pointer-events:none;border-radius:16px;z-index:0;left:0;top:0;width:0;height:0}
+nav .nvI,nav .nvH,#sdtabs .nvI,#sdtabs .nvH{position:absolute;pointer-events:none;border-radius:16px;z-index:0;left:0;top:0;width:0;height:0}
+#sdtabs .nvI,#sdtabs .nvH{border-radius:15px}@media(max-width:899px){#sdtabs .nvI,#sdtabs .nvH{border-radius:12px}}
 nav .nvI{background:var(--g2)}
-nav .nvH{background:color-mix(in srgb,var(--ink) 10%,transparent);opacity:0;transition:left .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),opacity .18s}
-nav.nvA button{z-index:1}
-nav.nvA button.on{background:transparent}
-@media(prefers-reduced-motion:reduce){nav .nvH{transition:none}}
+nav .nvH,#sdtabs .nvH{background:color-mix(in srgb,var(--ink) 10%,transparent);opacity:0;transition:left .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),opacity .18s}
+nav.nvA button,#sdtabs.nvA button{z-index:1;transition:color .2s!important}
+nav.nvA button.on,#sdtabs.nvA button.on{background:transparent}
+@media(prefers-reduced-motion:reduce){nav .nvH,#sdtabs .nvH{transition:none}}
 </style>
 <script>
 /* ===== Animation thanh tab: chỉ báo lướt đến tab được chọn (mobile) + vệt sáng lướt theo chuột (desktop) ===== */
 (function(){try{
 const RM=matchMedia('(prefers-reduced-motion:reduce)'),FINE=matchMedia('(hover:hover) and (pointer:fine)');
-let last=null,SL=0,busy=0;
+const LS=new Map(),SLM=new Map(),KY=n=>n.id=='sdtabs'?'sd':'nav';let busy=0;
 const mk=(n,c)=>{let e=n.querySelector('.'+c);if(!e){e=document.createElement('i');e.className=c;n.insertBefore(e,n.firstChild)}return e};
 const box=(e,b)=>{e.style.left=b.offsetLeft+'px';e.style.width=b.offsetWidth+'px';e.style.top=b.offsetTop+'px';e.style.height=b.offsetHeight+'px'};
-function place(){if(busy)return;document.querySelectorAll('nav').forEach(n=>{const on=n.querySelector('button.on');if(!on||n.querySelector('.nvI'))return;
+function place(){if(busy)return;document.querySelectorAll('nav,#sdtabs').forEach(n=>{const on=n.querySelector('button.on');if(!on||!on.offsetWidth||n.querySelector('.nvI'))return;const last=LS.get(KY(n)),SL=SLM.get(KY(n))||0;
 busy=1;n.classList.add('nvA');if(getComputedStyle(n).position=='static')n.style.position='relative';const I=mk(n,'nvI');box(I,on);
 const x1=on.offsetLeft,w1=on.offsetWidth,y1=on.offsetTop,h1=on.offsetHeight;
 if(SL)n.scrollLeft=SL;
 try{n.scrollTo({left:Math.max(0,x1-(n.clientWidth-w1)/2),behavior:RM.matches?'auto':'smooth'})}catch(e){}
 if(last&&!RM.matches&&(last.x!=x1||last.y!=y1)){const x0=last.x,w0=last.w,y0=last.y,h0=last.h,sx=Math.min(Math.abs(x1-x0)*.12,12),sy=Math.min(Math.abs(y1-y0)*.12,12),wm=(w0+w1)/2+sx,hm=(h0+h1)/2+sy,lm=(x0+w0/2+x1+w1/2)/2-wm/2,tm=(y0+h0/2+y1+h1/2)/2-hm/2;
 I.animate([{left:x0+'px',width:w0+'px',top:y0+'px',height:h0+'px'},{left:lm+'px',width:wm+'px',top:tm+'px',height:hm+'px',offset:.5},{left:x1+'px',width:w1+'px',top:y1+'px',height:h1+'px'}],{duration:420,easing:'cubic-bezier(.3,.9,.4,1)'})}
-last={x:x1,w:w1,y:y1,h:h1};busy=0})}
-let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;try{place()}catch(e){busy=0}})}).observe(document.body,{childList:true,subtree:true});
-document.addEventListener('scroll',e=>{if(e.target&&e.target.tagName=='NAV')SL=e.target.scrollLeft},true);
+LS.set(KY(n),{x:x1,w:w1,y:y1,h:h1});busy=0})}
+new MutationObserver(()=>{try{place()}catch(e){busy=0}}).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('scroll',e=>{if(e.target&&(e.target.tagName=='NAV'||e.target.id=='sdtabs'))SLM.set(KY(e.target),e.target.scrollLeft)},true);
 /* desktop: vệt sáng lướt theo chuột */
-document.addEventListener('mouseover',e=>{if(!FINE.matches)return;const b=e.target.closest&&e.target.closest('nav button');if(!b)return;const n=b.closest('nav'),h=mk(n,'nvH'),vis=h.style.opacity==1;
+document.addEventListener('mouseover',e=>{if(!FINE.matches)return;const b=e.target.closest&&e.target.closest('nav button,#sdtabs button');if(!b)return;const n=b.closest('nav,#sdtabs'),h=mk(n,'nvH'),vis=h.style.opacity==1;
 if(!vis){h.style.transition='none';box(h,b);h.offsetWidth;h.style.transition=''}else box(h,b);h.style.opacity=1},true);
-document.addEventListener('mouseout',e=>{const n=e.target.closest&&e.target.closest('nav');if(n&&!n.contains(e.relatedTarget)){const h=n.querySelector('.nvH');if(h)h.style.opacity=0}},true);
+document.addEventListener('mouseout',e=>{const n=e.target.closest&&e.target.closest('nav,#sdtabs');if(n&&!n.contains(e.relatedTarget)){const h=n.querySelector('.nvH');if(h)h.style.opacity=0}},true);
 setTimeout(()=>{try{place()}catch(e){}},300);
 }catch(e){console.error('navanim',e)}})();
 </script>
@@ -10063,9 +10060,11 @@ setInterval(sknChk,1000);
 /* ---- Thông báo ĐẨY cho Sky: hẹn giờ trên máy chủ để vẫn báo khi đã đóng hẳn trình duyệt (48 giờ tới, làm mới mỗi lần mở game) ---- */
 function skyPush(){try{
  if(!window.JSN||!JSN.pushOk()||typeof s=='undefined'||!s||!s.skn)return;
+ /* v-sớm-5-phút: xóa một lần các lịch đẩy cũ (đúng giờ) của Dầu / Bánh bà / Rùa chưa gửi, rồi hẹn lại sớm hơn 5 phút */
+ if(!s.sknv5){if(!skyPush.mig){skyPush.mig=1;Promise.all(['geyser','grandma','turtle'].map(k=>JSN.unsched('sky-'+k+'-'))).then(()=>{s.sknv5=1;sv();skyPush.mig=0;skyPush()}).catch(()=>{skyPush.mig=0})}return}
  const c=s.skn,now=Date.now(),H=48*3600*1000,lp=laP(now),rows=[],ok=ts=>ts>now&&ts<=now+H;
  [['geyser',0],['grandma',1],['turtle',2]].forEach(a=>{if(!c[a[0]])return;const e=EVT[a[1]];
-  for(let k=0;k<=2;k++){const d=addD(lp.y,lp.m,lp.d,k);for(let h=0;h<24;h+=2){const ts=laAt(d[0],d[1],d[2],h,e.off);if(ok(ts))rows.push({ref:'sky-'+a[0]+'-'+ts,at:ts,title:'Đến giờ '+e.n+'!',body:e.p+' · kéo dài '+e.dur+' phút'})}}});
+  for(let k=0;k<=2;k++){const d=addD(lp.y,lp.m,lp.d,k);for(let h=0;h<24;h+=2){const ts=laAt(d[0],d[1],d[2],h,e.off),at=ts-5*MIN;if(ok(at))rows.push({ref:'sky-'+a[0]+'-'+ts,at:at,title:'Sắp đến giờ '+e.n+'!',body:'Còn 5 phút nữa · '+e.p+' · kéo dài '+e.dur+' phút'})}}});
  if(c.daily)for(let k=0;k<=2;k++){const d=addD(lp.y,lp.m,lp.d,k),ts=laMid(d[0],d[1],d[2]);if(ok(ts))rows.push({ref:'sky-daily-'+ts,at:ts,title:'Đã reset hằng ngày',body:'Nhiệm vụ và nến hằng ngày đã làm mới.'})}
  if(c.eden){const b=addD(lp.y,lp.m,lp.d,-(lp.wd%7));for(let w=0;w<=2;w++){const d=addD(b[0],b[1],b[2],7*w),ts=laMid(d[0],d[1],d[2]);if(ok(ts))rows.push({ref:'sky-eden-'+ts,at:ts,title:'Đã reset Eden',body:'Eden reset hằng tuần đã làm mới.'})}}
  if(rows.length)JSN.sched(rows)}catch(e){console.error('skyPush',e)}}
@@ -10108,6 +10107,13 @@ document.head.appendChild(css);
 })();
 </script>
 
+<style id="tabx-style">
+/* Nút tab / nút đang chọn: giữ hình dạng gốc (viền 2px), màu theo chủ đề: đang chọn = viền đậm + nền nhạt, chưa chọn = viền nhạt */
+nav button,#sdtabs button{border:2px solid transparent;background:transparent;color:var(--ink)}
+nav button.on,#sdtabs button.on{border-color:color-mix(in srgb,var(--g2) 88%,#fff);background:color-mix(in srgb,var(--g2) 32%,transparent);color:var(--ink)}
+nav.nvA button.on,#sdtabs.nvA button.on{background:transparent;border-color:transparent}
+nav .nvI,#sdtabs .nvI{box-sizing:border-box;border:2px solid color-mix(in srgb,var(--g2) 88%,#fff);background:color-mix(in srgb,var(--g2) 32%,transparent)}
+</style>
 <style id="rx-style">
 /* ===== Relationship ===== */
 .rx-card{width:100%;display:block;border-radius:18px;box-shadow:0 0 0 2px var(--ln);background:var(--card)}

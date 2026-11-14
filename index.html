@@ -9620,6 +9620,7 @@ setTimeout(()=>{try{place()}catch(e){}},300);
    Thêm danh mục mới: push vào SKYCATS + thêm hàm render trong CATV. */
 (function(){
 Object.assign(I,{
+ tcy:'M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11zM9.5 14.5a2.6 2.6 0 002.5 2.5',
  sky:'M6.5 18a4 4 0 01-.6-7.95 6 6 0 0111.5-1.3A4.6 4.6 0 0117.5 18z',
  shard:'M12 2l6 6-6 14L6 8zM6 8h12M12 2l-2.5 6L12 22l2.5-14z',
  clock:'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2',
@@ -10051,9 +10052,34 @@ CATV.dg=function(){dgLoad();
  return h};
 window.DGX={reload(){dgLoad(1)}};
 
+/* ---- Tưới cây: tin nhắn kênh Discord (bot tuoi-cay.js ghi vào bảng tuoi_cay, web đọc + Realtime). Dùng lại dgCard/dgTxt của Daily Guild ---- */
+const TCY={rows:null,busy:0,at:0,err:'',rt:0};
+async function tcyLoad(force){
+ const c=typeof supabaseClient!='undefined'?supabaseClient:null;
+ if(!c){TCY.err='Chưa kết nối được máy chủ.';return}
+ if(TCY.busy||(!force&&Date.now()-TCY.at<60000))return;
+ TCY.busy=1;
+ try{const r=await c.from('tuoi_cay').select('message_id,author_name,author_avatar,content,images,created_at,edited_at').order('created_at',{ascending:false}).limit(30);
+  if(r.error)throw r.error;TCY.rows=r.data||[];TCY.err='';TCY.at=Date.now()}
+ catch(e){const m=e&&(e.message||e.details||e.hint)||String(e),cd=e&&e.code?' ['+e.code+']':'';console.error('tcy',m+cd,e);TCY.err='Không tải được tin nhắn Tưới cây: '+m+cd;TCY.at=Date.now()-50000}
+ TCY.busy=0;
+ if(!TCY.rt){TCY.rt=1;try{c.channel('tuoi-cay-rt').on('postgres_changes',{event:'*',schema:'public',table:'tuoi_cay'},()=>tcyLoad(1)).subscribe()}catch(e){}}
+ }
+CATV.tcy=function(){tcyLoad();
+ let h='<div class=card><div class=row style="margin:0"><b>Tưới cây</b><button class=s onclick="TCYX.reload()">Tải lại</button></div><p class=mut style="margin:4px 0 0;font-size:.82rem">Tin nhắn từ kênh Tưới cây trên Discord, tự cập nhật khi có tin mới hoặc tin được sửa.</p></div>';
+ if(TCY.rows==null)h+='<div class=card><p class=mut style="margin:0">'+(TCY.err?E(TCY.err):'Đang tải...')+'</p></div>';
+ else if(!TCY.rows.length)h+='<div class=card><p class=mut style="margin:0">'+(TCY.err?E(TCY.err):'Chưa có tin nhắn nào.')+'</p></div>';
+ else h+=TCY.rows.map(dgCard).join('');
+ return h};
+window.TCYX={reload(){tcyLoad(1)}};
+
+
 /* Máy tính (>=900px): tab Sky nằm CUỐI thanh tab chính. Điện thoại: tab Sky nằm ĐẦU thanh tab của ngăn Cộng đồng (nút ở thanh chính bị ẩn bằng CSS). */
 if(!TABS.some(t=>t[0]=='sky'))TABS.push(['sky','sky','Sky']);
 try{if(window.SDX&&!SDX.TS.some(t=>t[0]=='sky'))SDX.TS.unshift(['sky','sky','Sky'])}catch(e){}
+/* tab Tưới cây trong ngăn Cộng đồng (ngay sau Diễn đàn) */
+V.tcy=()=>CATV.tcy();
+try{if(window.SDX&&!SDX.TS.some(t=>t[0]=='tcy')){const i=SDX.TS.findIndex(t=>t[0]=='forum');SDX.TS.splice(i<0?SDX.TS.length:i+1,0,['tcy','tcy','Tưới cây']);SDX.refresh()}}catch(e){console.warn('tcy tab',e)}
 /* Điện thoại: bấm nút / vuốt mở Cộng đồng (không chỉ định tab) thì luôn vào Sky trước */
 try{const oo=SD.open;SD.open=function(k){if(!k&&innerWidth<900)k='sky';return oo.call(this,k)}}catch(e){}
 {const o=R;R=function(){try{const mob=innerWidth<900,sd=document.getElementById('sd'),open=sd&&sd.classList.contains('on'),onSky=!!document.querySelector('#sdtabs button.on[onclick*="\'sky\'"]');

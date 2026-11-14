@@ -10054,9 +10054,9 @@ function dgCard(r,avo){
  const two=imgs.length>=2;
  const th=two?'<span class=dgth>'+mk(imgs[0],'dgi-t')+'</span>':'<span class=dgth></span>';
  const im=(two?imgs.slice(1):imgs).map(u=>mk(u)).join('');
- const av=avo||r.author_avatar||'';
+ const av=avo||(/^https:\/\//.test(r.author_avatar||'')?r.author_avatar:TCYAV);
  return '<div class=card><div class=row style="margin:0 0 6px;justify-content:flex-start;gap:8px">'
-  +(/^(https:\/\/|data:image\/)/.test(av)?'<img src="'+E(av)+'" alt="" width=26 height=26 style="border-radius:50%;pointer-events:none">':'')
+  +(/^(https:\/\/|data:image\/)/.test(av)?'<img src="'+E(av)+'" alt="" width=26 height=26 style="border-radius:50%;pointer-events:none" onerror="this.onerror=null;this.src=TCYAV">':'')
   +'<b>'+E(r.author_name||'Discord')+'</b><span class=mut style="font-size:.76rem;margin-left:auto;text-align:right">'+w+'</span></div>'
   +'<div class=dgt>'+dgBody(r.content||'',1).replace('<span class=dgth></span>',th)+'</div>'+im+'</div>'}
 async function dgLoad(force){
@@ -10074,7 +10074,7 @@ CATV.dg=function(){dgLoad();
  let h='<div class=card><div class=row style="margin:0"><b>Daily Guild</b><button class=s onclick="DGX.reload()">Tải lại</button></div><p class=mut style="margin:4px 0 0;font-size:.82rem">Tin nhắn từ kênh Daily Guild trên Discord, tự cập nhật khi có tin mới hoặc tin được sửa.</p></div>';
  if(DG.rows==null)h+='<div class=card><p class=mut style="margin:0">'+(DG.err?E(DG.err):'Đang tải...')+'</p></div>';
  else if(!DG.rows.length)h+='<div class=card><p class=mut style="margin:0">'+(DG.err?E(DG.err):'Chưa có tin nhắn nào.')+'</p></div>';
- else h+=DG.rows.map(r=>dgCard(r,TCYAV)).join('');
+ else h+=DG.rows.map(r=>dgCard(r)).join('');
  return h};
 window.DGX={reload(){dgLoad(1)}};
 
@@ -10095,7 +10095,7 @@ CATV.tcy=function(){tcyLoad();
  let h='<div class=card><div class=row style="margin:0"><b>Tưới cây</b><button class=s onclick="TCYX.reload()">Tải lại</button></div><p class=mut style="margin:4px 0 0;font-size:.82rem">Tin nhắn từ kênh Tưới cây trên Discord, tự cập nhật khi có tin mới hoặc tin được sửa.</p></div>';
  if(TCY.rows==null)h+='<div class=card><p class=mut style="margin:0">'+(TCY.err?E(TCY.err):'Đang tải...')+'</p></div>';
  else if(!TCY.rows.length)h+='<div class=card><p class=mut style="margin:0">'+(TCY.err?E(TCY.err):'Chưa có tin nhắn nào.')+'</p></div>';
- else h+=TCY.rows.map(r=>dgCard(r,TCYAV)).join('');
+ else h+=TCY.rows.map(r=>dgCard(r)).join('');
  return h};
 window.TCYX={reload(){tcyLoad(1)}};
 

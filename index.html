@@ -9909,23 +9909,33 @@ setInterval(fill,1000);
 /* ---- Daily Guild: tin nhắn kênh Discord (bot ghi vào bảng daily_guild, web đọc + Realtime) ---- */
 const DG={rows:null,busy:0,at:0,err:'',rt:0};
 function dgTxt(t){
- let h=E(t);
+ const P=[],ph=h=>'\u0001'+(P.push(h)-1)+'\u0002';
+ let h=String(t==null?'':t);
+ h=h.replace(/```(?:[a-zA-Z0-9+#-]*\n)?([\s\S]*?)```/g,(m,c)=>ph('<pre class=dgc>'+E(c.replace(/^\n+|\s+$/g,''))+'</pre>'));
+ h=h.replace(/`([^`\n]+)`/g,(m,c)=>ph('<code class=dgic>'+E(c)+'</code>'));
+ h=E(h);
+ h=h.replace(/(https?:\/\/[^\s<\u0001]+)/g,(m,u)=>{let tail='';while(/[.,;:!?)\]]$/.test(u)&&!/&(amp|lt|gt|quot|#39)$/.test(u)){tail=u.slice(-1)+tail;u=u.slice(0,-1)}
+  const raw=u.replace(/&amp;/g,'&'),lb=/^https:\/\/(?:\w+\.)?discord(?:app)?\.com\/channels\//.test(raw)?'Liên kết Discord':raw.replace(/^https?:\/\/(www\.)?/,'').slice(0,38)+(raw.length>46?'…':'');
+  return ph('<a href="'+u+'" target=_blank rel=noopener>'+E(lb)+'</a>')+tail});
  h=h.replace(/&lt;t:(\d+)(?::([a-zA-Z]))?&gt;/g,(m,n,f)=>{const d=new Date(n*1000);
   if(f=='R'){const x=Math.round((d-Date.now())/60000),a=Math.abs(x),u=a>=1440?Math.round(a/1440)+' ngày':a>=60?Math.round(a/60)+' giờ':a+' phút';return '<b>'+(x>=0?'sau '+u:u+' trước')+'</b>'}
   const o=(f=='t'||f=='T')?{hour:'2-digit',minute:'2-digit'}:f=='d'?{day:'numeric',month:'numeric',year:'numeric'}:{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'};
   return '<b>'+d.toLocaleString('vi-VN',o)+'</b>'});
- h=h.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target=_blank rel=noopener>$1</a>');
- h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#{1,3}\s+(.+)$/gm,'<b>$1</b>').replace(/^-#\s+/gm,'')
- .replace(/&lt;(a?):(\w+):(\d+)&gt;/g,(m,an,nm,id)=>'<img class=dge src="https://cdn.discordapp.com/emojis/'+id+(an?'.gif':'.webp')+'?size=48" alt=":'+nm+':" title=":'+nm+':">')
- .replace(/\n/g,'<br>');
- return h}
+ h=h.replace(/&lt;(a?):(\w+):(\d+)&gt;/g,(m,an,nm,id)=>'<img class=dge src="https://cdn.discordapp.com/emojis/'+id+(an?'.gif':'.webp')+'?size=48" alt=":'+nm+':" title=":'+nm+':">');
+ h=h.replace(/^#{1,3}\s+(.+)$/gm,'<b>$1</b>').replace(/^-#\s+(.+)$/gm,'<small class=mut>$1</small>')
+  .replace(/^&gt;\s?(.+)$/gm,'<span class=dgq>$1</span>').replace(/^\s*[-*]\s+/gm,'• ')
+  .replace(/\*\*\*(.+?)\*\*\*/g,'<b><i>$1</i></b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/__(.+?)__/g,'<u>$1</u>')
+  .replace(/\*(?![\s*])(.+?)\*/g,'<i>$1</i>').replace(/(^|[^\w])_(?![\s_])(.+?)_(?!\w)/g,'$1<i>$2</i>').replace(/~~(.+?)~~/g,'<s>$1</s>')
+  .replace(/\|\|(.+?)\|\|/g,'<span class=dgsp onclick="this.classList.toggle(\'on\')">$1</span>');
+ h=h.replace(/\n/g,'<br>').replace(/\u0001(\d+)\u0002/g,(m,k)=>P[+k]);
+ return h.replace(/<br>(<pre)/g,'$1').replace(/(<\/pre>)<br>/g,'$1').replace(/(<br>){3,}/g,'<br><br>')}
 function dgCard(r){
  const d=new Date(r.created_at),w=d.toLocaleString('vi-VN',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+(r.edited_at?' · đã sửa':'');
- const im=(Array.isArray(r.images)?r.images:[]).filter(u=>/^https:\/\//.test(u)).slice(0,6).map(u=>'<img class=dgi loading=lazy src="'+E(u)+'" alt="">').join('');
+ const im=(Array.isArray(r.images)?r.images:[]).filter(u=>/^https:\/\//.test(u)).slice(0,6).map(u=>'<a href="'+E(u)+'" target=_blank rel=noopener><img class=dgi loading=lazy src="'+E(u)+'" alt=""></a>').join('');
  return '<div class=card><div class=row style="margin:0 0 6px;justify-content:flex-start;gap:8px">'
   +(/^https:\/\//.test(r.author_avatar||'')?'<img src="'+E(r.author_avatar)+'" alt="" width=26 height=26 style="border-radius:50%">':'')
   +'<b>'+E(r.author_name||'Discord')+'</b><span class=mut style="font-size:.76rem;margin-left:auto;text-align:right">'+w+'</span></div>'
-  +'<div style="word-break:break-word;line-height:1.45">'+dgTxt(r.content||'')+'</div>'+im+'</div>'}
+  +'<div class=dgt>'+dgTxt(r.content||'')+'</div>'+im+'</div>'}
 async function dgLoad(force){
  const c=typeof supabaseClient!='undefined'?supabaseClient:null;
  if(!c){DG.err='Chưa kết nối được máy chủ.';return}
@@ -9997,6 +10007,7 @@ const css=document.createElement('style');css.textContent=
 +'.szbar{position:relative;height:10px;border-radius:6px;margin:10px 0 2px;background:linear-gradient(90deg,#4fb06f,#f6d365,#e0446f)}.szbar i{position:absolute;top:-4px;width:6px;height:18px;border-radius:3px;background:var(--ink);border:2px solid var(--card);transform:translateX(-50%)}.szpre{white-space:pre-wrap;word-break:break-all;background:var(--bg);border-radius:10px;padding:8px;font-size:.75rem;margin:8px 0 0}'
 +'.skcv{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--ln)}.skw a{color:var(--g3)}'
 +'.skst{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.72rem;font-weight:700;color:#fff;background:var(--g2);vertical-align:1px}.skst.soon{background:#e8a33d}';
+css.textContent+='.dgt{font-size:.9rem;line-height:1.5;word-break:break-word}.dgt a{word-break:break-all}.dgc{margin:8px 0 4px;padding:4px 10px;background:var(--bg);border:1px solid var(--ln);border-left:4px solid var(--g2);border-radius:8px;font:700 .76rem/1.35 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:var(--g3)}.dgic{padding:1px 5px;background:var(--bg);border-radius:5px;font:.82em ui-monospace,Menlo,monospace}.dgq{display:inline-block;border-left:3px solid var(--ln);padding-left:8px;color:var(--mut)}.dgsp{background:var(--ink);color:transparent;border-radius:4px;cursor:pointer}.dgsp.on{background:var(--bg);color:inherit}';
 css.textContent+='.dge{display:inline-block;width:1.4em;height:1.4em;vertical-align:-.3em;object-fit:contain}.dgi{display:block;max-width:100%;border-radius:12px;margin-top:8px}';
 css.textContent+='@media(max-width:899px){nav.fx button[data-t=sky]{display:none!important}}@media(min-width:900px){#sdtabs button[onclick*="\'sky\'"]{display:none!important}}'
 +'#sknw{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 10px);z-index:80;width:min(420px,calc(100% - 20px));display:flex;flex-direction:column;gap:8px;pointer-events:none}'

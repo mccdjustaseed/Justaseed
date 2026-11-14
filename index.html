@@ -9224,4 +9224,129 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(poll,800)});
 })();
 </script>
+<script>
+/* ===== Cầu nối Discord bot -> game: nhận lệnh từ bảng bot_actions (cần chạy economy_setup.sql) =====
+   Game là nơi duy nhất sửa tiền/kho; bot chỉ xếp lệnh vào hàng đợi, game kiểm tra rồi mới thực hiện. */
+(function(){
+ const TTL={credit:0,transfer:6*3600e3,restock:15*60e3,open_day:15*60e3,hire_day:15*60e3,hire_month:15*60e3};
+ const sb=()=>typeof supabaseClient!='undefined'?supabaseClient:null;
+ const cloudOk=()=>{try{return !!(window.CLOUD&&CLOUD.ready&&CLOUD.uid===currentUser.id)}catch(e){return false}};
+ const ready=()=>{try{return !!(sb()&&typeof currentUser!='undefined'&&currentUser&&window.DISCORD_OK&&typeof s!='undefined'&&s&&typeof scr!='undefined'&&scr=='game'&&cloudOk())}catch(e){return false}};
+ const money=n=>Math.round(n).toLocaleString('vi-VN')+'đ';
+ const note=t=>{try{s.notifs=s.notifs||[];s.notifs.unshift({type:'bot',id:'bot'+Date.now()+Math.random(),text:t,time:new Date().toISOString(),read:false});s.notifs=s.notifs.slice(0,50)}catch(e){}};
+ /* chạy hàm của game nhưng bắt lại thông báo toast để biết lý do thất bại */
+ const capture=fn=>{const o=window.toast;let m='';window.toast=t=>{m=String(t)};try{fn()}finally{window.toast=o}return m};
+
+ async function apply(a){
+  const p=a.payload||{};
+  switch(a.kind){
+   case 'credit':{
+    const amt=Math.floor(+p.amt);
+    if(!(amt>=1&&amt<=5000000))throw new Error('Số tiền không hợp lệ');
+    s.money=(Number.isFinite(s.money)?s.money:0)+amt;
+    try{L('in','Thưởng',String(p.label||'Thưởng từ bot').slice(0,60),1,amt)}catch(e){}
+    note('🎁 '+String(p.label||'Bạn nhận được thưởng')+': +'+money(amt));
+    try{toast('🎁 +'+money(amt))}catch(e){}
+    return '+'+money(amt);
+   }
+   case 'transfer':{
+    const amt=Math.floor(+p.amt);
+    if(!(amt>=1000&&amt<=10000000))throw new Error('Số tiền không hợp lệ');
+    if(!/^[0-9a-f-]{8,40}$/i.test(String(p.to_user||'')))throw new Error('Người nhận không hợp lệ');
+    if(p.to_user===currentUser.id)throw new Error('Không thể tự chuyển cho mình');
+    try{fixMoney()}catch(e){}
+    if(amt>s.money)throw new Error('Không đủ tiền (còn '+money(s.money)+')');
+    s.money-=amt;try{save()}catch(e){}
+    const pay={v:1,bank:1,tid:String(p.tid||Date.now().toString(36)).slice(0,40),amt,note:String(p.note||'').slice(0,60)};
+    let err=null;
+    try{const r=await sb().from('wall_messages').insert({from_user:currentUser.id,to_user:p.to_user,message:'JSGIFT1:'+JSON.stringify(pay)});err=r&&r.error}catch(e){err=e}
+    if(err){s.money+=amt;throw new Error('Không gửi được: '+(err.message||'lỗi mạng')+' (đã hoàn tiền)')}
+    const to=String(p.to_name||'người chơi').slice(0,40);
+    try{L('out','Chuyển khoản','Chuyển cho '+to,1,amt)}catch(e){}
+    note('💳 Bạn đã chuyển '+money(amt)+' cho '+to);
+    try{const me=(s.pf&&s.pf.nm)||s.name||'Bạn bè';sb().from('push_jobs').upsert({user_id:p.to_user,ref:'bank-'+pay.tid,fire_at:new Date().toISOString(),title:'💳 Nhận tiền chuyển khoản',body:me+' vừa chuyển cho bạn '+money(amt)+'. Vào game để nhận nhé',sent:false},{onConflict:'user_id,ref'}).then(()=>{},()=>{})}catch(e){}
+    return '';
+   }
+   case 'restock':{
+    if(s.ph!='prep')throw new Error('Chỉ nhập hàng được ở giai đoạn chuẩn bị');
+    const si=+p.si,id=String(p.id),q=Math.floor(+p.q);
+    if(!SP[si]||!SP[si].it.includes(id))throw new Error('Mặt hàng không bán ở nhà cung cấp này');
+    if(!(q>=1&&q<=200))throw new Error('Số lượng không hợp lệ');
+    const f=F.find(x=>x.id==id);
+    if(f&&!fOK(f))throw new Error('Bạn chưa mở khóa '+nm(id));
+    fixMoney();CART={};
+    const k=si+id,pr=pc(id,SP[si].m);
+    if(!(Number.isFinite(pr)&&pr>0))throw new Error('Không tính được giá hôm nay');
+    const rem=remQ(si,id,k,0);
+    if(!(rem>0))throw new Error('Đã hết suất nhập ở '+SP[si].n);
+    const can=Math.min(q,rem,Math.floor(s.money/pr));
+    if(!(can>0))throw new Error('Không đủ tiền (giá '+money(pr)+'/cái)');
+    CART[k]=can;const total=cartTotal();confirmBuy();
+    return 'Đã nhập '+can+' '+nm(id)+(can<q?' (bị giới hạn bởi suất hoặc tiền)':'')+' · -'+money(total);
+   }
+   case 'open_day':{
+    if(s.ph!='prep')throw new Error('Tiệm không ở giai đoạn chuẩn bị');
+    if(!menu().length)throw new Error('Chưa đủ hoa và giấy gói để mở bán');
+    openDay();
+    return 'Đã mở gian hàng, khách đang vào!';
+   }
+   case 'hire_day':{
+    if(s.hire)throw new Error('Hôm nay đã có nhân viên rồi');
+    if(s.money<500000)throw new Error('Không đủ 500.000đ');
+    const m=capture(hireStaff);
+    if(!s.hire)throw new Error(m||'Không thuê được nhân viên');
+    return 'Đã thuê nhân viên cho hôm nay (-500.000đ).';
+   }
+   case 'hire_month':{
+    const m=capture(hireMonth);
+    if(!(s.hm&&s.hm.d==today()&&monS()))throw new Error(m||'Không thuê được nhân viên theo tháng');
+    return 'Đã thuê nhân viên theo tháng (30 ngày game).';
+   }
+  }
+  throw new Error('Loại lệnh không hỗ trợ');
+ }
+
+ async function one(a){
+  /* giành quyền xử lý: chỉ một tab/thiết bị chuyển được pending -> working */
+  const c=await sb().from('bot_actions').update({status:'working'}).eq('id',a.id).eq('status','pending').select('id');
+  if(c.error||!c.data||!c.data.length)return;
+  let st='done',msg='';
+  try{
+   const ttl=TTL[a.kind];
+   if(ttl&&Date.now()-new Date(a.created_at).getTime()>ttl)throw new Error('Lệnh đã hết hạn, hãy gửi lại');
+   msg=(await apply(a))||'';
+  }catch(e){st='failed';msg=String((e&&e.message)||e).slice(0,200)}
+  try{save()}catch(e){}
+  try{await sb().from('bot_actions').update({status:st,result:msg,done_at:new Date().toISOString()}).eq('id',a.id)}catch(e){}
+  try{if(window.CLOUD&&CLOUD.flush)CLOUD.flush()}catch(e){}
+  try{R()}catch(e){}
+ }
+
+ let running=0;
+ async function run(){
+  if(running||!ready())return;
+  running=1;
+  try{
+   const r=await sb().from('bot_actions').select('*').eq('user_id',currentUser.id).eq('status','pending').order('id',{ascending:true}).limit(10);
+   if(!r.error&&r.data)for(const a of r.data){if(!ready())break;await one(a)}
+  }catch(e){}
+  running=0;
+ }
+
+ /* realtime để nhận lệnh gần như ngay, kèm thăm dò dự phòng */
+ let RTB=null,RTBU=null;
+ function watch(){
+  try{
+   if(!sb()||typeof currentUser=='undefined'||!currentUser||typeof sb().channel!='function'){return}
+   if(RTBU===currentUser.id)return;
+   if(RTB){try{sb().removeChannel(RTB)}catch(e){}}
+   RTBU=currentUser.id;
+   RTB=sb().channel('bot-actions-'+RTBU).on('postgres_changes',{event:'INSERT',schema:'public',table:'bot_actions',filter:'user_id=eq.'+RTBU},()=>run()).subscribe();
+  }catch(e){}
+ }
+ setInterval(()=>{watch();if(!document.hidden)run()},8000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(run,600)});
+ setTimeout(()=>{watch();run()},7000);
+})();
+</script>
 </body></html>

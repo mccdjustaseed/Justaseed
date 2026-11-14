@@ -11174,12 +11174,118 @@ html:not(.dcok) button[onclick*="RELX.share"]{display:none!important}
 .chb i{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 3px;box-sizing:border-box;border-radius:8px;background:#e0446f;color:#fff;font:700 .62rem/16px sans-serif;text-align:center;font-style:normal;display:none}
 .chb.hu i{display:block}
 </style>
+<style id="chat-style2">
+.cmav{width:var(--z,40px);height:var(--z,40px);background:none;display:block;font-size:calc(var(--z,40px)*.42)}
+.cmh .cmav{width:var(--z,34px);height:var(--z,34px);font-size:calc(var(--z,34px)*.42)}
+.cmai{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--c-ca);color:#fff;font-weight:700}
+.cmai img{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
+.cmai svg{max-width:100%;max-height:100%}
+.cmav .pdot{width:26%;height:26%;min-width:10px;min-height:10px;right:0;bottom:0;border-color:var(--c-sbg,#fff)}
+.cmh .cmav .pdot{border-color:var(--c-hd)}
+#msgroot[data-skin=def] .cmav .pdot{border-color:var(--card)}
+#msgroot[data-skin=def] .cmh .cmav .pdot{border-color:var(--bg)}
+.cmsp{visibility:hidden}
+/* hàng danh sách */
+.cmtop{display:flex;align-items:baseline;gap:6px}.cmtop b{flex:1;min-width:0}
+.cmtm{font-style:normal;font-size:.72rem;color:var(--c-mut);flex:none}
+.cmsb{display:flex;align-items:center;gap:4px;min-width:0}
+.cmpv{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmtm2{flex:none;white-space:nowrap}
+.cmsb .bd{margin-left:auto;min-width:18px;height:18px;border-radius:9px;padding:0 5px;box-sizing:border-box;color:#fff;font-size:.7rem;line-height:18px;text-align:center}
+.cmr.unr .cmpv,.cmr.unr .cmtm2{font-weight:700;color:var(--c-txt)}
+.cmud{width:12px;height:12px;border-radius:50%;background:var(--c-ca);flex:none}
+.cmsi,.cmact{display:flex;align-items:center;gap:14px;color:inherit;pointer-events:none}
+.cmsi svg{display:block}
+.cmbk{padding:0 6px!important;min-height:34px}
+.cmst{display:flex;gap:14px;overflow-x:auto;flex:none;padding:2px 2px 10px;scrollbar-width:none}.cmst:empty{display:none}
+.cmstb{flex:none;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;background:none!important;border:0!important;color:var(--c-txt);font-size:.72rem;padding:0}
+.cmstb span:last-child{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmsh{font-weight:700;padding:6px 2px 8px;font-size:1rem}
+/* tin nhắn */
+.cmrow{display:flex;align-items:flex-end;gap:6px;min-width:0}.cmrow.me{justify-content:flex-end}
+.cmrow .chm.me,.cmrow .chm.th{align-self:auto}.cmrow .cmav{flex:none}
+#chl{gap:2px}.cmrow.gs{margin-top:6px}#msgroot[data-skin=def] #chl{gap:6px}#msgroot[data-skin=def] .cmrow.gs{margin-top:0}
+.cmts{align-self:center;font-size:.7rem;color:var(--c-mut);margin:10px 0 4px}
+.cmt{display:none;font-size:.66rem;opacity:.65}
+#msgroot[data-skin=telegram] .cmt{display:inline;float:right;margin:7px 0 -3px 12px}
+#msgroot[data-skin=telegram] .chm{display:flow-root;border-radius:12px;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+#msgroot[data-skin=telegram] .cmrow.me.ge .chm.me{border-bottom-right-radius:3px}
+#msgroot[data-skin=telegram] .cmrow.th.ge .chm.th{border-bottom-left-radius:3px}
+#msgroot[data-skin=telegram] .chm.me .cmt{color:#4fae4e;opacity:1}
+#msgroot[data-skin=telegram] .cmts{background:rgba(0,0,0,.28);color:#fff;padding:2px 10px;border-radius:12px}
+#msgroot:is([data-skin=zalo],[data-skin=viber]) .cmt{display:block;margin-top:3px}
+#msgroot[data-skin=viber] .chm.me .cmt{text-align:right}
+#msgroot[data-skin=zalo] .chm{border-radius:10px;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+#msgroot:is([data-skin=messenger],[data-skin=instagram],[data-skin=viber]) .cmrow.me .chm{border-radius:var(--c-rad)}
+#msgroot:is([data-skin=messenger],[data-skin=instagram],[data-skin=viber]) .cmrow.th .chm{border-radius:var(--c-rad)}
+#msgroot:is([data-skin=messenger],[data-skin=instagram],[data-skin=viber]) .cmrow.me:not(.gs) .chm{border-top-right-radius:5px}
+#msgroot:is([data-skin=messenger],[data-skin=instagram],[data-skin=viber]) .cmrow.me:not(.ge) .chm{border-bottom-right-radius:5px}
+#msgroot:is([data-skin=messenger],[data-skin=instagram],[data-skin=viber]) .cmrow.th:not(.gs) .chm{border-top-left-radius:5px}
+#msgroot:is([data-skin=messenger],[data-skin=instagram],[data-skin=viber]) .cmrow.th:not(.ge) .chm{border-bottom-left-radius:5px}
+#msgroot[data-skin=messenger] .chm{font-size:.95rem}
+/* header */
+#msgroot[data-skin=messenger] :is(.cmbk,.cmact){color:var(--c-ca)}
+#msgroot[data-skin=messenger] .cmh .cmw b,#msgroot[data-skin=instagram] .cmh .cmw b{font-size:.98rem}
+#msgroot[data-skin=messenger] .cmtt b{font-size:1.55rem;font-weight:800}
+#msgroot[data-skin=instagram] .cmtt b{display:flex;align-items:center;gap:4px;font-size:1.15rem}
+#msgroot[data-skin=telegram] .cmtt{padding:8px 4px 10px;gap:18px}
+#msgroot[data-skin=telegram] .cmtt b{font-size:1.1rem}
+/* ô soạn tin */
+.cmic{flex:none;display:flex;color:var(--c-ca)}
+#msgroot:is([data-skin=zalo],[data-skin=telegram]) .cmic{color:var(--c-mut)}
+#msgroot[data-skin=instagram] .cmic{background:var(--c-ca);color:#fff;border-radius:50%;padding:6px;box-sizing:content-box;width:20px;height:20px}
+#msgroot[data-skin=instagram] .cmic svg{width:20px;height:20px}
+#msgroot[data-skin=telegram] .chf input,#msgroot[data-skin=zalo] .chf input{background:transparent}
+#msgroot[data-skin=messenger] .chf input{background:var(--c-inb)}
+/* Zalo: thanh tìm kiếm trên header xanh */
+#msgroot[data-skin=zalo][data-lay=m][data-m=l]{padding:0}
+.cmtt.zl{gap:10px;border-radius:0!important;margin:0 0 4px!important;padding:10px 12px!important}
+.cmtt.zl .cmq{flex:1;margin:0;background:rgba(255,255,255,.22);color:#fff;padding:7px 12px}.cmtt.zl .cmq::placeholder{color:rgba(255,255,255,.85)}
+#msgroot[data-skin=zalo] #cml{padding:0 4px;gap:0}
+#msgroot[data-skin=zalo] .cmr{border-radius:0;border-bottom:1px solid var(--c-line)}
+#msgroot[data-skin=zalo] .cmsb .bd{background:#e53935}
+#msgroot[data-skin=telegram] #cml{gap:0}
+#msgroot[data-skin=viber] .cmsb .bd{background:var(--c-ca)}
+</style>
+<style id="chat-style3">
+.cmic{cursor:pointer;-webkit-tap-highlight-color:transparent}
+#msgroot[data-skin=def] .cmic{color:var(--g2)}
+.chm.cmk{padding:0;overflow:hidden;min-width:210px;background:var(--c-th)!important;color:var(--c-tht)!important;border:1px solid var(--c-line)}
+.chm.cmk .cmt{display:none!important}
+.chm.cmimg{padding:2px;background:transparent!important;border:0!important;box-shadow:none!important}
+.cmimg img{display:block;max-width:min(250px,100%);max-height:320px;border-radius:14px;cursor:zoom-in;background:var(--c-line)}
+.cmch{padding:7px 12px;background:var(--c-ca);color:#fff;font-size:.78rem;font-weight:700}
+.cmcb{padding:10px 12px}
+.cmamt{font-size:1.45rem;font-weight:800;letter-spacing:-.3px}
+.cmnt{font-size:.85rem;margin-top:2px;opacity:.85;word-break:break-word}
+.cmsm{font-size:.74rem;color:var(--c-mut);margin-top:6px}.cmsm2{padding:0 12px 9px;margin-top:-2px}
+.cmat{display:flex;align-items:center;gap:10px;cursor:pointer}
+.cmart{flex:none;line-height:0;display:grid;place-items:center;min-width:46px}
+.cmatx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.25}
+.cmatx b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cmatx small{font-size:.74rem;color:var(--c-mut)}
+.cmgo2{opacity:.5;font-size:1.3rem}
+.cmmenu{position:absolute;left:8px;bottom:58px;z-index:7;background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:16px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.28);min-width:200px;animation:chup .22s ease both}
+.cmmi{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer}.cmmi:active,.cmmi:hover{background:color-mix(in srgb,var(--g2) 16%,var(--card))}
+.cmmi span{font-size:1.3rem;width:26px;text-align:center}
+.cmsheet{position:absolute;inset:0;z-index:8;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}
+.cmsp2{width:100%;max-height:82%;overflow:auto;box-sizing:border-box;background:var(--card);color:var(--ink);border-radius:18px 18px 0 0;padding:14px;animation:chup .25s ease both}
+.cmsh2{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:1.02rem}.cmx2{cursor:pointer;padding:4px 8px;font-size:1.1rem}
+.cmmut{color:var(--mut);font-size:.8rem;margin:6px 0}
+.cmit{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;cursor:pointer;border:1px solid var(--ln);margin-bottom:6px}
+.cmit:active{background:color-mix(in srgb,var(--g2) 16%,var(--card))}.cmit .cmatx small{color:var(--mut)}
+.cmpk{flex:none;background:var(--g2);color:#fff;border-radius:10px;padding:5px 12px;font-size:.82rem;font-weight:700}
+.cmchips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.cmchip{padding:6px 11px;border-radius:14px;border:1px solid var(--ln);cursor:pointer;font-size:.84rem}.cmchip:active{background:color-mix(in srgb,var(--g2) 20%,var(--card))}
+.cmin{width:100%;box-sizing:border-box;margin:0 0 8px;font-size:1rem}.cmgo{width:100%}
+.cmzoom{position:absolute;inset:0;z-index:9;background:rgba(0,0,0,.88);display:grid;place-items:center;cursor:zoom-out}
+.cmzoom img{max-width:96%;max-height:94%;object-fit:contain;border-radius:8px}
+</style>
 <script>
 /* ===== Nhắn tin tạm thời giữa bạn bè (tab "Tin nhắn" trong ngăn Cộng đồng, ngay sau tab Bạn bè).
    Supabase Realtime Broadcast, KHÔNG ghi cơ sở dữ liệu: tin nhắn chỉ nằm trong bộ nhớ trang, thoát game/đóng tab là mất.
    Giao diện: có thể "hóa trang" theo kiểu các app nhắn tin (chỉ là kiểu dáng/màu sắc, không dùng logo), bố cục điện thoại hoặc máy tính. ===== */
 (function(){try{
-const MAX=500,conv={},unread={},names={},outs={},rate={};let inbox=null,me=null,fset=null,fT=0,open=null,lastSend=0,gen=0,SO=false;
+const MAX=500,avs={},conv={},unread={},names={},outs={},rate={};let inbox=null,me=null,fset=null,fT=0,open=null,lastSend=0,gen=0,SO=false;
 const uidNow=()=>typeof currentUser!=='undefined'&&currentUser?currentUser.id:null;
 const sbc=()=>typeof supabaseClient!=='undefined'?supabaseClient:null;
 const myName=()=>String((typeof s!=='undefined'&&s&&((s.pf&&s.pf.nm)||s.name))||'Người chơi').slice(0,30);
@@ -11216,7 +11322,7 @@ function applyStyle(r){const c=cfg(),sk=PAL[c.skin]?c.skin:'def',dk=dark(),v=Obj
 async function friends(force){const c=sbc(),u=uidNow();if(!c||!u)return new Set();if(!force&&fset&&Date.now()-fT<60000)return fset;
  try{const {data}=await c.from('friends').select('user_id,friend_id,status').eq('status','accepted').or(`user_id.eq.${u},friend_id.eq.${u}`);fset=new Set((data||[]).map(r=>r.user_id===u?r.friend_id:r.user_id));fT=Date.now()}catch(e){fset=fset||new Set()}return fset}
 async function loadFriends(force){const f=await friends(force),miss=[...f].filter(i=>!names[i]);
- if(miss.length&&sbc()){try{const {data}=await sbc().from('profiles').select('id,username,display_name').in('id',miss);(data||[]).forEach(p=>{names[p.id]=String(p.display_name||p.username||'Bạn bè').slice(0,30)})}catch(e){}}return f}
+ if(miss.length&&sbc()){try{const {data}=await sbc().from('profiles').select('id,username,display_name').in('id',miss);(data||[]).forEach(p=>{names[p.id]=String(p.display_name||p.username||'Bạn bè').slice(0,30)})}catch(e){}}await loadAv([...f]);return f}
 function out(fid){if(outs[fid])return outs[fid];const ch=sbc().channel('chat-'+fid,{config:{broadcast:{self:false}}});
  const o={ch,ready:new Promise(r=>{ch.subscribe(st=>{if(st==='SUBSCRIBED')r(true);else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED')r(false)})})};outs[fid]=o;return o}
 function stop(){try{const c=sbc();if(c){if(inbox)c.removeChannel(inbox);Object.keys(outs).forEach(k=>c.removeChannel(outs[k].ch))}}catch(e){}inbox=null;me=null;fset=null;Object.keys(outs).forEach(k=>delete outs[k]);Object.keys(conv).forEach(k=>delete conv[k]);Object.keys(unread).forEach(k=>delete unread[k]);open=null;const r=rootEl();if(r){delete r.dataset.m;r.textContent=''}}
@@ -11224,73 +11330,168 @@ function start(){const c=sbc(),u=uidNow();if(!c)return;if(me&&me!==u)stop();if(!
  inbox=c.channel('chat-'+u,{config:{broadcast:{self:false}}}).on('broadcast',{event:'msg'},m=>onMsg(m&&m.payload)).on('broadcast',{event:'ack'},m=>onAck(m&&m.payload)).subscribe()}
 const add=(fid,m)=>{const c=conv[fid]=conv[fid]||{msgs:[]};c.msgs.push(m);if(c.msgs.length>200)c.msgs.shift()};
 async function onMsg(p){try{
- if(!p||typeof p!=='object'||typeof p.from!=='string'||typeof p.text!=='string'||typeof p.id!=='string'||p.id.length>40||p.from===uidNow())return;
+ if(!p||typeof p!=='object'||typeof p.from!=='string'||typeof p.id!=='string'||p.id.length>40||p.from===uidNow())return;
+ const k=p.k==null?'':String(p.k);if(!['','img','pay','gift','att'].includes(k))return;
  const now=Date.now(),r=rate[p.from]=(rate[p.from]||[]).filter(t=>now-t<10000);if(r.length>=10)return;r.push(now);
  let f=await friends();if(!f.has(p.from))f=await friends(true);if(!f.has(p.from))return;
- const text=p.text.slice(0,MAX);if(!text.trim())return;
+ const x={k,text:String(typeof p.text==='string'?p.text:'').slice(0,MAX)};
+ if(k===''){if(typeof p.text!=='string'||!x.text.trim())return}
+ else if(k==='img'){if(typeof p.img!=='string'||p.img.length>230000||!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p.img))return;x.img=p.img;x.text=''}
+ else if(k==='pay'){const a=Math.floor(+p.amt);if(!(a>=1000&&a<=1e7))return;x.amt=a;x.note=String(p.note||'').replace(/[<>]/g,'').slice(0,60);x.text=''}
+ else{const api=feedAtApi(k==='gift'?'w':(p.at&&p.at.k)),a=api&&api.clean(p.at);if(!a||(k==='gift'&&a.k!=='w'))return;x.at=a;x.text=''}
  if(typeof p.name==='string'&&p.name&&!names[p.from])names[p.from]=p.name.slice(0,30);
- add(p.from,{id:p.id,me:0,text,t:now});
+ loadAv([p.from]);const m=Object.assign({id:p.id,me:0,t:now},x);add(p.from,m);
  try{out(p.from).ready.then(ok=>{if(ok)out(p.from).ch.send({type:'broadcast',event:'ack',payload:{id:p.id,from:uidNow()}})})}catch(e){}
  if(viewing(p.from)){paintThread(true);refreshList();return}
- unread[p.from]=(unread[p.from]||0)+1;badges();refreshList();
- try{toast('💬 '+nameOf(p.from)+': '+text.slice(0,40))}catch(e){}
- try{if(document.hidden&&'Notification' in window&&Notification.permission==='granted')new Notification(nameOf(p.from),{body:text.slice(0,100),tag:'chat-'+p.from})}catch(e){}
+ unread[p.from]=(unread[p.from]||0)+1;badges();refreshList();const pv=prev(m);
+ try{toast('💬 '+nameOf(p.from)+': '+pv.slice(0,40))}catch(e){}
+ try{if(document.hidden&&'Notification' in window&&Notification.permission==='granted')new Notification(nameOf(p.from),{body:pv.slice(0,100),tag:'chat-'+p.from})}catch(e){}
 }catch(e){console.warn('chat',e)}}
 function onAck(p){try{if(!p||typeof p.from!=='string'||typeof p.id!=='string')return;const c=conv[p.from];if(!c)return;const m=c.msgs.find(x=>x.id===p.id&&x.me);if(m&&m.st!=='ok'){m.st='ok';if(viewing(p.from))paintThread(false)}}catch(e){}}
+async function post(fid,x){
+ if(!sbc()||!uidNow())return toast('Hãy đăng nhập để nhắn tin');
+ const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),m=Object.assign({id,me:1,text:'',t:Date.now(),st:'sending'},x);add(fid,m);paintThread(true);refreshList();
+ try{const o=out(fid),ok=await o.ready;if(!ok){m.st='fail';delete outs[fid];paintThread(false);return}
+  const pl={id,from:uidNow(),name:myName(),text:m.text||''};['k','img','amt','note','at'].forEach(f=>{if(m[f]!=null&&m[f]!=='')pl[f]=m[f]});
+  await o.ch.send({type:'broadcast',event:'msg',payload:pl})}catch(e){m.st='fail';delete outs[fid]}
+ paintThread(false);setTimeout(()=>{if(m.st==='sending'){m.st='noack';paintThread(false)}},5000)}
 async function send(fid,text){text=String(text||'').replace(/\r/g,'').trim().slice(0,MAX);if(!text)return;
  if(!sbc()||!uidNow())return toast('Hãy đăng nhập để nhắn tin');
- if(Date.now()-lastSend<400)return;lastSend=Date.now();
- const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),m={id,me:1,text,t:Date.now(),st:'sending'};add(fid,m);paintThread(true);refreshList();
- try{const o=out(fid),ok=await o.ready;if(!ok){m.st='fail';delete outs[fid];paintThread(false);return}
-  await o.ch.send({type:'broadcast',event:'msg',payload:{id,from:uidNow(),name:myName(),text}})}catch(e){m.st='fail';delete outs[fid]}
- paintThread(false);setTimeout(()=>{if(m.st==='sending'){m.st='noack';paintThread(false)}},5000)}
+ if(Date.now()-lastSend<400)return;lastSend=Date.now();return post(fid,{text})}
 const stTxt={sending:'Đang gửi...',ok:'Đã nhận',noack:'Chưa thấy bạn bè nhận (có thể đang offline)',fail:'Gửi lỗi, thử lại sau'};
+const fmtT=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const rel=t=>{const m=Math.floor((Date.now()-t)/60000);return m<1?'Vừa xong':m<60?m+' phút':m<1440?Math.floor(m/60)+' giờ':Math.floor(m/1440)+' ngày'};
+const IP={back:'M15 5l-7 7 7 7',phone:'M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z',video:'M3 7h11a2 2 0 012 2v6a2 2 0 01-2 2H3zM16 11l5-3v8l-5-3',info:'M12 3a9 9 0 100 18 9 9 0 000-18zM12 11v5M12 8h.01',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-5-5',cam:'M4 8h3l2-3h6l2 3h3v11H4zM12 11a3.5 3.5 0 100 7 3.5 3.5 0 000-7z',dots:'M12 5h.01M12 12h.01M12 19h.01',menu:'M4 6h16M4 12h16M4 18h16',smile:'M12 3a9 9 0 100 18 9 9 0 000-18zM8 14a4.5 4.5 0 008 0M9 9.5h.01M15 9.5h.01',clip:'M20 11l-8 8a5 5 0 01-7-7l8-8a3.5 3.5 0 015 5l-8 8a2 2 0 01-3-3l7-7',plus:'M12 3a9 9 0 100 18 9 9 0 000-18zM12 8v8M8 12h8',chev:'M6 9l6 6 6-6',edit:'M4 20h4L19 9l-4-4L4 16zM14 6l4 4'};
+const fmtM=n=>Math.round(+n||0).toLocaleString('vi-VN')+'đ';
+const prev=m=>m.k==='img'?'🖼️ Hình ảnh':m.k==='pay'?'💳 Chuyển khoản '+fmtM(m.amt):m.k==='gift'?'🎁 Quà tặng: '+((m.at&&m.at.n)||''):m.k==='att'?'📎 '+((m.at&&m.at.n)||'Đính kèm'):m.text;
+let GIFTP=null,lastPick=null,payBusy=0;
+const ic=(n,z)=>'<svg width='+(z||22)+' height='+(z||22)+' viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round>'+IP[n]+'</svg>';
 const initial=id=>(nameOf(id).trim()[0]||'?').toUpperCase();
-function avatar(id,withDot){const a=el('span','cmav',initial(id));if(withDot){const d=el('i','pdot');d.setAttribute('data-pres',id);a.appendChild(d)}return a}
+/* avatar thật của bạn bè (ảnh / preset / chữ cái dự phòng) */
+function avatar(id,withDot,z){z=z||40;const a=el('span','cmav');a.style.setProperty('--z',z+'px');const raw=avs[id],d=raw?parseGav(raw):null,w=el('span','cmai');
+ if(d&&d.av){const im=new Image();im.alt='';im.draggable=false;im.src=d.av;w.appendChild(im)}
+ else if(d&&d.pre&&typeof FH!=='undefined'&&FH[d.pre]){try{w.innerHTML=fw(d.pre,z*.8)}catch(e){w.textContent=initial(id)}}
+ else if(d&&d.pre&&typeof PEM!=='undefined'&&PEM[d.pre])w.innerHTML='<span style="font-size:'+Math.round(z*.55)+'px;line-height:1">'+PEM[d.pre]+'</span>';
+ else w.textContent=initial(id);
+ a.appendChild(w);if(withDot){const p=el('i','pdot');p.setAttribute('data-pres',id);a.appendChild(p)}return a}
+async function loadAv(ids){const c=sbc();if(!c)return;const need=ids.filter(i=>!(i in avs));if(!need.length)return;need.forEach(i=>{avs[i]=''});
+ try{const{data,error}=await c.from('shop_public').select('user_id,game_avatar').in('user_id',need);if(error)throw error;(data||[]).forEach(r=>{avs[r.user_id]=r.game_avatar||''});refreshAv()}catch(e){need.forEach(i=>{delete avs[i]})}}
+function refreshAv(){try{refreshList();const h=document.querySelector('#msgroot .cmh .cmav');if(h&&open){const z=parseFloat(h.style.getPropertyValue('--z'))||36;h.replaceWith(avatar(open,1,z));try{PRES.paint()}catch(e){}}if(document.getElementById('chl'))paintThread(false)}catch(e){}}
 const PLANE='<svg width=22 height=22 viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
 function sendLabel(b){const sk=cfg().skin;b.className='cmsend'+(sk==='def'?' p':'');b.setAttribute('aria-label','Gửi');
  if(sk==='messenger'||sk==='telegram'||sk==='viber')b.innerHTML=PLANE;else b.textContent=sk==='zalo'?'GỬI':'Gửi'}
+/* ---- bong bóng đặc biệt: ảnh, chuyển tiền, quà, đính kèm ---- */
+function viewAt(a){const api=feedAtApi(a.k),md=document.getElementById('modal');if(!api||!md)return;md.innerHTML='<div class=mb onclick="if(event.target==this)mdl()"><div class=ms>'+api.info(a)+'<p class=mut style="margin:10px 0 0;font-size:.76rem">Thông tin là ảnh chụp tại thời điểm gửi.</p></div></div>'}
+function zoom(src){const r=rootEl();if(!r)return;const z=el('div','cmzoom'),im=new Image();im.src=src;im.alt='';z.appendChild(im);z.onclick=()=>z.remove();r.appendChild(z)}
+function fillK(d,m){const k=m.k;
+ if(k==='img'){const im=new Image();im.src=m.img;im.alt='Hình ảnh';im.draggable=false;im.onclick=()=>zoom(m.img);d.appendChild(im);return}
+ if(k==='pay'){d.appendChild(el('div','cmch','💳 Chuyển khoản'));const b=el('div','cmcb');b.appendChild(el('div','cmamt',fmtM(m.amt)));if(m.note)b.appendChild(el('div','cmnt','“'+m.note+'”'));
+  b.appendChild(el('div','cmsm',m.me?'Bạn đã chuyển cho '+nameOf(open):nameOf(open)+' đã chuyển cho bạn'));d.appendChild(b);return}
+ const api=m.at&&feedAtApi(k==='gift'?'w':m.at.k);if(!api){d.appendChild(el('div','cmcb','(không hiển thị được)'));return}
+ d.appendChild(el('div','cmch',k==='gift'?'🎁 Quà tặng':'📎 '+(m.at.k==='g'?'Vàng / trang sức':'Đồ workshop')));
+ const b=el('div','cmcb cmat'),a=el('span','cmart'),t=el('span','cmatx');a.innerHTML=api.art(m.at,48);t.appendChild(el('b','',m.at.n));t.appendChild(el('small','',api.sum(m.at)));
+ b.appendChild(a);b.appendChild(t);b.appendChild(el('span','cmgo2','›'));b.setAttribute('role','button');b.onclick=()=>viewAt(m.at);d.appendChild(b);
+ if(k==='gift')d.appendChild(el('div','cmsm cmsm2',m.me?'Món đã được chuyển vào túi của '+nameOf(open):'Quà đã gửi vào game của bạn, hãy kiểm tra túi đồ'))}
+const tc=()=>{const l=document.getElementById('chl');return l&&l.parentNode},closeSheet=()=>{document.querySelectorAll('#msgroot .cmsheet').forEach(n=>n.remove())};
+function sheet(title,body){const c=tc();if(!c)return;closeSheet();const o=el('div','cmsheet'),p=el('div','cmsp2'),h=el('div','cmsh2'),x=el('span','cmx2','✕');x.setAttribute('role','button');x.setAttribute('aria-label','Đóng');x.onclick=closeSheet;
+ h.appendChild(el('b','',title));h.appendChild(x);p.appendChild(h);p.appendChild(body);o.appendChild(p);o.addEventListener('click',e=>{if(e.target===o)closeSheet()});c.appendChild(o)}
+function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'))};
+ im.onload=()=>{URL.revokeObjectURL(u);let S=900,q=.72,o='';for(let n=0;n<7;n++){const r=Math.min(1,S/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*r));c.height=Math.max(1,Math.round(im.height*r));
+  const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);o=c.toDataURL('image/jpeg',q);if(o.length<=180000)break;S*=.8;q=Math.max(.45,q-.07)}
+  o.length<=220000?res(o):rej(new Error('big'))};im.src=u})}
+function pickImg(){if(!open)return;const to=open,f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=async()=>{const file=f.files&&f.files[0];if(!file)return;try{post(to,{k:'img',img:await shrink(file)})}catch(e){toast('Không gửi được ảnh này')}};f.click()}
+function itemSheet(kind){if(!open)return;const api=feedAtApi(kind==='g'?'g':'w');if(!api)return toast('Tính năng này chưa dùng được');let arr=[];try{arr=api.list()}catch(e){}
+ const b=el('div');if(!arr.length)b.appendChild(el('p','cmmut',api.empty));
+ arr.forEach(r=>{const row=el('div','cmit'),a=el('span','cmart'),t=el('span','cmatx');row.setAttribute('role','button');a.innerHTML=api.art(r.sn,46);t.appendChild(el('b','',r.sn.n));t.appendChild(el('small','',api.sum(r.sn)));
+  row.appendChild(a);row.appendChild(t);row.appendChild(el('span','cmpk',kind==='gift'?'Tặng':'Gửi'));row.onclick=()=>{closeSheet();kind==='gift'?giftItem(r):post(open,{k:'att',at:r.sn})};b.appendChild(row)});
+ b.appendChild(el('p','cmmut',kind==='gift'?'Món sẽ rời khỏi túi đồ của bạn và chuyển cho '+nameOf(open)+' (bạn có thể thêm lời nhắn ở bước sau).':'Chỉ gửi ảnh chụp thông tin món đồ, món vẫn nằm trong túi của bạn.'));
+ sheet(kind==='gift'?'🎁 Tặng quà cho '+nameOf(open):kind==='g'?'💍 Gửi vàng / trang sức':'🎒 Gửi đồ workshop',b)}
+async function giftItem(r){const fid=open;if(!window.XB||typeof XB.gift!=='function')return toast('Chưa tặng được lúc này');GIFTP={id:r.id,sn:r.sn,t:Date.now()};try{await XB.gift(r.id);XB.pick(fid)}catch(e){}}
+try{if(window.XB&&typeof XB.send==='function'&&!XB.send.cw){const os=XB.send,op=XB.pick;XB.pick=function(id){lastPick=id;return op.apply(this,arguments)};
+ XB.send=async function(){const g=GIFTP,r=await os.apply(this,arguments);try{if(g&&Date.now()-g.t<6e5&&lastPick&&!(s.shelf||[]).some(x=>x.id==g.id)){GIFTP=null;post(lastPick,{k:'gift',at:g.sn})}}catch(e){}return r};XB.send.cw=1}}catch(e){console.warn('gift hook',e)}
+const payOk=()=>{try{return !!(typeof selfVerified==='function'&&selfVerified()&&typeof supabaseClient!=='undefined')}catch(e){return false}};
+async function sendMoney(fid,amt,note){
+ if(!payOk())return toast('Chuyển tiền chỉ dành cho tài khoản đã liên kết Discord');if(payBusy)return;
+ amt=Math.floor(+amt||0);note=String(note||'').replace(/[<>]/g,'').trim().slice(0,60);
+ if(amt<1000)return toast('Tối thiểu 1.000đ');if(amt>1e7)return toast('Tối đa 10.000.000đ mỗi lần');
+ try{fixMoney()}catch(e){}if(amt>(s.money||0))return toast('Không đủ tiền');
+ const nm=nameOf(fid);if(!confirm('Chuyển '+fmtM(amt)+' cho '+nm+'?'))return;
+ payBusy=1;s.money-=amt;try{save()}catch(e){}
+ const tid=Date.now().toString(36)+Math.random().toString(36).slice(2,10),pay={v:1,bank:1,tid,amt,note};let err=null;
+ try{const r=await supabaseClient.from('wall_messages').insert({from_user:currentUser.id,to_user:fid,message:'JSGIFT1:'+JSON.stringify(pay)});err=r&&r.error}catch(e){err=e}
+ if(err){s.money+=amt;try{save()}catch(e){}payBusy=0;return toast('Không chuyển được: '+(err.message||'lỗi mạng')+' (đã hoàn tiền)')}
+ try{const b=s.bk2||(s.bk2={});b.tx=b.tx||[];b.seen=b.seen||[];b.tx.unshift({k:'out',amt,who:nm,note,t:Date.now()});b.tx=b.tx.slice(0,50)}catch(e){}
+ try{if(typeof L==='function')L('out','Chuyển khoản','Chuyển cho '+nm,1,amt)}catch(e){}
+ try{supabaseClient.from('push_jobs').upsert({user_id:fid,ref:'bank-'+tid,fire_at:new Date().toISOString(),title:'💳 Nhận tiền chuyển khoản',body:myName()+' vừa chuyển cho bạn '+fmtM(amt)+'. Vào game để nhận nhé',sent:false},{onConflict:'user_id,ref'}).then(()=>{},()=>{})}catch(e){}
+ try{save()}catch(e){}payBusy=0;toast('💳 Đã chuyển '+fmtM(amt)+' cho '+nm);post(fid,{k:'pay',amt,note})}
+function moneySheet(){if(!open)return;const fid=open,b=el('div');let bal=0;try{fixMoney();bal=s.money||0}catch(e){}
+ b.appendChild(el('p','cmmut','Số dư: '+fmtM(bal)+'. Mỗi lần từ 1.000đ đến 10.000.000đ.'));
+ const a=document.createElement('input');a.type='number';a.inputMode='numeric';a.min=1000;a.max=1e7;a.placeholder='Nhập số tiền';a.className='cmin';
+ const n=document.createElement('input');n.type='text';n.maxLength=60;n.placeholder='Lời nhắn (tuỳ chọn)';n.className='cmin';
+ const ch=el('div','cmchips');[10000,50000,100000,500000].forEach(v=>{const x=el('span','cmchip',fmtM(v));x.setAttribute('role','button');x.onclick=()=>{a.value=v};ch.appendChild(x)});
+ const go=el('button','p cmgo','Chuyển tiền');go.onclick=async()=>{go.disabled=true;await sendMoney(fid,a.value,n.value);go.disabled=false;if(!payBusy)closeSheet()};
+ b.appendChild(ch);b.appendChild(a);b.appendChild(n);b.appendChild(go);if(!payOk())b.appendChild(el('p','cmmut','Chuyển tiền chỉ dành cho tài khoản đã liên kết Discord.'));sheet('💳 Chuyển tiền cho '+nameOf(fid),b);setTimeout(()=>{try{a.focus()}catch(e){}},60)}
+function toggleMenu(){const c=tc();if(!c)return;const o=c.querySelector('.cmmenu');if(o){o.remove();return}closeSheet();
+ const m=el('div','cmmenu');[['🖼️','Hình ảnh',pickImg],['💳','Chuyển tiền',moneySheet],['🎁','Tặng quà',()=>itemSheet('gift')],['🎒','Đồ workshop',()=>itemSheet('w')],['💍','Vàng / trang sức',()=>itemSheet('g')]].forEach(a=>{
+  const b=el('div','cmmi');b.setAttribute('role','button');b.tabIndex=0;b.appendChild(el('span','',a[0]));b.appendChild(el('b','',a[1]));b.onclick=()=>{m.remove();a[2]()};m.appendChild(b)});c.appendChild(m)}
 /* ---- khung chat ---- */
-function renderThread(c){c.textContent='';const fid=open,desk=effLay()==='d';
- const h=el('div','cmh');if(!desk){const bk=el('button','s','←');bk.setAttribute('aria-label','Quay lại');bk.onclick=()=>CHAT.back();h.appendChild(bk)}
- h.appendChild(avatar(fid,1));const w=el('span','cmw');w.appendChild(el('b','',nameOf(fid)));const sm=el('small','','Offline');sm.setAttribute('data-pt',fid);w.appendChild(sm);h.appendChild(w);c.appendChild(h);
+function renderThread(c){c.textContent='';const fid=open,desk=effLay()==='d',sk=cfg().skin;
+ const h=el('div','cmh');if(!desk){const bk=el('button','s cmbk');bk.innerHTML=ic('back',24);bk.setAttribute('aria-label','Quay lại');bk.onclick=()=>CHAT.back();h.appendChild(bk)}
+ h.appendChild(avatar(fid,1,sk==='telegram'?38:36));const w=el('span','cmw');w.appendChild(el('b','',nameOf(fid)));const sm=el('small','','Offline');sm.setAttribute('data-pt',fid);w.appendChild(sm);h.appendChild(w);
+ const ACT={messenger:['phone','video','info'],zalo:['phone','video','menu'],telegram:['phone','dots'],viber:['phone','video'],instagram:['phone','video']}[sk];
+ if(ACT){const a=el('span','cmact');a.setAttribute('aria-hidden','true');a.innerHTML=ACT.map(n=>ic(n,22)).join('');h.appendChild(a)}c.appendChild(h);
  c.appendChild(el('div','chn','Tin nhắn không được lưu: thoát game hoặc đóng trình duyệt là mất hết. Chỉ gửi được khi bạn bè đang mở game.'));
- const l=el('div');l.id='chl';c.appendChild(l);
- const f=el('div','chf'),i=el('input');i.id='chi';i.maxLength=MAX;i.placeholder='Nhập tin nhắn...';i.autocomplete='off';i.setAttribute('enterkeyhint','send');
+ const l=el('div');l.id='chl';l.addEventListener('pointerdown',()=>{const o=c.querySelector('.cmmenu');if(o)o.remove()});c.appendChild(l);
+ c.style.position='relative';const f=el('div','chf'),LI={messenger:'plus',zalo:'plus',telegram:'clip',viber:'plus',instagram:'cam'}[sk]||'plus';
+ {const x=el('span','cmic');x.setAttribute('role','button');x.tabIndex=0;x.setAttribute('aria-label','Đính kèm: ảnh, chuyển tiền, quà, đồ');x.innerHTML=ic(LI,24);x.onclick=toggleMenu;x.onkeydown=e=>{if(e.key==='Enter')toggleMenu()};f.appendChild(x)}
+ const i=el('input');i.id='chi';i.maxLength=MAX;i.placeholder={messenger:'Aa',zalo:'Tin nhắn',telegram:'Tin nhắn',viber:'Nhắn tin...',instagram:'Nhắn tin...'}[sk]||'Nhập tin nhắn...';i.autocomplete='off';i.setAttribute('enterkeyhint','send');
  i.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();CHAT.go()}});
  const b=el('button');sendLabel(b);b.onclick=()=>CHAT.go();f.appendChild(i);f.appendChild(b);c.appendChild(f);
  paintThread(false,true);try{PRES.paint()}catch(e){}}
-function paintThread(animate,fresh){const l=document.getElementById('chl');if(!l||!open)return;const msgs=(conv[open]||{}).msgs||[],emp=l.querySelector('.e');
- if(msgs.length&&emp)emp.remove();
- if(!msgs.length&&!emp&&!l.children.length)l.appendChild(el('div','e','Chưa có tin nhắn. Hãy gửi lời chào!'));
- const st=document.getElementById('chst');if(st)st.remove();
- msgs.forEach(m=>{if(l.querySelector('[data-id="'+CSS.escape(m.id)+'"]'))return;
-  const d=el('div','chm '+(m.me?'me':'th')+(animate&&!fresh?' in':''),m.text);d.setAttribute('data-id',m.id);l.appendChild(d)});
+function paintThread(animate,fresh){const l=document.getElementById('chl');if(!l||!open)return;const sk=cfg().skin,msgs=(conv[open]||{}).msgs||[],seen=l._seen||(l._seen=new Set()),av=sk==='messenger'||sk==='instagram'||sk==='zalo';
+ l.textContent='';if(!msgs.length){l.appendChild(el('div','e','Chưa có tin nhắn. Hãy gửi lời chào!'));return}
+ msgs.forEach((m,i)=>{const pv=msgs[i-1],nx=msgs[i+1];
+  if(!pv||m.t-pv.t>900000)l.appendChild(el('div','cmts',fmtT(m.t)));
+  const gs=!pv||!!pv.me!==!!m.me||m.t-pv.t>300000,ge=!nx||!!nx.me!==!!m.me||nx.t-m.t>300000;
+  const row=el('div','cmrow '+(m.me?'me':'th')+(gs?' gs':'')+(ge?' ge':''));
+  if(av&&!m.me){const z=sk==='zalo'?32:28;if(sk==='zalo'?gs:ge)row.appendChild(avatar(open,0,z));else{const sp=el('span','cmav cmsp');sp.style.setProperty('--z',z+'px');row.appendChild(sp)}}
+  const d=el('div','chm '+(m.me?'me':'th')+(m.k?(m.k==='img'?' cmimg':' cmk'):'')+(animate&&!fresh&&!seen.has(m.id)?' in':''));d.setAttribute('data-id',m.id);
+  if(m.k)fillK(d,m);else{d.appendChild(el('span','cmx',m.text));d.appendChild(el('span','cmt',fmtT(m.t)+(sk==='telegram'&&m.me?(m.st==='ok'?' ✓✓':' ✓'):'')))}
+  row.appendChild(d);l.appendChild(row);seen.add(m.id)});
  const last=msgs[msgs.length-1];
- if(last&&last.me&&stTxt[last.st]){const t=el('div','chs'+(last.st==='fail'||last.st==='noack'?' bad':''),stTxt[last.st]);t.id='chst';l.appendChild(t)}
+ if(last&&last.me&&stTxt[last.st]&&!(sk==='telegram'&&(last.st==='sending'||last.st==='ok'))){const t=el('div','chs'+(last.st==='fail'||last.st==='noack'?' bad':''),stTxt[last.st]);t.id='chst';l.appendChild(t)}
  try{l.scrollTo({top:l.scrollHeight,behavior:animate&&!fresh?'smooth':'auto'})}catch(e){l.scrollTop=l.scrollHeight}}
 /* ---- danh sách hội thoại ---- */
-async function renderList(c){c.textContent='';const g=++gen,tt=el('div','cmtt');tt.appendChild(el('b','',TT[cfg().skin]||'Tin nhắn'));
- const gb=el('button','s cmg','🎨');gb.title='Giao diện tin nhắn';gb.setAttribute('aria-label','Giao diện tin nhắn');gb.onclick=()=>{SO=!SO;renderSettings()};tt.appendChild(gb);c.appendChild(tt);
- const q=el('input','cmq');q.id='cms';q.placeholder='Tìm kiếm';q.autocomplete='off';q.oninput=()=>fillList();c.appendChild(q);
+async function renderList(c){c.textContent='';const g=++gen,sk=cfg().skin,tt=el('div','cmtt'),q=el('input','cmq');q.id='cms';q.placeholder='Tìm kiếm';q.autocomplete='off';q.oninput=()=>fillList();
+ const gb=el('button','s cmg','🎨');gb.title='Giao diện tin nhắn';gb.setAttribute('aria-label','Giao diện tin nhắn');gb.onclick=()=>{SO=!SO;renderSettings()};
+ if(sk==='zalo'){tt.classList.add('zl');const si=el('span','cmsi');si.innerHTML=ic('search',20);tt.appendChild(si);tt.appendChild(q);tt.appendChild(gb);c.appendChild(tt)}
+ else{if(sk==='telegram'){const m=el('span','cmsi');m.innerHTML=ic('menu',24);tt.appendChild(m)}
+  const b=el('b','',sk==='instagram'?myName():(TT[sk]||'Tin nhắn'));if(sk==='instagram'){const v=el('span','cmsi');v.innerHTML=ic('chev',16);b.appendChild(v)}tt.appendChild(b);tt.appendChild(gb);
+  if(sk==='instagram'||sk==='messenger'){const ed=el('span','cmsi');ed.innerHTML=ic('edit',22);tt.appendChild(ed)}
+  c.appendChild(tt);c.appendChild(q);if(sk==='messenger'){const st=el('div','cmst');st.id='cmst';c.appendChild(st)}if(sk==='instagram')c.appendChild(el('div','cmsh','Tin nhắn'))}
  const l=el('div');l.id='cml';c.appendChild(l);l.appendChild(el('div','e','Đang tải bạn bè...'));
  if(!uidNow()){l.textContent='';l.appendChild(el('div','e','Hãy đăng nhập (liên kết Discord) để nhắn tin với bạn bè.'));return}
  start();await loadFriends(false);if(g!==gen||!c.isConnected)return;fillList()}
-function fillList(){const l=document.getElementById('cml');if(!l)return;l.textContent='';
+function fillList(){const l=document.getElementById('cml');if(!l)return;l.textContent='';const sk=cfg().skin;
+ const st=document.getElementById('cmst');if(st){st.textContent='';[...(fset||[])].slice(0,14).forEach(id=>{const it=el('button','cmstb');it.appendChild(avatar(id,1,56));it.appendChild(el('span','',nameOf(id).trim().split(/\s+/).pop()));it.onclick=()=>CHAT.open(id);st.appendChild(it)})}
  const qv=((document.getElementById('cms')||{}).value||'').toLowerCase().trim(),ids=new Set([...(fset||[])]);Object.keys(conv).forEach(k=>{if((conv[k].msgs||[]).length)ids.add(k)});
  if(!ids.size){l.appendChild(el('div','e','Chưa có bạn bè nào để nhắn tin. Hãy kết bạn ở tab Bạn bè nhé!'));return}
  const last=id=>{const m=(conv[id]||{}).msgs||[];return m[m.length-1]},list=[...ids].filter(id=>!qv||nameOf(id).toLowerCase().includes(qv));
  if(!list.length){l.appendChild(el('div','e','Không tìm thấy ai.'));return}
+ const SZ={messenger:56,instagram:56,telegram:54,zalo:48,viber:48},inl=sk==='messenger'||sk==='instagram';
  list.sort((a,b)=>((last(b)||{}).t||0)-((last(a)||{}).t||0)||nameOf(a).localeCompare(nameOf(b),'vi')).forEach(id=>{
-  const row=el('button','cmr'+(open===id&&effLay()==='d'?' act':'')),m=last(id),mid=el('div','cmm');mid.appendChild(el('b','',nameOf(id)));mid.appendChild(el('span','',m?(m.me?'Bạn: ':'')+m.text.replace(/\s+/g,' '):'Chạm để nhắn tin'));
-  row.appendChild(avatar(id,1));row.appendChild(mid);const n=unread[id]||0;if(n)row.appendChild(el('b','bd',n>9?'9+':n));
+  const m=last(id),n=unread[id]||0,row=el('button','cmr'+(open===id&&effLay()==='d'?' act':'')+(n?' unr':'')),mid=el('div','cmm');
+  const pv=m?(m.me?'Bạn: ':'')+prev(m).replace(/\s+/g,' '):'Chạm để nhắn tin',tm=m?(sk==='telegram'?fmtT(m.t):rel(m.t)):'';
+  const top=el('div','cmtop');top.appendChild(el('b','',nameOf(id)));if(!inl&&tm)top.appendChild(el('i','cmtm',tm));
+  const sub=el('div','cmsb');sub.appendChild(el('span','cmpv',pv));if(inl&&tm)sub.appendChild(el('span','cmtm2','· '+tm));if(!inl&&n)sub.appendChild(el('b','bd',n>9?'9+':n));
+  mid.appendChild(top);mid.appendChild(sub);row.appendChild(avatar(id,1,SZ[sk]||40));row.appendChild(mid);if(inl&&n)row.appendChild(el('i','cmud'));
   row.onclick=()=>CHAT.open(id);l.appendChild(row)});
  try{PRES.paint()}catch(e){}}
 const refreshList=()=>{if(rootEl()&&document.getElementById('cml')&&fset&&dockOn())fillList()};
 /* ---- bảng chọn giao diện ---- */
 function renderSettings(){const r=rootEl();if(!r)return;const o=r.querySelector('.cmset');if(o)o.remove();if(!SO)return;
  const c=cfg(),p=el('div','cmset'),sec=(t)=>p.appendChild(el('h4','',t)),strip=(arr,cur,fn)=>{const d=el('div','strip2');arr.forEach(a=>{const b=el('button','s'+(cur===a[0]?' on2':''),a[1]);b.onclick=()=>fn(a[0]);d.appendChild(b)});p.appendChild(d)};
- sec('Kiểu giao diện');strip(SKINS,c.skin,v=>{setCfg('skin',v);applyStyle(r);r.querySelectorAll('.cmsend').forEach(sendLabel);r.querySelectorAll('.cmtt b').forEach(b=>b.textContent=TT[v]||'Tin nhắn');renderSettings()});
+ sec('Kiểu giao diện');strip(SKINS,c.skin,v=>{setCfg('skin',v);render()});
  sec('Bố cục');strip([['m','📱 Điện thoại'],['d','🖥️ Máy tính'],['auto','Tự động']],c.lay,v=>{setCfg('lay',v);render()});
  const lb=el('label'),cb=el('input');cb.type='checkbox';cb.checked=!!c.sync;cb.disabled=c.skin==='def';cb.onchange=()=>{setCfg('sync',cb.checked?1:0);applyStyle(r);renderSettings()};lb.appendChild(cb);lb.appendChild(el('span','',c.skin==='def'?'Đồng bộ màu theo chủ đề game (đã theo chủ đề ở kiểu Mặc định)':'Đồng bộ màu theo chủ đề game'));p.appendChild(lb);
  const x=el('button','s','Đóng');x.style.marginTop='8px';x.onclick=()=>{SO=false;renderSettings()};p.appendChild(x);r.appendChild(p)}

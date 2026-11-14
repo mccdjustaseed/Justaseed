@@ -10014,10 +10014,7 @@ function dgTxt(t){
  h=h.replace(/(https?:\/\/[^\s<\u0001]+)/g,(m,u)=>{let tail='';while(/[.,;:!?)\]]$/.test(u)&&!/&(amp|lt|gt|quot|#39)$/.test(u)){tail=u.slice(-1)+tail;u=u.slice(0,-1)}
   const raw=u.replace(/&amp;/g,'&'),lb=/^https:\/\/(?:\w+\.)?discord(?:app)?\.com\/channels\//.test(raw)?'Liên kết Discord':raw.replace(/^https?:\/\/(www\.)?/,'').slice(0,38)+(raw.length>46?'…':'');
   return ph('<a href="'+u+'" target=_blank rel=noopener>'+E(lb)+'</a>')+tail});
- h=h.replace(/&lt;@&amp;(\d+)&gt;/g,'<span class=dgm>@vai trò</span>').replace(/&lt;#(\d+)&gt;/g,'<span class=dgm>#kênh</span>')
- .replace(/&lt;@!?(\d+)&gt;/g,(m,id)=>'<span class=dgm>@'+E(dgName(id))+'</span>');
  h=h.replace(/&lt;t:(\d+)(?::([a-zA-Z]))?&gt;/g,(m,n,f)=>{const d=new Date(n*1000);
-  if(f=='F'||f=='f')return '<span class=dgts>'+d.toLocaleString('vi-VN',f=='F'?{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}:{day:'numeric',month:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</span>';
   if(f=='R'){const x=Math.round((d-Date.now())/60000),a=Math.abs(x),u=a>=1440?Math.round(a/1440)+' ngày':a>=60?Math.round(a/60)+' giờ':a+' phút';return '<b>'+(x>=0?'sau '+u:u+' trước')+'</b>'}
   const o=(f=='t'||f=='T')?{hour:'2-digit',minute:'2-digit'}:f=='d'?{day:'numeric',month:'numeric',year:'numeric'}:{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'};
   return '<b>'+d.toLocaleString('vi-VN',o)+'</b>'});
@@ -10029,37 +10026,26 @@ function dgTxt(t){
   .replace(/\|\|(.+?)\|\|/g,'<span class=dgsp onclick="this.classList.toggle(\'on\')">$1</span>');
  h=h.replace(/\n/g,'<br>').replace(/\u0001(\d+)\u0002/g,(m,k)=>P[+k]);
  return h.replace(/<br>(<pre)/g,'$1').replace(/(<\/pre>)<br>/g,'$1').replace(/(<br>){3,}/g,'<br><br>')}
-const DGM={};
-function dgName(id){
- id=String(id);
- try{if(typeof dcMyId=='function'&&String(dcMyId())===id&&typeof discordNames=='function'){const d=discordNames(currentUser);if(d&&d.display)return d.display}}catch(e){}
- return DGM[id]||'người chơi'}
-async function dgResolve(rows){
- try{const c=typeof supabaseClient!='undefined'?supabaseClient:null;if(!c)return;
-  const need=new Set();(rows||[]).forEach(r=>{String(r.content||'').replace(/<@!?(\d+)>/g,(m,i)=>{if(!DGM[i]&&!DGM['_x'+i])need.add(i)})});
-  if(!need.size)return;const ids=[...need].slice(0,40);
-  const r=await c.from('server_members').select('*').in('discord_id',ids);
-  (r.data||[]).forEach(m=>{const n=m.display_name||m.nickname||m.nick||m.global_name||m.username||m.name;if(n)DGM[String(m.discord_id)]=String(n)});
-  ids.forEach(i=>{if(!DGM[i])DGM['_x'+i]=1});
-  if((S.cat=='dg'||S.cat=='tcy')&&document.querySelector('.skw'))rd()}catch(e){}}
-function dgImg(el){
- try{const w=el.naturalWidth,h=el.naturalHeight;if(!w||!h)return;
-  if(w/h<1.8&&w<=600){const t=el.closest('.dgb').querySelector('.dgth');if(t){t.appendChild(el);el.className='dgi dgi-t'}}}catch(e){}}
 function dgCard(r){
- const d=new Date(r.created_at),w=d.toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit'})+(d.toDateString()==new Date().toDateString()?'':' '+d.toLocaleDateString('vi-VN',{day:'numeric',month:'numeric'}))+(r.edited_at?' · đã sửa':'');
+ const d=new Date(r.created_at),w=d.toLocaleString('vi-VN',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+(r.edited_at?' · đã sửa':'');
  const im=(Array.isArray(r.images)?r.images:[]).filter(u=>/^https:\/\//.test(u)).slice(0,6).map(u=>'<img class=dgi loading=lazy draggable=false onload="dgImg(this)" src="'+E(u)+'" alt="">').join('');
- const nm=E(r.author_name||'Discord'),ini=E(String(r.author_name||'D').replace(/[^\p{L}\p{N}]/gu,'').charAt(0)||'D');
- const av=/^https:\/\//.test(r.author_avatar||'')?'<img class=dgav src="'+E(r.author_avatar)+'" alt="" draggable=false onerror="this.outerHTML=\'<span class=dgav>'+ini+'</span>\'">':'<span class=dgav>'+ini+'</span>';
- return '<div class="card dgm-card"><div class=dgmsg>'+av+'<div class=dgbody>'
-  +'<div class=dghd><b class=dgnm>'+nm+'</b><span class=dgapp>✔ APP</span><span class=dgtm>'+w+'</span></div>'
-  +'<div class=dgb><span class=dgth></span><div class=dgt>'+dgTxt(r.content||'')+'</div>'+im+'</div></div></div></div>'}
+ return '<div class=card><div class=row style="margin:0 0 6px;justify-content:flex-start;gap:8px">'
+  +(/^https:\/\//.test(r.author_avatar||'')?'<img src="'+E(r.author_avatar)+'" alt="" width=26 height=26 style="border-radius:50%">':'')
+  +'<b>'+E(r.author_name||'Discord')+'</b><span class=mut style="font-size:.76rem;margin-left:auto;text-align:right">'+w+'</span></div>'
+  +'<div class=dgt>'+dgBody(r.content||'')+'</div>'+im+'</div>'}
+function dgBody(c){c=String(c==null?'':c);
+ const m=c.match(/^\s*(?:<t:\d+(?::\w)?>|\d{1,2}:\d{2}[ ]\d{1,2}\/\d{1,2})[ ]*\n+/);
+ if(m)return '<div>'+dgTxt(m[0])+'</div><span class=dgth></span>'+dgTxt(c.slice(m[0].length));
+ return '<span class=dgth></span>'+dgTxt(c)}
+function dgImg(el){try{const w=el.naturalWidth,h=el.naturalHeight;if(!w||!h||w/h>=1.8)return;
+ const t=el.closest('.card').querySelector('.dgth');if(t){t.appendChild(el);el.className='dgi dgi-t'}}catch(e){}}
 async function dgLoad(force){
  const c=typeof supabaseClient!='undefined'?supabaseClient:null;
  if(!c){DG.err='Chưa kết nối được máy chủ.';return}
  if(DG.busy||(!force&&Date.now()-DG.at<60000))return;
  DG.busy=1;
  try{const r=await c.from('daily_guild').select('message_id,author_name,author_avatar,content,images,created_at,edited_at').order('created_at',{ascending:false}).limit(30);
-  if(r.error)throw r.error;DG.rows=r.data||[];DG.err='';DG.at=Date.now();dgResolve(DG.rows)}
+  if(r.error)throw r.error;DG.rows=r.data||[];DG.err='';DG.at=Date.now()}
  catch(e){const m=e&&(e.message||e.details||e.hint)||String(e),cd=e&&e.code?' ['+e.code+']':'';console.error('dg',m+cd,e);DG.err='Không tải được tin nhắn Daily Guild: '+m+cd;DG.at=Date.now()-50000}
  DG.busy=0;
  if(!DG.rt){DG.rt=1;try{c.channel('daily-guild-rt').on('postgres_changes',{event:'*',schema:'public',table:'daily_guild'},()=>dgLoad(1)).subscribe()}catch(e){}}
@@ -10080,10 +10066,9 @@ async function tcyLoad(force){
  if(TCY.busy||(!force&&Date.now()-TCY.at<60000))return;
  TCY.busy=1;
  try{const r=await c.from('tuoi_cay').select('message_id,author_name,author_avatar,content,images,created_at,edited_at').order('created_at',{ascending:false}).limit(30);
-  if(r.error)throw r.error;TCY.rows=r.data||[];TCY.err='';TCY.at=Date.now();dgResolve(TCY.rows)}
+  if(r.error)throw r.error;TCY.rows=r.data||[];TCY.err='';TCY.at=Date.now()}
  catch(e){const m=e&&(e.message||e.details||e.hint)||String(e),cd=e&&e.code?' ['+e.code+']':'';console.error('tcy',m+cd,e);TCY.err='Không tải được tin nhắn Tưới cây: '+m+cd;TCY.at=Date.now()-50000}
  TCY.busy=0;
- if(S.cat=='tcy'&&document.querySelector('.skw'))rd();
  if(!TCY.rt){TCY.rt=1;try{c.channel('tuoi-cay-rt').on('postgres_changes',{event:'*',schema:'public',table:'tuoi_cay'},()=>tcyLoad(1)).subscribe()}catch(e){}}
  }
 CATV.tcy=function(){tcyLoad();
@@ -10175,7 +10160,7 @@ const css=document.createElement('style');css.textContent=
 +'.skcv{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--ln)}.skw a{color:var(--g3)}'
 +'.skst{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.72rem;font-weight:700;color:#fff;background:var(--g2);vertical-align:1px}.skst.soon{background:#e8a33d}';
 css.textContent+='.dgt{font-size:.9rem;line-height:1.5;word-break:break-word}.dgt a{word-break:break-all}.dgc{margin:8px 0 4px;padding:4px 10px;background:var(--bg);border:1px solid var(--ln);border-left:4px solid var(--g2);border-radius:8px;font:700 .76rem/1.35 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:var(--g3)}.dgic{padding:1px 5px;background:var(--bg);border-radius:5px;font:.82em ui-monospace,Menlo,monospace}.dgq{display:inline-block;border-left:3px solid var(--ln);padding-left:8px;color:var(--mut)}.dgsp{background:var(--ink);color:transparent;border-radius:4px;cursor:pointer}.dgsp.on{background:var(--bg);color:inherit}';
-css.textContent+='.dge{display:inline-block;width:1.4em;height:1.4em;vertical-align:-.3em;object-fit:contain}.dgi{display:block;max-width:100%;border-radius:8px;margin-top:8px;pointer-events:none;-webkit-user-drag:none;user-select:none;-webkit-touch-callout:none}.dgi-t{margin:0 0 6px 10px;width:84px;max-width:30%;float:none;image-rendering:pixelated}.dgm-card{background:#313338;border:1px solid #1e1f22;color:#dbdee1;padding:12px 12px 12px}.dgmsg{display:flex;gap:10px;align-items:flex-start}.dgav{flex:none;width:40px;height:40px;border-radius:50%;object-fit:cover;background:#404249;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#fff;pointer-events:none}.dgbody{min-width:0;flex:1}.dghd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;line-height:1.2}.dgnm{color:#5ee08e;font-size:.95rem;word-break:break-word}.dgapp{background:#5865f2;color:#fff;font-size:.62rem;font-weight:700;padding:1px 5px;border-radius:4px}.dgtm{color:#949ba4;font-size:.72rem;margin-left:2px}.dgb{background:#2b2d31;border:1px solid #3f4147;border-radius:8px;padding:10px 12px;overflow:hidden}.dgb .dgt{color:#dbdee1}.dgb .dgt a{color:#00a8fc}.dgb .mut,.dgb small{color:#949ba4}.dgb .dgc,.dgb .dgic{background:#1e1f22;border-color:#3f4147;color:#dbdee1}.dgb .dgq{border-color:#4e5058;color:#b5bac1}.dgth{float:right}.dgth:empty{display:none}.dgth img{display:block}.dgm{background:rgba(88,101,242,.3);color:#c9cdfb;border-radius:4px;padding:0 2px;font-weight:500}.dgts{background:#3f4147;color:#dbdee1;border-radius:4px;padding:0 4px}';
+css.textContent+='.dge{display:inline-block;width:1.4em;height:1.4em;vertical-align:-.3em;object-fit:contain}.dgi{display:block;max-width:100%;border-radius:12px;margin-top:8px;pointer-events:none;-webkit-touch-callout:none;user-select:none}.dgth{float:right;margin:0 0 6px 10px}.dgth:empty{display:none}.dgi-t{width:84px;max-width:30vw;margin:0;image-rendering:pixelated}';
 css.textContent+='@media(max-width:899px){nav.fx button[data-t=sky]{display:none!important}}@media(min-width:900px){#sdtabs button[onclick*="\'sky\'"]{display:none!important}}'
 +'#sknw{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 10px);z-index:80;width:min(420px,calc(100% - 20px));display:flex;flex-direction:column;gap:8px;pointer-events:none}'
 +'.sknb{pointer-events:auto;display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:18px;background:var(--card);color:var(--ink);border:2px solid var(--g2);box-shadow:0 10px 28px rgba(20,70,40,.4);cursor:pointer;animation:sknin .3s ease-out;transition:opacity .25s,transform .25s}'

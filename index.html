@@ -9505,8 +9505,8 @@ busy=1;n.classList.add('nvA');if(getComputedStyle(n).position=='static')n.style.
 const x1=on.offsetLeft,w1=on.offsetWidth,y1=on.offsetTop,h1=on.offsetHeight;
 if(SL)n.scrollLeft=SL;
 try{n.scrollTo({left:Math.max(0,x1-(n.clientWidth-w1)/2),behavior:RM.matches?'auto':'smooth'})}catch(e){}
-if(last&&!RM.matches&&(last.x!=x1||last.y!=y1)){const x0=last.x,w0=last.w,y0=last.y,h0=last.h,l=Math.min(x0,x1),r=Math.max(x0+w0,x1+w1),tp=Math.min(y0,y1),bt=Math.max(y0+h0,y1+h1);
-I.animate([{left:x0+'px',width:w0+'px',top:y0+'px',height:h0+'px'},{left:l+'px',width:(r-l)+'px',top:tp+'px',height:(bt-tp)+'px',offset:.45},{left:x1+'px',width:w1+'px',top:y1+'px',height:h1+'px'}],{duration:520,easing:'cubic-bezier(.3,.9,.4,1)'})}
+if(last&&!RM.matches&&(last.x!=x1||last.y!=y1)){const x0=last.x,w0=last.w,y0=last.y,h0=last.h,sx=Math.min(Math.abs(x1-x0)*.12,12),sy=Math.min(Math.abs(y1-y0)*.12,12),wm=(w0+w1)/2+sx,hm=(h0+h1)/2+sy,lm=(x0+w0/2+x1+w1/2)/2-wm/2,tm=(y0+h0/2+y1+h1/2)/2-hm/2;
+I.animate([{left:x0+'px',width:w0+'px',top:y0+'px',height:h0+'px'},{left:lm+'px',width:wm+'px',top:tm+'px',height:hm+'px',offset:.5},{left:x1+'px',width:w1+'px',top:y1+'px',height:h1+'px'}],{duration:420,easing:'cubic-bezier(.3,.9,.4,1)'})}
 last={x:x1,w:w1,y:y1,h:h1};busy=0})}
 let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;try{place()}catch(e){busy=0}})}).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('scroll',e=>{if(e.target&&e.target.tagName=='NAV')SL=e.target.scrollLeft},true);

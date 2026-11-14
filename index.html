@@ -6677,7 +6677,7 @@ function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))
  async function disable(){try{localStorage.setItem(LS,'0')}catch(e){}PUSHOK=0;
   try{const r=await reg(),sub=r&&r.pushManager&&await r.pushManager.getSubscription();if(sub){const ep=sub.endpoint;await sub.unsubscribe();try{await supabaseClient.from('push_subs').delete().eq('endpoint',ep)}catch(e){}}}catch(e){}
   try{if(typeof currentUser!='undefined'&&currentUser)await supabaseClient.from('push_jobs').delete().eq('user_id',currentUser.id).like('ref','ws-%')}catch(e){}
-  toast('Đã tắt thông báo')}
+  try{await pjDel('sky-')}catch(e){}toast('Đã tắt thông báo')}
  /* hẹn giờ push khi workshop xong (máy chủ gửi, kể cả khi đã đóng game) */
  let ST=0;const sync=()=>{clearTimeout(ST);ST=setTimeout(doSync,1500)};
  async function doSync(){if(!PUSHOK||typeof s=='undefined'||!s||typeof currentUser=='undefined'||!currentUser)return;
@@ -6700,6 +6700,11 @@ function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))
  const pjSend=(to,body)=>{try{if(!_from||!to||typeof currentUser=='undefined'||!currentUser||to===currentUser.id)return;
   _from('push_jobs').upsert({user_id:to,ref:'ev-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),fire_at:new Date().toISOString(),title:'Justaseed',body:String(body).slice(0,140),sent:false},{onConflict:'user_id,ref'}).then(()=>{},()=>{})}catch(e){}};
  const ownerOf=async(tb,col,id)=>{try{const r=await _from(tb).select(col).eq('id',id).maybeSingle();return r&&r.data?r.data[col]:null}catch(e){return null}};
+ const pjAdd=async list=>{try{if(!PUSHOK||!_from||typeof currentUser=='undefined'||!currentUser||!list||!list.length)return false;
+  const rows=list.map(x=>({user_id:currentUser.id,ref:x.ref,fire_at:new Date(x.at).toISOString(),title:x.title,body:x.body,sent:false}));
+  for(let i=0;i<rows.length;i+=50){const r=await _from('push_jobs').upsert(rows.slice(i,i+50),{onConflict:'user_id,ref',ignoreDuplicates:true});if(r&&r.error)return false}
+  return true}catch(e){return false}};
+ const pjDel=async prefix=>{try{if(!_from||typeof currentUser=='undefined'||!currentUser)return;await _from('push_jobs').delete().eq('user_id',currentUser.id).eq('sent',false).like('ref',prefix+'%')}catch(e){}};
  const HK={
   friends:r=>{if(r&&r.status=='pending')pjSend(r.friend_id,'👥 '+actor()+' gửi lời mời kết bạn')},
   wall_messages:r=>{const m=String((r&&r.message)||'');
@@ -6716,7 +6721,7 @@ function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))
     try{const ot=b.then.bind(b);b.then=function(a,rj){return ot(function(res){try{if(res&&!res.error){(Array.isArray(row)?row:[row]).forEach(x=>{try{const h=HK[tb](x);if(h&&h.catch)h.catch(()=>{})}catch(e){}})}}catch(e){}return a?a(res):res},rj)}}catch(e){}
     return b}});
   return q}}catch(e){}
- window.JSN={show,sync,isOn:on,pushOk:()=>PUSHOK,
+ window.JSN={show,sync,enable,sched:pjAdd,unsched:pjDel,isOn:on,pushOk:()=>PUSHOK,
   done:(t,name)=>{if(!PUSHOK)show('🎓 Workshop xong rồi','Hoàn thành: '+name,'ws-'+t)},
   row:()=>{const st=!sup()?'off':Notification.permission=='denied'?'blocked':on()?'on':'off',lb=st=='on'?'Bật':st=='blocked'?'Bị chặn':'Tắt';
    const hint=st=='on'?`<p class=mut style="margin:0 0 6px">${PUSHOK?'Báo workshop xong, quà, chuyển khoản, lời mời kết bạn, ký tường, tim và bình luận, kể cả khi đã đóng hẳn game.':'Báo khi game đang mở ở nền. Muốn báo cả khi đã đóng game, cần cấu hình Web Push. [Lỗi: '+(window.__pe||'chưa thử đăng ký, đóng mở lại game')+']'}</p>`:'';
@@ -10004,23 +10009,38 @@ function sknShow(title,body,tag){
 function sknChk(){try{
  if(typeof s=='undefined'||!s||typeof scr=='undefined'||scr!='game')return;const c=s.skn;if(!c)return;
  const now=Date.now(),L=sknL(),lp=laP(now);let ch=0;
- const go=(k,st,title,body)=>{if(st<=now&&now-st<3*MIN&&st>(L[k]||0)){L[k]=st;ch=1;sknShow(title,body,'sky-'+k)}};
+ const go=(k,st,title,body)=>{if(st<=now&&now-st<3*MIN&&st>(L[k]||0)){L[k]=st;ch=1;sknShow(title,body,'sky-'+k+'-'+st)}};
  [['geyser',0],['grandma',1],['turtle',2]].forEach(a=>{if(!c[a[0]])return;const e=EVT[a[1]];
   for(let k=-1;k<=1;k++){const d=addD(lp.y,lp.m,lp.d,k);for(let h=0;h<24;h+=2)go(a[0],laAt(d[0],d[1],d[2],h,e.off),'Đến giờ '+e.n+'!',e.p+' · kéo dài '+e.dur+' phút')}});
  if(c.daily)go('daily',laMid(lp.y,lp.m,lp.d),'Đã reset hằng ngày','Nhiệm vụ và nến hằng ngày đã làm mới.');
  if(c.eden){const b=addD(lp.y,lp.m,lp.d,-(lp.wd%7));go('eden',laMid(b[0],b[1],b[2]),'Đã reset Eden','Eden reset hằng tuần đã làm mới.')}
  if(ch)sv()}catch(e){console.error('skn',e)}}
 setInterval(sknChk,1000);
-const permTxt=()=>{if(!('Notification' in window))return 'Trình duyệt này không hỗ trợ thông báo hệ thống, chỉ hiện thông báo nổi trong app.';
- const p=Notification.permission;return p=='granted'?'Thông báo hệ thống: đã bật (hiện cả khi bạn đang ở tab/app khác nhưng trang vẫn đang mở).':p=='denied'?'Thông báo hệ thống: đang bị chặn trong trình duyệt. Thông báo nổi vẫn hiện trong app.':'Thông báo hệ thống: chưa cấp quyền. Bật một mục bên trên để được hỏi quyền.'};
+
+/* ---- Thông báo ĐẨY cho Sky: hẹn giờ trên máy chủ để vẫn báo khi đã đóng hẳn trình duyệt (48 giờ tới, làm mới mỗi lần mở game) ---- */
+function skyPush(){try{
+ if(!window.JSN||!JSN.pushOk()||typeof s=='undefined'||!s||!s.skn)return;
+ const c=s.skn,now=Date.now(),H=48*3600*1000,lp=laP(now),rows=[],ok=ts=>ts>now&&ts<=now+H;
+ [['geyser',0],['grandma',1],['turtle',2]].forEach(a=>{if(!c[a[0]])return;const e=EVT[a[1]];
+  for(let k=0;k<=2;k++){const d=addD(lp.y,lp.m,lp.d,k);for(let h=0;h<24;h+=2){const ts=laAt(d[0],d[1],d[2],h,e.off);if(ok(ts))rows.push({ref:'sky-'+a[0]+'-'+ts,at:ts,title:'Đến giờ '+e.n+'!',body:e.p+' · kéo dài '+e.dur+' phút'})}}});
+ if(c.daily)for(let k=0;k<=2;k++){const d=addD(lp.y,lp.m,lp.d,k),ts=laMid(d[0],d[1],d[2]);if(ok(ts))rows.push({ref:'sky-daily-'+ts,at:ts,title:'Đã reset hằng ngày',body:'Nhiệm vụ và nến hằng ngày đã làm mới.'})}
+ if(c.eden){const b=addD(lp.y,lp.m,lp.d,-(lp.wd%7));for(let w=0;w<=2;w++){const d=addD(b[0],b[1],b[2],7*w),ts=laMid(d[0],d[1],d[2]);if(ok(ts))rows.push({ref:'sky-eden-'+ts,at:ts,title:'Đã reset Eden',body:'Eden reset hằng tuần đã làm mới.'})}}
+ if(rows.length)JSN.sched(rows)}catch(e){console.error('skyPush',e)}}
+setTimeout(skyPush,9000);setTimeout(skyPush,30000);setInterval(skyPush,10*60*1000);
+const permTxt=()=>{if(window.JSN&&JSN.pushOk())return 'Thông báo đẩy: đã bật. Sky sẽ báo cả khi bạn đã đóng hẳn trình duyệt, cho các mốc trong 48 giờ kể từ lần mở game gần nhất (mở game một lần mỗi ngày là đủ).';
+ if(!('Notification' in window))return 'Trình duyệt này không hỗ trợ thông báo hệ thống, chỉ hiện thông báo nổi trong app.';
+ const p=Notification.permission;return p=='denied'?'Thông báo đẩy: đang bị chặn trong trình duyệt, hãy cho phép thông báo cho trang này. Hiện chỉ báo khi trang đang mở.':'Thông báo đẩy: chưa bật. Bật một mục bên trên để được hỏi quyền và đăng ký (cần đăng nhập). Chưa bật thì chỉ báo khi trang đang mở.'};
 CATV.snot=function(){const c=sknC();
  return '<div class=card><h3 style="margin:0 0 4px">Thông báo nổi Sky</h3><p class=mut style="margin:0 0 6px;font-size:.82rem">Bật mục nào thì app sẽ hiện thông báo nổi đúng giờ đó. Giờ hiển thị theo thiết bị của bạn.</p>'
  +SKN.map(x=>'<label class=skr style="cursor:pointer"><span><b>'+E(x[1])+'</b><br><span class=mut>'+E(x[2])+'</span></span><input type=checkbox style="width:22px;height:22px;accent-color:var(--g2);flex:0 0 auto" '+(c[x[0]]?'checked':'')+' onchange="SKN.tog(\''+x[0]+'\',this.checked)"></label>').join('')
  +'<div style="text-align:center;margin-top:10px"><button class=s onclick="SKN.test()">Gửi thông báo thử</button></div></div>'
- +'<div class=card><p class=mut style="margin:0;font-size:.78rem">'+permTxt()+' Thông báo chỉ hoạt động khi trang Justaseed đang mở (kể cả thu nhỏ); đóng hẳn trang thì trình duyệt không cho web tự báo.</p></div>'};
+ +'<div class=card><p class=mut style="margin:0;font-size:.78rem">'+permTxt()+'</p></div>'};
 window.SKN={tog(k,v){const c=sknC();c[k]=v?1:0;if(v)sknL()[k]=Date.now();sv();
-  if(v&&'Notification' in window&&Notification.permission=='default'){try{const r=Notification.requestPermission(()=>rd());if(r&&r.then)r.then(()=>rd())}catch(e){}}},
- test(){sknShow('Thông báo thử','Thông báo nổi của Sky đang hoạt động.','sky-test');try{if('Notification' in window&&Notification.permission=='default')Notification.requestPermission().then(rd)}catch(e){}}};
+  if(v){if(window.JSN&&!JSN.isOn()){JSN.enable().then(()=>{skyPush();rd()}).catch(()=>rd())}else{skyPush();rd()}}
+  else{try{window.JSN&&JSN.unsched('sky-'+k+'-')}catch(e){}rd()}},
+ test(){sknShow('Thông báo thử','Thông báo nổi của Sky đang hoạt động.','sky-test');
+  try{if(window.JSN&&JSN.pushOk()){JSN.sched([{ref:'sky-test-'+Date.now(),at:Date.now()+3000,title:'Thông báo đẩy thử',body:'Thông báo đẩy của Sky đang hoạt động, kể cả khi đã đóng trình duyệt.'}]);toast('Đã hẹn thông báo đẩy thử, sẽ đến trong khoảng 1 phút. Bạn có thể đóng hẳn trình duyệt để thử.')}
+   else if(window.JSN&&!JSN.isOn()){JSN.enable().then(rd)}}catch(e){}}};
 
 const css=document.createElement('style');css.textContent=
 '.skc{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}.skc .s{display:inline-flex;align-items:center;gap:6px}'

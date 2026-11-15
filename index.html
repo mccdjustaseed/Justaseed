@@ -5325,8 +5325,8 @@ async function up(force){
   else if(CS.hasRow){r=await supabaseClient.from('game_saves').update(Object.assign({rev:nr},row)).eq('user_id',currentUser.id).eq('rev',CS.rev||0).select('user_id');
    if(r&&!r.error&&(!r.data||!r.data.length)){CS.uid=null;CS.ready=0;CS.retry=0;CS.busy=0;return}} /* bot đã sửa save trước: tải lại bản đám mây */
   else{r=await supabaseClient.from('game_saves').upsert(Object.assign({rev:nr},row),{onConflict:'user_id'})}
-  if(r&&r.error){if(/\brev\b/.test(r.error.message||'')&&!CS.norev){CS.norev=1}else if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: kiểm tra bảng game_saves trên Supabase (chạy justaseed-game-saves.sql)')}}
-  else{CS.last=j;CS.t=Date.now();if(!CS.norev){CS.rev=nr;CS.hasRow=1;try{localStorage.setItem('jsRev_'+currentUser.id,String(nr))}catch(e){}}}}catch(e){}
+  if(r&&r.error){try{console.warn('[cloud] lưu lỗi:',r.error.message||r.error)}catch(e){}if(/\brev\b/.test(r.error.message||'')&&!CS.norev){CS.norev=1}else if(bad(r.error)){CS.off=1;warn('Chưa bật lưu đám mây: kiểm tra bảng game_saves trên Supabase (chạy justaseed-game-saves.sql)')}}
+  else{CS.last=j;CS.t=Date.now();CS.lm=row.money;if(!CS.norev){CS.rev=nr;CS.hasRow=1;try{localStorage.setItem('jsRev_'+currentUser.id,String(nr))}catch(e){}}}}catch(e){try{console.warn('[cloud] lưu lỗi:',e)}catch(_){}}
  CS.busy=0}
 async function sync(){
  if(!window.DISCORD_OK||!currentUser)return;const uid=currentUser.id;CS.uid=uid;CS.ready=0;
@@ -5364,7 +5364,7 @@ setInterval(()=>{
  if(!window.DISCORD_OK||!currentUser){CS.uid=null;CS.ready=0;CS.off=0;return}
  if(CS.off)return;
  if(CS.uid!=currentUser.id&&!CS.syncing&&Date.now()-CS.retry>15000){CS.syncing=1;sync().finally(()=>CS.syncing=0);return}
- if(CS.ready&&Date.now()-CS.t>8000)up();
+ if(CS.ready&&(Date.now()-CS.t>8000||(Date.now()-CS.t>2000&&Math.round(s.money||0)!==CS.lm)))up();
  if(CS.ready&&!document.hidden&&Date.now()-(CS.pt||0)>6000)pull()},3000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden'){try{save()}catch(e){}up()}else{setTimeout(pull,500)}});
 addEventListener('pagehide',()=>{up()});

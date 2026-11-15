@@ -1262,7 +1262,7 @@ live={cs:[],sp:0,tot:9999,t:0,n:0,rev:0,lost:0,id:0,dec:0,last:0,len:L0,nx:2};cu
 function tick(){live.t++;let ch=0;if(!live.cs.length&&!brk()&&menu().length){if(!live.nx)live.nx=live.t+(live.bot?0:3+Math.floor(Math.random()*4));if(live.t>=live.nx){const k=1+Math.floor(Math.random()*3);for(let i=0;i<k;i++)spawn();live.nx=0;ch=1}}
 const ck=document.getElementById('clk');if(ck)ck.textContent=clk()+(brk()?' ☕ Nghỉ':'');
 live.cs.slice().forEach(c=>{if(!can(c)||!c.hd)return;c.pat--;const b=document.getElementById('pb'+c.id);if(b)b.style.width=c.pat/c.max*100+'%';if(c.pat<=0){review(1,c.look);live.lost++;rm(c.id);ch=1;toast('Một khách bỏ đi vì chờ lâu')}});if(ch)R();
-if(live.t>=live.len||(!menu().length&&!live.cs.length)){live.lost+=live.cs.length;live.cs=[];cur=null;endDay()}}
+if(live.t>=live.len||(!menu().length&&!live.cs.length&&!(window.BRALIVE&&window.BRALIVE()))){live.lost+=live.cs.length;live.cs=[];cur=null;endDay()}}
 /* ===== CẬP NHẬT 3 ===== */
 const PX={kr:0,hg:3000,xs:3000,tm:4000,cr:4000,sk:4000,vg:5000,tim:5000,la:5000,sg:5000,cm:4000,dy:3000};
 Object.assign(GI,{the:`<rect x=7 y=9 width=26 height=22 rx=3 fill=#ffc2d4 /><path d='M20 25c-6-4-6-9-2-9 1.5 0 2 1 2 2 0-1 .5-2 2-2 4 0 4 5-2 9z' fill=#e0446f />`,bong:`<ellipse cx=20 cy=15 rx=9 ry=11 fill=#ff6f91 /><path d='M20 26l-2 3h4z' fill=#ff6f91 /><path d='M20 29q-4 4 0 9' stroke=#888 fill=none />`,socola:`<rect x=8 y=10 width=24 height=20 rx=3 fill=#6b3e26 /><path d='M8 20h24M20 10v20' stroke=#4a2a18 stroke-width=1.5 />`,nen:`<rect x=13 y=16 width=14 height=16 rx=2 fill=#ffe0a8 /><path d='M20 15c-3-4 0-6 0-9 3 3 3 6 0 9z' fill=#ff9a3c />`,gau:`<circle cx=20 cy=24 r=11 fill=#c98b5a /><circle cx=11 cy=12 r=4.5 fill=#c98b5a /><circle cx=29 cy=12 r=4.5 fill=#c98b5a /><circle cx=20 cy=26 r=5 fill=#f1d3b0 /><circle cx=16 cy=20 r=1.5 fill=#333 /><circle cx=24 cy=20 r=1.5 fill=#333 /><circle cx=20 cy=25 r=1.5 fill=#333 />`});
@@ -8933,7 +8933,7 @@ sync();
  function run(n){
   const lv=live,oR=R,oT=toast,oS=s.snd,r0=lv.rev,n0=lv.n;let ran=0;
   R=function(){};toast=function(){};s.snd=0;
-  try{for(let i=0;i<n;i++){if(!live||live!==lv||s.ph!='open')break;if(i%(lv.bot?1:SERVE_EVERY)==0)autoServe();T0();ran++}}
+  try{for(let i=0;i<n;i++){if(!live||live!==lv||s.ph!='open')break;if(i%(lv.bot?1:SERVE_EVERY)==0)autoServe();if(window.BRTICK)window.BRTICK();T0();ran++}}
   catch(e){}
   finally{R=oR;toast=oT;s.snd=oS}
   try{R()}catch(e){}
@@ -9020,8 +9020,8 @@ sync();
   ['TPBank',[4.75,4.75,5.5,5.7,5.7,5.8]],['VIB',[4.4,4.5,5.7,7.0,5.9,6.0]]];
  const TERMS=[1,3,6,12,18,24],DEMAND=0.1,MINDEP=100000,MD=30,tdays=t=>t*MD;
  const NAMES=['Lan','Hương','Minh','Tú','Nam','Linh','Hà','Phúc','Thảo','Khoa','Mai','Đạt','Vy','Quân','Ngọc','Bảo'];
- const BRN=['Quận 1','Cầu Giấy','Đà Nẵng','Quận 7','Nha Trang','Hải Phòng'];
- const MAXS=6,MAXL=10,MAXB=5,MAXBL=5;
+ const BRN=['Quận 1','Cầu Giấy','Đà Nẵng','Quận 7','Nha Trang','Hải Phòng','Cần Thơ','Huế','Đà Lạt','Vũng Tàu'];
+ const MAXS=6,MAXL=10,MAXB=10,MAXBL=5;
  const hireCost=n=>200000+150000*n;
  const upCost=l=>Math.round(120000*Math.pow(l,1.7)/1000)*1000;
  const wage=l=>20000+10000*l;
@@ -9153,8 +9153,8 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
   Object.keys(b.st).forEach(k=>{if(FH[k])b.st[k]=Math.floor((b.st[k]||0)*.6)});
   b.bought={};
   return o}
- function brDay(b,sp){if(b.plan){const pl=b.plan;b.plan=null;b.st=pl.st;b.bought={};return pl.r}return brCore(b,sp)}
- function planBr(){X().br.forEach(b=>{b.plan=null;if(b.pause)return;const t={l:b.l,pause:b.pause,stf:b.stf,st:Object.assign({},b.st),bought:{}};b.plan={r:brCore(t,(typeof live!='undefined'&&live&&live.tot)||8),st:t.st}})}
+ function brDay(b,sp){if(b.plan){const pl=b.plan;b.plan=null;if(pl.live)Object.keys(pl.st).forEach(k=>{if(FH[k])pl.st[k]=Math.floor((pl.st[k]||0)*.6)});b.st=pl.st;b.bought={};return pl.r}return brCore(b,sp)}
+ function planBr(){X().br.forEach(b=>{b.plan=null;if(b.pause)return;{b.plan={live:1,r:{rev:0,n:0,lost:0,wage:brWage(b),rent:brRent(b.l)},st:Object.assign({},b.st)};return}const t={l:b.l,pause:b.pause,stf:b.stf,st:Object.assign({},b.st),bought:{}};b.plan={r:brCore(t,(typeof live!='undefined'&&live&&live.tot)||8),st:t.st}})}
 
  /* nhập hàng cho chi nhánh: đổi tạm kho/suất nhập của quầy sang kho chi nhánh khi thao tác ở tab Nhập hàng */
  /* chi phí chưa nằm trong báo cáo ngày: nhập hàng cho chi nhánh (s.spent bị hoàn lại) và tiền thuê nhân viên ngày/tháng; dayRoll đưa vào ảnh tổng kết */
@@ -9179,7 +9179,7 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
   return h+`<div class=card><h3>Chi nhánh trước giờ mở cửa</h3><p class=mut>Mọi chi nhánh đang hoạt động phải có nhân viên và đã nhập hàng thì mới mở được gian hàng. Không muốn nhập hàng thì cho chi nhánh tạm nghỉ.</p>${rows}</div>`}}
  {const o=openDay;openDay=function(){const b=brBlock();
   if(b.length){toast(b.map(r=>'CN '+r.b.n+' '+r.w.join(', ')).join('; ')+'. Hãy nhập hàng/tuyển nhân viên hoặc cho tạm nghỉ');tab='shop';try{R()}catch(e){}return}
-  BT=0;const rr=o.apply(this,arguments);try{planBr()}catch(e){console.warn('planBr',e)}return rr}}
+  BT=0;const rr=o.apply(this,arguments);if(window.__BOT_OPEN&&live)live.bot=1;try{planBr()}catch(e){console.warn('planBr',e)}return rr}}
 
  V.branch=()=>{const x=X();
   return `<div class=card><h3>Chi nhánh (${x.br.length}/${MAXB})</h3><p class=mut>Mỗi chi nhánh có <b>nhân viên</b> và <b>kho hàng riêng</b>. Trước khi mở gian hàng, mọi chi nhánh đang hoạt động phải có ít nhất 1 nhân viên và đã nhập hàng; nếu không muốn nhập thì cho chi nhánh <b>tạm nghỉ</b> (không tốn lương, tiền thuê, cũng không có doanh thu). Cuối ngày chi nhánh tự bán từ kho của mình: nhiều nhân viên, cấp cao thì phục vụ được nhiều khách hơn. Hoa còn dư trong kho héo 40% mỗi ngày.</p>
@@ -9208,7 +9208,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  const GRN='color:#2e9e57;font-weight:700';
  const dayP=()=>{try{return(typeof live!='undefined'&&live&&s.ph=='open')?Math.max(0,Math.min(1,live.len?live.t/live.len:(live.sp-live.cs.length)/Math.max(1,live.tot))):0}catch(e){return 0}};
  const isSell=b=>s.ph=='open'&&!b.pause&&!!b.plan;
- const brTxt=b=>{const p=dayP(),r=b.plan.r,a=Math.floor(r.n*p),v=Math.round(r.rev*p),l=Math.floor(r.lost*p);return 'Đã bán '+a+'/'+r.n+' đơn · '+$(v)+(r.lost?' · '+l+'/'+r.lost+' khách chưa được phục vụ':'')};
+ const brTxt=b=>{if(b.plan.live)return 'Đã bán '+b.plan.r.n+' đơn · '+$(b.plan.r.rev);const p=dayP(),r=b.plan.r,a=Math.floor(r.n*p),v=Math.round(r.rev*p),l=Math.floor(r.lost*p);return 'Đã bán '+a+'/'+r.n+' đơn · '+$(v)+(r.lost?' · '+l+'/'+r.lost+' khách chưa được phục vụ':'')};
  const brBadge=(b,why)=>b.pause?'<b class=mut>Tạm nghỉ</b>':isSell(b)?'<b style="'+GRN+'">● Đang bán hàng</b>':why.length?'<b class=bad>Chưa sẵn sàng</b>':'<b class=ok>Sẵn sàng</b>';
  const brLive=b=>{if(!isSell(b))return '';const pc=Math.round(dayP()*100);
   return `<div style="margin:6px 0"><div class=row style="margin:0 0 3px"><span id="brt-${b.id}" class=mut>${esc(brTxt(b))}</span><span id="brp-${b.id}" class=mut>${pc}%</span></div><div style="height:8px;border-radius:9px;background:rgba(0,0,0,.12);overflow:hidden"><i id="brb-${b.id}" style="display:block;height:100%;width:${pc}%;background:#2e9e57;transition:width .6s"></i></div></div>`};
@@ -9222,6 +9222,11 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
   return h+`<div class=card><h3>Chi nhánh</h3>${act.map(b=>`<div class=row style="margin:0"><span><b>CN ${esc(b.n)}</b></span><b style="${GRN}">● Đang bán hàng</b></div>${brLive(b)}`).join('')}</div>`}}
  {const o=tick;tick=function(){const r=o.apply(this,arguments);try{if(s.ph=='open'){X().dp=Math.round(dayP()*1000)/1000;const pc=Math.round(dayP()*100);X().br.filter(isSell).forEach(b=>{const t=document.getElementById('brt-'+b.id),q=document.getElementById('brp-'+b.id),f=document.getElementById('brb-'+b.id);if(t)t.textContent=brTxt(b);if(q)q.textContent=pc+'%';if(f)f.style.width=pc+'%'})}}catch(e){}return r}}
  Object.assign(window.X2,{kho(id){BRO[id]=!BRO[id];R()}});
+ const brOn=()=>typeof live!='undefined'&&live&&s.ph=='open';
+ const brT=b=>({l:b.l,pause:b.pause,stf:b.stf,st:b.plan.st,bought:{}});
+ window.BRALIVE=()=>{try{return brOn()&&X().br.some(b=>!b.pause&&b.plan&&b.plan.live&&brMenu(brT(b)).length>0)}catch(e){return false}};
+ window.BRTICK=()=>{try{if(!brOn()||live.paused)return;const bot=!!live.bot;X().br.forEach(b=>{const pl=b.plan;if(b.pause||!pl||!pl.live)return;const t=brT(b);pl.acc=pl.acc||[];b.stf.forEach((sf,k)=>{pl.acc[k]=(pl.acc[k]||0)+(bot?1:.6/gap(sf.l));while(pl.acc[k]>=1){const m=brMenu(t);if(!m.length){pl.acc[k]=0;break}pl.acc[k]-=1;const it=rnd(m);t.st[it.f.id]-=it.p.k;t.st[it.p.id]-=1;pl.r.rev+=price(it.f.id,it.p.id);pl.r.n++}})})}catch(e){}};
+ {const o=tick;tick=function(){window.BRTICK();return o.apply(this,arguments)}}
 
  try{Object.assign(I,{staff:'M12 11a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',bank:'M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18',branch:'M4 21V8l8-5 8 5v13M9 21v-6h6v6'})}catch(e){}
  [['staff','staff','Nhân viên'],['branch','branch','Chi nhánh'],['bank','bank','Ngân hàng']].forEach(t=>{if(!TABS.some(x=>x[0]==t[0]))TABS.push(t)});
@@ -9808,7 +9813,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
   br_open(){
    const n0=(x2().br||[]).length,m=cap(()=>X2.openBr());
    const n1=(x2().br||[]).length;
-   if(n1<=n0)fail(m||'Chưa mở được chi nhánh (tối đa 5, hoặc thiếu tiền)');
+   if(n1<=n0)fail(m||'Chưa mở được chi nhánh (tối đa 10, hoặc thiếu tiền)');
    done();return 'Đã mở chi nhánh '+s.x2.br[n1-1].n;
   },
   br_up(p){

@@ -5365,8 +5365,8 @@ setInterval(()=>{
  if(!window.DISCORD_OK||!currentUser){CS.uid=null;CS.ready=0;CS.off=0;return}
  if(CS.off)return;
  if(CS.uid!=currentUser.id&&!CS.syncing&&Date.now()-CS.retry>15000){CS.syncing=1;sync().finally(()=>CS.syncing=0);return}
- if(CS.ready&&(Date.now()-CS.t>8000||(Date.now()-CS.t>2000&&Math.round(s.money||0)!==CS.lm)))up();
- if(CS.ready&&!document.hidden&&Date.now()-(CS.pt||0)>6000)pull()},3000);
+ if(CS.ready&&(Date.now()-CS.t>30000||(Date.now()-CS.t>15000&&Math.round(s.money||0)!==CS.lm)))up();
+ if(CS.ready&&!document.hidden&&Date.now()-(CS.pt||0)>15000)pull()},3000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden'){try{save()}catch(e){}up()}else{setTimeout(pull,500)}});
 addEventListener('pagehide',()=>{up()});
 CS.flush=async function(){

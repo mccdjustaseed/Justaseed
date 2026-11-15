@@ -6509,7 +6509,7 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 <script>
 /* ===== v52: Quản trị nằm trong ngăn Cộng đồng (chỉ tài khoản có trong bảng admins) + khóa tài khoản + nhận tiền quản trị viên tặng ===== */
 (function(){
-const A={ok:0,uid:null,v:'home',need:1,busy:0,q:'',mode:'recent',list:null,sel:null,stats:null,banned:null,ct:'posts',content:null,names:{},grants:null,admins:null,roles:null,groles:null};
+const A={ok:0,uid:null,v:'home',need:1,busy:0,q:'',mode:'recent',list:null,sel:null,stats:null,banned:null,ct:'posts',content:null,names:{},grants:null,admins:null,roles:null,groles:null,ann:null,logs:null,adj:null};
 const sb=()=>typeof supabaseClient!='undefined'?supabaseClient:null;
 const E=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fm=n=>Number(n||0).toLocaleString('vi-VN');
@@ -6536,7 +6536,9 @@ function banUI(reason){
  try{sb().auth.signOut({scope:'local'})}catch(e){}}
 async function banChk(){
  const u=me();if(BN||!u||!sb())return;
- try{const r=await sb().from('banned_users').select('reason').eq('user_id',u.id).maybeSingle();if(r&&r.data){BN=1;banUI(r.data.reason)}}catch(e){}}
+ try{let r=await sb().from('banned_users').select('reason,until').eq('user_id',u.id).maybeSingle();
+ if(r&&r.error)r=await sb().from('banned_users').select('reason').eq('user_id',u.id).maybeSingle();
+ if(r&&r.data&&(!r.data.until||new Date(r.data.until)>Date.now())){BN=1;banUI((r.data.reason||'')+(r.data.until?' (đến '+new Date(r.data.until).toLocaleString('vi-VN')+')':''))}}catch(e){}}
 setInterval(banChk,60000);setTimeout(banChk,6000);
 /* nhận tiền quản trị viên tặng */
 async function claim(){
@@ -6544,8 +6546,40 @@ async function claim(){
  try{const r=await sb().rpc('claim_grants');
   if(r&&!r.error&&+r.data>0){const m=+r.data;s.money+=m;try{L('in','Quà từ quản trị viên','Nhận tiền',1,m)}catch(e){}try{save()}catch(e){}toast('🎁 Quản trị viên tặng bạn '+fm(m)+'₫');try{softR()}catch(e){}}}catch(e){}}
 setInterval(claim,30000);setTimeout(claim,7000);
+/* quản trị viên trừ tiền (lệnh trong bảng admin_adjust, nhận khi mở game) */
+async function claimAdj(){
+ if(!me()||!sb()||typeof s=='undefined'||!s||typeof scr=='undefined'||scr!='game')return;
+ try{const r=await sb().rpc('claim_adjust');
+  if(r&&!r.error&&+r.data>0){const m=Math.min(Math.floor(+r.data),Math.max(0,Math.floor(s.money||0)));
+   if(m>0){s.money-=m;try{L('out','Quản trị viên điều chỉnh','Trừ tiền',1,m)}catch(e){}try{save()}catch(e){}}
+   toast('⚠️ Quản trị viên đã trừ '+fm(m)+'₫');try{softR()}catch(e){}}}catch(e){}}
+setInterval(claimAdj,30000);setTimeout(claimAdj,9000);
+/* thông báo của quản trị viên: banner cho người đang chơi */
+let ANS='';try{ANS=localStorage.getItem('js_ann_seen')||''}catch(e){}
+function annClose(id){try{localStorage.setItem('js_ann_seen',String(id))}catch(e){}ANS=String(id);const d=document.getElementById('annb');if(d)d.remove()}
+function annShow(a){
+ if(document.getElementById('annb'))return;
+ const d=document.createElement('div');d.id='annb';d.setAttribute('role','status');
+ d.style.cssText='position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:9000;background:var(--g2,#2f7d4f);color:#fff;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 4px 18px rgba(0,0,0,.25)';
+ const t=document.createElement('div');t.style.cssText='flex:1;min-width:0;word-break:break-word';t.innerHTML='<b>📢 Thông báo</b><br>'+E(a.message);
+ const x=document.createElement('button');x.textContent='✕';x.setAttribute('aria-label','Đóng');x.style.cssText='border:0;background:transparent;color:#fff;font-size:1.1rem;cursor:pointer';x.onclick=()=>annClose(a.id);
+ d.appendChild(t);d.appendChild(x);document.body.appendChild(d)}
+async function annChk(){
+ if(!me()||!sb()||typeof scr=='undefined'||scr!='game')return;
+ try{const r=await sb().from('admin_announcements').select('id,message,expires_at').eq('active',true).order('id',{ascending:false}).limit(5);
+  if(r.error||!r.data)return;const a=r.data.find(x=>!x.expires_at||new Date(x.expires_at)>Date.now());
+  if(a&&String(a.id)!==ANS)annShow(a);else if(!a){const d=document.getElementById('annb');if(d)d.remove()}}catch(e){}}
+setInterval(annChk,120000);setTimeout(annChk,8000);
 /* giao diện quản trị */
 const fail=(e,m)=>toast(m||('Lỗi: '+((e&&e.message)||e)));
+const bAct=b=>!!b&&(!b.until||new Date(b.until)>Date.now());
+const NEEDSQL='Chưa có bảng hoặc cột mới, hãy chạy file admin_v2.sql trong Supabase';
+const sqlErr=e=>{const m=String(e&&(e.message||'')||''),c=String(e&&e.code||'');return c=='PGRST205'||c=='42P01'||c=='42703'||c=='PGRST204'||/schema cache|does not exist|could not find/i.test(m)};
+const fail2=e=>sqlErr(e)?toast(NEEDSQL):fail(e);
+const myNm=()=>{try{return (s&&s.pf&&s.pf.nm)||'Admin'}catch(e){return 'Admin'}};
+async function alog(action,target,detail){try{const u=me(),r=await sb().from('admin_logs').insert({admin_id:u&&u.id,admin_name:String(myNm()).slice(0,60),action,target_id:target?String(target):null,detail:String(detail||'').slice(0,300),source:'web'});if(r&&r.error)console.warn('[admin] ghi nhật ký lỗi:',r.error.message)}catch(e){}}
+const LOGL={grant:'Tặng tiền',grant_all:'Tặng tiền cho tất cả',adjust:'Trừ tiền',del_adjust:'Thu hồi lệnh trừ tiền',ban:'Khóa tài khoản',unban:'Mở khóa',del_post:'Xóa bài đăng',del_cmt:'Xóa bình luận',del_msg:'Xóa ký tường',del_grant:'Thu hồi quà tặng',role:'Shop roles',admin_add:'Cấp quyền admin',admin_del:'Gỡ quyền admin',ann_add:'Đăng thông báo',ann_del:'Xóa thông báo',ann_off:'Bật/tắt thông báo'};
+const LOGK={feed_posts:'del_post',feed_comments:'del_cmt',wall_messages:'del_msg',admin_grants:'del_grant',admin_adjust:'del_adjust',admin_announcements:'ann_del'};
 const nmOf=p=>E(p.display_name||p.username||'Người chơi');
 const gs=p=>p.g?'XP '+fm(p.g.xp)+' · Ngày '+p.g.day+' · '+fm(p.g.money)+'₫ · '+ago(p.g.updated_at):'chưa có dữ liệu chơi';
 const LOAD='<div class=card><p class=mut style="margin:0">Đang tải...</p></div>';
@@ -6564,7 +6598,7 @@ const homeH=()=>{const t=A.stats;if(!t)return LOAD;
 
 const playersH=()=>`<div class=card><div class=row style="margin:0"><input id=adq value="${E(A.q)}" placeholder="Tên hoặc ID người chơi..." style="flex:1;width:auto;min-width:0" onkeydown="if(event.key=='Enter')AD.find()"><button class=p onclick="AD.find()">Tìm</button></div>${bar(chip(A.mode=='recent','🕘 Mới nhất',"AD.mode('recent')")+chip(A.mode=='money','💰 Nhiều tiền',"AD.mode('money')")+chip(A.mode=='xp','⭐ XP cao',"AD.mode('xp')"))}</div>`+(A.busy&&!A.list?LOAD:((A.list||[]).map(userCard).join('')||EMPTY('Không thấy người chơi nào.')));
 
-const bannedH=()=>A.banned==null?LOAD:(A.banned.map(b=>`<div class=card><div class=row style="margin:0">${nameBtn(b.user_id,A.names[b.user_id])}<button class=s onclick="AD.unban('${b.user_id}')">🔓 Mở khóa</button></div><div class=mut>Lý do: ${E(b.reason||'—')}${b.created_at?' · '+ago(b.created_at):''}</div></div>`).join('')||EMPTY('Không có tài khoản nào bị khóa.'));
+const bannedH=()=>A.banned==null?LOAD:(A.banned.map(b=>`<div class=card><div class=row style="margin:0">${nameBtn(b.user_id,A.names[b.user_id])}<button class=s onclick="AD.unban('${b.user_id}')">🔓 Mở khóa</button></div><div class=mut>Lý do: ${E(b.reason||'—')}${b.created_at?' · '+ago(b.created_at):''}${b.until?(bAct(b)?' · đến '+new Date(b.until).toLocaleString('vi-VN'):' · <i>đã hết hạn</i>'):' · vĩnh viễn'}</div></div>`).join('')||EMPTY('Không có tài khoản nào bị khóa.'));
 
 const contentH=()=>{const ck=A.ct,cap=ck=='posts'?r=>r.caption||'(chỉ có ảnh)':ck=='cmts'?r=>(r.body||'').replace(/^↩\d+\|/,'').replace(/\u27e6A:[^\u27e7]*\u27e7/g,' [đính kèm]'):r=>r.message||'',del=ck=='posts'?'AD.delPost':ck=='cmts'?'AD.delCmt':'AD.delMsg';
  const head=bar(chip(ck=='posts','📰 Bài đăng',"AD.ctype('posts')")+chip(ck=='cmts','💬 Bình luận',"AD.ctype('cmts')")+chip(ck=='msgs','📝 Ký tường',"AD.ctype('msgs')"));
@@ -6572,17 +6606,22 @@ const contentH=()=>{const ck=A.ct,cap=ck=='posts'?r=>r.caption||'(chỉ có ản
  return head+(A.content.map(r=>`<div class=card><div class=row style="margin:0">${nameBtn(r.uid,A.names[r.uid])}<small class=mut style="flex:1;text-align:right">${ago(r.created_at)}</small><button class=s onclick="${del}(${+r.id})" aria-label="Xóa">🗑</button></div><div style="word-break:break-word;margin-top:4px">${E(cap(r))}</div></div>`).join('')||EMPTY('Không có nội dung.'))};
 
 const doneG=g=>g.claimed||g.claimed_at||g.used||g.done||g.status=='claimed';
-const grantsH=()=>`<div class=card><div class=strip2><button class=s onclick="AD.grantAll()">🎁 Tặng tiền cho tất cả</button></div></div>`+(A.grants==null?LOAD:(A.grants.map(g=>`<div class=card><div class=row style="margin:0">${nameBtn(g.user_id,A.names[g.user_id])}<b style="flex:1;text-align:right">${fm(g.money)}₫</b><button class=s onclick="AD.delGrant(${+g.id})" aria-label="Thu hồi">🗑</button></div><div class=mut>${doneG(g)?'✅ Đã nhận':'⏳ Chờ nhận'}${g.created_at?' · '+ago(g.created_at):''}${g.note?' · '+E(g.note):''}</div></div>`).join('')||EMPTY('Chưa có lệnh tặng tiền.')));
+const grantsH0=()=>`<div class=card><div class=strip2><button class=s onclick="AD.grantAll()">🎁 Tặng tiền cho tất cả</button></div></div>`+(A.grants==null?LOAD:(A.grants.map(g=>`<div class=card><div class=row style="margin:0">${nameBtn(g.user_id,A.names[g.user_id])}<b style="flex:1;text-align:right">${fm(g.money)}₫</b><button class=s onclick="AD.delGrant(${+g.id})" aria-label="Thu hồi">🗑</button></div><div class=mut>${doneG(g)?'✅ Đã nhận':'⏳ Chờ nhận'}${g.created_at?' · '+ago(g.created_at):''}${g.note?' · '+E(g.note):''}</div></div>`).join('')||EMPTY('Chưa có lệnh tặng tiền.')));
 
+const adjH=()=>A.adj==null?'':(`<div class=card><h3 style="margin:0">➖ Lệnh trừ tiền</h3><p class=mut style="margin:4px 0 0">Trừ khi người chơi mở game. Không đủ tiền thì trừ hết số đang có.</p></div>`+(A.adj.map(g=>`<div class=card><div class=row style="margin:0">${nameBtn(g.user_id,A.names[g.user_id])}<b style="flex:1;text-align:right">-${fm(g.amount)}₫</b><button class=s onclick="AD.delAdj(${+g.id})" aria-label="Thu hồi">🗑</button></div><div class=mut>${g.claimed_at?'✅ Đã trừ':'⏳ Chờ trừ'}${g.created_at?' · '+ago(g.created_at):''}${g.note?' · '+E(g.note):''}</div></div>`).join('')||EMPTY('Chưa có lệnh trừ tiền.')));
+const grantsH=()=>grantsH0()+adjH();
+const annH=()=>`<div class=card><h3>📢 Đăng thông báo cho người chơi</h3><p class=mut style="font-size:.78rem;margin:0 0 4px">Người đang mở game sẽ thấy banner thông báo.</p><textarea id=ann-t maxlength=500 rows=3 placeholder="Nội dung thông báo..." style="width:100%;margin:2px 0"></textarea><div class=row style="margin:2px 0"><span class=mut>Tự hết hạn sau (giờ, 0 = không)</span><input id=ann-h type=number min=0 value=24 style="width:5.5em"></div><button class=p style="width:100%;margin-top:6px" onclick="AD.annAdd()">Đăng</button></div>`+(A.ann==null?LOAD:(A.ann.map(a=>{const on=a.active&&(!a.expires_at||new Date(a.expires_at)>Date.now());return `<div class=card><div class=row style="margin:0"><span class="${on?'ok':'mut'}">${on?'Đang hiển thị':(a.active?'Đã hết hạn':'Đã tắt')}</span><small class=mut style="flex:1;text-align:right">${ago(a.created_at)}</small></div><div style="word-break:break-word;margin:4px 0">${E(a.message)}</div>${a.expires_at?'<div class=mut>Hết hạn: '+new Date(a.expires_at).toLocaleString('vi-VN')+'</div>':''}<div class=row><button class=s onclick="AD.annToggle(${+a.id})">${a.active?'Tắt':'Bật'}</button><button class=s onclick="AD.annDel(${+a.id})">Xóa</button></div></div>`}).join('')||EMPTY('Chưa có thông báo.')));
+const logsH=()=>A.logs==null?LOAD:(A.logs.map(l=>{const t=l.target_id&&/^[0-9a-f-]{36}$/i.test(l.target_id)?nameBtn(l.target_id,A.names[l.target_id]):(l.target_id?E(l.target_id):'');return `<div class=card><div class=row style="margin:0"><b>${E(LOGL[l.action]||l.action)}</b><span class=tag>${l.source=='bot'?'Bot':'Web'}</span><small class=mut style="flex:1;text-align:right">${ago(l.created_at)}</small></div><div class=mut>Bởi ${E(l.admin_name||'Admin')}${t?' · cho '+t:''}</div>${l.detail?'<div style="word-break:break-word">'+E(l.detail)+'</div>':''}</div>`}).join('')||EMPTY('Chưa có hoạt động quản trị nào được ghi.'));
 const adminsH=()=>`<div class=card><h3>Thêm quản trị viên</h3><div class=row style="margin:0"><input id=adnew placeholder="Dán User ID..." style="flex:1;width:auto;min-width:0"><button class=p onclick="AD.addAdmin(document.getElementById('adnew').value)">Thêm</button></div></div>`+(A.admins==null?LOAD:(A.admins.map(a=>`<div class=card><div class=row style="margin:0">${nameBtn(a.user_id,A.names[a.user_id])}${me()&&a.user_id==me().id?'<span class=tag>Bạn</span>':'<button class=s onclick="AD.delAdmin(\''+a.user_id+'\')">Gỡ</button>'}</div><div class=mut style="word-break:break-all">${E(a.user_id)}</div></div>`).join('')||EMPTY('Không có.')));
 
-const viewH=()=>{const p=A.sel,me_=me()&&p.id===me().id;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b>${p.ban?'<span class=tag style="background:#d9534f">Đã khóa</span>':''}${p.admin?'<span class=tag>Admin</span>':''}<button class=s onclick="AD.back()">← Quay lại</button></div><div class=mut>@${E(p.username||'—')}</div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div>${p.ban&&p.reason?'<div class=mut>Lý do khóa: '+E(p.reason)+'</div>':''}<div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button>${me_?'':`<button class=s onclick="${p.admin?`AD.delAdmin('${p.id}')`:`AD.addAdmin('${p.id}')`}">${p.admin?'Gỡ admin':'🛡 Cấp admin'}</button>`}</div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Bình luận</h3>${rowsH(A.cmts,r=>(r.body||'').replace(/^↩\d+\|/,'').replace(/\u27e6A:[^\u27e7]*\u27e7/g,' [đính kèm]'),'AD.delCmt')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
+const lvLine=p=>{if(!p.g||typeof lvOf!='function')return'';try{const lv=lvOf(p.g.xp||0),l=window.BKLIM&&BKLIM.of?BKLIM.of(lv):null;return `<div class=mut>Cấp ${lv}${l?' · hạn mức/ngày: chuyển '+fm(l.send)+'₫ · nhận '+fm(l.recv)+'₫':''}</div>`}catch(e){return''}};
+const viewH=()=>{const p=A.sel,me_=me()&&p.id===me().id;return `<div class=card><div class=row style="margin:0"><b>${nmOf(p)}</b>${p.ban?'<span class=tag style="background:#d9534f">Đã khóa</span>':''}${p.admin?'<span class=tag>Admin</span>':''}<button class=s onclick="AD.back()">← Quay lại</button></div><div class=mut>@${E(p.username||'—')}</div><div class=mut style="word-break:break-all">ID: ${E(p.id)}</div><div class=mut>${gs(p)}</div>${lvLine(p)}${p.ban&&p.reason?'<div class=mut>Lý do khóa: '+E(p.reason)+(p.until?' · đến '+new Date(p.until).toLocaleString('vi-VN'):' · vĩnh viễn')+'</div>':''}<div class=strip2 style="margin-top:8px"><button class=s onclick="AD.grant('${p.id}')">💰 Tặng tiền</button><button class=s onclick="AD.deduct('${p.id}')">➖ Trừ tiền</button><button class=s onclick="AD.copy('${p.id}')">📋 Chép ID</button><button class=s onclick="AD.ban('${p.id}')">${p.ban?'🔓 Mở khóa':'🚫 Khóa tài khoản'}</button>${me_?'':`<button class=s onclick="${p.admin?`AD.delAdmin('${p.id}')`:`AD.addAdmin('${p.id}')`}">${p.admin?'Gỡ admin':'🛡 Cấp admin'}</button>`}</div></div><div class=card><h3>Bài đăng bảng tin</h3>${rowsH(A.posts,r=>r.caption||'(chỉ có ảnh)','AD.delPost')}</div><div class=card><h3>Bình luận</h3>${rowsH(A.cmts,r=>(r.body||'').replace(/^↩\d+\|/,'').replace(/\u27e6A:[^\u27e7]*\u27e7/g,' [đính kèm]'),'AD.delCmt')}</div><div class=card><h3>Ký tường đã gửi</h3>${rowsH(A.msgs,r=>r.message||'','AD.delMsg')}</div>`};
 
 const rin=(id,val,ph,t)=>`<input id="${id}" ${t?'type='+t+' ':''}value="${E(val)}" placeholder="${ph}" style="width:100%;margin:2px 0">`;
 const EFX=[['none','Màu đơn'],['gradient','Chuyển màu'],['shimmer','Chuyển màu động'],['holo','Holographic (cầu vồng)'],['glow','Phát sáng']];
 const rsty=(k,it)=>`<div class=row style="margin:2px 0"><label class=mut>Màu 1 <input type=color id="${k}c" value="${E(it.color||'#99aab5')}" style="width:44px;height:30px;padding:0"></label><label class=mut>Màu 2 <input type=color id="${k}c2" value="${E(it.color2||it.color||'#99aab5')}" style="width:44px;height:30px;padding:0"></label></div><select id="${k}e" style="width:100%;margin:2px 0">${EFX.map(x=>`<option value="${x[0]}" ${(it.effect||'none')==x[0]?'selected':''}>${x[1]}</option>`).join('')}</select>`;
 const rolesH=()=>`<div class=card><h3>➕ Thêm role bán</h3>${A.groles?`<select id="rl-pick" onchange="AD.rolePick(this.value)" style="width:100%;margin:2px 0"><option value="">— Chọn role có sẵn trong server —</option>${A.groles.map(g=>{const sold=(A.roles||[]).some(x=>x.role_id==g.role_id),ok=g.assignable&&!sold;return `<option value="${E(g.role_id)}" ${ok?'':'disabled'}>${E(g.name)}${sold?' (đã bán)':g.assignable?'':' (bot chưa gắn được)'}</option>`}).join('')}</select><p class=mut style="font-size:.78rem;margin:0 0 4px">${!A.groles.length?'⚠️ Bot chưa đồng bộ role nào. Hãy chạy bản bot mới (kèm guild_roles.sql) và chờ log [guild_roles], rồi bấm ↻.':!A.groles.some(g=>g.assignable)?'⚠️ Bot chưa gắn được role nào: vào Cài đặt server, mục Vai trò, kéo role của bot lên cao hơn các role cần bán, rồi chờ vài phút và bấm ↻.':'Role mờ là role bot không gắn được (role của bot/tích hợp hoặc nằm cao hơn role của bot).'}</p>`:'<p class=mut style="font-size:.78rem">Chưa tải được danh sách role từ bot, hãy nhập ID thủ công.</p>'}${rin('rl-id','','ID role Discord (dãy số)')}${rin('rl-n','','Tên hiển thị')}${rin('rl-p','','Giá (tiền trong game)','number')}${rin('rl-d','','Mô tả (không bắt buộc)')}${rin('rl-s',0,'Thứ tự','number')}${rsty('rl-',{})}<button class=p style="width:100%;margin-top:6px" onclick="AD.roleAdd()">Thêm</button></div>`+(A.roles==null?LOAD:(A.roles.map(it=>{const k='rr'+it.role_id+'-',q=`'${E(it.role_id)}'`;return `<div class=card><div class=row style="margin:0">${window.ROLEFX?ROLEFX.pill(it):'<b>'+E(it.name)+'</b>'}<span class="${it.active?'ok':'mut'}">${it.active?'Đang bán':'Đã tắt'}</span></div><div class=mut style="font-size:.72rem">ID ${E(it.role_id)}</div>${A.groles&&!A.groles.some(g=>g.role_id==it.role_id)?'<div class=bad style="font-size:.78rem">⚠️ Role này không còn trên Discord, hãy tắt bán hoặc xóa.</div>':''}${rin(k+'n',it.name,'Tên')}${rin(k+'p',it.price,'Giá','number')}${rin(k+'d',it.description,'Mô tả')}${rin(k+'s',it.sort,'Thứ tự','number')}${rsty(k,it)}<div class=row><button class=p onclick="AD.roleSave(${q})">Lưu</button><button class=s onclick="AD.roleToggle(${q})">${it.active?'Tắt bán':'Bật bán'}</button><button class=s onclick="AD.roleDel(${q})">Xóa</button></div></div>`}).join('')||EMPTY('Chưa có role nào.')));
-const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['roles','🛒 Shop roles',rolesH],['admins','🛡 Quản trị viên',adminsH]];
+const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['roles','🛒 Shop roles',rolesH],['ann','📢 Thông báo',annH],['logs','📜 Nhật ký',logsH],['admins','🛡 Quản trị viên',adminsH]];
 V.adm=()=>{
  if(!A.ok)return EMPTY('Bạn không có quyền quản trị.');
  if(A.need){A.need=0;setTimeout(()=>AD.go(A.v),0)}
@@ -6591,6 +6630,21 @@ V.adm=()=>{
 
 window.AD={
  cur:()=>A.v,
+ async copy(id){try{await navigator.clipboard.writeText(id);toast('Đã chép ID')}catch(e){toast('ID: '+id)}},
+ async deduct(id){
+  const v=Math.floor(Number(String(prompt('Số tiền TRỪ của người chơi (tối đa 100000000):','100000')||'').replace(/[^0-9]/g,'')));
+  if(!v||v<1||v>1e8)return toast('Số tiền không hợp lệ');
+  const note=String(prompt('Lý do (có thể bỏ trống):','')||'').slice(0,100);
+  if(!confirm('Trừ '+fm(v)+'₫ của người chơi này?'))return;
+  try{const r=await sb().from('admin_adjust').insert({user_id:id,amount:v,note,created_by:me()&&me().id});if(r.error)throw r.error;alog('adjust',id,'-'+fm(v)+'đ'+(note?' · '+note:''));toast('Đã tạo lệnh trừ '+fm(v)+'₫, trừ khi người chơi mở game')}catch(er){fail2(er)}},
+ delAdj(id){AD.del('admin_adjust',id,'lệnh trừ tiền')},
+ async annAdd(){
+  const t=String((document.getElementById('ann-t')||{}).value||'').trim().slice(0,500);if(!t)return toast('Nhập nội dung thông báo');
+  const hr=Math.floor(Number((document.getElementById('ann-h')||{}).value)||0),exp=hr>0?new Date(Date.now()+hr*36e5).toISOString():null;
+  try{const r=await sb().from('admin_announcements').insert({message:t,expires_at:exp,active:true,created_by:me()&&me().id});if(r.error)throw r.error;alog('ann_add',null,t.slice(0,120));toast('Đã đăng thông báo');AD.go('ann')}catch(er){fail2(er)}},
+ async annToggle(id){const a=(A.ann||[]).find(x=>x.id==id);if(!a)return;
+  try{const r=await sb().from('admin_announcements').update({active:!a.active}).eq('id',id).select('id');if(r.error)throw r.error;if(!r.data||!r.data.length)return toast('Không đổi được, hãy kiểm tra file SQL admin_v2.sql');alog('ann_off',null,(a.active?'Tắt: ':'Bật: ')+String(a.message).slice(0,80));AD.go('ann')}catch(er){fail2(er)}},
+ annDel(id){AD.del('admin_announcements',id,'thông báo')},
  async go(v){A.v=v;A.sel=null;A.busy=1;redraw();
   try{
    if(v=='home')await this._stats();
@@ -6600,11 +6654,14 @@ window.AD={
    else if(v=='grants')await this._grants();
    else if(v=='roles')await this._roles();
    else if(v=='admins')await this._admins();
-  }catch(er){fail(er)}
+   else if(v=='ann')await this._ann();
+   else if(v=='logs')await this._logs();
+  }catch(er){fail2(er)}
   A.busy=0;redraw()},
  async _stats(){const s=sb(),since=new Date(Date.now()-864e5).toISOString();
   const c=(t,col,f)=>{let r=s.from(t).select(col,{count:'exact',head:true});if(f)r=f(r);return r.then(x=>x.error?'?':x.count)};
-  const [pl,sv,act,bn,fp,fc,wm,gr,ad]=await Promise.all([c('profiles','id'),c('game_saves','user_id'),c('game_saves','user_id',r=>r.gte('updated_at',since)),c('banned_users','user_id'),c('feed_posts','id'),c('feed_comments','id'),c('wall_messages','id',r=>r.not('message','like','JSGIFT1:%')),c('admin_grants','user_id'),c('admins','user_id')]);
+  const cb=()=>s.from('banned_users').select('user_id',{count:'exact',head:true}).or('until.is.null,until.gt.'+new Date().toISOString()).then(x=>x.error?c('banned_users','user_id'):x.count);
+  const [pl,sv,act,bn,fp,fc,wm,gr,ad]=await Promise.all([c('profiles','id'),c('game_saves','user_id'),c('game_saves','user_id',r=>r.gte('updated_at',since)),cb(),c('feed_posts','id'),c('feed_comments','id'),c('wall_messages','id',r=>r.not('message','like','JSGIFT1:%')),c('admin_grants','user_id'),c('admins','user_id')]);
   A.stats={pl,sv,act,bn,fp,fc,wm,gr,ad}},
  find(q){const e=document.getElementById('adq');A.q=String(q==null?(e?e.value:A.q):q).trim();return this.go('players')},
  mode(m){A.mode=m;A.q='';return this.go('players')},
@@ -6620,7 +6677,7 @@ window.AD={
    const x=await r;if(x.error)throw x.error;prof=x.data;const ids=prof.map(p=>p.id);
    if(ids.length){const g=await s.from('game_saves').select('user_id,xp,day,money,updated_at').in('user_id',ids);(g.data||[]).forEach(r=>gm[r.user_id]=r)}}
   const ids=prof.map(p=>p.id),b={};
-  if(ids.length){const y=await s.from('banned_users').select('user_id').in('user_id',ids);(y.data||[]).forEach(r=>b[r.user_id]=1)}
+  if(ids.length){let y=await s.from('banned_users').select('user_id,until').in('user_id',ids);if(y.error)y=await s.from('banned_users').select('user_id').in('user_id',ids);(y.data||[]).forEach(r=>{if(bAct(r))b[r.user_id]=1})}
   A.list=prof.map(p=>({...p,g:gm[p.id]||null,ban:!!b[p.id]}))},
  ctype(k){A.ct=k;A.content=null;return this.go('content')},
  async _content(){const s=sb(),k=A.ct;let r,uk='user_id';
@@ -6632,15 +6689,18 @@ window.AD={
   A.names=await namesOf(r.data.map(x=>x.user_id));A.banned=r.data.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')))},
  async _grants(){let r=await sb().from('admin_grants').select('*').order('created_at',{ascending:false}).limit(50);
   if(r.error)r=await sb().from('admin_grants').select('*').limit(50);if(r.error)throw r.error;
-  A.names=await namesOf(r.data.map(x=>x.user_id));A.grants=r.data},
+  A.names=await namesOf(r.data.map(x=>x.user_id));A.grants=r.data;A.adj=null;
+  try{const j=await sb().from('admin_adjust').select('*').order('created_at',{ascending:false}).limit(50);if(!j.error){A.adj=j.data||[];A.names={...A.names,...await namesOf(A.adj.map(x=>x.user_id))}}}catch(e){A.adj=null}},
  async _roles(){const r=await sb().from('shop_roles').select('*').order('sort');if(r.error)throw r.error;A.roles=r.data||[];const g=await sb().from('guild_roles').select('*').order('position',{ascending:false});A.groles=g.error?null:(g.data||[])},
  rolePick(id){const g=(A.groles||[]).find(x=>x.role_id==id);if(!g)return;const set=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v};set('rl-id',g.role_id);set('rl-n',g.name);{const f=window.ROLEFX&&ROLEFX.dc?ROLEFX.dc(g):null;if(f){set('rl-c',f.color);set('rl-c2',f.color2);set('rl-e',f.effect)}else if(g.color){set('rl-c',g.color);set('rl-c2',g.color)}const ks=Object.keys(g);if(!ks.some(k=>/secondary|tertiary|colors|color2|style|holo/i.test(k)))toast('Bot chưa lưu màu phụ/phong cách vào guild_roles. Cột hiện có: '+ks.join(', '))}},
  _rf(pre){const g=i=>{const e=document.getElementById(pre+i);return e?e.value:''},name=g('n').trim().slice(0,60),price=Math.floor(Number(g('p'))),d=g('d').trim().slice(0,120),sort=Math.floor(Number(g('s')))||0;if(!name){toast('Nhập tên role');return null}if(!(price>0)){toast('Giá phải lớn hơn 0');return null}const hx=/^#[0-9a-fA-F]{6}$/,c=g('c')||'#99aab5',c2=g('c2')||c,e=g('e')||'none';if(!hx.test(c)||!hx.test(c2))return toast('Màu không hợp lệ'),null;return{name,price,description:d||null,sort,color:c,color2:c2,effect:e}},
- async _rdone(r,m){if(r.error)throw r.error;toast(m);try{if(window.ROLES)ROLES.stale()}catch(e){}await AD.go('roles')},
+ async _rdone(r,m){if(r.error)throw r.error;alog('role',null,m);toast(m);try{if(window.ROLES)ROLES.stale()}catch(e){}await AD.go('roles')},
  async roleAdd(){const id=String((document.getElementById('rl-id')||{}).value||'').trim();if(!/^\d{5,25}$/.test(id))return toast('ID role không đúng (dãy số lấy từ Discord)');const f=this._rf('rl-');if(!f)return;try{await this._rdone(await sb().from('shop_roles').insert({role_id:id,...f,active:true}),'Đã thêm role')}catch(er){fail(er)}},
  async roleSave(id){const f=this._rf('rr'+id+'-');if(!f)return;try{await this._rdone(await sb().from('shop_roles').update(f).eq('role_id',id),'Đã lưu role')}catch(er){fail(er)}},
  async roleToggle(id){const it=(A.roles||[]).find(x=>x.role_id==id);if(!it)return;try{await this._rdone(await sb().from('shop_roles').update({active:!it.active}).eq('role_id',id),it.active?'Đã tắt bán':'Đã bật bán')}catch(er){fail(er)}},
  async roleDel(id){if(!confirm('Xóa role này khỏi cửa hàng? Nếu đã có người mua thì hãy chọn Tắt bán.'))return;try{const r=await sb().from('shop_roles').delete().eq('role_id',id);if(r.error&&/foreign key|violates/i.test(r.error.message))return toast('Role đã có người mua, hãy chọn Tắt bán thay vì xóa');await this._rdone(r,'Đã xóa role')}catch(er){fail(er)}},
+ async _ann(){try{const r=await sb().from('admin_announcements').select('*').order('id',{ascending:false}).limit(30);if(r.error)throw r.error;A.ann=r.data||[]}catch(e){A.ann=[];throw e}},
+ async _logs(){try{const r=await sb().from('admin_logs').select('*').order('created_at',{ascending:false}).limit(60);if(r.error)throw r.error;A.names=await namesOf(r.data.map(x=>x.target_id).filter(x=>/^[0-9a-f-]{36}$/i.test(x||'')));A.logs=r.data||[]}catch(e){A.logs=[];throw e}},
  async _admins(){const r=await sb().from('admins').select('*');if(r.error)throw r.error;
   A.names=await namesOf(r.data.map(x=>x.user_id));A.admins=r.data},
  async open(id){
@@ -6652,10 +6712,10 @@ window.AD={
     s.from('feed_posts').select('id,caption,created_at').eq('user_id',id).order('created_at',{ascending:false}).limit(20),
     s.from('feed_comments').select('id,body,created_at').eq('user_id',id).order('created_at',{ascending:false}).limit(20),
     s.from('wall_messages').select('id,message,created_at').eq('from_user',id).not('message','like','JSGIFT1:%').order('created_at',{ascending:false}).limit(20),
-    s.from('banned_users').select('reason').eq('user_id',id).maybeSingle(),
+    s.from('banned_users').select('reason,until').eq('user_id',id).maybeSingle().then(x=>x.error?s.from('banned_users').select('reason').eq('user_id',id).maybeSingle():x),
     s.from('admins').select('user_id').eq('user_id',id).maybeSingle()]);
    if(!A.sel||A.sel.id!=id)return;
-   A.posts=a.data||[];A.cmts=c.data||[];A.msgs=m.data||[];A.sel.ban=!!bn.data;A.sel.reason=bn.data&&bn.data.reason;A.sel.admin=!!ad.data}
+   A.posts=a.data||[];A.cmts=c.data||[];A.msgs=m.data||[];A.sel.ban=bAct(bn.data);A.sel.reason=bn.data&&bn.data.reason;A.sel.until=bn.data&&bn.data.until||null;A.sel.admin=!!ad.data}
   catch(er){A.posts=A.posts||[];A.cmts=A.cmts||[];A.msgs=A.msgs||[];fail(er)}
   redraw()},
  back(){A.sel=null;redraw()},
@@ -6663,7 +6723,7 @@ window.AD={
   if(!confirm('Xóa '+label+' này? Không hoàn tác được.'))return;
   try{const r=await sb().from(tb).delete().eq('id',id).select('id');if(r.error)throw r.error;
    if(!r.data||!r.data.length)return toast('Không xóa được, hãy kiểm tra đã chạy file SQL quản trị');
-   toast('Đã xóa');if(A.sel)AD.open(A.sel.id);else AD.go(A.v)}catch(er){fail(er)}},
+   alog(LOGK[tb]||'del',A.sel&&A.sel.id,label+' #'+id);toast('Đã xóa');if(A.sel)AD.open(A.sel.id);else AD.go(A.v)}catch(er){fail(er)}},
  delPost(id){AD.del('feed_posts',id,'bài đăng')},
  delCmt(id){AD.del('feed_comments',id,'bình luận')},
  delMsg(id){AD.del('wall_messages',id,'ký tường')},
@@ -6672,7 +6732,7 @@ window.AD={
   const v=Math.floor(Number(String(prompt('Số tiền tặng (tối đa 100000000):','100000')||'').replace(/[^0-9]/g,'')));
   if(!v||v<1||v>1e8)return toast('Số tiền không hợp lệ');
   const note=String(prompt('Lời nhắn (có thể bỏ trống):','')||'').slice(0,100);
-  try{const r=await sb().from('admin_grants').insert({user_id:id,money:v,note});if(r.error)throw r.error;toast('Đã tạo lệnh tặng '+fm(v)+'₫, người chơi nhận khi mở game')}catch(er){fail(er)}},
+  try{const r=await sb().from('admin_grants').insert({user_id:id,money:v,note});if(r.error)throw r.error;alog('grant',id,fm(v)+'đ'+(note?' · '+note:''));toast('Đã tạo lệnh tặng '+fm(v)+'₫, người chơi nhận khi mở game')}catch(er){fail(er)}},
  async grantAll(){
   const v=Math.floor(Number(String(prompt('Tặng cho TẤT CẢ người chơi. Số tiền mỗi người (tối đa 10000000):','10000')||'').replace(/[^0-9]/g,'')));
   if(!v||v<1||v>1e7)return toast('Số tiền không hợp lệ');
@@ -6680,26 +6740,32 @@ window.AD={
   try{const p=await sb().from('profiles').select('id').limit(5000);if(p.error)throw p.error;
    if(!confirm('Tặng '+fm(v)+'₫ cho '+fm(p.data.length)+' người chơi?'))return;
    for(let i=0;i<p.data.length;i+=200){const r=await sb().from('admin_grants').insert(p.data.slice(i,i+200).map(x=>({user_id:x.id,money:v,note})));if(r.error)throw r.error}
-   toast('Đã tạo lệnh tặng cho '+fm(p.data.length)+' người');AD.go('grants')}catch(er){fail(er)}},
+   alog('grant_all',null,fm(v)+'đ × '+fm(p.data.length)+' người'+(note?' · '+note:''));toast('Đã tạo lệnh tặng cho '+fm(p.data.length)+' người');AD.go('grants')}catch(er){fail(er)}},
  async ban(id){
   const p=A.sel;if(!p)return;
   if(me()&&id===me().id)return toast('Không thể tự khóa chính mình');
-  try{if(p.ban){const r=await sb().from('banned_users').delete().eq('user_id',id);if(r.error)throw r.error;p.ban=false;p.reason=null;toast('Đã mở khóa')}
-   else{const rs=prompt('Lý do khóa (người chơi sẽ thấy):','Vi phạm quy định');if(rs===null)return;const r=await sb().from('banned_users').insert({user_id:id,reason:String(rs).slice(0,120)});if(r.error)throw r.error;p.ban=true;p.reason=String(rs).slice(0,120);toast('Đã khóa tài khoản')}
+  try{if(p.ban){const r=await sb().from('banned_users').delete().eq('user_id',id);if(r.error)throw r.error;p.ban=false;p.reason=null;p.until=null;alog('unban',id,'');toast('Đã mở khóa')}
+   else{const rs=prompt('Lý do khóa (người chơi sẽ thấy):','Vi phạm quy định');if(rs===null)return;
+    const hs=prompt('Khóa bao nhiêu giờ? (24 = 1 ngày, 168 = 7 ngày). Để 0 hoặc trống = vĩnh viễn:','0');if(hs===null)return;
+    const hr=Math.floor(Number(String(hs||'0').replace(/[^0-9]/g,''))||0),until=hr>0?new Date(Date.now()+hr*36e5).toISOString():null,reason=String(rs).slice(0,120);
+    await sb().from('banned_users').delete().eq('user_id',id);
+    const row={user_id:id,reason};if(until)row.until=until;
+    const r=await sb().from('banned_users').insert(row);if(r.error)throw r.error;
+    p.ban=true;p.reason=reason;p.until=until;alog('ban',id,reason+(until?' · '+hr+' giờ':' · vĩnh viễn'));toast(until?'Đã khóa '+hr+' giờ':'Đã khóa vĩnh viễn')}
    if(A.list){const x=A.list.find(q=>q.id==id);if(x)x.ban=p.ban}
-   redraw()}catch(er){fail(er)}},
+   redraw()}catch(er){fail2(er)}},
  async unban(id){if(!confirm('Mở khóa tài khoản này?'))return;
-  try{const r=await sb().from('banned_users').delete().eq('user_id',id);if(r.error)throw r.error;toast('Đã mở khóa');AD.go('banned')}catch(er){fail(er)}},
+  try{const r=await sb().from('banned_users').delete().eq('user_id',id);if(r.error)throw r.error;alog('unban',id,'');toast('Đã mở khóa');AD.go('banned')}catch(er){fail(er)}},
  async addAdmin(id){id=String(id||'').trim();
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return toast('User ID không hợp lệ');
   if(!confirm('Cấp quyền quản trị cho tài khoản này?'))return;
-  try{const r=await sb().from('admins').insert({user_id:id});if(r.error)throw r.error;toast('Đã cấp quyền admin');if(A.sel&&A.sel.id==id){A.sel.admin=true;redraw()}else AD.go('admins')}catch(er){fail(er)}},
+  try{const r=await sb().from('admins').insert({user_id:id});if(r.error)throw r.error;alog('admin_add',id,'');toast('Đã cấp quyền admin');if(A.sel&&A.sel.id==id){A.sel.admin=true;redraw()}else AD.go('admins')}catch(er){fail(er)}},
  async delAdmin(id){
   if(me()&&id===me().id)return toast('Không thể tự gỡ quyền của chính mình');
   if(!confirm('Gỡ quyền quản trị của tài khoản này?'))return;
   try{const r=await sb().from('admins').delete().eq('user_id',id).select('user_id');if(r.error)throw r.error;
    if(!r.data||!r.data.length)return toast('Không gỡ được, hãy kiểm tra file SQL quản trị');
-   toast('Đã gỡ quyền admin');if(A.sel&&A.sel.id==id){A.sel.admin=false;redraw()}else AD.go('admins')}catch(er){fail(er)}}
+   alog('admin_del',id,'');toast('Đã gỡ quyền admin');if(A.sel&&A.sel.id==id){A.sel.admin=false;redraw()}else AD.go('admins')}catch(er){fail(er)}}
 };
 })();
 </script>
@@ -9271,7 +9337,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
 <script>
 /* ===== Thẻ ngân hàng: chuyển tiền giữa người chơi (chỉ tài khoản đã liên kết Discord) ===== */
 (function(){
- const MINT=1000,MAXT=10000000,PFX='JSGIFT1:',LIKE='JSGIFT1:{"v":1,"bank":1,%';
+ const MINT=1,PFX='JSGIFT1:',LIKE='JSGIFT1:{"v":1,"bank":1,%';
  const ok=()=>{try{return !!(typeof currentUser!='undefined'&&currentUser&&typeof supabaseClient!='undefined'&&supabaseClient&&typeof selfVerified=='function'&&selfVerified())}catch(e){return false}};
  const sb=()=>supabaseClient;
  const B=()=>{const o=s.bk2||(s.bk2={});o.tx=o.tx||[];o.seen=o.seen||[];return o};
@@ -9280,7 +9346,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  const vnD=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,10);
  const limOf=lv=>{lv=Math.max(0,Math.min(75,Math.floor(lv)||0));const m=lv>=20?100:1;return{lv,send:LIM_S[lv]*1000*m,recv:LIM_R[lv]*1000*m}};
  const myLim=()=>{const b=B(),d=vnD();if(!b.lim||b.lim.d!==d)b.lim={d,out:0,in:0};const l=limOf(lvOf(s.xp||0));return{lv:l.lv,send:l.send,recv:l.recv,out:b.lim.out||0,inn:b.lim.in||0,b}};
- window.BKLIM={my:myLim};
+ window.BKLIM={my:myLim,of:limOf};
  const h53=(str,seed)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,c;i<str.length;i++){c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
   h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)};
  const mkNo=(uid,n)=>'9704'+String(h53(uid,n*2+1)%1000000).padStart(6,'0')+String(h53(uid,n*2+2)%1000000).padStart(6,'0');
@@ -9320,11 +9386,11 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
   const form=b.no?`<div class=card><h3>Chuyển tiền</h3>
 <div class=row><span>Số thẻ người nhận</span><input inputmode=numeric maxlength=19 placeholder="16 chữ số" value="${esc(Q.no)}" oninput="BKX.no(this.value)" style="width:11.5em"></div>
 <div class=row><button class=s ${Q.busy?'disabled':''} onclick="BKX.find()">Kiểm tra người nhận</button>${Q.who?`<b class=ok>✓ ${esc(Q.who.name)}</b>`:'<span class=mut>Chưa kiểm tra</span>'}</div>
-<div class=row><span>Số tiền</span><input type=number inputmode=numeric min=${MINT} step=1000 placeholder="Tối thiểu ${MINT}" value="${esc(Q.amt)}" oninput="BKX.amt(this.value)" style="width:11.5em"></div>
+<div class=row><span>Số tiền</span><input type=number inputmode=numeric min=1 step=1 placeholder="Nhập số tiền" value="${esc(Q.amt)}" oninput="BKX.amt(this.value)" style="width:11.5em"></div>
 <div class=row><button class=s onclick="BKX.pick(10000)">10.000</button><button class=s onclick="BKX.pick(100000)">100.000</button><button class=s onclick="BKX.pick(1000000)">1.000.000</button></div>
 <div class=row><input maxlength=60 placeholder="Lời nhắn (tuỳ chọn)" value="${esc(Q.note)}" oninput="BKX.note(this.value)" style="width:100%"></div>
 <div class=row><button class=p ${Q.busy||!Q.who?'disabled':''} onclick="BKX.send()">Chuyển tiền</button></div>
-<p class=mut style="margin:4px 0 0">Mỗi lần chuyển từ ${$(MINT)} đến ${$(MAXT)}. Tiền chuyển đi không thể thu hồi.<br>Giới hạn hôm nay (cấp ${myLim().lv}): chuyển ${$(myLim().out)}/${$(myLim().send)} · nhận ${$(myLim().inn)}/${$(myLim().recv)}</p></div>`:'';
+<p class=mut style="margin:4px 0 0">Không giới hạn mỗi lần chuyển, chỉ giới hạn theo hạn mức cấp trong ngày. Tiền chuyển đi không thể thu hồi.<br>Hạn mức hôm nay (cấp ${myLim().lv}): chuyển ${$(myLim().out)}/${$(myLim().send)} · nhận ${$(myLim().inn)}/${$(myLim().recv)}</p></div>`:'';
   const tx=b.tx.slice(0,15);
   const hist=`<div class=card><h3>Lịch sử giao dịch</h3>${tx.length?tx.map(x=>`<div class=row><span>${x.k=='in'?'Nhận từ':'Chuyển cho'} <b>${esc(x.who)}</b><br><span class=mut>${new Date(x.t).toLocaleString('vi-VN')}${x.note?' · '+esc(x.note):''}</span></span><b class="${x.k=='in'?'ok':'bad'}">${x.k=='in'?'+':'-'}${$(x.amt)}</b></div>`).join(''):'<p class=mut>Chưa có giao dịch nào.</p>'}</div>`;
   return `<div class=card><h3>💳 Thẻ ngân hàng</h3>${card}${b.no?`<div class=row><span class=mut>Số thẻ của bạn (đưa cho người khác để nhận tiền)</span><button class=s onclick="BKX.copy()">Sao chép</button></div>`:''}${err}</div>${form}${hist}`};
@@ -9356,7 +9422,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    if(!ok())return toast('Chỉ dành cho tài khoản đã liên kết Discord');
    if(Q.busy)return;if(!Q.who)return toast('Hãy nhập số thẻ rồi bấm Kiểm tra người nhận');
    const amt=Math.floor(+Q.amt||0);
-   if(amt<MINT)return toast('Tối thiểu '+$(MINT));if(amt>MAXT)return toast('Tối đa '+$(MAXT)+' mỗi lần');
+   if(!(amt>=MINT)||!Number.isFinite(amt))return toast('Hãy nhập số tiền hợp lệ');
     {const lm=myLim();if(amt>lm.send-lm.out)return toast('Vượt giới hạn chuyển trong ngày (cấp '+lm.lv+': tối đa '+$(lm.send)+'/ngày, còn '+$(Math.max(0,lm.send-lm.out))+')')}
    try{fixMoney()}catch(e){}if(amt>s.money)return toast('Không đủ tiền');
    const who=Q.who,note=Q.note.trim().slice(0,60);
@@ -9387,7 +9453,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     if(!p||!p.bank)continue;
     if(b.seen.includes(row.id)){del(row.id);continue}
     const amt=Math.floor(+p.amt),t='t:'+String(p.tid||'').slice(0,40);
-    if(!(amt>=MINT&&amt<=MAXT)||t=='t:'||b.seen.includes(t)){b.seen.push(row.id);del(row.id);continue}
+    if(!(amt>=MINT&&Number.isFinite(amt))||t=='t:'||b.seen.includes(t)){b.seen.push(row.id);del(row.id);continue}
     if(!p.rf){const lm=myLim();
      if(amt>lm.recv){if(await bounce(row.from_user,amt,p)){b.seen.push(row.id,t);del(row.id)}continue} /* lớn hơn cả hạn mức nhận của ngày: hoàn lại */
      if(amt>lm.recv-lm.inn)continue} /* hết hạn mức hôm nay: tin nằm chờ, nhận khi sang ngày mới */
@@ -9445,7 +9511,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    }
    case 'transfer':{
     const amt=Math.floor(+p.amt);
-    if(!(amt>=1000&&amt<=10000000))throw new Error('Số tiền không hợp lệ');
+    if(!(amt>=1&&Number.isFinite(amt)))throw new Error('Số tiền không hợp lệ');
     if(window.BKLIM){const lm=window.BKLIM.my();if(amt>lm.send-lm.out)throw new Error('Vượt giới hạn chuyển trong ngày (cấp '+lm.lv+': tối đa '+money(lm.send)+'/ngày, còn '+money(Math.max(0,lm.send-lm.out))+')')}
     if(!/^[0-9a-f-]{8,40}$/i.test(String(p.to_user||'')))throw new Error('Người nhận không hợp lệ');
     if(p.to_user===currentUser.id)throw new Error('Không thể tự chuyển cho mình');
@@ -11901,7 +11967,8 @@ const payOk=()=>{try{return !!(typeof selfVerified==='function'&&selfVerified()&
 async function sendMoney(fid,amt,note){
  if(!payOk())return toast('Chuyển tiền chỉ dành cho tài khoản đã liên kết Discord');if(payBusy)return;
  amt=Math.floor(+amt||0);note=String(note||'').replace(/[<>]/g,'').trim().slice(0,60);
- if(amt<1000)return toast('Tối thiểu 1.000đ');if(amt>1e7)return toast('Tối đa 10.000.000đ mỗi lần');
+ if(!(amt>=1)||!Number.isFinite(amt))return toast('Hãy nhập số tiền hợp lệ');
+ try{if(window.BKLIM){const lm=BKLIM.my();if(amt>lm.send-lm.out)return toast('Vượt giới hạn chuyển trong ngày (cấp '+lm.lv+': tối đa '+fmtM(lm.send)+'/ngày, còn '+fmtM(Math.max(0,lm.send-lm.out))+')')}}catch(e){}
  try{fixMoney()}catch(e){}if(amt>(s.money||0))return toast('Không đủ tiền');
  const nm=nameOf(fid);if(!confirm('Chuyển '+fmtM(amt)+' cho '+nm+'?'))return;
  payBusy=1;s.money-=amt;try{save()}catch(e){}
@@ -11909,12 +11976,13 @@ async function sendMoney(fid,amt,note){
  try{const r=await supabaseClient.from('wall_messages').insert({from_user:currentUser.id,to_user:fid,message:'JSGIFT1:'+JSON.stringify(pay)});err=r&&r.error}catch(e){err=e}
  if(err){s.money+=amt;try{save()}catch(e){}payBusy=0;return toast('Không chuyển được: '+(err.message||'lỗi mạng')+' (đã hoàn tiền)')}
  try{const b=s.bk2||(s.bk2={});b.tx=b.tx||[];b.seen=b.seen||[];b.tx.unshift({k:'out',amt,who:nm,note,t:Date.now()});b.tx=b.tx.slice(0,50)}catch(e){}
+ try{if(window.BKLIM)BKLIM.my().b.lim.out+=amt}catch(e){}
  try{if(typeof L==='function')L('out','Chuyển khoản','Chuyển cho '+nm,1,amt)}catch(e){}
  try{supabaseClient.from('push_jobs').upsert({user_id:fid,ref:'bank-'+tid,fire_at:new Date().toISOString(),title:'💳 Nhận tiền chuyển khoản',body:myName()+' vừa chuyển cho bạn '+fmtM(amt)+'. Vào game để nhận nhé',sent:false},{onConflict:'user_id,ref'}).then(()=>{},()=>{})}catch(e){}
  try{save()}catch(e){}payBusy=0;toast('💳 Đã chuyển '+fmtM(amt)+' cho '+nm);post(fid,{k:'pay',amt,note})}
 function moneySheet(){if(!open)return;const fid=open,b=el('div');let bal=0;try{fixMoney();bal=s.money||0}catch(e){}
- b.appendChild(el('p','cmmut','Số dư: '+fmtM(bal)+'. Mỗi lần từ 1.000đ đến 10.000.000đ.'));
- const a=document.createElement('input');a.type='number';a.inputMode='numeric';a.min=1000;a.max=1e7;a.placeholder='Nhập số tiền';a.className='cmin';
+ b.appendChild(el('p','cmmut','Số dư: '+fmtM(bal)+'. Không giới hạn mỗi lần, chỉ giới hạn theo hạn mức cấp trong ngày.'));
+ const a=document.createElement('input');a.type='number';a.inputMode='numeric';a.min=1;a.placeholder='Nhập số tiền';a.className='cmin';
  const n=document.createElement('input');n.type='text';n.maxLength=60;n.placeholder='Lời nhắn (tuỳ chọn)';n.className='cmin';
  const ch=el('div','cmchips');[10000,50000,100000,500000].forEach(v=>{const x=el('span','cmchip',fmtM(v));x.setAttribute('role','button');x.onclick=()=>{a.value=v};ch.appendChild(x)});
  const go=el('button','p cmgo','Chuyển tiền');go.onclick=async()=>{go.disabled=true;await sendMoney(fid,a.value,n.value);go.disabled=false;if(!payBusy)closeSheet()};

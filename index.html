@@ -1259,7 +1259,7 @@ return sec('Hoa',fl())+sec('Giấy gói',P)+sec('Quà tặng',G)+'<p class=mut>H
 const brk=()=>false;const clk=()=>{const m=Math.min(780,Math.floor(live.t/live.len*780));return String(9+Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
 function openDay(){CART={};s.ph='open';let L0=s.len||240;if(L0==1800&&lvOf(s.xp||0)<20){L0=900;s.len=900}
 live={cs:[],sp:0,tot:9999,t:0,n:0,rev:0,lost:0,id:0,dec:0,last:0,len:L0,nx:2};cur=null;bd=nb();live.iv=setInterval(tick,1000);R()}
-function tick(){live.t++;let ch=0;if(!live.cs.length&&!brk()&&menu().length){if(!live.nx)live.nx=live.t+3+Math.floor(Math.random()*4);if(live.t>=live.nx){const k=1+Math.floor(Math.random()*3);for(let i=0;i<k;i++)spawn();live.nx=0;ch=1}}
+function tick(){live.t++;let ch=0;if(!live.cs.length&&!brk()&&menu().length){if(!live.nx)live.nx=live.t+(live.bot?0:3+Math.floor(Math.random()*4));if(live.t>=live.nx){const k=1+Math.floor(Math.random()*3);for(let i=0;i<k;i++)spawn();live.nx=0;ch=1}}
 const ck=document.getElementById('clk');if(ck)ck.textContent=clk()+(brk()?' ☕ Nghỉ':'');
 live.cs.slice().forEach(c=>{if(!can(c)||!c.hd)return;c.pat--;const b=document.getElementById('pb'+c.id);if(b)b.style.width=c.pat/c.max*100+'%';if(c.pat<=0){review(1,c.look);live.lost++;rm(c.id);ch=1;toast('Một khách bỏ đi vì chờ lâu')}});if(ch)R();
 if(live.t>=live.len||(!menu().length&&!live.cs.length)){live.lost+=live.cs.length;live.cs=[];cur=null;endDay()}}
@@ -8911,7 +8911,7 @@ sync();
 <script>
 /* ===== Bán hàng chạy nền khi rời tab game ===== */
 (function(){
- const MAXN=3600,SERVE_EVERY=12,T0=tick;
+ const MAXN=7200,SERVE_EVERY=12,T0=tick;
  const active=()=>typeof live!='undefined'&&live&&live.iv&&typeof s!='undefined'&&s&&s.ph=='open'&&s.bg!==0;
  function autoServe(){
   if(!live||s.ph!='open')return;
@@ -8933,7 +8933,7 @@ sync();
  function run(n){
   const lv=live,oR=R,oT=toast,oS=s.snd,r0=lv.rev,n0=lv.n;let ran=0;
   R=function(){};toast=function(){};s.snd=0;
-  try{for(let i=0;i<n;i++){if(!live||live!==lv||s.ph!='open')break;if(i%SERVE_EVERY==0)autoServe();T0();ran++}}
+  try{for(let i=0;i<n;i++){if(!live||live!==lv||s.ph!='open')break;if(i%(lv.bot?1:SERVE_EVERY)==0)autoServe();T0();ran++}}
   catch(e){}
   finally{R=oR;toast=oT;s.snd=oS}
   try{R()}catch(e){}
@@ -8950,7 +8950,7 @@ sync();
    if(n>0)run(n);
    if(!live||s.ph!='open')return;
   }
-  if(document.hidden&&((live.bgN=(live.bgN||0)+1)%SERVE_EVERY==0))autoServe();
+  if(document.hidden&&((live.bgN=(live.bgN||0)+1)%(live.bot?1:SERVE_EVERY)==0))autoServe();
   return T0();
  };
  function back(){
@@ -8973,7 +8973,7 @@ sync();
   const ok=lvOf(s.xp||0)>=50;
   return h.replace(/(30 phút[^<]*<\/button>)/,'$1 '+(ok?'<button class="s '+(s.len==3600?'on2':'')+'" onclick="s.len=3600;R()">1 giờ</button>':'<button class=s disabled title="Đạt level 50 để mở khóa">🔒 1 giờ · Lv 50</button>'))}}
  /* chặn ngày 1 giờ khi chưa đủ level 50 (kể cả dữ liệu cũ / mã khôi phục) */
- {const o=openDay;openDay=function(){if(s.len==3600&&lvOf(s.xp||0)<50)s.len=lvOf(s.xp||0)>=20?1800:900;return o.apply(this,arguments)}}
+ {const o=openDay;openDay=function(){if(s.len==7200&&!window.__BOT_OPEN)s.len=lvOf(s.xp||0)>=50?3600:(lvOf(s.xp||0)>=20?1800:900);if(s.len==3600&&lvOf(s.xp||0)<50)s.len=lvOf(s.xp||0)>=20?1800:900;return o.apply(this,arguments)}}
  const on=()=>typeof live!='undefined'&&live&&typeof s!='undefined'&&s&&s.ph=='open'&&s.bg!==0;
  const clr=()=>{try{localStorage.removeItem(KEY)}catch(e){}};
  /* lưu ảnh chụp ngày bán đang chạy (kèm save()) để lần mở lại chạy bù */
@@ -8992,7 +8992,7 @@ sync();
   if(!o||!o.live||o.day!==s.day)return;
   const lv=o.live;if(!(lv.len>0)||!(lv.t>=0))return;
   s.ph='open';live=lv;live.iv=null;cur=null;try{bd=nb()}catch(e){}CART={};
-  const gap=Math.max(0,Math.floor((Date.now()-o.at)/1000)-1),n=Math.min(gap,3600,Math.max(0,live.len-live.t-1));
+  const gap=Math.max(0,Math.floor((Date.now()-o.at)/1000)-1),n=Math.min(gap,7200,Math.max(0,live.len-live.t-1));
   live.bgT=Date.now();live.iv=setInterval(tick,1000);
   if(n>0&&window.BGSALE)BGSALE.run(n)
  }catch(e){console.error('resume',e)}}
@@ -9554,8 +9554,8 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  /* chạy nhiều thao tác liền nhau mà không vẽ lại giao diện / kêu bíp / hiện toast */
  const quiet=fn=>{const oR=R,oT=window.toast,oS=s.snd;R=function(){};window.toast=function(){};s.snd=0;try{return fn()}finally{R=oR;window.toast=oT;s.snd=oS}};
  const done=()=>{try{save()}catch(e){}try{R()}catch(e){}};
- const LENS=[240,480,900,1800,3600];
- const lenTxt=l=>l>=3600?'1 giờ':(l/60)+' phút';
+ const LENS=[240,480,900,1800,3600,7200];
+ const lenTxt=l=>l>=7200?'2 giờ':l>=3600?'1 giờ':(l/60)+' phút';
  const lvl=()=>lvOf(s.xp||0);
  const pad=n=>String(n).padStart(2,'0');
  const x2=()=>s.x2||{};
@@ -9568,12 +9568,14 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    if(s.ph!='prep')fail('Tiệm không ở giai đoạn chuẩn bị');
    if(!menu().length)fail('Chưa đủ hoa và giấy gói để mở bán');
    const len=Math.floor(+p.len)||(LENS.includes(s.len)?s.len:240);
-   if(!LENS.includes(len))fail('Thời gian bán chỉ có 4, 8, 15, 30 phút hoặc 1 giờ');
+   if(!LENS.includes(len))fail('Thời gian bán chỉ có 4, 8, 15, 30 phút, 1 giờ hoặc 2 giờ');
    if(len==1800&&lvl()<20)fail('Ngày bán 30 phút cần cấp 20 (bạn đang cấp '+lvl()+')');
    if(len==3600&&lvl()<50)fail('Ngày bán 1 giờ cần cấp 50 (bạn đang cấp '+lvl()+')');
+   if(len==7200&&lvl()<50)fail('Ngày bán 2 giờ cần cấp 50 (bạn đang cấp '+lvl()+')');
    s.len=len;
-   const m=cap(()=>openDay());
+   let m;window.__BOT_OPEN=1;try{m=cap(()=>openDay())}finally{window.__BOT_OPEN=0}
    if(s.ph!='open')fail(m||'Không mở được gian hàng');
+   if(live)live.bot=1;
    return 'Đã mở gian hàng '+lenTxt(len)+', khách đang vào!';
   },
   /* Chỉ dùng khi web tắt (trình duyệt ẩn): chạy trọn ngày đã mở bằng đúng tick của game
@@ -9585,7 +9587,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    let ticks=0;
    quiet(()=>{for(let i=0;i<len+30;i++){
     if(!live||live!==lv||s.ph!='open')break;
-    if(auto&&i%12==0)try{auto()}catch(e){}
+    if(auto&&i%(lv.bot?1:12)==0)try{auto()}catch(e){}
     tick();ticks++;
    }});
    if(s.ph=='open')fail('Ngày bán không kết thúc, thử lại sau');
@@ -9600,7 +9602,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    const auto=window.BGSALE&&window.BGSALE.autoServe,n=Math.max(0,Math.floor(+(p&&p.n))||0),lv=live;
    if(s.ph=='open')quiet(()=>{for(let k=0;k<n;k++){
     if(!live||live!==lv||s.ph!='open')break;
-    live.bi=live.bi||0;if(auto&&live.bi%12==0)try{auto()}catch(e){}
+    live.bi=live.bi||0;if(auto&&live.bi%(live.bot?1:12)==0)try{auto()}catch(e){}
     live.bi++;live.bgT=Date.now();tick();
    }});
    return OPS._snap(lv);

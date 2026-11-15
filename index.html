@@ -2691,7 +2691,7 @@ autoServe=function(){
  try{
   bd=nb();bd.size=c.z;bd.fl={...need};bd.ps=c.ps||bd.ps;
   if(c.xt&&!c.xm)bd.gift[c.xt]=1;
-  {const gs=G.filter(x=>!W.includes(x.id)&&(s.st[x.id]||0)>0);if(gs.length){const g=gs[Math.floor(Math.random()*gs.length)];bd.gift[g.id]=(bd.gift[g.id]||0)+1}} /* nhân viên luôn tặng 1 quà ngẫu nhiên còn trong kho, khách có xin hay không */
+  if(c.ask){const gs=G.filter(x=>!W.includes(x.id)&&(s.st[x.id]||0)>0);if(gs.length){const g=gs[Math.floor(Math.random()*gs.length)];bd.gift[g.id]=(bd.gift[g.id]||0)+1}} /* nhân viên chỉ tặng 1 quà ngẫu nhiên còn trong kho khi khách có yêu cầu quà */
   give(c.id)}
  finally{bd=sv0;cur=live&&live.cs.some(x=>x.id==c0)?c0:(live&&live.cs[0]?live.cs[0].id:null)}}
 })();
@@ -8922,7 +8922,7 @@ sync();
     if(!can(c)){decline(c.id);continue}
     cur=c.id;bd=nb();bd.size=c.z;bd.fl=c.mx?Object.assign({},c.mx):{[c.f]:K[c.z]};if(c.ps)bd.ps=c.ps;
     if(c.xt&&!c.xm){if((s.st[c.xt]||0)<1){decline(c.id);continue}bd.gift={[c.xt]:1}}
-    {const gs=G.filter(x=>!W.includes(x.id)&&(s.st[x.id]||0)>0);if(gs.length){const g=gs[Math.floor(Math.random()*gs.length)];bd.gift[g.id]=(bd.gift[g.id]||0)+1}} /* luôn tặng 1 quà ngẫu nhiên còn trong kho */
+    if(c.ask){const gs=G.filter(x=>!W.includes(x.id)&&(s.st[x.id]||0)>0);if(gs.length){const g=gs[Math.floor(Math.random()*gs.length)];bd.gift[g.id]=(bd.gift[g.id]||0)+1}} /* chỉ tặng 1 quà ngẫu nhiên còn trong kho khi khách có yêu cầu quà */
     if(!s.old)s.old={};
     give(c.id);
     if(live&&live.cs.some(x=>x.id==c.id))c.noauto=1;
@@ -9170,10 +9170,12 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
  ['chg','setQ','buyAll','addN','all','confirmBuy'].forEach(n=>{if(typeof window[n]=='function')window[n]=swWrap(window[n])});
  /* nút "Thêm tất cả hàng vào giỏ" gọi XB.all (không phải window.all) nên phải bọc riêng, nếu không nó đọc suất/kho của quầy chính thay vì chi nhánh */
  try{if(window.XB&&typeof XB.all=='function')XB.all=swWrap(XB.all)}catch(e){}
+ /* chi nhánh chỉ bán bó hoa: chặn nhập quà, áo mưa, dù vào kho chi nhánh (tiền mất mà không dùng được) */
+ {const cb0=window.confirmBuy;if(typeof cb0=='function')window.confirmBuy=function(){const b=cbr();if(b&&!SW){const bad=Object.keys(CART).filter(k=>{const id=k.slice(1);return(CART[k]||0)>0&&!F.some(x=>x.id==id)&&!isPp(id)});if(bad.length){bad.forEach(k=>delete CART[k]);toast('Chi nhánh chỉ nhập hoa và giấy gói, không nhập quà, áo mưa hay dù');try{R()}catch(e){}return}}return cb0.apply(this,arguments)}}
  {const o=V.buy;const w=swWrap(function(){return o.apply(this,arguments)});
   V.buy=function(){const h=w.apply(this,arguments);if(s.ph!='prep')return h;const x=X();if(!x.br.length)return h;
    const ch=(id,n)=>`<button class="s ${BT==id?'on2':''}" onclick="X2.tg(${id})">${n}</button>`,cb=x.br.find(b=>b.id==BT);
-   return `<div class=card><h3>Nhập hàng cho</h3><div class=tabs2>${ch(0,'Quầy chính')}${x.br.map(b=>ch(b.id,'CN '+esc(b.n)+(b.pause?' (nghỉ)':''))).join('')}</div>${cb?`<p class=mut style="margin:4px 0 0">Đang nhập vào <b>kho riêng của CN ${esc(cb.n)}</b> (suất nhập tính riêng). Kho và suất bên dưới là của chi nhánh này.</p>`:''}</div>`+h}}
+   return `<div class=card><h3>Nhập hàng cho</h3><div class=tabs2>${ch(0,'Quầy chính')}${x.br.map(b=>ch(b.id,'CN '+esc(b.n)+(b.pause?' (nghỉ)':''))).join('')}</div>${cb?`<p class=mut style="margin:4px 0 0">Đang nhập vào <b>kho riêng của CN ${esc(cb.n)}</b> (suất nhập tính riêng). Kho và suất bên dưới là của chi nhánh này. Chi nhánh chỉ bán bó hoa nên <b>chỉ nhập hoa và giấy gói</b> (quà, áo mưa, dù chỉ dùng ở quầy chính).</p>`:''}</div>`+h}}
  {const o=V.shop;V.shop=function(){const h=o.apply(this,arguments);if(s.ph!='prep')return h;const x=X();if(!x.br.length)return h;
   const rows=x.br.map((b,i)=>{const w=b.pause?[]:brWhy(b);return `<div class=row><span><b>CN ${esc(b.n)}</b><br><span class="${b.pause?'mut':w.length?'bad':'ok'}">${b.pause?'Tạm nghỉ':w.length?w.join(', '):'Sẵn sàng'}</span></span><span style="display:flex;gap:6px"><button class=s onclick="X2.bb(${i})">Nhập hàng</button><button class=s onclick="X2.bp(${i})">${b.pause?'Mở lại':'Tạm nghỉ'}</button></span></div>`}).join('');
   return h+`<div class=card><h3>Chi nhánh trước giờ mở cửa</h3><p class=mut>Mọi chi nhánh đang hoạt động phải có nhân viên và đã nhập hàng thì mới mở được gian hàng. Không muốn nhập hàng thì cho chi nhánh tạm nghỉ.</p>${rows}</div>`}}
@@ -9832,6 +9834,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    const si=+p.si,id=String(p.id),q=Math.floor(+p.q);
    if(!SP[si]||!SP[si].it.includes(id))fail('Mặt hàng không bán ở nhà cung cấp này');
    if(!(q>=1&&q<=99999))fail('Số lượng không hợp lệ');
+   if(!F.some(x=>x.id==id)&&!isPp(id))fail('Chi nhánh chỉ nhập hoa và giấy gói, không nhập quà, áo mưa hay dù');
    const f=F.find(x=>x.id==id);
    if(f&&!fOK(f))fail('Bạn chưa mở khóa '+nm(id));
    b.st=b.st||{};b.bought=b.bought||{};

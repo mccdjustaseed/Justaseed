@@ -9736,6 +9736,34 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    if(b.l<=l0)fail(m||'Chưa nâng cấp được (tối đa cấp 5, hoặc thiếu tiền)');
    done();return 'Chi nhánh '+b.n+' lên cấp '+b.l;
   },
+  /* Nhập hàng cho CHI NHÁNH (bot Discord: nút "Chọn chi nhánh" ở lệnh nhaphang khi web đang mở).
+     Giống swWrap của tab Nhập hàng: tạm đổi kho/suất nhập của quầy sang kho/suất chi nhánh rồi dùng đúng confirmBuy của game. */
+  restock_br(p){
+   const bi=Math.floor(+p.br)-1,b=(x2().br||[])[bi];
+   if(!b)fail('Không có chi nhánh số '+p.br);
+   if(s.ph!='prep')fail('Chỉ nhập hàng được ở giai đoạn chuẩn bị');
+   const si=+p.si,id=String(p.id),q=Math.floor(+p.q);
+   if(!SP[si]||!SP[si].it.includes(id))fail('Mặt hàng không bán ở nhà cung cấp này');
+   if(!(q>=1&&q<=200))fail('Số lượng không hợp lệ');
+   const f=F.find(x=>x.id==id);
+   if(f&&!fOK(f))fail('Bạn chưa mở khóa '+nm(id));
+   b.st=b.st||{};b.bought=b.bought||{};
+   const SV={st:s.st,bo:s.bought},sp0=s.spent;
+   let can=0,total=0;
+   s.st=b.st;s.bought=b.bought;
+   try{quiet(()=>{
+    fixMoney();CART={};
+    const k=si+id,pr=pc(id,SP[si].m);
+    if(!(Number.isFinite(pr)&&pr>0))fail('Không tính được giá hôm nay');
+    const rem=remQ(si,id,k,0);
+    if(!(rem>0))fail('Đã hết suất nhập ở '+SP[si].n);
+    can=Math.min(q,rem,Math.floor(s.money/pr));
+    if(!(can>0))fail('Không đủ tiền (giá '+money(pr)+'/cái)');
+    CART[k]=can;total=cartTotal();confirmBuy();
+   })}finally{b.st=s.st;b.bought=s.bought;s.st=SV.st;s.bought=SV.bo;s.spent=sp0;CART={}}
+   done();
+   return 'Đã nhập vào CN '+b.n+': '+can+' '+nm(id)+(can<q?' (bị giới hạn bởi suất hoặc tiền)':'')+' · -'+money(total);
+  },
   bank_dep(p){
    const b=Math.floor(+p.b),t=Math.floor(+p.t),a=Math.floor(+p.a);
    if(!(b>=0&&b<=9))fail('Ngân hàng không hợp lệ');

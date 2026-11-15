@@ -1726,8 +1726,8 @@ ln.forEach(l=>{x.textAlign='left';x.fillText(l[0],80,y);x.textAlign='right';x.fi
 function dayCv(r){
 const TX=r.tax&&typeof r.tax=='object'?r.tax:{inc:+r.tax||0,wt:0,rt:0};
 /* chi phí/doanh thu chi nhánh của ngày vừa kết thúc (dayRoll lưu ở s.x2.last ngay sau endDay) */
-const XL=s.x2&&s.x2.last,BRN=XL&&((XL.brRev||0)||(XL.brCost||0)||(XL.brRent||0)||(XL.brBuy||0))?XL:null,BRE=BRN?514+(BB?76:0):0;
-const WG=(XL&&XL.wage)||0,BB=(XL&&XL.brBuy)||0,FEES=[['Thuế thu nhập',TX.inc],['Thuế tài sản',TX.wt],['Phụ phí mặt bằng',TX.rt],['Lương nhân viên',WG]].filter(a=>a[1]>0),PF=(r.pf||0)-WG;
+const XL=s.x2&&s.x2.last,BB=(XL&&XL.brBuy)||0,BRN=XL&&((XL.brRev||0)||(XL.brCost||0)||(XL.brRent||0)||(XL.brBuy||0))?XL:null,BRE=BRN?514+(BB?76:0):0;
+const WG=(XL&&XL.wage)||0,FEES=[['Thuế thu nhập',TX.inc],['Thuế tài sản',TX.wt],['Phụ phí mặt bằng',TX.rt],['Lương nhân viên',WG]].filter(a=>a[1]>0),PF=(r.pf||0)-WG;
 const W=1080,H=1350+FEES.length*76+BRE,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
 const col=v=>{const e=document.createElement('i');e.style.color='var('+v+')';document.body.appendChild(e);const k=getComputedStyle(e).color;e.remove();return k};
 const bg=col('--bg'),card=col('--card'),ink=col('--ink'),mut=col('--mut'),ac3=col('--g3'),ln=col('--ln'),bad=col('--bad');
@@ -9247,9 +9247,9 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
 })();
 </script>
 <script>
-/* Lên cấp -> tăng số suất nhập hàng mỗi ngày: +10%/cấp so với gốc, tối đa x3 (cấp 21) */
+/* Lên cấp -> tăng số suất nhập hàng mỗi ngày: +25%/cấp so với gốc, tối đa x8 (cấp 29). Bot (engine.js capMult) dùng đúng công thức này */
 (function(){
- const mult=()=>{let l=1;try{l=lvOf((s&&s.xp)||0)}catch(e){}return Math.min(3,1+.1*(l-1))};
+ const mult=()=>{let l=1;try{l=lvOf((s&&s.xp)||0)}catch(e){}return Math.min(8,1+.25*(l-1))};
  SP.forEach(x=>{const base=x.cap;Object.defineProperty(x,'cap',{configurable:true,enumerable:true,get(){return Math.round(base*mult())}})});
  SP.forEach(x=>{if(!/cấp/.test(x.d))x.d+=' · tăng suất khi lên cấp'});
 })();
@@ -9460,7 +9460,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     if(s.ph!='prep')throw new Error('Chỉ nhập hàng được ở giai đoạn chuẩn bị');
     const si=+p.si,id=String(p.id),q=Math.floor(+p.q);
     if(!SP[si]||!SP[si].it.includes(id))throw new Error('Mặt hàng không bán ở nhà cung cấp này');
-    if(!(q>=1&&q<=200))throw new Error('Số lượng không hợp lệ');
+    if(!(q>=1&&q<=99999))throw new Error('Số lượng không hợp lệ');
     const f=F.find(x=>x.id==id);
     if(f&&!fOK(f))throw new Error('Bạn chưa mở khóa '+nm(id));
     fixMoney();CART={};
@@ -9824,7 +9824,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    if(s.ph!='prep')fail('Chỉ nhập hàng được ở giai đoạn chuẩn bị');
    const si=+p.si,id=String(p.id),q=Math.floor(+p.q);
    if(!SP[si]||!SP[si].it.includes(id))fail('Mặt hàng không bán ở nhà cung cấp này');
-   if(!(q>=1&&q<=200))fail('Số lượng không hợp lệ');
+   if(!(q>=1&&q<=99999))fail('Số lượng không hợp lệ');
    const f=F.find(x=>x.id==id);
    if(f&&!fOK(f))fail('Bạn chưa mở khóa '+nm(id));
    b.st=b.st||{};b.bought=b.bought||{};

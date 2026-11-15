@@ -9353,7 +9353,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
 /* ===== Cầu nối Discord bot -> game: nhận lệnh từ bảng bot_actions (cần chạy economy_setup.sql) =====
    Game là nơi duy nhất sửa tiền/kho; bot chỉ xếp lệnh vào hàng đợi, game kiểm tra rồi mới thực hiện. */
 (function(){
- const TTL={sync:20e3,credit:0,transfer:6*3600e3,restock:15*60e3,open_day:15*60e3,hire_day:15*60e3,hire_month:15*60e3};
+ const TTL={sync:20e3,credit:0,transfer:6*3600e3,restock:15*60e3,open_day:15*60e3,hire_day:15*60e3,hire_month:15*60e3,op:15*60e3};
  const sb=()=>typeof supabaseClient!='undefined'?supabaseClient:null;
  const cloudOk=()=>{try{return !!(window.CLOUD&&CLOUD.ready&&CLOUD.uid===currentUser.id)}catch(e){return false}};
  const ready=()=>{try{return !!(sb()&&typeof currentUser!='undefined'&&currentUser&&window.DISCORD_OK&&typeof s!='undefined'&&s&&typeof scr!='undefined'&&scr=='game'&&cloudOk())}catch(e){return false}};
@@ -9416,10 +9416,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     return 'Đã nhập '+can+' '+nm(id)+(can<q?' (bị giới hạn bởi suất hoặc tiền)':'')+' · -'+money(total);
    }
    case 'open_day':{
-    if(s.ph!='prep')throw new Error('Tiệm không ở giai đoạn chuẩn bị');
-    if(!menu().length)throw new Error('Chưa đủ hoa và giấy gói để mở bán');
-    openDay();
-    return 'Đã mở gian hàng, khách đang vào!';
+    return window.BOTOPS.open_day(p);
    }
    case 'hire_day':{
     if(s.hire)throw new Error('Hôm nay đã có nhân viên rồi');
@@ -9432,6 +9429,11 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     const m=capture(hireMonth);
     if(!(s.hm&&s.hm.d==today()&&monS()))throw new Error(m||'Không thuê được nhân viên theo tháng');
     return 'Đã thuê nhân viên theo tháng (30 ngày game).';
+   }
+   case 'op':{
+    const f=window.BOTOPS&&p.op!='sim_day'&&p.op!='sim_step'&&p.op!='sim_close'&&p.op[0]!='_'&&Object.prototype.hasOwnProperty.call(window.BOTOPS,p.op)?window.BOTOPS[p.op]:null;
+    if(!f)throw new Error('Thao tác không hỗ trợ');
+    return f(p.args||{});
    }
   }
   throw new Error('Loại lệnh không hỗ trợ');
@@ -9478,6 +9480,285 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  setInterval(()=>{watch();if(!document.hidden)run()},4000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(run,600)});
  setTimeout(()=>{watch();run()},7000);
+})();
+</script>
+<script>
+/* ===== BOTOPS: thao tác game mà bot Discord gọi được =====
+   Một nơi duy nhất định nghĩa luật: dùng chung cho
+   (1) cầu nối bot_actions khi web đang mở (kind 'op', 'open_day'), và
+   (2) trình duyệt ẩn của bot (headless.js) khi web tắt.
+   Mọi hàm gọi lại đúng hàm của game, ném Error(tiếng Việt) nếu không làm được và trả về chuỗi kết quả. */
+(function(){
+ const money=n=>Math.round(n).toLocaleString('vi-VN')+'đ';
+ const fail=m=>{throw new Error(m)};
+ /* chạy hàm của game nhưng bắt lại thông báo toast để biết lý do thất bại */
+ const cap=fn=>{const o=window.toast;let m='';window.toast=t=>{m=String(t)};try{fn()}finally{window.toast=o}return m};
+ /* chạy nhiều thao tác liền nhau mà không vẽ lại giao diện / kêu bíp / hiện toast */
+ const quiet=fn=>{const oR=R,oT=window.toast,oS=s.snd;R=function(){};window.toast=function(){};s.snd=0;try{return fn()}finally{R=oR;window.toast=oT;s.snd=oS}};
+ const done=()=>{try{save()}catch(e){}try{R()}catch(e){}};
+ const LENS=[240,480,900,1800,3600];
+ const lenTxt=l=>l>=3600?'1 giờ':(l/60)+' phút';
+ const lvl=()=>lvOf(s.xp||0);
+ const pad=n=>String(n).padStart(2,'0');
+ const x2=()=>s.x2||{};
+ const pet=k=>k=='dog'?'dog':'cat', petN=k=>k=='dog'?'chó':'mèo';
+
+ const OPS={
+  /* ---------- ngày bán ---------- */
+  open_day(p){
+   p=p||{};
+   if(s.ph!='prep')fail('Tiệm không ở giai đoạn chuẩn bị');
+   if(!menu().length)fail('Chưa đủ hoa và giấy gói để mở bán');
+   const len=Math.floor(+p.len)||(LENS.includes(s.len)?s.len:240);
+   if(!LENS.includes(len))fail('Thời gian bán chỉ có 4, 8, 15, 30 phút hoặc 1 giờ');
+   if(len==1800&&lvl()<20)fail('Ngày bán 30 phút cần cấp 20 (bạn đang cấp '+lvl()+')');
+   if(len==3600&&lvl()<50)fail('Ngày bán 1 giờ cần cấp 50 (bạn đang cấp '+lvl()+')');
+   s.len=len;
+   const m=cap(()=>openDay());
+   if(s.ph!='open')fail(m||'Không mở được gian hàng');
+   return 'Đã mở gian hàng '+lenTxt(len)+', khách đang vào!';
+  },
+  /* Chỉ dùng khi web tắt (trình duyệt ẩn): chạy trọn ngày đã mở bằng đúng tick của game
+     (nhân viên theo ngày/tháng, nhân viên cố định) + "bán nền" của web (tự phục vụ mỗi 12 giây),
+     dừng khi hết giờ hoặc hết hàng. */
+  sim_day(){
+   if(typeof live=='undefined'||!live||s.ph!='open')fail('Gian hàng chưa mở');
+   const lv=live,len=lv.len||s.len||240,auto=window.BGSALE&&window.BGSALE.autoServe;
+   let ticks=0;
+   quiet(()=>{for(let i=0;i<len+30;i++){
+    if(!live||live!==lv||s.ph!='open')break;
+    if(auto&&i%12==0)try{auto()}catch(e){}
+    tick();ticks++;
+   }});
+   if(s.ph=='open')fail('Ngày bán không kết thúc, thử lại sau');
+   const t=Math.min(lv.t,len),mins=Math.min(780,Math.floor(t/len*780));
+   const r=s.rpt||{};
+   return {len,t,clock:pad(9+Math.floor(mins/60))+':'+pad(mins%60),why:lv.t>=len?'time':'stock',
+    n:r.n||0,lost:r.lost||0,dec:r.dec||0,rev:r.rev||0,pf:r.pf||0,day:(s.day||1)-1};
+  },
+  /* Chạy n tick (mỗi tick = 1 giây game như web) để bot cập nhật tiến độ theo thời gian thật. Trả ảnh chụp tiến độ. */
+  sim_step(p){
+   if(typeof live=='undefined'||!live)fail('Gian hàng chưa mở');
+   const auto=window.BGSALE&&window.BGSALE.autoServe,n=Math.max(0,Math.floor(+(p&&p.n))||0),lv=live;
+   if(s.ph=='open')quiet(()=>{for(let k=0;k<n;k++){
+    if(!live||live!==lv||s.ph!='open')break;
+    live.bi=live.bi||0;if(auto&&live.bi%12==0)try{auto()}catch(e){}
+    live.bi++;live.bgT=Date.now();tick();
+   }});
+   return OPS._snap(lv);
+  },
+  sim_close(){
+   if(typeof live=='undefined'||!live||s.ph!='open')fail('Gian hàng không đang mở');
+   const lv=live;lv.closed=1;quiet(()=>{live.cs=[];cur=null;bd=nb();endDay()});
+   return OPS._snap(lv);
+  },
+  _snap(lv){
+   const len=lv.len||s.len||240,t=Math.min(lv.t,len),mins=Math.min(780,Math.floor(t/len*780)),done=s.ph!='open',r=s.rpt||{};
+   let left=0;try{left=menu().reduce((a,m)=>a+m.n,0)}catch(e){}
+   return {done,len,t,pct:Math.round(t/len*100),clock:pad(9+Math.floor(mins/60))+':'+pad(mins%60),
+    n:done?(r.n||0):lv.n,lost:done?(r.lost||0):lv.lost,dec:r.dec||0,rev:done?(r.rev||0):lv.rev,pf:r.pf||0,day:(s.day||1)-(done?1:0),
+    left,why:lv.closed?'closed':(lv.t>=len?'time':'stock')};
+  },
+  next_day(){
+   if(s.ph=='open')fail('Gian hàng đang mở bán, đợi hết ngày đã');
+   if(s.ph!='end')fail('Chưa có ngày nào cần sang (tiệm đang ở giai đoạn chuẩn bị)');
+   s.ph='prep';try{tab='home'}catch(e){}done();
+   return 'Đã sang ngày '+s.day+'. Nhập hàng và mở bán nhé!';
+  },
+  hire_day(){
+   if(s.hire)fail('Hôm nay đã có nhân viên rồi');
+   if(s.money<500000)fail('Không đủ 500.000đ');
+   const m=cap(hireStaff);
+   if(!s.hire)fail(m||'Không thuê được nhân viên');
+   return 'Đã thuê nhân viên cho hôm nay (-500.000đ).';
+  },
+  hire_month(){
+   const m=cap(hireMonth);
+   if(!(s.hm&&s.hm.d==today()&&monS()))fail(m||'Không thuê được nhân viên theo tháng');
+   return 'Đã thuê nhân viên theo tháng (30 ngày game).';
+  },
+
+  /* ---------- giá bán ---------- */
+  price_set(p){
+   const f=String(p.f),z=String(p.p),v=Math.round(+p.v);
+   if(!fl().some(x=>x.id==f))fail('Chưa mở khóa hoa này (hoặc không đúng mùa)');
+   if(!P.some(x=>x.id==z))fail('Size giấy không hợp lệ (S, M hoặc L)');
+   if(!(v>0))fail('Giá không hợp lệ');
+   const c=cost(f,z),m=cap(()=>prSet(f+z,v,c,sug(f,z)));
+   try{save()}catch(e){}
+   return nm(f)+' giấy '+z+': '+money(price(f,z))+' (vốn '+money(c)+', tối đa '+money(mxp(f,z))+')'+(m?' · '+m:'');
+  },
+  price_reset(){s.pr={};done();return 'Đã đặt lại giá mặc định (vốn +'+Math.round(MARK*100)+'%).'},
+  price_pct(p){
+   const pct=+p.pct;
+   if(!(pct>=0&&pct<=200))fail('Phần trăm lãi từ 0 đến 200');
+   let n=0;
+   quiet(()=>{fl().forEach(f=>P.forEach(z=>{const c=cost(f.id,z.id);prSet(f.id+z.id,Math.round(c*(1+pct/100)/1000)*1000,c,sug(f.id,z.id));n++}))});
+   done();return 'Đã đặt lãi +'+pct+'% so với vốn (làm tròn 1.000đ, trong giới hạn game) cho '+n+' món.';
+  },
+
+  /* ---------- nâng cấp ---------- */
+  buy_up(){
+   const u0=s.up||0,c=250000*(u0+1);
+   if(u0>=5)fail('Quầy xịn đã đạt cấp tối đa');
+   if(s.money<c)fail('Không đủ tiền ('+money(c)+')');
+   const m=cap(()=>buyUp(c));
+   if((s.up||0)<=u0)fail(m||'Chưa nâng được quầy');
+   done();return 'Quầy xịn lên cấp '+s.up+'/5 · -'+money(c);
+  },
+  buy_vip(){
+   const l=s.vl||0,c=150000*(l+1);
+   if(l>=5)fail('Quảng bá khách VIP đã tối đa');
+   if(s.money<c)fail('Không đủ tiền ('+money(c)+')');
+   buyVL(c);
+   if((s.vl||0)<=l)fail('Chưa nâng được');
+   done();return 'Quảng bá khách VIP lên cấp '+s.vl+'/5 · -'+money(c);
+  },
+  unlock(p){
+   const id=String(p.id),f=F.find(x=>x.id==id&&x.u);
+   if(!f)fail('Hoa này không cần mở khóa');
+   if(s.un[id])fail('Bạn đã mở khóa '+f.n+' rồi');
+   if(s.money<f.u)fail('Không đủ tiền ('+money(f.u)+')');
+   unlock(id);
+   if(!s.un[id])fail('Chưa mở khóa được');
+   done();return 'Đã mở khóa '+f.n+' · -'+money(f.u);
+  },
+
+  /* ---------- nhiệm vụ / thành tích ---------- */
+  quest_claim(p){
+   let n=0,got=0;
+   const want=p.i=='all'?[0,1,2,3,4]:[Math.floor(+p.i)-1];
+   for(const i of want){
+    const Q=QL();
+    if(!Q[i]){if(p.i!='all')fail('Không có nhiệm vụ số '+(i+1));continue}
+    if(s.cl[i]){if(p.i!='all')fail('Nhiệm vụ này đã nhận rồi');continue}
+    if(!Q[i][1](s)){if(p.i!='all')fail('Nhiệm vụ này chưa hoàn thành');continue}
+    const rw=Q[i][2];claimQ(i);n++;got+=rw;
+   }
+   if(!n)fail('Chưa có nhiệm vụ nào để nhận');
+   done();return 'Đã nhận '+n+' nhiệm vụ · +'+money(got);
+  },
+  quick_claim(p){
+   let n=0,got=0;
+   const qq=s.qq||[],want=p.i=='all'?qq.map((_,i)=>i):[Math.floor(+p.i)-1];
+   for(const i of want){
+    const q=qq[i],t=QT[i];
+    if(!q)fail('Không có nhiệm vụ nhanh số '+(i+1));
+    if(q.c){if(p.i!='all')fail('Nhiệm vụ này đã nhận rồi');continue}
+    if((s[t[1]]||0)-q.b<q.n){if(p.i!='all')fail('Nhiệm vụ này chưa hoàn thành');continue}
+    claimQQ(i);n++;got+=q.r;
+   }
+   if(!n)fail('Chưa có nhiệm vụ nhanh nào để nhận');
+   done();return 'Đã nhận '+n+' nhiệm vụ nhanh · +'+money(got);
+  },
+  quick_refresh(){
+   const free=s.qfd!=s.day;
+   if(!free&&s.money<10000)fail('Không đủ 10.000đ để làm mới');
+   const m=cap(refQ);
+   done();return free?'Đã làm mới nhiệm vụ nhanh (miễn phí hôm nay).':'Đã làm mới nhiệm vụ nhanh · -'+money(10000);
+  },
+  ach_claim(p){
+   let n=0;const names=[];
+   const ids=p.id=='all'?ACH.map(a=>a[0]):[String(p.id)];
+   for(const id of ids){
+    const a=ACH.find(x=>x[0]==id);
+    if(!a)fail('Không có thành tích mã "'+id+'"');
+    if(s.ac[id]){if(p.id!='all')fail('Thành tích này đã nhận rồi');continue}
+    if(!a[2](s)){if(p.id!='all')fail('Thành tích này chưa hoàn thành');continue}
+    quiet(()=>claimAch(id));n++;names.push(a[1]);
+   }
+   if(!n)fail('Chưa có thành tích nào để nhận');
+   done();return 'Đã nhận '+n+' thành tích: '+names.join(', ');
+  },
+
+  /* ---------- thú cưng / nội thất ---------- */
+  pet_buy(p){
+   const k=pet(p.k);
+   if(s.po&&s.po[k])fail('Bạn đã có '+petN(k)+' rồi');
+   if(s.money<200000)fail('Không đủ tiền (200.000đ)');
+   s.po=s.po||{};buyPet(k);
+   if(!s.po[k])fail('Chưa nhận nuôi được');
+   done();return 'Đã nhận nuôi '+petN(k)+' '+s[k].n+' · -200.000đ';
+  },
+  pet_do(p){
+   const k=pet(p.k),a=String(p.act);
+   if(!(s.po&&s.po[k]))fail('Bạn chưa nhận nuôi '+petN(k)+' (dùng lệnh nhận nuôi trước)');
+   const t=s[k],b0=t.bond||0,cat=k=='cat';
+   if(a=='feed'){if(s.money<2000)fail('Không đủ tiền ('+money(2000)+')');cat?feedCat():feedDog()}
+   else if(a=='play')cat?playCat():playDog();
+   else if(a=='pet')cat?petCat():petDog();
+   else fail('Hành động không hợp lệ');
+   try{save()}catch(e){}
+   return t.n+' ('+petN(k)+'): gắn bó '+b0+' → '+(t.bond||0);
+  },
+  furn_buy(p){
+   const k=String(p.k),i=FK.indexOf(k);
+   if(i<0)fail('Không có món nội thất này');
+   const it=FU[k];
+   if(s.fo[k])fail('Bạn đã có '+it[0]+' rồi');
+   if(s.money<it[1])fail('Không đủ tiền ('+money(it[1])+')');
+   buyFU(i);
+   if(!s.fo[k])fail('Chưa mua được');
+   done();return 'Đã bày '+it[0]+' · -'+money(it[1]);
+  },
+  furn_toggle(p){
+   const k=String(p.k),i=FK.indexOf(k);
+   if(i<0)fail('Không có món nội thất này');
+   if(!s.fo[k])fail('Bạn chưa có '+FU[k][0]);
+   tgFU(i);done();return FU[k][0]+': '+(s.fo[k]==1?'đang bày':'đã cất đi');
+  },
+
+  /* ---------- nhân viên cố định / chi nhánh / ngân hàng ---------- */
+  staff_hire(){
+   const n0=(x2().stf||[]).length,c=200000+150000*n0;
+   const m=cap(()=>X2.hire());
+   const n1=(x2().stf||[]).length;
+   if(n1<=n0)fail(m||'Chưa tuyển được (tối đa 6 nhân viên)');
+   done();return 'Đã tuyển '+s.x2.stf[n1-1].n+' · -'+money(c);
+  },
+  staff_up(p){
+   const i=Math.floor(+p.i)-1,t=(x2().stf||[])[i];
+   if(!t)fail('Không có nhân viên số '+p.i);
+   const l0=t.l,m=cap(()=>X2.up(i));
+   if(t.l<=l0)fail(m||'Chưa nâng cấp được (tối đa cấp 10)');
+   done();return t.n+' lên cấp '+t.l;
+  },
+  br_open(){
+   const n0=(x2().br||[]).length,m=cap(()=>X2.openBr());
+   const n1=(x2().br||[]).length;
+   if(n1<=n0)fail(m||'Chưa mở được chi nhánh (tối đa 5, hoặc thiếu tiền)');
+   done();return 'Đã mở chi nhánh '+s.x2.br[n1-1].n;
+  },
+  br_up(p){
+   const i=Math.floor(+p.i)-1,b=(x2().br||[])[i];
+   if(!b)fail('Không có chi nhánh số '+p.i);
+   const l0=b.l,m=cap(()=>X2.upBr(i));
+   if(b.l<=l0)fail(m||'Chưa nâng cấp được (tối đa cấp 5, hoặc thiếu tiền)');
+   done();return 'Chi nhánh '+b.n+' lên cấp '+b.l;
+  },
+  bank_dep(p){
+   const b=Math.floor(+p.b),t=Math.floor(+p.t),a=Math.floor(+p.a);
+   if(!(b>=0&&b<=9))fail('Ngân hàng không hợp lệ');
+   if(![0,1,3,6,12,18,24].includes(t))fail('Kỳ hạn không hợp lệ');
+   if(!(a>0))fail('Số tiền không hợp lệ');
+   const n0=(x2().bk||[]).length;
+   X2.sel('b',b);X2.sel('t',t);X2.sel('a',a);
+   const m=cap(()=>X2.dep());
+   if((x2().bk||[]).length<=n0)fail(m||'Chưa gửi được');
+   const d=s.x2.bk[s.x2.bk.length-1];
+   done();return 'Đã gửi '+money(d.amt)+(t?' kỳ hạn '+t+' tháng':' không kỳ hạn')+' · lãi '+d.r+'%/năm';
+  },
+  bank_wd(p){
+   const i=Math.floor(+p.i)-1,a=(x2().bk||[])[i];
+   if(!a)fail('Không có khoản gửi số '+p.i);
+   const early=!!(a.t&&(a.m||0)<a.t*30);
+   if(early&&!p.force)fail('Khoản này chưa đến hạn: rút trước hạn chỉ nhận lãi không kỳ hạn 0,1%/năm. Thêm xác nhận rút sớm nếu vẫn muốn rút.');
+   const m0=s.money,oc=window.confirm;window.confirm=()=>true;
+   try{X2.wd(i)}finally{window.confirm=oc}
+   done();return 'Đã rút '+money(s.money-m0)+(early?' (rút trước hạn)':'');
+  }
+ };
+ window.BOTOPS=OPS;
 })();
 </script>
 <script>

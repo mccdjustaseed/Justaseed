@@ -3833,8 +3833,13 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
     let intent = null;
     try{ intent = localStorage.getItem(INTENT_KEY); localStorage.removeItem(INTENT_KEY); }catch(e){}
 
+    // Đã chơi bằng bot trước đó? Chuyển bản lưu do bot tạo sang tài khoản này (chỉ khi tài khoản web chưa có tiến trình)
+    let botClaimed = false;
+    try{ const cl = await supabaseClient.rpc('claim_bot_account'); botClaimed = !!(cl && cl.data === 'claimed'); }catch(e){}
+
     const exists = await hasAccount(user.id);
     window.AUTH_READY = true;
+    if (botClaimed) { try{ toast('Đã chuyển tiến trình bạn chơi trên bot sang tài khoản này.'); }catch(e){} }
 
     if (intent === 'register') {
       try{ await upsertProfile(user); }catch(e){}

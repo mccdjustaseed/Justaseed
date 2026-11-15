@@ -1725,7 +1725,9 @@ const W=720,[c,x]=paperC(W,290+it.length*48+36+ln.length*50+190);x.fillText(`HÓ
 ln.forEach(l=>{x.textAlign='left';x.fillText(l[0],80,y);x.textAlign='right';x.fillText(l[1],W-80,y);y+=50});x.font='700 40px "Baloo 2",sans-serif';x.textAlign='left';x.fillText('Tổng',80,y+10);x.textAlign='right';x.fillStyle=b.run?'#d9534f':'#388a55';x.fillText(b.run?'0đ':$(b.pr+b.xp+b.tip),W-80,y+10);y+=75;x.textAlign='center';x.fillStyle='#678a73';x.font='26px Onest,sans-serif';x.fillText(b.run?'Khách quỵt tiền':'★'.repeat(b.st)+'☆'.repeat(5-b.st)+' · Cảm ơn quý khách',W/2,y,560);return c}
 function dayCv(r){
 const TXN=r.tax&&typeof r.tax=='object'?(r.tax.inc||0)+(r.tax.wt||0)+(r.tax.rt||0):(+r.tax||0);
-const W=1080,H=1350+(TXN?76:0),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+/* chi phí/doanh thu chi nhánh của ngày vừa kết thúc (dayRoll lưu ở s.x2.last ngay sau endDay) */
+const XL=s.x2&&s.x2.last,BRN=XL&&((XL.brRev||0)||(XL.brCost||0)||(XL.brRent||0))?XL:null,BRE=BRN?514:0;
+const W=1080,H=1350+(TXN?76:0)+BRE,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
 const col=v=>{const e=document.createElement('i');e.style.color='var('+v+')';document.body.appendChild(e);const k=getComputedStyle(e).color;e.remove();return k};
 const bg=col('--bg'),card=col('--card'),ink=col('--ink'),mut=col('--mut'),ac3=col('--g3'),ln=col('--ln'),bad=col('--bad');
 const d=r.d||s.day-1,L=100,Rr=W-100,hand='"Patrick Hand",cursive',ui='Onest,sans-serif',hd='"Baloo 2",sans-serif';
@@ -1748,8 +1750,14 @@ rows.forEach(a=>{tx(a[0],L,y,44,ink,ui,400,'left',520);tx((a[2]&&a[1]>0?'+':'')+
  if(a[0]=='Chi phí nhập hàng'&&r.sp>0){tx('gồm hàng hỏng '+$(r.sp),L,y+42,32,mut,ui,400,'left',620);y+=42}
  y+=76});
 dash(y-20);y+=58;
-tx('Lợi nhuận',L,y+14,72,ink,hd,700,'left',480);
-tx($(r.pf),Rr,y+14,76,r.pf>=0?ac3:bad,hd,700,'right',540);
+tx(BRN?'Lợi nhuận quầy chính':'Lợi nhuận',L,y+14,BRN?54:72,ink,hd,700,'left',BRN?600:480);
+tx($(r.pf),Rr,y+14,BRN?64:76,r.pf>=0?ac3:bad,hd,700,'right',BRN?420:540);
+if(BRN){const bRv=BRN.brRev||0,bWg=BRN.brCost||0,bRt=BRN.brRent||0,net=bRv-bWg-bRt,tot=r.pf+net;
+ y+=92;dash(y-48);tx('Chi nhánh',L,y,38,mut,ui,600);y+=70;
+ [['Doanh thu chi nhánh',bRv,1],['Lương nhân viên chi nhánh',-bWg],['Thuê mặt bằng chi nhánh',-bRt]].forEach(a=>{tx(a[0],L,y,44,ink,ui,400,'left',620);tx((a[2]&&a[1]>0?'+':'')+$(a[1]),Rr,y,46,a[2]?ac3:ink,hd,700,'right',400);y+=76});
+ dash(y-36);y+=48;
+ tx('Lãi/lỗ chi nhánh',L,y+8,48,ink,hd,700,'left',560);tx((net>0?'+':'')+$(net),Rr,y+8,52,net>=0?ac3:bad,hd,700,'right',420);y+=76;
+ tx('Tổng lợi nhuận',L,y+14,62,ink,hd,700,'left',520);tx($(tot),Rr,y+14,68,tot>=0?ac3:bad,hd,700,'right',440)}
 y+=124;
 const rp=Math.max(1,Math.min(5,Math.round(s.rep||0))),sc=2.3,gap=62,sx=W/2-(5*gap)/2-105;
 for(let i=0;i<5;i++){x.save();x.translate(sx+i*gap,y-40);x.scale(sc,sc);const p=new Path2D(I.star);x.globalAlpha=i<rp?1:.28;x.fillStyle='#ffc83d';x.fill(p);x.lineWidth=1.4;x.strokeStyle='#e0a500';x.stroke(p);x.restore()}

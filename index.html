@@ -1726,8 +1726,8 @@ ln.forEach(l=>{x.textAlign='left';x.fillText(l[0],80,y);x.textAlign='right';x.fi
 function dayCv(r){
 const TX=r.tax&&typeof r.tax=='object'?r.tax:{inc:+r.tax||0,wt:0,rt:0};
 /* chi phí/doanh thu chi nhánh của ngày vừa kết thúc (dayRoll lưu ở s.x2.last ngay sau endDay) */
-const XL=s.x2&&s.x2.last,BRN=XL&&((XL.brRev||0)||(XL.brCost||0)||(XL.brRent||0))?XL:null,BRE=BRN?514:0;
-const WG=(XL&&XL.wage)||0,FEES=[['Thuế thu nhập',TX.inc],['Thuế tài sản',TX.wt],['Phụ phí mặt bằng',TX.rt],['Lương nhân viên',WG]].filter(a=>a[1]>0),PF=(r.pf||0)-WG;
+const XL=s.x2&&s.x2.last,BRN=XL&&((XL.brRev||0)||(XL.brCost||0)||(XL.brRent||0)||(XL.brBuy||0))?XL:null,BRE=BRN?514+(BB?76:0):0;
+const WG=(XL&&XL.wage)||0,BB=(XL&&XL.brBuy)||0,FEES=[['Thuế thu nhập',TX.inc],['Thuế tài sản',TX.wt],['Phụ phí mặt bằng',TX.rt],['Lương nhân viên',WG]].filter(a=>a[1]>0),PF=(r.pf||0)-WG;
 const W=1080,H=1350+FEES.length*76+BRE,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
 const col=v=>{const e=document.createElement('i');e.style.color='var('+v+')';document.body.appendChild(e);const k=getComputedStyle(e).color;e.remove();return k};
 const bg=col('--bg'),card=col('--card'),ink=col('--ink'),mut=col('--mut'),ac3=col('--g3'),ln=col('--ln'),bad=col('--bad');
@@ -1747,15 +1747,15 @@ x.strokeStyle=ln;x.lineWidth=3;x.beginPath();x.moveTo(L,534);x.lineTo(Rr,534);x.
 const rows=[['Doanh thu',r.rev,1],['Chi phí nhập hàng',-r.buy],['Thuê mặt bằng',-(r.rent||0)],['Điện + nước',-(r.util||0)]];
 FEES.forEach(a=>rows.push([a[0],-a[1]]));
 let y=606;
-rows.forEach(a=>{tx(a[0],L,y,44,ink,ui,400,'left',520);tx((a[2]&&a[1]>0?'+':'')+$(a[1]),Rr,y,46,a[2]?ac3:ink,hd,700,'right',440);
+rows.forEach(a=>{tx(a[0],L,y,44,ink,ui,400,'left',520);tx((a[2]&&a[1]>0?'+':'')+$(a[1]),Rr,y,46,a[2]?ac3:(a[1]<0?bad:ink),hd,700,'right',440);
  if(a[0]=='Chi phí nhập hàng'&&r.sp>0){tx('gồm hàng hỏng '+$(r.sp),L,y+42,32,mut,ui,400,'left',620);y+=42}
  y+=76});
 dash(y-20);y+=58;
 tx(BRN?'Lợi nhuận quầy chính':'Tổng lợi nhuận',L,y+14,BRN?54:72,ink,hd,700,'left',BRN?600:480);
 tx($(PF),Rr,y+14,BRN?64:76,PF>=0?ac3:bad,hd,700,'right',BRN?420:540);
-if(BRN){const bRv=BRN.brRev||0,bWg=BRN.brCost||0,bRt=BRN.brRent||0,net=bRv-bWg-bRt,tot=PF+net;
+if(BRN){const bRv=BRN.brRev||0,bWg=BRN.brCost||0,bRt=BRN.brRent||0,net=bRv-bWg-bRt-BB,tot=PF+net;
  y+=92;dash(y-48);tx('Chi nhánh',L,y,38,mut,ui,600);y+=70;
- [['Doanh thu chi nhánh',bRv,1],['Lương nhân viên chi nhánh',-bWg],['Thuê mặt bằng chi nhánh',-bRt]].forEach(a=>{tx(a[0],L,y,44,ink,ui,400,'left',620);tx((a[2]&&a[1]>0?'+':'')+$(a[1]),Rr,y,46,a[2]?ac3:ink,hd,700,'right',400);y+=76});
+ [['Doanh thu chi nhánh',bRv,1],['Nhập hàng chi nhánh',-BB],['Lương nhân viên chi nhánh',-bWg],['Thuê mặt bằng chi nhánh',-bRt]].filter(a=>a[1]||a[2]).forEach(a=>{tx(a[0],L,y,44,ink,ui,400,'left',620);tx((a[2]&&a[1]>0?'+':'')+$(a[1]),Rr,y,46,a[2]?ac3:(a[1]<0?bad:ink),hd,700,'right',400);y+=76});
  dash(y-36);y+=48;
  tx('Lãi/lỗ chi nhánh',L,y+8,48,ink,hd,700,'left',560);tx((net>0?'+':'')+$(net),Rr,y+8,52,net>=0?ac3:bad,hd,700,'right',420);y+=76;
  tx('Tổng lợi nhuận',L,y+14,62,ink,hd,700,'left',520);tx($(tot),Rr,y+14,68,tot>=0?ac3:bad,hd,700,'right',440)}
@@ -9079,7 +9079,8 @@ sync();
    return true});
   try{fixMoney()}catch(e){}
   /* lợi nhuận cuối cùng của ngày = lãi quầy chính - lương NV + lãi/lỗ chi nhánh (sau thuế & phí); ảnh tổng kết và tin DM của bot cùng dùng số này */
-  if(s.rpt){s.rpt.wg=o.wage;s.rpt.fin=(s.rpt.pf||0)-o.wage+o.brRev-o.brCost-o.brRent}
+  o.brBuy=x.brBuy||0;x.brBuy=0;
+  if(s.rpt){s.rpt.wg=o.wage;s.rpt.fin=(s.rpt.pf||0)-o.wage+o.brRev-o.brCost-o.brRent-o.brBuy}
   x.last=o;try{save()}catch(e){}
  }
  const E0=endDay;
@@ -9156,6 +9157,8 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
  function planBr(){X().br.forEach(b=>{b.plan=null;if(b.pause)return;const t={l:b.l,pause:b.pause,stf:b.stf,st:Object.assign({},b.st),bought:{}};b.plan={r:brCore(t,(typeof live!='undefined'&&live&&live.tot)||8),st:t.st}})}
 
  /* nhập hàng cho chi nhánh: đổi tạm kho/suất nhập của quầy sang kho chi nhánh khi thao tác ở tab Nhập hàng */
+ /* chi phí chưa nằm trong báo cáo ngày: nhập hàng cho chi nhánh (s.spent bị hoàn lại) và tiền thuê nhân viên ngày/tháng; dayRoll đưa vào ảnh tổng kết */
+ const addExp=(k,v)=>{if(v>0){const x=X();x[k]=(x[k]||0)+v}};
  let SW=null,SV=null;
  const cbr=()=>{if(!BT||typeof tab=='undefined'||tab!='buy')return null;return X().br.find(b=>b.id==BT)||null};
  function swWrap(fn){return function(){
@@ -9163,7 +9166,7 @@ ${x.stf.map((t,i)=>`<div class=card><div class=row><span><b>${esc(t.n)}</b> · c
   const b=cbr();if(!b)return fn.apply(this,arguments);
   const sp0=s.spent;SV={st:s.st,bo:s.bought};SW=b;s.st=b.st;s.bought=b.bought;
   try{return fn.apply(this,arguments)}
-  finally{b.st=s.st;b.bought=s.bought;s.st=SV.st;s.bought=SV.bo;s.spent=sp0;SW=null;SV=null}}}
+  finally{try{addExp('brBuy',(Number(s.spent)||0)-(Number(sp0)||0))}catch(e){}b.st=s.st;b.bought=s.bought;s.st=SV.st;s.bought=SV.bo;s.spent=sp0;SW=null;SV=null}}}
  ['chg','setQ','buyAll','addN','all','confirmBuy'].forEach(n=>{if(typeof window[n]=='function')window[n]=swWrap(window[n])});
  /* nút "Thêm tất cả hàng vào giỏ" gọi XB.all (không phải window.all) nên phải bọc riêng, nếu không nó đọc suất/kho của quầy chính thay vì chi nhánh */
  try{if(window.XB&&typeof XB.all=='function')XB.all=swWrap(XB.all)}catch(e){}
@@ -9265,6 +9268,12 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  const ok=()=>{try{return !!(typeof currentUser!='undefined'&&currentUser&&typeof supabaseClient!='undefined'&&supabaseClient&&typeof selfVerified=='function'&&selfVerified())}catch(e){return false}};
  const sb=()=>supabaseClient;
  const B=()=>{const o=s.bk2||(s.bk2={});o.tx=o.tx||[];o.seen=o.seen||[];return o};
+ /* ===== Giới hạn chuyển / nhận tiền mỗi ngày theo cấp (bảng bot OwO, đơn vị nghìn đồng; từ cấp 20 nhân 100). Ngày tính theo giờ Việt Nam ===== */
+ const LIM_S=[50,64,78,92,106,120,134,148,162,176,5190,5204,5218,5232,5246,5260,5274,5288,5302,5316,10330,10334,10358,10372,10386,10400,10414,10428,10442,10456,15470,15484,15498,15512,15526,15540,15554,15568,15582,15596,20610,20624,20638,20652,20666,20680,20694,20708,20722,20736,25750,25764,25778,25792,25806,25820,25834,25848,25862,25876,30890,30904,30918,30932,30946,30960,30974,30988,31002,31016,36030,36044,36058,36072,36086,36100],LIM_R=[50,64,78,92,106,120,134,148,162,176,7785,7806,5827,7848,7869,7869,7911,7932,7953,7974,20260,20688,20716,20744,20772,20800,20828,20856,20884,20912,38675,38710,38745,38780,38815,38850,38885,38920,38955,38890,61830,61872,61914,61956,61998,62040,62082,62124,62166,62208,90125,90174,90223,90272,90321,90370,90419,90468,90517,90566,123560,123616,123672,123728,123784,123840,123896,123952,124008,124064,162135,162198,162261,162324,162387,162450];
+ const vnD=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,10);
+ const limOf=lv=>{lv=Math.max(0,Math.min(75,Math.floor(lv)||0));const m=lv>=20?100:1;return{lv,send:LIM_S[lv]*1000*m,recv:LIM_R[lv]*1000*m}};
+ const myLim=()=>{const b=B(),d=vnD();if(!b.lim||b.lim.d!==d)b.lim={d,out:0,in:0};const l=limOf(lvOf(s.xp||0));return{lv:l.lv,send:l.send,recv:l.recv,out:b.lim.out||0,inn:b.lim.in||0,b}};
+ window.BKLIM={my:myLim};
  const h53=(str,seed)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,c;i<str.length;i++){c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
   h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)};
  const mkNo=(uid,n)=>'9704'+String(h53(uid,n*2+1)%1000000).padStart(6,'0')+String(h53(uid,n*2+2)%1000000).padStart(6,'0');
@@ -9308,7 +9317,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
 <div class=row><button class=s onclick="BKX.pick(10000)">10.000</button><button class=s onclick="BKX.pick(100000)">100.000</button><button class=s onclick="BKX.pick(1000000)">1.000.000</button></div>
 <div class=row><input maxlength=60 placeholder="Lời nhắn (tuỳ chọn)" value="${esc(Q.note)}" oninput="BKX.note(this.value)" style="width:100%"></div>
 <div class=row><button class=p ${Q.busy||!Q.who?'disabled':''} onclick="BKX.send()">Chuyển tiền</button></div>
-<p class=mut style="margin:4px 0 0">Mỗi lần chuyển từ ${$(MINT)} đến ${$(MAXT)}. Tiền chuyển đi không thể thu hồi.</p></div>`:'';
+<p class=mut style="margin:4px 0 0">Mỗi lần chuyển từ ${$(MINT)} đến ${$(MAXT)}. Tiền chuyển đi không thể thu hồi.<br>Giới hạn hôm nay (cấp ${myLim().lv}): chuyển ${$(myLim().out)}/${$(myLim().send)} · nhận ${$(myLim().inn)}/${$(myLim().recv)}</p></div>`:'';
   const tx=b.tx.slice(0,15);
   const hist=`<div class=card><h3>Lịch sử giao dịch</h3>${tx.length?tx.map(x=>`<div class=row><span>${x.k=='in'?'Nhận từ':'Chuyển cho'} <b>${esc(x.who)}</b><br><span class=mut>${new Date(x.t).toLocaleString('vi-VN')}${x.note?' · '+esc(x.note):''}</span></span><b class="${x.k=='in'?'ok':'bad'}">${x.k=='in'?'+':'-'}${$(x.amt)}</b></div>`).join(''):'<p class=mut>Chưa có giao dịch nào.</p>'}</div>`;
   return `<div class=card><h3>💳 Thẻ ngân hàng</h3>${card}${b.no?`<div class=row><span class=mut>Số thẻ của bạn (đưa cho người khác để nhận tiền)</span><button class=s onclick="BKX.copy()">Sao chép</button></div>`:''}${err}</div>${form}${hist}`};
@@ -9317,6 +9326,8 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  /* ----- chuyển tiền ----- */
  const del=id=>{try{sb().from('wall_messages').delete().eq('id',id).then(()=>{},()=>{})}catch(e){}};
  const tid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+ /* người nhận đã vượt giới hạn nhận cả ngày: hoàn tiền lại cho người gửi (tin có cờ rf, không tính vào hạn mức nhận) */
+ const bounce=async(to,amt,p)=>{if(!to)return false;try{const pay={v:1,bank:1,tid:'rf'+String(p.tid||tid()).slice(0,36),amt,note:'Hoàn lại: người nhận đã vượt giới hạn nhận trong ngày',rf:1};const r=await sb().from('wall_messages').insert({from_user:currentUser.id,to_user:to,message:PFX+JSON.stringify(pay)});return !(r&&r.error)}catch(e){return false}};
  window.BKX={
   no(v){Q.no=String(v);const d=Q.no.replace(/\D/g,'');if(Q.who&&Q.who.no!==d)Q.who=null},
   amt(v){Q.amt=String(v)},note(v){Q.note=String(v).slice(0,60)},
@@ -9339,6 +9350,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    if(Q.busy)return;if(!Q.who)return toast('Hãy nhập số thẻ rồi bấm Kiểm tra người nhận');
    const amt=Math.floor(+Q.amt||0);
    if(amt<MINT)return toast('Tối thiểu '+$(MINT));if(amt>MAXT)return toast('Tối đa '+$(MAXT)+' mỗi lần');
+    {const lm=myLim();if(amt>lm.send-lm.out)return toast('Vượt giới hạn chuyển trong ngày (cấp '+lm.lv+': tối đa '+$(lm.send)+'/ngày, còn '+$(Math.max(0,lm.send-lm.out))+')')}
    try{fixMoney()}catch(e){}if(amt>s.money)return toast('Không đủ tiền');
    const who=Q.who,note=Q.note.trim().slice(0,60);
    if(!confirm('Chuyển '+$(amt)+' cho '+who.name+'?'))return;
@@ -9346,7 +9358,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    const pay={v:1,bank:1,tid:tid(),amt,note};let err=null;
    try{const r=await sb().from('wall_messages').insert({from_user:currentUser.id,to_user:who.id,message:PFX+JSON.stringify(pay)});err=r&&r.error}catch(e){err=e}
    if(err){s.money+=amt;try{save()}catch(e){}Q.busy=0;toast('Không chuyển được: '+(err.message||'lỗi mạng')+' (đã hoàn tiền)');R();return}
-   const b=B();b.tx.unshift({k:'out',amt,who:who.name,note,t:Date.now()});b.tx=b.tx.slice(0,50);
+   const b=B();myLim().b.lim.out+=amt;b.tx.unshift({k:'out',amt,who:who.name,note,t:Date.now()});b.tx=b.tx.slice(0,50);
    try{L('out','Chuyển khoản','Chuyển cho '+who.name,1,amt)}catch(e){}
    try{const me=(s.pf&&s.pf.nm)||s.name||'Bạn bè';sb().from('push_jobs').upsert({user_id:who.id,ref:'bank-'+pay.tid,fire_at:new Date().toISOString(),title:'💳 Nhận tiền chuyển khoản',body:me+' vừa chuyển cho bạn '+Math.round(amt).toLocaleString('vi-VN')+'đ. Vào game để nhận nhé',sent:false},{onConflict:'user_id,ref'}).then(()=>{},()=>{})}catch(e){}
    try{save()}catch(e){}
@@ -9368,9 +9380,12 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     if(!p||!p.bank)continue;
     if(b.seen.includes(row.id)){del(row.id);continue}
     const amt=Math.floor(+p.amt),t='t:'+String(p.tid||'').slice(0,40);
-    b.seen.push(row.id);
-    if(!(amt>=MINT&&amt<=MAXT)||t=='t:'||b.seen.includes(t)){del(row.id);continue}
-    b.seen.push(t);s.money+=amt;
+    if(!(amt>=MINT&&amt<=MAXT)||t=='t:'||b.seen.includes(t)){b.seen.push(row.id);del(row.id);continue}
+    if(!p.rf){const lm=myLim();
+     if(amt>lm.recv){if(await bounce(row.from_user,amt,p)){b.seen.push(row.id,t);del(row.id)}continue} /* lớn hơn cả hạn mức nhận của ngày: hoàn lại */
+     if(amt>lm.recv-lm.inn)continue} /* hết hạn mức hôm nay: tin nằm chờ, nhận khi sang ngày mới */
+    b.seen.push(row.id,t);s.money+=amt;
+    {const lm=myLim();if(p.rf)lm.b.lim.out=Math.max(0,lm.b.lim.out-amt);else lm.b.lim.in+=amt}
     const who=nm[row.from_user]||'Người chơi',note=String(p.note||'').slice(0,60);
     b.tx.unshift({k:'in',amt,who,note,t:Date.now()});got.push({amt,who});
     try{L('in','Chuyển khoản','Nhận từ '+who,1,amt)}catch(e){}
@@ -9424,6 +9439,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    case 'transfer':{
     const amt=Math.floor(+p.amt);
     if(!(amt>=1000&&amt<=10000000))throw new Error('Số tiền không hợp lệ');
+    if(window.BKLIM){const lm=window.BKLIM.my();if(amt>lm.send-lm.out)throw new Error('Vượt giới hạn chuyển trong ngày (cấp '+lm.lv+': tối đa '+money(lm.send)+'/ngày, còn '+money(Math.max(0,lm.send-lm.out))+')')}
     if(!/^[0-9a-f-]{8,40}$/i.test(String(p.to_user||'')))throw new Error('Người nhận không hợp lệ');
     if(p.to_user===currentUser.id)throw new Error('Không thể tự chuyển cho mình');
     try{fixMoney()}catch(e){}
@@ -9433,6 +9449,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     let err=null;
     try{const r=await sb().from('wall_messages').insert({from_user:currentUser.id,to_user:p.to_user,message:'JSGIFT1:'+JSON.stringify(pay)});err=r&&r.error}catch(e){err=e}
     if(err){s.money+=amt;throw new Error('Không gửi được: '+(err.message||'lỗi mạng')+' (đã hoàn tiền)')}
+    try{if(window.BKLIM)window.BKLIM.my().b.lim.out+=amt}catch(e){}
     const to=String(p.to_name||'người chơi').slice(0,40);
     try{L('out','Chuyển khoản','Chuyển cho '+to,1,amt)}catch(e){}
     note('💳 Bạn đã chuyển '+money(amt)+' cho '+to);

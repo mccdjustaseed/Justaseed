@@ -9572,6 +9572,21 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     n:done?(r.n||0):lv.n,lost:done?(r.lost||0):lv.lost,dec:r.dec||0,rev:done?(r.rev||0):lv.rev,pf:r.pf||0,day:(s.day||1)-(done?1:0),
     left,why:lv.closed?'closed':(lv.t>=len?'time':'stock')};
   },
+  /* cá cược trên Discord: bot đã tung kết quả, game chỉ ghi thắng/thua (tự kiểm tra số dư và hạn mức) */
+  bet(p){
+   const d=Math.round(+p.delta),bt=Math.round(+p.bet)||Math.max(0,-Math.round(+p.delta));
+   if(!Number.isFinite(d)||d===0||Math.abs(d)>5e9||!(bt>=1&&bt<=250e6))fail('Số tiền cược không hợp lệ (tối đa 250.000.000đ mỗi lần)');
+   if(-d>bt)fail('Kết quả cược không hợp lệ');
+   try{fixMoney()}catch(e){}
+   const m=Number.isFinite(s.money)?s.money:0;
+   if(bt>m)fail('Không đủ tiền (còn '+money(m)+')');
+   s.money=m+d;
+   try{L(d>0?'in':'out','Cá cược',String(p.label||'Cá cược Discord').slice(0,60),1,Math.abs(d))}catch(e){}
+   done();
+   return String(Math.round(s.money));
+  },
+  /* XP chat server: cộng đúng như xp() của game (có thưởng lên cấp) */
+  chat_xp(p){const n=Math.floor(+p.n);if(!(n>=1&&n<=200))fail('Số XP không hợp lệ');xp(n);return '+'+n+' XP'},
   next_day(){
    if(s.ph=='open')fail('Gian hàng đang mở bán, đợi hết ngày đã');
    if(s.ph!='end')fail('Chưa có ngày nào cần sang (tiệm đang ở giai đoạn chuẩn bị)');

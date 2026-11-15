@@ -9175,7 +9175,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  /* ---------- Xem kho, trạng thái "đang bán hàng", tiến trình chi nhánh ---------- */
  const BRO={};
  const GRN='color:#2e9e57;font-weight:700';
- const dayP=()=>{try{return(typeof live!='undefined'&&live&&s.ph=='open')?Math.max(0,Math.min(1,(live.sp-live.cs.length)/Math.max(1,live.tot))):0}catch(e){return 0}};
+ const dayP=()=>{try{return(typeof live!='undefined'&&live&&s.ph=='open')?Math.max(0,Math.min(1,live.len?live.t/live.len:(live.sp-live.cs.length)/Math.max(1,live.tot))):0}catch(e){return 0}};
  const isSell=b=>s.ph=='open'&&!b.pause&&!!b.plan;
  const brTxt=b=>{const p=dayP(),r=b.plan.r,a=Math.floor(r.n*p),v=Math.round(r.rev*p),l=Math.floor(r.lost*p);return 'Đã bán '+a+'/'+r.n+' đơn · '+$(v)+(r.lost?' · '+l+'/'+r.lost+' khách chưa được phục vụ':'')};
  const brBadge=(b,why)=>b.pause?'<b class=mut>Tạm nghỉ</b>':isSell(b)?'<b style="'+GRN+'">● Đang bán hàng</b>':why.length?'<b class=bad>Chưa sẵn sàng</b>':'<b class=ok>Sẵn sàng</b>';

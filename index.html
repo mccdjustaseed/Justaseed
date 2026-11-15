@@ -11823,7 +11823,7 @@ const IP={back:'M15 5l-7 7 7 7',phone:'M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 
 const fmtM=n=>Math.round(+n||0).toLocaleString('vi-VN')+'đ';
 const prev=m=>m.k==='img'?'🖼️ Hình ảnh':m.k==='pay'?'💳 Chuyển khoản '+fmtM(m.amt):m.k==='gift'?'🎁 Quà tặng: '+((m.at&&m.at.n)||''):m.k==='att'?'📎 '+((m.at&&m.at.n)||'Đính kèm'):m.text;
 let GIFTP=null,lastPick=null,payBusy=0;
-const ic=(n,z)=>'<svg width='+(z||22)+' height='+(z||22)+' viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round>'+IP[n]+'</svg>';
+const ic=(n,z)=>'<svg width='+(z||22)+' height='+(z||22)+' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="'+(IP[n]||'')+'"/></svg>';
 const initial=id=>(nameOf(id).trim()[0]||'?').toUpperCase();
 /* avatar thật của bạn bè (ảnh / preset / chữ cái dự phòng) */
 function avatar(id,withDot,z){z=z||40;const a=el('span','cmav');a.style.setProperty('--z',z+'px');const raw=avs[id],d=raw?parseGav(raw):null,w=el('span','cmai');

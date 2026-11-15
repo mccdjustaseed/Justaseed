@@ -1259,7 +1259,7 @@ return sec('Hoa',fl())+sec('Giấy gói',P)+sec('Quà tặng',G)+'<p class=mut>H
 const brk=()=>false;const clk=()=>{const m=Math.min(780,Math.floor(live.t/live.len*780));return String(9+Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
 function openDay(){CART={};s.ph='open';let L0=s.len||240;if(L0==1800&&lvOf(s.xp||0)<20){L0=900;s.len=900}
 live={cs:[],sp:0,tot:9999,t:0,n:0,rev:0,lost:0,id:0,dec:0,last:0,len:L0,nx:2};cur=null;bd=nb();live.iv=setInterval(tick,1000);R()}
-function tick(){live.t++;let ch=0;if(!live.cs.length&&!brk()&&menu().length){if(!live.nx)live.nx=live.t+(live.bot?0:3+Math.floor(Math.random()*4));if(live.t>=live.nx){const k=1+Math.floor(Math.random()*3);for(let i=0;i<k;i++)spawn();live.nx=0;ch=1}}
+function tick(){live.t++;let ch=0;if(live.bot&&window.MAINSIM){window.MAINSIM()}else if(!live.cs.length&&!brk()&&menu().length){if(!live.nx)live.nx=live.t+(live.bot?0:3+Math.floor(Math.random()*4));if(live.t>=live.nx){const k=1+Math.floor(Math.random()*3);for(let i=0;i<k;i++)spawn();live.nx=0;ch=1}}
 const ck=document.getElementById('clk');if(ck)ck.textContent=clk()+(brk()?' ☕ Nghỉ':'');
 live.cs.slice().forEach(c=>{if(!can(c)||!c.hd)return;c.pat--;const b=document.getElementById('pb'+c.id);if(b)b.style.width=c.pat/c.max*100+'%';if(c.pat<=0){review(1,c.look);live.lost++;rm(c.id);ch=1;toast('Một khách bỏ đi vì chờ lâu')}});if(ch)R();
 if(live.t>=live.len||(!menu().length&&!live.cs.length&&!(window.BRALIVE&&window.BRALIVE()))){live.lost+=live.cs.length;live.cs=[];cur=null;endDay()}}
@@ -9295,6 +9295,36 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  const brT=b=>({l:b.l,pause:b.pause,stf:b.stf,st:b.plan.st,bought:{}});
  window.BRALIVE=()=>{try{return brOn()&&X().br.some(b=>!b.pause&&b.plan&&b.plan.live&&brMenu(brT(b)).length>0)}catch(e){return false}};
  window.BRTICK=()=>{try{if(!brOn()||live.paused)return;const bot=!!live.bot;X().br.forEach(b=>{const pl=b.plan;if(b.pause||!pl||!pl.live)return;const t=brT(b);pl.acc=pl.acc||[];b.stf.forEach((sf,k)=>{pl.acc[k]=(pl.acc[k]||0)+(bot?1:.6/gap(sf.l));while(pl.acc[k]>=1){const m=brMenu(t);if(!m.length){pl.acc[k]=0;break}pl.acc[k]-=1;const it=rnd(m);t.st[it.f.id]-=it.p.k;t.st[it.p.id]-=1;pl.r.rev+=price(it.f.id,it.p.id);pl.r.n++}})})}catch(e){}};
+ /* Quầy chính khi BOT bán thay: mô phỏng nhẹ như chi nhánh (không tạo khách/giao diện). Vẫn tính tiền, bó trộn nhiều loại, đồ mưa/nắng, boa, combo, sao, XP và Đại gia Mthuan (bot tự đồng ý). Sao chỉ cộng vào uy tín, KHÔNG tạo bài feedback. */
+ window.MAINSIM=()=>{try{
+  if(!live||!live.bot||s.ph!='open'||live.closed)return;
+  const k=1+Math.floor(Math.random()*3);let xg=0;s.old=s.old||{};
+  for(let i=0;i<k;i++){
+   const m=menu();if(!m.length)break;
+   if(!live.bigDone&&Math.random()<.0003){
+    live.bigDone=1;const t=bigTotal();[...F,...P,...G].forEach(x=>{s.st[x.id]=0});
+    s.money+=t;s.rev+=t;live.rev+=t;s.sv++;live.n++;
+    L('in','Doanh thu bán hàng','Đại gia Mthuan mua hết hàng',1,t);
+    s.rep=s.rep*.8+5*.2;s.five++;
+    try{addBill({nm:'Đại gia Mthuan',look:{sk:rnd(SK),hr:'#222',sh:'#ffc83d',hs:2,gl:1,ac:1},vip:1,fl:[],all:1,pr:t,xp:0,tip:0,st:5,run:0})}catch(e){}
+    xg+=50;break}
+   const it=rnd(m),f=it.f,p=it.p,bp=Math.min(price(f.id,p.id),Math.round(sug(f.id,p.id)*1.3/1000)*1000);
+   const hag=Math.random()<.35,ps=Math.random()<.7?rnd(Object.keys(PS)):null,px=ps?(PX[ps]||0):0,vip=Math.random()<vipP();
+   let pr=(hag?Math.max(cost(f.id,p.id),Math.floor(bp*.8/1000)*1000):bp)+px;
+   let st=5,need={[f.id]:p.k},nz=nm(f.id)+' size '+p.id,xt0=null,xp0=0;
+   /* bó trộn nhiều loại + đồ mưa/nắng: dùng chung ext() của game thật */
+   try{const c={id:0,f:f.id,z:p.id,ps,pr,offer:pr};ext(c);if(c.mx){need=c.mx;pr=c.pr;nz=Object.keys(need).map(k=>nm(k)).join(' + ')+' size '+p.id}if(c.xt){if(c.xm)st=Math.min(st,4);else{xt0=c.xt;xp0=c.xp||0}}}catch(e){}
+   s.st[p.id]--;for(const k in need){s.st[k]-=need[k];s.old[k]=Math.max(0,(s.old[k]||0)-need[k])}
+   if(xt0)s.st[xt0]--;
+   if(Math.random()<.25){const gs=G.filter(g=>!W.includes(g.id)&&(s.st[g.id]||0)>0);if(gs.length){const g=rnd(gs);s.st[g.id]--;waste+=C[g.id]}else st=4}
+   const tip=vip?Math.round(pr*(.05+Math.random()*.15)):0;
+   s.money+=pr+xp0+tip;s.rev+=pr+xp0+tip;live.rev+=pr+xp0+tip;s.sv++;live.n++;if(vip)s.vn=(s.vn||0)+1;
+   L('in','Doanh thu bán hàng',nz,1,pr);if(xp0)L('in','Đồ mưa nắng',nm(xt0),1,xp0);if(tip)L('in','Tiền boa','Khách VIP',1,tip);
+   s.rep=s.rep*.8+st*.2;if(st==5)s.five++;
+   const t=live.t;live.cb=live.lt!=null&&t-live.lt<=15?(live.cb||1)+1:1;live.lt=t;
+   if(live.cb>1){const b=Math.round(pr*Math.min(.5,(live.cb-1)*.05)/100)*100;if(b>0){s.money+=b;live.rev+=b;L('in','Combo','x'+Math.min(live.cb,11),1,b)}}
+   xg+=10+st*4+(vip?5:0)}
+  if(xg>0)xp(xg)}catch(e){}};
  {const o=tick;tick=function(){window.BRTICK();return o.apply(this,arguments)}}
 
  try{Object.assign(I,{staff:'M12 11a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',bank:'M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18',branch:'M4 21V8l8-5 8 5v13M9 21v-6h6v6'})}catch(e){}

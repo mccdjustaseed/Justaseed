@@ -5340,7 +5340,8 @@ async function sync(){
   const lx=s.xp||0,ld=s.day||1,cx=row.xp||0,cd=row.day||1;
   const cr=+row.rev||0;let lr=0;try{lr=+localStorage.getItem('jsRev_'+uid)||0}catch(e){}
   CS.rev=cr;CS.hasRow=1;
-  if(cr>lr||cx>lx||(cx==lx&&cd>ld)){
+  if((cr>lr||cx>lx||(cx==lx&&cd>ld))&&typeof live!='undefined'&&live&&s.ph=='open'){CS.uid=null;CS.ready=0;CS.retry=Date.now();return} /* đang bán dở: khôi phục từ đám mây sẽ đóng quầy (load() ép về chuẩn bị), để sau khi hết ngày */
+   if(cr>lr||cx>lx||(cx==lx&&cd>ld)){
    try{const o=await qrParse(row.data);try{localStorage.setItem('jas2_bak',JSON.stringify(s))}catch(e){}
     QRO=o;qrDo();save();CS.last=cj();CS.ready=1;CS.t=Date.now();try{localStorage.setItem('jsRev_'+uid,String(cr))}catch(e){}toast('☁️ Đã khôi phục tiến trình từ tài khoản Discord');return}
    catch(e){CS.off=1;warn('Không đọc được bản lưu đám mây, vẫn giữ tiến trình trong máy');return}
@@ -8981,6 +8982,16 @@ sync();
   if(n>0&&window.BGSALE)BGSALE.run(n)
  }catch(e){console.error('resume',e)}}
  {const o=play;play=function(){resume();return o.apply(this,arguments)}}
+ /* Chuyển sang app khác rồi quay lại mà trình duyệt đã nạp lại trang (hay gặp trên điện thoại): trước đây game ép gian hàng về "chuẩn bị" lúc nạp trang
+    và chỉ khôi phục khi bấm "Chơi tiếp". Nay tự vào lại game và khôi phục quầy nếu ảnh chụp ngày bán còn mới (dưới 20 phút). */
+ function autoBack(){try{
+  if(typeof live!='undefined'&&live)return;
+  if(typeof s=='undefined'||!s||s.ph!='prep'||s.bg===0||scr=='game')return;
+  const raw=localStorage.getItem(KEY);if(!raw)return;const o=JSON.parse(raw);
+  if(!o||!o.live||o.day!==s.day||!(Date.now()-o.at<20*60e3))return;
+  play();
+ }catch(e){console.error('autoBack',e)}}
+ setTimeout(autoBack,600);
 })();
 </script>
 <script>

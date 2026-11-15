@@ -9586,7 +9586,14 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    return String(Math.round(s.money));
   },
   /* XP chat server: cộng đúng như xp() của game (có thưởng lên cấp) */
-  chat_xp(p){const n=Math.floor(+p.n);if(!(n>=1&&n<=200))fail('Số XP không hợp lệ');xp(n);return '+'+n+' XP'},
+  chat_xp(p){
+   const n=Math.floor(+p.n),rw=Math.min(1e6,Math.max(0,Math.floor(+p.rw)||0));
+   if(!(n>=1&&n<=200))fail('Số XP không hợp lệ');
+   const a=lvOf(s.xp||0);s.xp=(s.xp||0)+n;const b=lvOf(s.xp);
+   if(b>a&&rw){let r=0;for(let l=a+1;l<=b;l++)r+=rw*l;s.money=(Number.isFinite(s.money)?s.money:0)+r;
+    try{L('in','Thưởng cấp độ','Lên cấp '+b+' (chat server)',1,r)}catch(e){}
+    try{toast('Lên cấp '+b+' · +'+$(r))}catch(e){}}
+   done();return '+'+n+' XP'},
   next_day(){
    if(s.ph=='open')fail('Gian hàng đang mở bán, đợi hết ngày đã');
    if(s.ph!='end')fail('Chưa có ngày nào cần sang (tiệm đang ở giai đoạn chuẩn bị)');

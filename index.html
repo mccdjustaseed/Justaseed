@@ -5348,12 +5348,25 @@ async function sync(){
   }
  }
  CS.ready=1;await up(true);if(!row)toast('☁️ Đã bật lưu tiến trình lên tài khoản Discord')}
+/* Bot (hoặc thiết bị khác) vừa sửa save đám mây (cộng tiền, nhập hàng...) -> web đang mở tự tải lại để số dư cập nhật.
+   Chỉ kiểm tra khi máy này không có thay đổi chưa lưu; nếu có thì up() tự xử lý xung đột như cũ. */
+async function pull(){
+ if(CS.pulling||CS.busy||CS.norev||!CS.hasRow||!CS.ready||CS.off||!window.DISCORD_OK||!currentUser||CS.uid!=currentUser.id)return;
+ CS.pulling=1;CS.pt=Date.now();
+ try{
+  if(cj()!==CS.last)return;
+  const r=await supabaseClient.from('game_saves').select('rev').eq('user_id',currentUser.id).maybeSingle();
+  if(r&&!r.error&&r.data&&(+r.data.rev||0)>(CS.rev||0)){CS.uid=null;CS.ready=0;CS.retry=0}
+ }catch(e){}
+ finally{CS.pulling=0}
+}
 setInterval(()=>{
  if(!window.DISCORD_OK||!currentUser){CS.uid=null;CS.ready=0;CS.off=0;return}
  if(CS.off)return;
  if(CS.uid!=currentUser.id&&!CS.syncing&&Date.now()-CS.retry>15000){CS.syncing=1;sync().finally(()=>CS.syncing=0);return}
- if(CS.ready&&Date.now()-CS.t>8000)up()},3000);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden'){try{save()}catch(e){}up()}});
+ if(CS.ready&&Date.now()-CS.t>8000)up();
+ if(CS.ready&&!document.hidden&&Date.now()-(CS.pt||0)>6000)pull()},3000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden'){try{save()}catch(e){}up()}else{setTimeout(pull,500)}});
 addEventListener('pagehide',()=>{up()});
 CS.flush=async function(){
  if(!window.DISCORD_OK||!currentUser||CS.off||!CS.ready||CS.uid!=currentUser.id)return false;

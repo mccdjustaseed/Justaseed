@@ -8982,7 +8982,8 @@ sync();
  function autoServe(){
   if(!live||s.ph!='open')return;
   for(const c of live.cs.slice()){
-   if(c.big||c.noauto)continue;
+   if(c.big){if(live.bot){try{sellBig(c.id)}catch(e){c.noauto=1}break}continue} /* bot bán thay: tự đồng ý với Đại gia Mthuan (bán hết hàng), tránh đứng quầy mãi */
+   if(c.noauto)continue;
    try{
     if(!c.hd){c.pr=c.offer||c.pr;c.hd=1}
     if(!can(c)){decline(c.id);continue}

@@ -1728,8 +1728,7 @@ const TX=r.tax&&typeof r.tax=='object'?r.tax:{inc:+r.tax||0,wt:0,rt:0};
 /* chi phí/doanh thu chi nhánh của ngày vừa kết thúc (dayRoll lưu ở s.x2.last ngay sau endDay) */
 const XL=s.x2&&s.x2.last,BRN=XL&&((XL.brRev||0)||(XL.brCost||0)||(XL.brRent||0))?XL:null,BRE=BRN?514:0;
 const WG=(XL&&XL.wage)||0,FEES=[['Thuế thu nhập',TX.inc],['Thuế tài sản',TX.wt],['Phụ phí mặt bằng',TX.rt],['Lương nhân viên',WG]].filter(a=>a[1]>0),PF=(r.pf||0)-WG;
-const BAL=XL&&XL.bal!=null?XL.bal:(s.ph=='end'?s.money:null),BALE=BAL!=null?108:0;
-const W=1080,H=1350+FEES.length*76+BALE+BRE,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+const W=1080,H=1350+FEES.length*76+BRE,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
 const col=v=>{const e=document.createElement('i');e.style.color='var('+v+')';document.body.appendChild(e);const k=getComputedStyle(e).color;e.remove();return k};
 const bg=col('--bg'),card=col('--card'),ink=col('--ink'),mut=col('--mut'),ac3=col('--g3'),ln=col('--ln'),bad=col('--bad');
 const d=r.d||s.day-1,L=100,Rr=W-100,hand='"Patrick Hand",cursive',ui='Onest,sans-serif',hd='"Baloo 2",sans-serif';
@@ -1752,7 +1751,7 @@ rows.forEach(a=>{tx(a[0],L,y,44,ink,ui,400,'left',520);tx((a[2]&&a[1]>0?'+':'')+
  if(a[0]=='Chi phí nhập hàng'&&r.sp>0){tx('gồm hàng hỏng '+$(r.sp),L,y+42,32,mut,ui,400,'left',620);y+=42}
  y+=76});
 dash(y-20);y+=58;
-tx(BRN?'Lợi nhuận quầy chính':'Lợi nhuận',L,y+14,BRN?54:72,ink,hd,700,'left',BRN?600:480);
+tx(BRN?'Lợi nhuận quầy chính':'Tổng lợi nhuận',L,y+14,BRN?54:72,ink,hd,700,'left',BRN?600:480);
 tx($(PF),Rr,y+14,BRN?64:76,PF>=0?ac3:bad,hd,700,'right',BRN?420:540);
 if(BRN){const bRv=BRN.brRev||0,bWg=BRN.brCost||0,bRt=BRN.brRent||0,net=bRv-bWg-bRt,tot=PF+net;
  y+=92;dash(y-48);tx('Chi nhánh',L,y,38,mut,ui,600);y+=70;
@@ -1760,7 +1759,7 @@ if(BRN){const bRv=BRN.brRev||0,bWg=BRN.brCost||0,bRt=BRN.brRent||0,net=bRv-bWg-b
  dash(y-36);y+=48;
  tx('Lãi/lỗ chi nhánh',L,y+8,48,ink,hd,700,'left',560);tx((net>0?'+':'')+$(net),Rr,y+8,52,net>=0?ac3:bad,hd,700,'right',420);y+=76;
  tx('Tổng lợi nhuận',L,y+14,62,ink,hd,700,'left',520);tx($(tot),Rr,y+14,68,tot>=0?ac3:bad,hd,700,'right',440)}
-if(BAL!=null){y+=60;dash(y);y+=62;tx('Số dư cuối ngày',L,y,44,ink,ui,600,'left',520);tx($(BAL),Rr,y,56,BAL>=0?ac3:bad,hd,700,'right',440);y+=110}else y+=124;
+y+=124;
 const rp=Math.max(1,Math.min(5,Math.round(s.rep||0))),sc=2.3,gap=62,sx=W/2-(5*gap)/2-105;
 for(let i=0;i<5;i++){x.save();x.translate(sx+i*gap,y-40);x.scale(sc,sc);const p=new Path2D(I.star);x.globalAlpha=i<rp?1:.28;x.fillStyle='#ffc83d';x.fill(p);x.lineWidth=1.4;x.strokeStyle='#e0a500';x.stroke(p);x.restore()}
 tx('· Uy tín '+(s.rep||0).toFixed(1),sx+5*gap+8,y+6,46,mut,ui,600,'left',320);
@@ -9079,7 +9078,8 @@ sync();
     try{L('in','Lãi ngân hàng',BANKS[a.b][0]+' '+a.t+' tháng',1,i)}catch(e){}return false}
    return true});
   try{fixMoney()}catch(e){}
-  o.bal=s.money;
+  /* lợi nhuận cuối cùng của ngày = lãi quầy chính - lương NV + lãi/lỗ chi nhánh (sau thuế & phí); ảnh tổng kết và tin DM của bot cùng dùng số này */
+  if(s.rpt){s.rpt.wg=o.wage;s.rpt.fin=(s.rpt.pf||0)-o.wage+o.brRev-o.brCost-o.brRent}
   x.last=o;try{save()}catch(e){}
  }
  const E0=endDay;
@@ -9575,7 +9575,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    const t=Math.min(lv.t,len),mins=Math.min(780,Math.floor(t/len*780));
    const r=s.rpt||{};
    return {len,t,clock:pad(9+Math.floor(mins/60))+':'+pad(mins%60),why:lv.t>=len?'time':'stock',
-    n:r.n||0,lost:r.lost||0,dec:r.dec||0,rev:r.rev||0,pf:r.pf||0,day:(s.day||1)-1};
+    n:r.n||0,lost:r.lost||0,dec:r.dec||0,rev:r.rev||0,pf:r.fin??(r.pf||0),day:(s.day||1)-1};
   },
   /* Chạy n tick (mỗi tick = 1 giây game như web) để bot cập nhật tiến độ theo thời gian thật. Trả ảnh chụp tiến độ. */
   sim_step(p){
@@ -9597,7 +9597,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
    const len=lv.len||s.len||240,t=Math.min(lv.t,len),mins=Math.min(780,Math.floor(t/len*780)),done=s.ph!='open',r=s.rpt||{};
    let left=0;try{left=menu().reduce((a,m)=>a+m.n,0)}catch(e){}
    return {done,len,t,pct:Math.round(t/len*100),clock:pad(9+Math.floor(mins/60))+':'+pad(mins%60),
-    n:done?(r.n||0):lv.n,lost:done?(r.lost||0):lv.lost,dec:r.dec||0,rev:done?(r.rev||0):lv.rev,pf:r.pf||0,day:(s.day||1)-(done?1:0),
+    n:done?(r.n||0):lv.n,lost:done?(r.lost||0):lv.lost,dec:r.dec||0,rev:done?(r.rev||0):lv.rev,pf:r.fin??(r.pf||0),day:(s.day||1)-(done?1:0),
     left,why:lv.closed?'closed':(lv.t>=len?'time':'stock')};
   },
   /* cá cược trên Discord: bot đã tung kết quả, game chỉ ghi thắng/thua (tự kiểm tra số dư và hạn mức) */

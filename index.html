@@ -13062,9 +13062,9 @@ function dom(url){if(CC[url]||PEND[url])return;PEND[url]=1;const im=new Image();
   if(!n||sw<.5){CC[url]={h:210,s:8}}else{let h=Math.atan2(wy,wx)*180/Math.PI;if(h<0)h+=360;CC[url]={h:Math.round(h),s:Math.max(30,Math.min(68,Math.round(ws/sw*100)))}}
  }catch(err){CC[url]={f:1}}delete PEND[url]};
  im.onerror=()=>{CC[url]={f:1};delete PEND[url]};im.src=url}
-setInterval(()=>{try{const m=window.MS,n=$('mnow');if(!m)return;if(n){const t=m.now,th=t&&(t.th||t.img);let h=t?hue(t.id):150,sa=40;
+setInterval(()=>{try{const m=window.MS,n=$('mnow');if(!m)return;const S=(k,v)=>{document.body.style.setProperty(k,v);if(n)n.style.setProperty(k,v)};{const t=m.now,th=t&&(t.th||t.img);let h=t?hue(t.id):150,sa=40;
  if(th){const c=CC[th];if(c){if(!c.f){h=c.h;sa=c.s}}else dom(th)}
- n.style.setProperty('--cv',th?'url("'+th+'")':'none');n.style.setProperty('--mh',h);n.style.setProperty('--msat',sa+'%');n.style.setProperty('--mlig','24%');
+ S('--cv',th?'url("'+th+'")':'none');S('--mh',h);S('--msat',sa+'%');S('--mlig','24%');
  document.body.style.setProperty('--mcol','hsl('+h+' '+Math.max(sa,45)+'% 42%)');
  const l=$('mly');l&&l.style.setProperty('--mh2',h);sk()}document.body.classList.toggle('mus-on',!!m.playing)}catch(e){}},400);
 document.addEventListener('input',e=>{if(e.target.id==='msk')sk()},true)})();

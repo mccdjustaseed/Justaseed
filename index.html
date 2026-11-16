@@ -1061,7 +1061,7 @@ if(s.mkn)t.push(s.mkn);if(s.lo)t.push('🤝 Mấy hôm nay tiệm lỗ nên ch�
 if(!t.length)t.push('Giá bán mặc định là vốn + 215%. Khách mặc cả nhiều hơn nếu bạn tăng giá quá cao. Chợ Quảng Bá đắt hơn Vườn Đà Lạt 25%.');return t.join(' ')}
 function nxt(){if(s.ph=='end')return['shop','Xem tổng kết'];if(s.ph=='open')return['shop','Quay lại quầy'];return menu().length?['shop','Mở gian hàng']:['buy','Nhập hàng đầu tiên']}
 function R(){if(scr!='game'){save();return}const ni=s.ph=='open'?2:s.ph=='end'?3:menu().length?1:0,sp=['Nhập hàng','Đặt giá','Bán hàng','Tổng kết'].map((x,i)=>`<span class="chip ${i==ni?'on':''}">${x}</span>`).join(''),cc=cartCount();
-document.getElementById('app').innerHTML=`<div class=hd><div><h2 style="display:flex;gap:6px;align-items:center">${catF(38)}${esc(s.name)}</h2><b class=bal>${$(s.money)}</b></div><span><button class=s style="padding:2px" onclick="pfmT()" aria-label="Hồ sơ">${avH(30)}</button> <button class=s id=nbell onclick="ntm()" aria-label="Thông báo">${ic('bell')}<i class=rdot></i></button> <button class="s bk" onclick="goMenu()" aria-label="Màn hình chính">${ic('home')}</button> <div class=dmx data-dk=${s.dark?1:0} role=switch aria-label="Sáng/Tối" onclick="toggleDark(event)"><span>☀️</span><span>🌙</span></div> <button class=s onclick="mdl('s')" aria-label="Cài đặt">${ic('gear')}</button></span></div><nav role=tablist class=fx>${TABS.map(t=>{const isBeta=(t[0]==='team');return `<button role=tab data-t="${t[0]}" class="${tab==t[0]?'on':''}" onclick="tab='${t[0]}';R()">${ic(t[1],20)}<span>${t[2]}${isBeta?' <small class=beta>BETA</small>':''}</span>${t[0]=='buy'&&cc?'<b class=bd>'+cc+'</b>':''}</button>`}).join('')}</nav><main id=tc>${V[tab]()}</main>`;{const n=document.querySelector('nav'),a=n&&n.querySelector('.on');if(a)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;if(tab!==LT){const ix=k=>TABS.findIndex(x=>x[0]==k),d=ix(tab)<ix(LT)?-1:1;LT=tab;const m=document.getElementById('tc');m.style.setProperty('--dx',d*36+'px');m.classList.add('tin');if(a)a.classList.add('pop')}}
+document.getElementById('app').innerHTML=`<div class=hd><div><h2 style="display:flex;gap:6px;align-items:center">${catF(38)}${esc(s.name)}</h2><b class=bal>${$(s.money)}</b></div><span><button class=s style="padding:2px" onclick="pfmT()" aria-label="Hồ sơ">${avH(30)}</button> <button class=s id=nbell onclick="ntm()" aria-label="Thông báo">${ic('bell')}<i class=rdot></i></button> <button class="s bk" onclick="goMenu()" aria-label="Màn hình chính">${ic('home')}</button> <div class=dmx data-dk=${s.dark?1:0} role=switch aria-label="Sáng/Tối" onclick="toggleDark(event)"><span>☀️</span><span>🌙</span></div> <button class=s onclick="mdl('s')" aria-label="Cài đặt">${ic('gear')}</button></span></div><nav role=tablist class=fx>${TABS.map(t=>{const isBeta=(t[0]==='team');return `<button role=tab data-t="${t[0]}" class="${tab==t[0]?'on':''}" onclick="tab='${t[0]}';R()">${ic(t[0]==='music'&&window.MS&&MS.tv?'tv':t[1],20)}<span>${t[0]==='music'?(window.MS&&MS.tv?'Phim':'Nhạc'):t[2]}${isBeta?' <small class=beta>BETA</small>':''}</span>${t[0]=='buy'&&cc?'<b class=bd>'+cc+'</b>':''}</button>`}).join('')}</nav><main id=tc>${V[tab]()}</main>`;{const n=document.querySelector('nav'),a=n&&n.querySelector('.on');if(a)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;if(tab!==LT){const ix=k=>TABS.findIndex(x=>x[0]==k),d=ix(tab)<ix(LT)?-1:1;LT=tab;const m=document.getElementById('tc');m.style.setProperty('--dx',d*36+'px');m.classList.add('tin');if(a)a.classList.add('pop')}}
 const tt=s.tut>=0&&s.tut<T.length?T[s.tut]:null;document.getElementById('tutw').innerHTML=tt?`<div id=tut><div class=tpg><i style="width:${(s.tut+1)/T.length*100}%"></i></div><span class=tcn>${s.tut+1}/${T.length}</span><b>${tt[0]}</b><br>${tt[1]}<div class=row><button class=tskip onclick="s.tut=-1;R()">✕ Bỏ qua hướng dẫn</button><button class=p onclick="s.tut++;tab='${T[Math.min(s.tut+1,T.length-1)][2]}';R()">Tiếp</button></div></div>`:'';save()}
 function th(){document.documentElement.dataset.theme=s.dark?'dark':'light';R()}
 /* ===== ĐÁNH GIÁ ===== */
@@ -1961,6 +1961,7 @@ const fm=ms=>{ms=Math.max(0,Math.round((ms||0)/1000));return Math.floor(ms/60)+'
 
 /* ---------- icon + tab ---------- */
 I.music='M9 18V5l12-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM21 16a3 3 0 11-6 0 3 3 0 016 0z';
+I.tv='M3 7h18v12H3zM8 3l4 4 4-4';
 {const i=TABS.findIndex(t=>t[0]=='up');TABS.splice(i<0?TABS.length:i,0,['music','music','Nhạc'])}
 if(typeof ENL!=='undefined'){ENL.push(['Nhạc','Music'],['Hàng đợi','Queue'],['Kết nối YouTube','Connect YouTube']);ENL.sort((a,b)=>b[0].length-a[0].length)}
 const IC={
@@ -2167,7 +2168,7 @@ function nowH0(){
 <p class="mar mut">${t?esc(t.ar||'YouTube'):'Tìm bài hát hoặc dán link YouTube bên dưới'}</p></div><button class="msk10 msrate" ${t?'':'disabled'} aria-label="Tốc độ phát ${(+MS.rate||1)}x (chạm để đổi)" title="Tốc độ phát · chạm để đổi" onclick="MU.rateNext()">${+MS.rate||1}x</button></div>
 <input type="range" id="msk" min="0" max="1000" value="0" ${t?'':'disabled'} aria-label="Tua bài hát" oninput="MU.sk(this.value,1)" onchange="MU.sk(this.value)">
 <div class="mtm"><span id="mtl">0:00</span><span id="mtr">${fm(MS.dur||(t&&t.dur))}</span></div>
-<div class="mctl">${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('','Tua lùi 10 giây','MU.seekBy(-10)','b10',!t)}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Tua tới 10 giây','MU.seekBy(10)','f10',!t)}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', isFav(t)?'Bỏ khỏi yêu thích':'Thêm vào yêu thích','MU.fav()',isFav(t)?'heartf':'heart',!t).replace('class=""','class="'+(isFav(t)?'act':'')+'"')}<button class="${MS.ap?'act':''}" aria-pressed="${MS.ap?'true':'false'}" aria-label="Autoplay: ${MS.ap?'Bật':'Tắt'}" title="Autoplay ${MS.ap?'bật':'tắt'} — hết hàng đợi thì tự tìm bài tiếp theo" onclick="MU.ap()">${sg('auto',22)}</button>${window.__tvBtn?window.__tvBtn():''}</div>`}
+<div class="mctl">${window.__tvBtn?window.__tvBtn():''}${bt('', MS.rep?'Lặp lại 1 bài: đang bật':'Lặp lại 1 bài','MU.rep()',MS.rep?'rep1':'rep').replace('class=""','class="'+(MS.rep?'act':'')+'"')}${bt('','Bài trước','MU.prev()','prev')}${bt('','Tua lùi 10 giây','MU.seekBy(-10)','b10',!t)}${bt('big',MS.playing?'Tạm dừng':'Phát','MU.tog()',MS.playing?'pause':'play').replace('width="22" height="22"','width="30" height="30"')}${bt('','Tua tới 10 giây','MU.seekBy(10)','f10',!t)}${bt('','Bài tiếp theo (bỏ qua)','MU.next()','next')}${bt('', isFav(t)?'Bỏ khỏi yêu thích':'Thêm vào yêu thích','MU.fav()',isFav(t)?'heartf':'heart',!t).replace('class=""','class="'+(isFav(t)?'act':'')+'"')}<button class="${MS.ap?'act':''}" aria-pressed="${MS.ap?'true':'false'}" aria-label="Autoplay: ${MS.ap?'Bật':'Tắt'}" title="Autoplay ${MS.ap?'bật':'tắt'} — hết hàng đợi thì tự tìm bài tiếp theo" onclick="MU.ap()">${sg('auto',22)}</button></div>`}
 function resH(){
  if(MS.busy)return '<p class="mut" style="margin:8px 0 0">Đang tìm…</p>';
  if(MS.err)return `<p class="bad" style="margin:8px 0 0">${esc(MS.err)}</p>`;
@@ -14328,7 +14329,9 @@ function voice(se,k,t,f,p){if(k=='bell')bell(se,t,f,p);else if(k=='ep')ep(se,t,f
 
 /* ---------- bộ lập lịch nhạc nền ---------- */
 function startBgm(){
- if(sess||!ensure()||ctx.state!='running')return;
+ if(sess||!ensure())return;
+ if(ctx.state=='suspended'){try{ctx.resume().then(function(){if(!sess&&want())startBgm()}).catch(function(){})}catch(e){}return}
+ if(ctx.state!='running')return;
  var id=R.dataset.skin||'',sp=spec(id),se={id:id,sp:sp,dead:false,nodes:[],n:0,bar:0,ci:0,ai:0,ad:1,md:2,tm:0,next:ctx.currentTime+.12};
  se.env=ctx.createGain();se.env.gain.setValueAtTime(.0001,ctx.currentTime);se.env.gain.linearRampToValueAtTime(1,ctx.currentTime+1.6);se.env.connect(bgmBus);
  se.send=ctx.createGain();se.send.gain.value=sp.wet==null?.4:sp.wet;se.send.connect(verbIn);
@@ -14572,6 +14575,244 @@ window.XFQ={make:openMake,scan:openScan,save:save,share:share,copy:copy,file:fil
 /* chèn khung vào tab Thẻ ngân hàng */
 {var o=V.card;V.card=function(){var h=o.apply(this,arguments),k='<div class=card><h3>Chuyển tiền</h3>';
  if(typeof h=='string'&&h.indexOf(k)>=0&&h.indexOf('qrxf')<0)h=h.replace(k,'<div class="card qrxf"><h3>📲 Chuyển khoản bằng QR</h3><p class=mut style="margin:0 0 8px">Tạo QR để người khác quét và chuyển tiền cho bạn, hoặc quét QR của người khác để điền sẵn thông tin chuyển.</p><div class=row><button class=p onclick="XFQ.make()">Tạo QR nhận tiền</button><button class=s onclick="XFQ.scan()">Quét QR chuyển khoản</button></div></div>'+k);return h}}
+})();
+</script>
+
+
+<style id="v116-fix">
+/* v116: tivi cố định; trả tai/chân mèo; khóa trượt ngang; tab Phim + icon tivi */
+
+@media (max-width: 899px) {
+  #tc:has(#mnow.tvon) > #mnow {
+    position: relative !important;
+    top: auto !important;
+    z-index: 2 !important;
+  }
+  #mnow.tvon { animation: none !important; }
+}
+
+html.tvmode, html.tvmode body {
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  position: relative;
+}
+html.tvmode #app,
+html.tvmode #tc {
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+html.tvmode #mnow.tvon,
+html.tvmode #mtv {
+  position: relative !important;
+  left: 0 !important;
+  transform: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Trả tai/chân mèo — KHÔNG overflow:hidden trên card */
+:root[data-skin^="cat"] #mnow.tvon,
+:root[data-skin^="cat"] .tvn {
+  overflow: visible !important;
+}
+:root[data-skin^="cat"] #mnow.tvon {
+  margin-top: 30px !important;
+  margin-bottom: 30px !important;
+}
+:root[data-skin^="cat"] .tvn {
+  margin-top: 32px !important;
+  margin-bottom: 10px !important;
+}
+:root[data-skin^="cat"] #mnow.tvon::before,
+:root[data-skin^="cat"] .tvn-body::before,
+:root[data-skin^="cat"] #mnow.tvon::after,
+:root[data-skin^="cat"] .tvn-body::after {
+  pointer-events: none;
+  z-index: 0;
+}
+
+#spEmb.tvm {
+  position: fixed !important;
+  z-index: 4;
+  transition: none !important;
+  will-change: auto !important;
+}
+.mctl button.mtvb { order: -1; margin-right: 2px; }
+html.tvmode #tc.tin,
+html.tvmode #tc.tin > * { animation: none !important; }
+</style>
+<script id="v116-js">
+(function () {
+  if (window.__v116) return;
+  window.__v116 = 1;
+
+  function isTv() {
+    try { return !!(window.MS && MS.tv); } catch (e) { return false; }
+  }
+
+  function syncTab() {
+    try {
+      if (typeof TABS !== 'undefined' && TABS) {
+        for (var i = 0; i < TABS.length; i++) {
+          if (TABS[i][0] === 'music') {
+            TABS[i][2] = isTv() ? 'Phim' : 'Nhạc';
+            TABS[i][1] = isTv() ? 'tv' : 'music';
+            break;
+          }
+        }
+      }
+      var btn = document.querySelector('nav.fx button[data-t="music"], nav button[data-t="music"]');
+      if (!btn) return;
+      var lb = isTv() ? 'Phim' : 'Nhạc';
+      var span = btn.querySelector('span');
+      if (span) {
+        for (var i = 0; i < span.childNodes.length; i++) {
+          var n = span.childNodes[i];
+          if (n.nodeType === 3) {
+            var t = n.textContent.trim();
+            if (t === 'Nhạc' || t === 'Phim' || t === 'Music' || !t) { n.textContent = lb; break; }
+          }
+        }
+        if (!span.querySelector('*') && span.textContent.trim() !== lb) span.textContent = lb;
+      }
+      btn.setAttribute('aria-label', lb);
+      try {
+        if (typeof ic === 'function') {
+          var svg = btn.querySelector('svg');
+          var wrap = document.createElement('div');
+          wrap.innerHTML = ic(isTv() ? 'tv' : 'music', 20);
+          var neu = wrap.firstChild;
+          if (svg && neu) svg.replaceWith(neu);
+          else if (!svg && neu) btn.insertBefore(neu, btn.firstChild);
+        }
+      } catch (e) {}
+    } catch (e) {}
+  }
+
+  function syncMode() {
+    var on = isTv();
+    try {
+      document.documentElement.classList.toggle('tvmode', on);
+      document.body.classList.toggle('tvmode', on);
+    } catch (e) {}
+    if (on) {
+      try {
+        if (window.scrollX) window.scrollTo(0, window.scrollY || 0);
+        document.documentElement.scrollLeft = 0;
+        document.body.scrollLeft = 0;
+        var app = document.getElementById('app');
+        if (app) app.scrollLeft = 0;
+        var tc = document.getElementById('tc');
+        if (tc) tc.scrollLeft = 0;
+      } catch (e) {}
+    }
+    syncTab();
+  }
+
+  var sx = 0, sy = 0;
+  document.addEventListener('touchstart', function (e) {
+    if (!isTv() || !e.touches || !e.touches.length) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+  }, { passive: true, capture: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!isTv() || !e.touches || !e.touches.length) return;
+    var t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) {
+      var el = e.target;
+      if (el && el.closest && el.closest('input,textarea,select,#msk,nav.fx,#sdtabs')) return;
+      if (e.cancelable) e.preventDefault();
+    }
+  }, { passive: false, capture: true });
+
+  /* Giữ overlay không nhảy ngang vì scrollX */
+  setInterval(function () {
+    if (!isTv()) return;
+    try {
+      if (window.scrollX) window.scrollTo(0, window.scrollY || 0);
+      var em = document.getElementById('spEmb');
+      if (em && em.classList.contains('tvm')) {
+        var L = parseFloat(em.style.left) || 0;
+        if (L < 0) em.style.left = '0px';
+      }
+    } catch (e) {}
+  }, 100);
+
+  function hook() {
+    try {
+      if (window.MX && typeof MX.tv === 'function' && !MX.tv.__v116) {
+        var o = MX.tv;
+        MX.tv = function () {
+          var r = o.apply(this, arguments);
+          setTimeout(syncMode, 0);
+          setTimeout(syncMode, 40);
+          return r;
+        };
+        MX.tv.__v116 = 1;
+      }
+    } catch (e) {}
+    try {
+      if (typeof R === 'function' && !R.__v116) {
+        var oR = R;
+        window.R = function () {
+          try {
+            if (typeof TABS !== 'undefined' && TABS) {
+              for (var i = 0; i < TABS.length; i++) {
+                if (TABS[i][0] === 'music') {
+                  TABS[i][2] = isTv() ? 'Phim' : 'Nhạc';
+                  TABS[i][1] = isTv() ? 'tv' : 'music';
+                  break;
+                }
+              }
+            }
+          } catch (e) {}
+          var r = oR.apply(this, arguments);
+          setTimeout(syncMode, 0);
+          return r;
+        };
+        R.__v116 = 1;
+      }
+    } catch (e) {}
+  }
+
+  function patchBgm() {
+    try {
+      if (typeof window.music === 'function' && !window.music.__v116) {
+        var om = window.music;
+        window.music = function () {
+          var r = om.apply(this, arguments);
+          try {
+            if (window.NBX && window.NBX._ctx) {
+              var c = window.NBX._ctx();
+              if (c && c.state === 'suspended') c.resume().catch(function () {});
+            }
+          } catch (e) {}
+          return r;
+        };
+        window.music.__v116 = 1;
+      }
+    } catch (e) {}
+  }
+
+  var last = null;
+  setInterval(function () {
+    var v = isTv() ? 1 : 0;
+    if (v !== last) { last = v; syncMode(); }
+  }, 250);
+
+  syncMode();
+  hook();
+  patchBgm();
+  setTimeout(hook, 400);
+  setTimeout(patchBgm, 400);
+  setTimeout(syncMode, 800);
 })();
 </script>
 </body></html>

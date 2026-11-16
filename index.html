@@ -13049,6 +13049,9 @@ body.mus-on #mq .mtr.cur .mbt::before{animation:eq .9s ease-in-out infinite alte
 body.mpon #mp{border-color:var(--mcol,var(--g2))}
 body.mpon #mp button.pp,body.mpon #mp i{background:var(--mcol,var(--g2))}
 @media(prefers-reduced-motion:reduce){#hbcard .hbsw,#hbcard .hbsw::after,#mnow{transition:none}}
+/* v71: chống iOS tự phóng to khi bấm vào ô nhập (cần chữ >= 16px) */
+@media (hover:none) and (pointer:coarse){input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),textarea,select{font-size:max(16px,1em)!important}}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </style><script>(()=>{const $=id=>document.getElementById(id),hue=id=>{let h=0;for(const c of id||'')h=(h*31+c.charCodeAt(0))%360;return h};
 const sk=()=>{const k=$('msk');if(k)k.style.setProperty('--p',k.value/10+'%')};
 const CC={},PEND={};
@@ -13068,5 +13071,15 @@ document.addEventListener('input',e=>{if(e.target.id==='msk')sk()},true)})();
 </script>
 <script>/* v71: phím tắt cho tab Nhạc trên máy tính: Space phát/dừng, ←/→ tua 10 giây */
 document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target,tg=t&&t.tagName;if(tg=='INPUT'||tg=='TEXTAREA'||tg=='SELECT'||(t&&t.isContentEditable))return;if(!document.getElementById('mnow')||!window.MU)return;if(e.code=='Space'){e.preventDefault();MU.tog()}else if(e.key=='ArrowRight'){e.preventDefault();MU.seekBy(10)}else if(e.key=='ArrowLeft'){e.preventDefault();MU.seekBy(-10)}});
+</script>
+<script>/* v71: cập nhật hồ sơ không làm nhảy về đầu khung + bỏ phóng to sau khi gõ */
+(()=>{
+ const keep=fn=>function(){const m=document.querySelector('#modal .ms'),y=m?m.scrollTop:0,w=window.scrollY;const r=fn.apply(this,arguments);const n=document.querySelector('#modal .ms');if(n&&y)n.scrollTop=y;if(w&&Math.abs(window.scrollY-w)>2)window.scrollTo(0,w);return r};
+ try{if(typeof pfm==='function'&&!pfm.__k){const o=pfm;pfm=keep(o);pfm.__k=1}}catch(e){}
+ const mv=document.querySelector('meta[name=viewport]');
+ if(mv){const c=mv.getAttribute('content');
+  document.addEventListener('focusout',e=>{const t=e.target&&e.target.tagName;if(t!=='INPUT'&&t!=='TEXTAREA'&&t!=='SELECT')return;
+   setTimeout(()=>{if(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))return;mv.setAttribute('content',c.replace('maximum-scale=1','maximum-scale=1.01'));setTimeout(()=>mv.setAttribute('content',c),60)},120)},true)}
+})();
 </script>
 </body></html>

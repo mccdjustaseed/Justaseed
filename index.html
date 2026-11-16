@@ -1046,7 +1046,7 @@ const art=id=>FH[id]?fw(id,34):K[id]?wr(id):gi(id,30);
 const step=(si,id)=>{const m=SP[si].m,k=si+id,q=CART[k]||0;return `<div class=row><span style="display:flex;gap:8px;align-items:center">${art(id)}<span><b>${nm(id)}</b><br><span class=mut>${$(pc(id,m))} · ${isPp(id)?'không giới hạn':'còn '+remQ(si,id,k,q)+' suất'} · kho ${s.st[id]||0}</span></span></span><span><button class=s onpointerdown="hold(${si},'${id}',-1)">−</button><input class=qi type=number inputmode=numeric min=0 value="${q}" onchange="setQ(${si},'${id}',this.value)"><button class=s onpointerdown="hold(${si},'${id}',1)">+</button> <button class=s onclick="setQ(${si},'${id}',(CART['${si}${id}']||0)-5)">-5</button> <button class=s onclick="buyAll(${si},'${id}')">Hết</button></span></div>`};
 function cartBox(){const it=cartItems(),t=cartTotal(),after=s.money-t;
 if(!it.length)return `<div class=card><h3>${ic('cart')} Giỏ nhập hàng</h3><p class=mut>Giỏ đang trống. Bấm + để thêm hàng, tiền chưa bị trừ cho đến khi bạn xác nhận mua.</p></div>`;
-return `<div class="card cartc"><h3>${ic('bill')} Xác nhận đơn nhập hàng</h3>${it.map(i=>`<div class=row><span style="display:flex;gap:8px;align-items:center">${art(i.id)}<span><b>${nm(i.id)}</b> × ${i.q}<br><span class=mut>${SP[i.si].n} · ${$(i.u)}/cái</span></span></span><span><b>${$(i.sub)}</b> <button class=s onclick="removeLine('${i.k}')" aria-label="Bỏ">✕</button></span></div>`).join('')}
+return `<div class="card cartc"><h3>${ic('bill')} Xác nhận đơn nhập hàng</h3><div class="cll">${it.map(i=>`<div class=row><span style="display:flex;gap:8px;align-items:center">${art(i.id)}<span><b>${nm(i.id)}</b> × ${i.q}<br><span class=mut>${SP[i.si].n} · ${$(i.u)}/cái</span></span></span><span><b>${$(i.sub)}</b> <button class=s onclick="removeLine('${i.k}')" aria-label="Bỏ">✕</button></span></div>`).join('')}</div>
 <div class=inq><div class=row><span>Tổng số lượng</span><b>${cartCount()}</b></div><div class=row><span>Cần thanh toán</span><b style="font-size:1.2rem">${$(t)}</b></div><div class=row><span class=mut>Số dư hiện tại</span><span class=mut>${$(s.money)}</span></div><div class=row><span class=mut>Số dư sau khi mua</span><span class="${after<0?'bad':'ok'}">${$(after)}</span></div></div>
 <div class=row><button class=s onclick="clearCart()">Hủy giỏ</button><button class=p ${after<0?'disabled':''} onclick="confirmBuy()">Xác nhận mua ${$(t)}</button></div></div>`}
 function menuBox(){const m=menu();return `<div class=card><h3>Menu hôm nay</h3><p class=mut>Khách chỉ gọi món có trong menu, tính theo hàng đã nhập.</p>${m.length?m.map(i=>`<div class=row><span style="display:flex;gap:6px;align-items:center">${fw(i.f.id,28)}${wr(i.p.id)} ${i.f.n} ${i.p.id} <span class=mut>(còn ${i.n} phần)</span></span><b>${$(price(i.f.id,i.p.id))}</b></div>`).join(''):'<p class=mut>Chưa có món. Cần đủ hoa (S=3, M=5, L=10 bông) và giấy gói.</p>'}</div>`}
@@ -13524,5 +13524,18 @@ scan();
 .brt-bar{height:9px;border-radius:9px;background:color-mix(in srgb,var(--ink) 12%,transparent);overflow:hidden}
 .brt-bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#46c373,#2e9e57);box-shadow:inset 0 1px 0 #fff5;transition:width .6s}
 .brt-f{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:.76rem;color:var(--mut)}.brt-f span:last-child{font-weight:700;color:var(--ink)}
+</style>
+<style id="cart-v95">
+/* v95: máy tính — bảng "Xác nhận đơn nhập hàng" luôn nằm cố định ở góc phải dưới */
+.cll{display:block}
+@media (min-width:1000px){
+ #tc>.card.cartc{position:fixed!important;top:auto!important;right:16px;bottom:16px;left:auto;width:clamp(300px,24vw,360px);max-height:calc(100dvh - 120px);margin:0;display:flex;flex-direction:column;z-index:7;box-shadow:0 18px 40px -12px rgba(0,0,0,.45)}
+ body.mpon #tc>.card.cartc{bottom:156px;max-height:calc(100dvh - 276px)}
+ #tc>.card.cartc>*{flex:0 0 auto}
+ #tc>.card.cartc>.cll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin:0 -6px;padding:0 6px}
+ #tc:has(>.card.cartc){padding-right:calc(clamp(300px,24vw,360px) + 24px)}
+ #cbar{display:none!important}
+}
+@media (min-width:900px) and (max-width:999px){#tc>.card.cartc{position:static!important;grid-column:1/-1!important}}
 </style>
 </body></html>

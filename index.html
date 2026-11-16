@@ -14866,4 +14866,19 @@ html.tvmode #tc.tin > * { animation: none !important; }
   },250);
 })();
 </script>
+<style id="m-order-v123">
+/* v123 (chỉ điện thoại): thẻ Tivi (Đang xem trên Tivi / Nghe nhạc · Xem tivi / Cửa sổ nổi) lên trên ô tìm kiếm; hàng đợi lên trên Gợi ý nhạc & phim */
+@media (max-width:899px){
+#tc:has(#mnow){display:flex;flex-direction:column;align-items:stretch}
+#tc:has(#mnow)>#mnow{order:1}
+#tc:has(#mnow)>#mly{order:2}
+#tc:has(#mnow)>#mtv{order:3}
+#tc:has(#mnow)>#mxs{order:4}
+#tc:has(#mnow)>#mdesc{order:5}
+#tc:has(#mnow)>#mq{order:6}
+#tc:has(#mnow)>#mxgc{order:7}
+/* chế độ xem tivi: ẩn thẻ lời bài hát */
+#tc:has(#mnow.tvon)>#mly,#tc:has(#mtv.tvon)>#mly,#tc#tc:has(#mnow.tvon)>#mly{display:none!important}
+}
+</style>
 </body></html>

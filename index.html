@@ -2168,7 +2168,7 @@ function resH(){
  if(MS.err)return `<p class="bad" style="margin:8px 0 0">${esc(MS.err)}</p>`;
  return ''}
 const chv=o=>`<span style="display:inline-block;transition:transform .2s;transform:rotate(${o?0:-90}deg)">${sg('chev',18)}</span>`;
-function qH(){return qH0()}
+function qH(){return window.MX&&MX.q?MX.q():qH0()}
 function qH0(){
  const fv=MS.qv=='f',open=fv?MS.fo:MS.qo,cnt=fv?MS.fav.length:MS.q.length;
  const head=`<div class="row" style="margin-top:0"><button class="s" style="display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:0" onclick="${fv?'MU.ft()':'MU.qt()'}" aria-expanded="${open?'true':'false'}">${chv(open)}<h3 style="margin:0">${fv?'Yêu thích':'Hàng đợi'} <span class="qcnt">(${cnt})</span></h3></button><span style="display:flex;align-items:center;gap:4px">${!fv&&MS.qo&&MS.q.length>1?`<button class="s" onclick="MU.shuf()">${sg('shuf',15)} Xáo</button>`:''}${!fv&&MS.qo&&MS.q.length?'<button class="s" onclick="MU.clr()">Xóa hết</button>':''}<button class="s" style="width:34px;height:34px;padding:0;display:inline-grid;place-items:center;border-radius:10px;${fv?'color:#e0446f;border-color:#e0446f':''}" aria-pressed="${fv?'true':'false'}" aria-label="${fv?'Quay lại hàng đợi':'Xem danh sách yêu thích'}" title="${fv?'Quay lại hàng đợi':'Xem danh sách yêu thích'}" onclick="MU.qv()">${sg(fv?'heartf':'heart',18)}</button></span></div>`;
@@ -12760,7 +12760,7 @@ function gH(){const R=[['VN','🇻🇳 Việt Nam'],['KR','🇰🇷 Hàn Quốc'
  return `<div class="row" style="margin:0"><b>Thịnh hành</b><select id="mxsel" onchange="if(this.value){MX.chart(this.value,this.options[this.selectedIndex].text);this.selectedIndex=0}"><option value="">Chọn quốc gia…</option>${R.map(r=>`<option value="${r[0]}">${r[1]}</option>`).join('')}</select></div>`}
 function q(){const L=X.lv,cn={q:MS.q.length,f:MS.fav.length,h:hist().length,p:X.pls.length};MS.qo=1;MS.fo=1;
  const seg=`<div class="mxs">${[['q','Hàng đợi'],['f','Yêu thích'],['h','Gần đây'],['p','Playlist']].map(v=>`<button class="${L==v[0]?'on':''}" onclick="MX.seg('${v[0]}')">${v[1]} ${cn[v[0]]}</button>`).join('')}</div>`;
- if(L=='q'||L=='f'){MS.qv=L=='f'?'f':'q';return seg+(L=='q'?`<div class="mxqa"><button class="s" onclick="MU.shuf()">🔀 Xáo</button><button class="s" onclick="MX.save()">💾 Lưu playlist</button><button class="s" onclick="MU.clr()">🗑 Xóa hết</button></div>`:'')+`<div class="mxq">${H.q()}</div>`}
+ if(L=='q'||L=='f'){MS.qv=L=='f'?'f':'q';return seg+''+`<div class="mxq">${H.q()}</div>`}
  if(L=='h'){const h=hist(),t=top();return seg+(t.length?'<div class="sec">Nghe nhiều nhất</div>'+t.map((x,i)=>rowX(x,i,'t')).join(''):'')+(h.length?'<div class="sec">Vừa nghe</div>'+h.map((x,i)=>rowX(x,i,'h')).join(''):'<p class="mut">Chưa có lịch sử nghe.</p>')}
  return seg+`<button class="s" onclick="MX.save()">💾 Lưu hàng đợi hiện tại thành playlist</button>`+(X.pls.length?X.pls.map((p,i)=>`<div class="mtr"><div class="mxpe">🎵</div><div class="mti"><b>${esc(p.n)}</b><span>${p.t.length} bài</span></div><div class="mbt"><button class="s" aria-label="Phát" onclick="MX.pp(${i},1)">▶</button><button class="s" aria-label="Thêm vào hàng đợi" onclick="MX.pp(${i},0)">＋</button><button class="s" aria-label="Xóa" onclick="MX.pp(${i},-1)">🗑</button></div></div>`).join(''):'<p class="mut">Chưa có playlist. Xếp hàng đợi rồi bấm Lưu.</p>')}
 const qUI=()=>{const e=$e('mq');if(e)e.innerHTML=q()};

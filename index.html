@@ -14838,4 +14838,33 @@ html.tvmode #tc.tin > * { animation: none !important; }
 /* v118: điện thoại — khung video neo theo trang (absolute) để cuộn cùng nội dung, không lệch/lòi dải đen */
 @media(max-width:899px){html.tvmode #spEmb.tvm:not(.movie){position:absolute!important}}
 </style>
+<style id="tvclean-v119">
+/* v119: chế độ xem video chỉ còn hình — ẩn tiêu đề/kênh/chia sẻ/logo/gợi ý của YouTube; thêm nút tốc độ phát */
+#spEmb.tvm:not(.movie) iframe{pointer-events:none!important;transition:opacity .2s}
+#spEmb.tvm:not(.movie).ovh iframe{opacity:0}
+#spEmb.tvm:not(.movie).ovh{background:var(--cv,none) center/cover,#000}
+#spEmb.tvm:not(.movie){cursor:pointer;-webkit-tap-highlight-color:transparent}
+@media(max-width:899px){
+#tc #mnow.tvon .msrate{display:grid!important;position:absolute;top:auto;right:4px;bottom:-4px;width:30px;height:30px;font-size:.68rem;z-index:5}
+#tc #mnow.tvon .mar{padding-right:36px}
+}
+</style>
+<script id="tvclean-js-v119">
+(function(){
+  var last=0;
+  function em(){return document.getElementById('spEmb')}
+  setInterval(function(){
+    var e=em();if(!e||!window.MS)return;
+    var tv=e.classList.contains('tvm')&&!e.classList.contains('movie');
+    e.classList.toggle('ovh',tv&&!MS.playing);
+    if(tv){try{var n=document.getElementById('mnow');if(n){var v=getComputedStyle(n).getPropertyValue('--cv');if(v)e.style.setProperty('--cv',v)}}catch(x){}}
+  },250);
+  document.addEventListener('click',function(ev){
+    var e=em();if(!e||!e.classList.contains('tvm')||e.classList.contains('movie'))return;
+    if(ev.target!==e)return;
+    var t=Date.now();if(t-last<300)return;last=t;
+    try{MU.tog()}catch(x){}
+  },true);
+})();
+</script>
 </body></html>

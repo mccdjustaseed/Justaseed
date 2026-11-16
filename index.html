@@ -673,7 +673,7 @@ const CardMu = (function () {
     plP = loadYT().then(Y => new Promise(res => {
       const p = new Y.Player('pvEl', {
         width: '200', height: '200', videoId: id,
-        playerVars: { playsinline: 1, rel: 0, controls: 0 },
+        playerVars: { playsinline: 1, rel: 0, controls: 0, cc_load_policy: 0, iv_load_policy: 3, modestbranding: 1 },
         events: {
           onReady: () => { pl = p; cued = id; res(p); },
           onStateChange: e => {
@@ -2040,10 +2040,11 @@ function ensureCtl(id,auto){
  if(ctl)return Promise.resolve(ctl);if(ctlP)return ctlP;
  ctlP=loadApi().then(Y=>new Promise(res=>{
   const p=new Y.Player('spEl',{width:'100%',height:'100%',videoId:id,
-   playerVars:{playsinline:1,rel:0,modestbranding:1,autoplay:auto?1:0,start:stAt||0},
+   playerVars:{playsinline:1,rel:0,modestbranding:1,controls:0,cc_load_policy:0,iv_load_policy:3,fs:0,autoplay:auto?1:0,start:stAt||0},
    events:{onReady:()=>{ctl=p;loaded=id;try{p.getIframe().setAttribute('allow','autoplay; encrypted-media; picture-in-picture; fullscreen')}catch(e){}res(p)},onStateChange:onSt,onError:onErr}})
  })).catch(e=>{ctlP=null;throw e});
  return ctlP}
+function destroyCtl(){try{if(ctl&&ctl.destroy)ctl.destroy()}catch(e){}ctl=null;ctlP=null;loaded='';try{var el=document.getElementById('spEl');if(el)el.innerHTML=''}catch(e){}}
 const est=()=>MS.playing?Math.min(MS.pos+(Date.now()-MS.evT)*(MS.rate||1),MS.dur||1e9):MS.pos;
 function kick(c){
  const k=++kid;let n=0;
@@ -2054,6 +2055,7 @@ function kick(c){
   else if(!document.hidden){MS.arm=1;MS.show=1;ui();toast('Trình duyệt chặn tự phát — chạm vào màn hình để phát')}};
  setTimeout(f,250)}
 function go(t,at){
+ if(!window.__ytCleaned){window.__ytCleaned=1;try{destroyCtl()}catch(e){}}
  if(MS.now&&t&&MS.now.id===t.id&&!(at>2000))MS.rst=(MS.rst|0)+1;
  stAt=at>2000?Math.floor(at/1000):0;MS.now=t;MS.ended=0;MS.pos=at||0;MS.dur=t.dur||0;MS.playing=0;MS.want=1;MS.evT=Date.now();ending=0;
  sv();ui();
@@ -5634,7 +5636,7 @@ const ClipMu=(function(){
  function ensure(){
   if(pl)return Promise.resolve(pl);if(plP)return plP;wrap();
   plP=ytReady().then(()=>new Promise(res=>{
-   const p=new YT.Player('clipEl',{width:'200',height:'200',playerVars:{playsinline:1,rel:0,controls:0},events:{
+   const p=new YT.Player('clipEl',{width:'200',height:'200',playerVars:{playsinline:1,rel:0,controls:0,cc_load_policy:0,iv_load_policy:3,modestbranding:1},events:{
     onReady:()=>{pl=p;res(p)},
     onStateChange:e=>{const st=e&&e.data;
      if(st===1){if(!cur){try{p.pauseVideo()}catch(x){}return}arm((cur.en-cur.st)*1000+1500);ui()}

@@ -10084,13 +10084,13 @@ const isNew=()=>!s.onb&&!hasProg();
 const ensurePf=()=>{s.pf=s.pf||{nm:'Chủ tiệm',av:null,pre:'cat'}};
 const dots=n=>`<div class=stp>${['Chủ đề','Hồ sơ'].map((t,i)=>`<span class="${i<n?'on':''}"><i>${i<n-1?'✓':i+1}</i>${t}</span>`).join('<b></b>')}</div>`;
 const PN=['Lá xanh','Hồng đào','Trời xanh','Tím mơ','Cam nắng','Ngọc lam','Hồng sen','Cà phê'],SG=['Tiệm hoa Mướp','Vườn Mây','Hoa Nhà Bơ','Góc Hoa Nhỏ'];
-function start(){if(busy)return;busy=1;ensurePf();st={step:1,col:s.pf.col||PC[0],dark:s.dark?1:0,pn:'',sn:'',av:null,cv:null};$o('onb').classList.add('on');draw()}
+function start(){if(busy)return;busy=1;ensurePf();st={step:1,col:s.pf.col||PC[0],dark:s.dark?1:0,pn:'',sn:'',av:null,cv:null};$o('onb').classList.add('on');delete $o('onb').dataset.step;draw()}
 const AV=[['tul','#ffd3dc'],['hd','#fff0a8'],['cc','#ffe0ea'],['oai','#e6dcff'],['hong','#ffd0d0'],['cuc','#dcefff'],['sen','#f3dcff'],['lily','#ffe3c4']],CVP=[['#bfe8c6','#bfe9fb'],['#ffd3dc','#ffe9a0'],['#cfe8ff','#e6dcff'],['#ffe3c4','#ffd3dc'],['#4fb06f','#2c5a3b']],CV=264;let cr=null;
 const colName=()=>PN[PC.indexOf(st.col)]||'Màu của bạn';
 const cvImg=(a,b)=>{const c=document.createElement('canvas');c.width=720;c.height=270;const g=c.getContext('2d'),l=g.createLinearGradient(0,0,720,270);l.addColorStop(0,a);l.addColorStop(1,b);g.fillStyle=l;g.fillRect(0,0,720,270);return c.toDataURL('image/jpeg',.8)};
 const avImg=(id,bg)=>{const d=document.createElement('div');d.innerHTML=fw(id,192);const v=d.firstElementChild,NS='http://www.w3.org/2000/svg';v.setAttribute('viewBox','-6 -6 52 52');const r=document.createElementNS(NS,'rect');r.setAttribute('x',-6);r.setAttribute('y',-6);r.setAttribute('width',52);r.setAttribute('height',52);r.setAttribute('fill',bg);v.insertBefore(r,v.firstChild);return 'data:image/svg+xml;utf8,'+encodeURIComponent(new XMLSerializer().serializeToString(v))};
 function paint(){document.querySelectorAll('#onb .sw3').forEach(b=>{const cu=b.classList.contains('cus');b.classList.toggle('on',cu?!PC.includes(st.col):b.style.getPropertyValue('--c').trim()==st.col)});const cu=document.querySelector('#onb .sw3.cus');if(cu)cu.style.setProperty('--c',st.col);const n=$o('obcn');if(n)n.textContent=colName();const t=document.querySelector('#onb .tgl');if(t)t.classList.toggle('d',!!st.dark)}
-function draw(){const o=$o('onb');
+function draw(){const o=$o('onb');const keep=o.dataset.step==String(st.step),sy=o.scrollTop,sx=keep?[...o.querySelectorAll('.avs')].map(e=>e.scrollLeft):[];
 if(st.step==1){o.innerHTML=`<div class=ob>${dots(1)}<div class=obh><h1>Chọn màu cho tiệm</h1><p class=mut>Màu này áp lên nút, viền và hồ sơ. Đổi lại được trong Hồ sơ.</p></div>
 <div class=pv><div class=pvh><span class=pva>${catSVG(s.cat,'face',28)}</span><b>Tiệm của bạn</b><span class=pvm>${$(s.money)}</span></div><div class=pvb><span></span><span></span><span></span></div><button class=p tabindex=-1>Mở gian hàng</button><div class=pvn><i class=on></i><i></i><i></i><i></i></div></div>
 <div class=cn><b id=obcn>${colName()}</b><span class=mut>Chạm một màu để xem thử ngay</span></div>
@@ -10105,7 +10105,7 @@ o.innerHTML=`<div class=ob>${dots(2)}<div class=obh><h1>Bạn là ai?</h1><p cla
 <div class=card><label><b>Tên hồ sơ của bạn</b><input class=fi type=text maxlength=20 placeholder="Chủ tiệm" value="${esc(st.pn)}" oninput="JS_ONB.v('pn',this.value)"></label>
 <label><b>Tên gian hàng</b><input class=fi type=text maxlength=24 placeholder="VD: Tiệm hoa Mướp" value="${esc(st.sn)}" oninput="JS_ONB.v('sn',this.value)"></label><div class=sug><span class=mut>Gợi ý:</span>${SG.map(n=>`<button class=chip onclick="JS_ONB.sug('${n}')">${n}</button>`).join('')}</div></div>
 <div class=acts><button class="s big" onclick="JS_ONB.go(1)">Quay lại</button><button class="p big" onclick="JS_ONB.fin()">Bắt đầu chơi</button></div></div>`}
-o.scrollTop=0}
+o.dataset.step=st.step;if(keep){o.scrollTop=sy;o.querySelectorAll('.avs').forEach((e,i)=>{if(sx[i])e.scrollLeft=sx[i]})}else o.scrollTop=0}
 function proc(inp,k){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{if(k=='av'){openCrop(im);return}
 const W=720,H=270,c=document.createElement('canvas');c.width=W;c.height=H;const q=Math.max(W/im.width,H/im.height);c.getContext('2d').drawImage(im,(W-im.width*q)/2,(H-im.height*q)/2,im.width*q,im.height*q);st.cv=c.toDataURL('image/jpeg',.78);st.cp=null;draw()};im.onerror=()=>toast('Không đọc được ảnh');im.src=r.result};r.readAsDataURL(f);inp.value=''}
 function cdraw(){const c=$o('cpcv');if(!c||!cr)return;const g=c.getContext('2d'),sc=cr.b*cr.z,w=cr.im.width*sc,h=cr.im.height*sc,mx=(w-CV)/2,my=(h-CV)/2;cr.x=Math.max(-mx,Math.min(mx,cr.x));cr.y=Math.max(-my,Math.min(my,cr.y));g.clearRect(0,0,CV,CV);g.drawImage(cr.im,CV/2+cr.x-w/2,CV/2+cr.y-h/2,w,h)}
@@ -14650,6 +14650,20 @@ html.tvmode #mtv {
 .mctl button.mtvb { order: -1; margin-right: 2px; }
 html.tvmode #tc.tin,
 html.tvmode #tc.tin > * { animation: none !important; }
+
+/* v117: tivi nằm DƯỚI các thẻ phía sau; hào quang/chân đế/tai mèo không chặn chạm */
+#mnow.tvon, #mtv, .tvn, .tvn-body { pointer-events: auto; }
+#mnow.tvon::before, #mnow.tvon::after,
+.tvn-body::before, .tvn-body::after,
+#mtv::before, #mtv::after { pointer-events: none !important; }
+#tc:has(#mnow.tvon) > #mnow.tvon,
+#tc:has(#mnow.tvon) > #mtv { z-index: 0 !important; }
+#tc:has(#mnow.tvon) > .card:not(#mnow):not(#mtv),
+#tc:has(#mnow.tvon) > #mq,
+#tc:has(#mnow.tvon) > #mly {
+  position: relative;
+  z-index: 1;
+}
 </style>
 <script id="v116-js">
 (function () {

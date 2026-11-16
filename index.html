@@ -9332,6 +9332,10 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  const brBadge=(b,why)=>b.pause?'<b class=mut>Tạm nghỉ</b>':isSell(b)?'<b style="'+GRN+'">● Đang bán hàng</b>':why.length?'<b class=bad>Chưa sẵn sàng</b>':'<b class=ok>Sẵn sàng</b>';
  const brLive=b=>{if(!isSell(b))return '';const pc=Math.round(dayP()*100);
   return `<div style="margin:6px 0"><div class=row style="margin:0 0 3px"><span id="brt-${b.id}" class=mut>${esc(brTxt(b))}</span><span id="brp-${b.id}" class=mut>${pc}%</span></div><div style="height:8px;border-radius:9px;background:rgba(0,0,0,.12);overflow:hidden"><i id="brb-${b.id}" style="display:block;height:100%;width:${pc}%;background:#2e9e57;transition:width .6s"></i></div></div>`};
+ const brNum=b=>{const r=b.plan.r,p=dayP();return b.plan.live?{n:r.n,N:r.n,v:r.rev,l:0,L:0}:{n:Math.floor(r.n*p),N:r.n,v:Math.round(r.rev*p),l:Math.floor(r.lost*p),L:r.lost}};
+ const brNote=b=>{const a=brNum(b);return a.L?a.l+'/'+a.L+' khách chưa được phục vụ':'Chưa bỏ lỡ khách nào'};
+ const brTile=b=>{const a=brNum(b),pc=Math.round(dayP()*100);
+  return `<div class="brt"><div class="brt-h"><span class="brt-n">🏠 CN ${esc(b.n)}</span><span class="brt-b">Đang bán</span></div><div class="brt-st"><div><small>Đơn</small><b id="brn-${b.id}">${a.n}${b.plan.live?'':'<em>/'+a.N+'</em>'}</b></div><div><small>Doanh thu</small><b id="brv-${b.id}">${$(a.v)}</b></div></div><div class="brt-bar"><i id="brb-${b.id}" style="width:${pc}%"></i></div><div class="brt-f"><span id="brt-${b.id}">${esc(brNote(b))}</span><span id="brp-${b.id}">${pc}%</span></div></div>`};
  const stName=k=>{try{return nm(k)}catch(e){return String(k)}};
  const brKho=b=>{const o=!!BRO[b.id];let h=`<div class=row style="margin:4px 0"><button class=s onclick="X2.kho(${b.id})">${o?'Ẩn kho':'Xem kho'}</button></div>`;if(!o)return h;
   const ks=Object.keys(b.st).filter(k=>(b.st[k]||0)>0),fl=ks.filter(k=>FH[k]),pp=ks.filter(k=>isPp(k)),ot=ks.filter(k=>!FH[k]&&!isPp(k));
@@ -9339,8 +9343,8 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
   const body=sec('Hoa',fl)+sec('Giấy gói',pp)+sec('Khác',ot);
   return h+`<div class=card style="margin:0 0 6px">${body||'<p class=mut style="margin:0">Kho trống.</p>'}${s.ph=='open'&&b.plan?'<p class=mut style="margin:6px 0 0;font-size:.78rem">Kho được trừ khi kết thúc ngày.</p>':''}</div>`};
  {const o=V.shop;V.shop=function(){const h=o.apply(this,arguments);if(s.ph!='open')return h;const act=X().br.filter(isSell);if(!act.length)return h;
-  return h+`<div class=card><h3>Chi nhánh</h3>${act.map(b=>`<div class=row style="margin:0"><span><b>CN ${esc(b.n)}</b></span><b style="${GRN}">● Đang bán hàng</b></div>${brLive(b)}`).join('')}</div>`}}
- {const o=tick;tick=function(){const r=o.apply(this,arguments);try{if(s.ph=='open'){X().dp=Math.round(dayP()*1000)/1000;const pc=Math.round(dayP()*100);X().br.filter(isSell).forEach(b=>{const t=document.getElementById('brt-'+b.id),q=document.getElementById('brp-'+b.id),f=document.getElementById('brb-'+b.id);if(t)t.textContent=brTxt(b);if(q)q.textContent=pc+'%';if(f)f.style.width=pc+'%'})}}catch(e){}return r}}
+  return h+`<div class="card brl"><div class="brh"><h3>Chi nhánh</h3><span class="brs">${act.length} đang bán hàng</span></div><div class="brg">${act.map(brTile).join('')}</div></div>`}}
+ {const o=tick;tick=function(){const r=o.apply(this,arguments);try{if(s.ph=='open'){X().dp=Math.round(dayP()*1000)/1000;const pc=Math.round(dayP()*100);X().br.filter(isSell).forEach(b=>{const t=document.getElementById('brt-'+b.id),q=document.getElementById('brp-'+b.id),f=document.getElementById('brb-'+b.id);if(t)t.textContent=brNote(b);if(q)q.textContent=pc+'%';if(f)f.style.width=pc+'%';const N=brNum(b),e1=document.getElementById('brn-'+b.id),e2=document.getElementById('brv-'+b.id);if(e1)e1.innerHTML=N.n+(b.plan.live?'':'<em>/'+N.N+'</em>');if(e2)e2.textContent=$(N.v)})}}catch(e){}return r}}
  Object.assign(window.X2,{kho(id){BRO[id]=!BRO[id];R()}});
  const brOn=()=>typeof live!='undefined'&&live&&s.ph=='open';
  const brT=b=>({l:b.l,pause:b.pause,stf:b.stf,st:b.plan.st,bought:{}});
@@ -13501,4 +13505,24 @@ try{new MutationObserver(scan).observe(document.body,{childList:true,subtree:tru
 scan();
 })();
 </script>
+<style id="brl-v94">
+/* v94: thẻ Chi nhánh ở tab Quầy: rộng hết hàng, mỗi chi nhánh một ô gọn */
+#tc>.card.brl{grid-column:1/-1!important}
+.brl .brh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}.brl .brh h3{margin:0}
+.brs{padding:4px 12px;border-radius:99px;background:color-mix(in srgb,#2e9e57 16%,transparent);color:#2e9e57;font-weight:700;font-size:.8rem;white-space:nowrap}
+.brg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.brt{padding:13px 14px 12px;border-radius:20px;background:color-mix(in srgb,var(--g2) 8%,var(--card));border:1px solid color-mix(in srgb,var(--g2) 26%,transparent);box-shadow:0 12px 22px -18px var(--g3)}
+.brt-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brt-n{display:flex;align-items:center;gap:6px;font-weight:800;font-size:1rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brt-b{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;background:color-mix(in srgb,#2e9e57 16%,transparent);color:#2e9e57;font-weight:700;font-size:.74rem;white-space:nowrap}
+.brt-b::before{content:"";width:7px;height:7px;border-radius:50%;background:#2e9e57;animation:brpl 1.6s ease-in-out infinite}
+@keyframes brpl{0%,100%{box-shadow:0 0 0 0 rgba(46,158,87,.55)}50%{box-shadow:0 0 0 5px rgba(46,158,87,0)}}
+.brt-st{display:grid;grid-template-columns:auto 1fr;gap:18px;margin:12px 0 10px}
+.brt-st small{display:block;color:var(--mut);font-size:.72rem;margin-bottom:1px}
+.brt-st b{font-size:1.08rem;font-variant-numeric:tabular-nums}.brt-st b em{font-style:normal;font-weight:500;color:var(--mut);font-size:.82rem}
+.brt-st>div:last-child b{color:var(--g3)}
+.brt-bar{height:9px;border-radius:9px;background:color-mix(in srgb,var(--ink) 12%,transparent);overflow:hidden}
+.brt-bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#46c373,#2e9e57);box-shadow:inset 0 1px 0 #fff5;transition:width .6s}
+.brt-f{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:.76rem;color:var(--mut)}.brt-f span:last-child{font-weight:700;color:var(--ink)}
+</style>
 </body></html>

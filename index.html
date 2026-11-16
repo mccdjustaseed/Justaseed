@@ -14072,9 +14072,10 @@ function loop(){requestAnimationFrame(loop);
   else{const sc=document.querySelector('#mtv .tvn-scr');if(sc&&!mqD.matches)r=sc.getBoundingClientRect()}
   if(r){TL=parseFloat(getComputedStyle(document.documentElement).paddingTop)||0;{const nv=document.querySelector('#app nav.fx')||document.querySelector('nav.fx');if(nv){const nb=nv.getBoundingClientRect().bottom;if(nb>TL&&nb<innerHeight*.5)TL=nb}}vis=r.width>20&&r.bottom>TL+4&&r.top<innerHeight-10}}
  if(vis){if(!on){em.classList.add('tvm');on=1;tvT=performance.now()}em.classList.toggle('tvw',performance.now()-tvT<700);
-  const g=[r.left,r.top,r.width,r.height].map(Math.round).join();
+  const ab=mqD.matches,ox=ab?(window.scrollX||0):0,oy=ab?(window.scrollY||0):0;
+  const g=[r.left+ox,r.top+oy,r.width,r.height].map(Math.round).join();
   em.style.clipPath=r.top<TL?'inset('+Math.round(TL-r.top)+'px 0 0 0)':'';
-  if(g!==last){last=g;em.style.left=r.left+'px';em.style.top=r.top+'px';em.style.width=r.width+'px';em.style.height=r.height+'px'}}
+  if(g!==last){last=g;em.style.left=(r.left+ox)+'px';em.style.top=(r.top+oy)+'px';em.style.width=r.width+'px';em.style.height=r.height+'px'}}
  else if(on){em.classList.remove('tvm','tvw');em.style.clipPath='';on=0;last='';if(!MS.movie&&!em.classList.contains('movie'))['left','top','width','height'].forEach(k=>em.style[k]='')}}
 requestAnimationFrame(loop);
 try{if(typeof tab!='undefined'&&tab=='music')R()}catch(e){}
@@ -14831,4 +14832,13 @@ html.tvmode #tc.tin > * { animation: none !important; }
   setTimeout(syncMode, 800);
 })();
 </script>
+<style id="tvfix-v118">
+/* v118: điện thoại — khung video neo theo trang (absolute) để cuộn cùng nội dung, không lệch/lòi dải đen */
+@media(max-width:899px){html.tvmode #spEmb.tvm:not(.movie){position:absolute!important}}
+/* v118: tấm che cố định ở hàng Dynamic Island/thanh trạng thái, nằm TRÊN khung video (z 9) -> không bao giờ lòi dải đen ở mép trên khi cuộn */
+@media(max-width:899px){
+html.tvmode::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:9;pointer-events:none}
+html.tvmode body.scrl::before{content:"";position:fixed;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 8px);background:var(--bg);z-index:9;pointer-events:none}
+}
+</style>
 </body></html>

@@ -14070,7 +14070,7 @@ function loop(){requestAnimationFrame(loop);
   const mn=mqD.matches?document.querySelector('#mnow.tvon .mnr'):null;
   if(mn){const b=mn.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.width*9/16,bottom:b.top+b.width*9/16}}
   else{const sc=document.querySelector('#mtv .tvn-scr');if(sc&&!mqD.matches)r=sc.getBoundingClientRect()}
-  if(r){TL=parseFloat(getComputedStyle(document.documentElement).paddingTop)||0;vis=r.width>20&&r.bottom>TL+4&&r.top<innerHeight-10}}
+  if(r){TL=parseFloat(getComputedStyle(document.documentElement).paddingTop)||0;{const nv=document.querySelector('#app nav.fx')||document.querySelector('nav.fx');if(nv){const nb=nv.getBoundingClientRect().bottom;if(nb>TL&&nb<innerHeight*.5)TL=nb}}vis=r.width>20&&r.bottom>TL+4&&r.top<innerHeight-10}}
  if(vis){if(!on){em.classList.add('tvm');on=1;tvT=performance.now()}em.classList.toggle('tvw',performance.now()-tvT<700);
   const g=[r.left,r.top,r.width,r.height].map(Math.round).join();
   em.style.clipPath=r.top<TL?'inset('+Math.round(TL-r.top)+'px 0 0 0)':'';

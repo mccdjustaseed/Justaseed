@@ -14062,7 +14062,7 @@ setInterval(()=>{try{
  nowTv();metrics()}catch(e){}},400);
 
 /* video phủ lên màn hình tivi (không chuyển iframe để khỏi nạp lại) */
-let on=0,last='',tvT=0;
+let on=0,last='',tvT=0,TL=0;
 function loop(){requestAnimationFrame(loop);
  const em=$('spEmb');if(!em)return;
  let r=null,vis=false;
@@ -14070,11 +14070,12 @@ function loop(){requestAnimationFrame(loop);
   const mn=mqD.matches?document.querySelector('#mnow.tvon .mnr'):null;
   if(mn){const b=mn.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.width*9/16,bottom:b.top+b.width*9/16}}
   else{const sc=document.querySelector('#mtv .tvn-scr');if(sc&&!mqD.matches)r=sc.getBoundingClientRect()}
-  if(r)vis=r.width>20&&r.bottom>70&&r.top<innerHeight-10}
+  if(r){TL=parseFloat(getComputedStyle(document.documentElement).paddingTop)||0;vis=r.width>20&&r.bottom>TL+4&&r.top<innerHeight-10}}
  if(vis){if(!on){em.classList.add('tvm');on=1;tvT=performance.now()}em.classList.toggle('tvw',performance.now()-tvT<700);
   const g=[r.left,r.top,r.width,r.height].map(Math.round).join();
+  em.style.clipPath=r.top<TL?'inset('+Math.round(TL-r.top)+'px 0 0 0)':'';
   if(g!==last){last=g;em.style.left=r.left+'px';em.style.top=r.top+'px';em.style.width=r.width+'px';em.style.height=r.height+'px'}}
- else if(on){em.classList.remove('tvm','tvw');on=0;last='';if(!MS.movie&&!em.classList.contains('movie'))['left','top','width','height'].forEach(k=>em.style[k]='')}}
+ else if(on){em.classList.remove('tvm','tvw');em.style.clipPath='';on=0;last='';if(!MS.movie&&!em.classList.contains('movie'))['left','top','width','height'].forEach(k=>em.style[k]='')}}
 requestAnimationFrame(loop);
 try{if(typeof tab!='undefined'&&tab=='music')R()}catch(e){}
 })();
@@ -14591,16 +14592,17 @@ window.XFQ={make:openMake,scan:openScan,save:save,share:share,copy:copy,file:fil
   #mnow.tvon { animation: none !important; }
 }
 
-html.tvmode, html.tvmode body {
-  overflow-x: hidden !important;
+/* v117: dùng overflow-x:clip trên body (không tạo scroll container, không ép overflow-y:auto).
+   Không đặt overflow trên #app/#tc nữa vì nó cắt vuông hào quang/bóng đổ của tivi và tai mèo. */
+html.tvmode body {
+  overflow-x: clip !important;
   overscroll-behavior-x: none !important;
   width: 100% !important;
   max-width: 100vw !important;
-  position: relative;
 }
 html.tvmode #app,
 html.tvmode #tc {
-  overflow-x: hidden !important;
+  overflow: visible !important;
   overscroll-behavior-x: none !important;
   max-width: 100% !important;
   width: 100% !important;

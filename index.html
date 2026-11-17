@@ -6705,13 +6705,49 @@ const rin=(id,val,ph,t)=>`<input id="${id}" ${t?'type='+t+' ':''}value="${E(val)
 const EFX=[['none','Màu đơn'],['gradient','Chuyển màu'],['shimmer','Chuyển màu động'],['holo','Holographic (cầu vồng)'],['glow','Phát sáng']];
 const rsty=(k,it)=>`<div class=row style="margin:2px 0"><label class=mut>Màu 1 <input type=color id="${k}c" value="${E(it.color||'#99aab5')}" style="width:44px;height:30px;padding:0"></label><label class=mut>Màu 2 <input type=color id="${k}c2" value="${E(it.color2||it.color||'#99aab5')}" style="width:44px;height:30px;padding:0"></label></div><select id="${k}e" style="width:100%;margin:2px 0">${EFX.map(x=>`<option value="${x[0]}" ${(it.effect||'none')==x[0]?'selected':''}>${x[1]}</option>`).join('')}</select>`;
 const rolesH=()=>`<div class=card><h3>➕ Thêm role bán</h3>${A.groles?`<select id="rl-pick" onchange="AD.rolePick(this.value)" style="width:100%;margin:2px 0"><option value="">— Chọn role có sẵn trong server —</option>${A.groles.map(g=>{const sold=(A.roles||[]).some(x=>x.role_id==g.role_id),ok=g.assignable&&!sold;return `<option value="${E(g.role_id)}" ${ok?'':'disabled'}>${E(g.name)}${sold?' (đã bán)':g.assignable?'':' (bot chưa gắn được)'}</option>`}).join('')}</select><p class=mut style="font-size:.78rem;margin:0 0 4px">${!A.groles.length?'⚠️ Bot chưa đồng bộ role nào. Hãy chạy bản bot mới (kèm guild_roles.sql) và chờ log [guild_roles], rồi bấm ↻.':!A.groles.some(g=>g.assignable)?'⚠️ Bot chưa gắn được role nào: vào Cài đặt server, mục Vai trò, kéo role của bot lên cao hơn các role cần bán, rồi chờ vài phút và bấm ↻.':'Role mờ là role bot không gắn được (role của bot/tích hợp hoặc nằm cao hơn role của bot).'}</p>`:'<p class=mut style="font-size:.78rem">Chưa tải được danh sách role từ bot, hãy nhập ID thủ công.</p>'}${rin('rl-id','','ID role Discord (dãy số)')}${rin('rl-n','','Tên hiển thị')}${rin('rl-p','','Giá (tiền trong game)','number')}${rin('rl-d','','Mô tả (không bắt buộc)')}${rin('rl-s',0,'Thứ tự','number')}${rsty('rl-',{})}<button class=p style="width:100%;margin-top:6px" onclick="AD.roleAdd()">Thêm</button></div>`+(A.roles==null?LOAD:(A.roles.map(it=>{const k='rr'+it.role_id+'-',q=`'${E(it.role_id)}'`;return `<div class=card><div class=row style="margin:0">${window.ROLEFX?ROLEFX.pill(it):'<b>'+E(it.name)+'</b>'}<span class="${it.active?'ok':'mut'}">${it.active?'Đang bán':'Đã tắt'}</span></div><div class=mut style="font-size:.72rem">ID ${E(it.role_id)}</div>${A.groles&&!A.groles.some(g=>g.role_id==it.role_id)?'<div class=bad style="font-size:.78rem">⚠️ Role này không còn trên Discord, hãy tắt bán hoặc xóa.</div>':''}${rin(k+'n',it.name,'Tên')}${rin(k+'p',it.price,'Giá','number')}${rin(k+'d',it.description,'Mô tả')}${rin(k+'s',it.sort,'Thứ tự','number')}${rsty(k,it)}<div class=row><button class=p onclick="AD.roleSave(${q})">Lưu</button><button class=s onclick="AD.roleToggle(${q})">${it.active?'Tắt bán':'Bật bán'}</button><button class=s onclick="AD.roleDel(${q})">Xóa</button></div></div>`}).join('')||EMPTY('Chưa có role nào.')));
-const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['roles','🛒 Shop roles',rolesH],['ann','📢 Thông báo',annH],['logs','📜 Nhật ký',logsH],['admins','🛡 Quản trị viên',adminsH]];
+const CF=(k,l,h,r)=>`<label class=mut style="display:block;margin:8px 0 2px">${l}</label>${h?`<small class=mut style="display:block">${h}</small>`:''}<textarea rows=${r} oninput="AC.s('${k}',this.value)" style="width:100%">${E((A.cd||{})[k]||'')}</textarea>`;
+const CS=(k,o)=>`<select onchange="AC.s('${k}',this.value)" style="width:100%">${o.map(x=>`<option${((A.cd||{})[k]||o[0])==x?' selected':''}>${x}</option>`).join('')}</select>`;
+const caseH=()=>{A.cd=A.cd||{};return `<div class=card><h3>🕯️ Tạo vụ án cho /phaan</h3>`+CF('title','Tiêu đề','',1)+CF('desc','Mô tả ngắn','',2)+CF('intro','Mở đầu','',3)+CF('locs','Địa điểm và manh mối','Dòng "# Tên | mô tả" cho địa điểm, dòng "- Tiêu đề | mô tả" cho manh mối. Cần ≥3 địa điểm, ≥5 manh mối.',8)+CF('sus','Nghi phạm','Mỗi dòng: Tên | Vai trò | Giới thiệu (≥3)',4)+CF('npcs','NPC thẩm vấn','Mỗi dòng: Tên | Vai trò | Tính cách | Điều biết (ngăn bằng ;) | Câu dự phòng (≥2)',4)+CF('th','Giả thuyết','Mỗi dòng một giả thuyết (≥3)',4)+`<label class=mut style="display:block;margin:8px 0 2px">Giả thuyết đúng là số</label><input type=number min=1 value="${E((A.cd||{}).ans||1)}" oninput="AC.s('ans',this.value)" style="width:100%">`+CF('cmb','Ghép manh mối (tùy chọn)','Mỗi dòng: Tiêu đề A + Tiêu đề B => Tiêu đề mới | mô tả',3)+CF('req','Manh mối bắt buộc','Tiêu đề, ngăn bằng ; (có thể gồm manh mối ghép)',2)+CF('exp','Lời giải','',3)+`<label class=mut style="display:block;margin:8px 0 2px">Độ khó</label>`+CS('diff',['medium','easy','hard','expert'])+`<label class=mut style="display:block;margin:8px 0 2px">Trạng thái</label>`+CS('status',['published','review'])+`<button class=p style="width:100%;margin-top:8px" onclick="AC.make()">Lưu vụ án</button></div>`+(A.cs==null?LOAD:A.cs.map(c=>`<div class=card><b>${E(c.title)}</b><div class=mut>${E(c.slug)} · ${E(c.difficulty)}</div></div>`).join('')||EMPTY('Chưa có vụ án.'))};
+const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['roles','🛒 Shop roles',rolesH],['ann','📢 Thông báo',annH],['logs','📜 Nhật ký',logsH],['case','🕯️ Vụ án',caseH],['admins','🛡 Quản trị viên',adminsH]];
 V.adm=()=>{
  if(!A.ok)return EMPTY('Bạn không có quyền quản trị.');
  if(A.need){A.need=0;setTimeout(()=>AD.go(A.v),0)}
  const cur=VIEWS.find(x=>x[0]==A.v)||VIEWS[0];
  return `<div class=card><div class=row style="margin:0"><h3 style="margin:0;flex:1">🛡 Quản trị</h3><button class=s onclick="AD.go(AD.cur())" aria-label="Làm mới">↻</button></div>${bar(VIEWS.map(x=>chip(A.v==x[0]&&!A.sel,x[1],`AD.go('${x[0]}')`)).join(''))}</div>${A.sel?viewH():cur[2]()}`};
 
+window.AC={
+ s(k,v){(A.cd=A.cd||{})[k]=v},
+ async make(){
+  const d=A.cd||{},ck=x=>String(x).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/đ/g,'d').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''),
+   L=k=>String(d[k]||'').split('\n').map(x=>x.trim()).filter(Boolean),P=l=>l.split('|').map(x=>x.trim()),er=[];
+  const title=String(d.title||'').trim();if(!title)er.push('Thiếu tiêu đề');
+  const locations=[];let cur=null;
+  for(const l of L('locs')){if(l[0]=='#'){const[n,x]=P(l.slice(1));cur={key:ck(n),name:n,description:x||'',clues:[]};locations.push(cur)}else if(l[0]=='-'&&cur){const[t,x]=P(l.slice(1));cur.clues.push({key:'clue_'+ck(t),title:t,description:x||''})}else er.push('Sai định dạng: '+l)}
+  const clues=locations.flatMap(l=>l.clues),by=new Map(clues.map(c=>[ck(c.title),c]));
+  if(locations.length<3)er.push('Cần ≥3 địa điểm');if(clues.length<5)er.push('Cần ≥5 manh mối');
+  if(new Set(clues.map(c=>c.key)).size!=clues.length)er.push('Có manh mối trùng tên');
+  const suspects=L('sus').map(l=>{const[n,r,b]=P(l);return{key:ck(n),name:n,role:r||'',public_bio:b||''}});if(suspects.length<3)er.push('Cần ≥3 nghi phạm');
+  const npcs=L('npcs').map(l=>{const[n,r,p,k,f]=P(l);return{key:ck(n),name:n,role:r||'',personality:p||'',public_knowledge:(k||'').split(';').map(x=>x.trim()).filter(Boolean),fallback:f||'Tôi không biết thêm điều gì.'}});if(npcs.length<2)er.push('Cần ≥2 NPC');
+  const theories=L('th').map(l=>({key:ck(l).slice(0,40),label:l}));if(theories.length<3)er.push('Cần ≥3 giả thuyết');
+  const a=theories[(+d.ans||1)-1];if(!a)er.push('Số giả thuyết đúng không hợp lệ');
+  const combos=[];
+  for(const l of L('cmb')){const m=l.match(/^(.+?)\+(.+?)=>(.+)$/);if(!m){er.push('Sai định dạng ghép: '+l);continue}
+   const A1=by.get(ck(m[1])),B1=by.get(ck(m[2])),[t,x]=P(m[3]);if(!A1||!B1){er.push('Ghép sai tên: '+l);continue}
+   const u={key:'clue_'+ck(t),title:t,description:x||''};by.set(ck(t),u);combos.push({requires:[A1.key,B1.key],unlocks:u})}
+  const required=String(d.req||'').split(';').map(x=>x.trim()).filter(Boolean).map(t=>{const c=by.get(ck(t));if(!c)er.push('Manh mối bắt buộc không có: '+t);return c&&c.key}).filter(Boolean);
+  if(!required.length)er.push('Cần ≥1 manh mối bắt buộc');
+  if(er.length)return alert('Cần sửa:\n- '+er.join('\n- '));
+  const slug=ck(title).replace(/_/g,'-')+'-'+Date.now().toString(36);
+  try{
+   const c=await sb().from('scf_cases').insert({slug,title:title.slice(0,140),description:String(d.desc||'').slice(0,1000),difficulty:d.diff||'medium',theme:'supernatural'}).select('id').single();
+   if(c.error)throw c.error;
+   const v=await sb().from('scf_case_versions').insert({case_id:c.data.id,version:1,source:'authored',status:d.status||'published',public_data:{intro:String(d.intro||'').trim(),locations,suspects,npcs,theories,combos},solution_data:{answer_key:a.key,explanation:String(d.exp||'').trim(),timeline:[],required_clues:required}});
+   if(v.error){await sb().from('scf_cases').delete().eq('id',c.data.id);throw v.error}
+   try{alog('case_add',null,title.slice(0,120))}catch(e){}
+   A.cd={};toast('Đã lưu vụ án '+slug);AD.go('case')
+  }catch(er2){if(er2&&(er2.code=='42501'||/permission|policy/i.test(er2.message||'')))toast('Thiếu quyền: hãy chạy file scf_admin.sql trong Supabase');else fail2(er2)}
+ }
+};
 window.AD={
  cur:()=>A.v,
  async copy(id){try{await navigator.clipboard.writeText(id);toast('Đã chép ID')}catch(e){toast('ID: '+id)}},
@@ -6740,8 +6776,10 @@ window.AD={
    else if(v=='admins')await this._admins();
    else if(v=='ann')await this._ann();
    else if(v=='logs')await this._logs();
+   else if(v=='case')await this._case();
   }catch(er){fail2(er)}
   A.busy=0;redraw()},
+ async _case(){const r=await sb().from('scf_cases').select('slug,title,difficulty,created_at').order('created_at',{ascending:false}).limit(30);if(r.error)throw r.error;A.cs=r.data||[]},
  async _stats(){const s=sb(),since=new Date(Date.now()-864e5).toISOString();
   const c=(t,col,f)=>{let r=s.from(t).select(col,{count:'exact',head:true});if(f)r=f(r);return r.then(x=>x.error?'?':x.count)};
   const cb=()=>s.from('banned_users').select('user_id',{count:'exact',head:true}).or('until.is.null,until.gt.'+new Date().toISOString()).then(x=>x.error?c('banned_users','user_id'):x.count);

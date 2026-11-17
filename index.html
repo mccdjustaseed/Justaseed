@@ -6705,49 +6705,13 @@ const rin=(id,val,ph,t)=>`<input id="${id}" ${t?'type='+t+' ':''}value="${E(val)
 const EFX=[['none','Màu đơn'],['gradient','Chuyển màu'],['shimmer','Chuyển màu động'],['holo','Holographic (cầu vồng)'],['glow','Phát sáng']];
 const rsty=(k,it)=>`<div class=row style="margin:2px 0"><label class=mut>Màu 1 <input type=color id="${k}c" value="${E(it.color||'#99aab5')}" style="width:44px;height:30px;padding:0"></label><label class=mut>Màu 2 <input type=color id="${k}c2" value="${E(it.color2||it.color||'#99aab5')}" style="width:44px;height:30px;padding:0"></label></div><select id="${k}e" style="width:100%;margin:2px 0">${EFX.map(x=>`<option value="${x[0]}" ${(it.effect||'none')==x[0]?'selected':''}>${x[1]}</option>`).join('')}</select>`;
 const rolesH=()=>`<div class=card><h3>➕ Thêm role bán</h3>${A.groles?`<select id="rl-pick" onchange="AD.rolePick(this.value)" style="width:100%;margin:2px 0"><option value="">— Chọn role có sẵn trong server —</option>${A.groles.map(g=>{const sold=(A.roles||[]).some(x=>x.role_id==g.role_id),ok=g.assignable&&!sold;return `<option value="${E(g.role_id)}" ${ok?'':'disabled'}>${E(g.name)}${sold?' (đã bán)':g.assignable?'':' (bot chưa gắn được)'}</option>`}).join('')}</select><p class=mut style="font-size:.78rem;margin:0 0 4px">${!A.groles.length?'⚠️ Bot chưa đồng bộ role nào. Hãy chạy bản bot mới (kèm guild_roles.sql) và chờ log [guild_roles], rồi bấm ↻.':!A.groles.some(g=>g.assignable)?'⚠️ Bot chưa gắn được role nào: vào Cài đặt server, mục Vai trò, kéo role của bot lên cao hơn các role cần bán, rồi chờ vài phút và bấm ↻.':'Role mờ là role bot không gắn được (role của bot/tích hợp hoặc nằm cao hơn role của bot).'}</p>`:'<p class=mut style="font-size:.78rem">Chưa tải được danh sách role từ bot, hãy nhập ID thủ công.</p>'}${rin('rl-id','','ID role Discord (dãy số)')}${rin('rl-n','','Tên hiển thị')}${rin('rl-p','','Giá (tiền trong game)','number')}${rin('rl-d','','Mô tả (không bắt buộc)')}${rin('rl-s',0,'Thứ tự','number')}${rsty('rl-',{})}<button class=p style="width:100%;margin-top:6px" onclick="AD.roleAdd()">Thêm</button></div>`+(A.roles==null?LOAD:(A.roles.map(it=>{const k='rr'+it.role_id+'-',q=`'${E(it.role_id)}'`;return `<div class=card><div class=row style="margin:0">${window.ROLEFX?ROLEFX.pill(it):'<b>'+E(it.name)+'</b>'}<span class="${it.active?'ok':'mut'}">${it.active?'Đang bán':'Đã tắt'}</span></div><div class=mut style="font-size:.72rem">ID ${E(it.role_id)}</div>${A.groles&&!A.groles.some(g=>g.role_id==it.role_id)?'<div class=bad style="font-size:.78rem">⚠️ Role này không còn trên Discord, hãy tắt bán hoặc xóa.</div>':''}${rin(k+'n',it.name,'Tên')}${rin(k+'p',it.price,'Giá','number')}${rin(k+'d',it.description,'Mô tả')}${rin(k+'s',it.sort,'Thứ tự','number')}${rsty(k,it)}<div class=row><button class=p onclick="AD.roleSave(${q})">Lưu</button><button class=s onclick="AD.roleToggle(${q})">${it.active?'Tắt bán':'Bật bán'}</button><button class=s onclick="AD.roleDel(${q})">Xóa</button></div></div>`}).join('')||EMPTY('Chưa có role nào.')));
-const CF=(k,l,h,r)=>`<label class=mut style="display:block;margin:8px 0 2px">${l}</label>${h?`<small class=mut style="display:block">${h}</small>`:''}<textarea rows=${r} oninput="AC.s('${k}',this.value)" style="width:100%">${E((A.cd||{})[k]||'')}</textarea>`;
-const CS=(k,o)=>`<select onchange="AC.s('${k}',this.value)" style="width:100%">${o.map(x=>`<option${((A.cd||{})[k]||o[0])==x?' selected':''}>${x}</option>`).join('')}</select>`;
-const caseH=()=>{A.cd=A.cd||{};return `<div class=card><h3>🕯️ Tạo vụ án cho /phaan</h3>`+CF('title','Tiêu đề','',1)+CF('desc','Mô tả ngắn','',2)+CF('intro','Mở đầu','',3)+CF('locs','Địa điểm và manh mối','Dòng "# Tên | mô tả" cho địa điểm, dòng "- Tiêu đề | mô tả" cho manh mối. Cần ≥3 địa điểm, ≥5 manh mối.',8)+CF('sus','Nghi phạm','Mỗi dòng: Tên | Vai trò | Giới thiệu (≥3)',4)+CF('npcs','NPC thẩm vấn','Mỗi dòng: Tên | Vai trò | Tính cách | Điều biết (ngăn bằng ;) | Câu dự phòng (≥2)',4)+CF('th','Giả thuyết','Mỗi dòng một giả thuyết (≥3)',4)+`<label class=mut style="display:block;margin:8px 0 2px">Giả thuyết đúng là số</label><input type=number min=1 value="${E((A.cd||{}).ans||1)}" oninput="AC.s('ans',this.value)" style="width:100%">`+CF('cmb','Ghép manh mối (tùy chọn)','Mỗi dòng: Tiêu đề A + Tiêu đề B => Tiêu đề mới | mô tả',3)+CF('req','Manh mối bắt buộc','Tiêu đề, ngăn bằng ; (có thể gồm manh mối ghép)',2)+CF('exp','Lời giải','',3)+`<label class=mut style="display:block;margin:8px 0 2px">Độ khó</label>`+CS('diff',['medium','easy','hard','expert'])+`<label class=mut style="display:block;margin:8px 0 2px">Trạng thái</label>`+CS('status',['published','review'])+`<button class=p style="width:100%;margin-top:8px" onclick="AC.make()">Lưu vụ án</button></div>`+(A.cs==null?LOAD:A.cs.map(c=>`<div class=card><b>${E(c.title)}</b><div class=mut>${E(c.slug)} · ${E(c.difficulty)}</div></div>`).join('')||EMPTY('Chưa có vụ án.'))};
-const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['roles','🛒 Shop roles',rolesH],['ann','📢 Thông báo',annH],['logs','📜 Nhật ký',logsH],['case','🕯️ Vụ án',caseH],['admins','🛡 Quản trị viên',adminsH]];
+const VIEWS=[['home','📊 Tổng quan',homeH],['players','👥 Người chơi',playersH],['content','🧹 Nội dung',contentH],['banned','🚫 Đã khóa',bannedH],['grants','🎁 Quà tặng',grantsH],['roles','🛒 Shop roles',rolesH],['ann','📢 Thông báo',annH],['logs','📜 Nhật ký',logsH],['admins','🛡 Quản trị viên',adminsH]];
 V.adm=()=>{
  if(!A.ok)return EMPTY('Bạn không có quyền quản trị.');
  if(A.need){A.need=0;setTimeout(()=>AD.go(A.v),0)}
  const cur=VIEWS.find(x=>x[0]==A.v)||VIEWS[0];
  return `<div class=card><div class=row style="margin:0"><h3 style="margin:0;flex:1">🛡 Quản trị</h3><button class=s onclick="AD.go(AD.cur())" aria-label="Làm mới">↻</button></div>${bar(VIEWS.map(x=>chip(A.v==x[0]&&!A.sel,x[1],`AD.go('${x[0]}')`)).join(''))}</div>${A.sel?viewH():cur[2]()}`};
 
-window.AC={
- s(k,v){(A.cd=A.cd||{})[k]=v},
- async make(){
-  const d=A.cd||{},ck=x=>String(x).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/đ/g,'d').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''),
-   L=k=>String(d[k]||'').split('\n').map(x=>x.trim()).filter(Boolean),P=l=>l.split('|').map(x=>x.trim()),er=[];
-  const title=String(d.title||'').trim();if(!title)er.push('Thiếu tiêu đề');
-  const locations=[];let cur=null;
-  for(const l of L('locs')){if(l[0]=='#'){const[n,x]=P(l.slice(1));cur={key:ck(n),name:n,description:x||'',clues:[]};locations.push(cur)}else if(l[0]=='-'&&cur){const[t,x]=P(l.slice(1));cur.clues.push({key:'clue_'+ck(t),title:t,description:x||''})}else er.push('Sai định dạng: '+l)}
-  const clues=locations.flatMap(l=>l.clues),by=new Map(clues.map(c=>[ck(c.title),c]));
-  if(locations.length<3)er.push('Cần ≥3 địa điểm');if(clues.length<5)er.push('Cần ≥5 manh mối');
-  if(new Set(clues.map(c=>c.key)).size!=clues.length)er.push('Có manh mối trùng tên');
-  const suspects=L('sus').map(l=>{const[n,r,b]=P(l);return{key:ck(n),name:n,role:r||'',public_bio:b||''}});if(suspects.length<3)er.push('Cần ≥3 nghi phạm');
-  const npcs=L('npcs').map(l=>{const[n,r,p,k,f]=P(l);return{key:ck(n),name:n,role:r||'',personality:p||'',public_knowledge:(k||'').split(';').map(x=>x.trim()).filter(Boolean),fallback:f||'Tôi không biết thêm điều gì.'}});if(npcs.length<2)er.push('Cần ≥2 NPC');
-  const theories=L('th').map(l=>({key:ck(l).slice(0,40),label:l}));if(theories.length<3)er.push('Cần ≥3 giả thuyết');
-  const a=theories[(+d.ans||1)-1];if(!a)er.push('Số giả thuyết đúng không hợp lệ');
-  const combos=[];
-  for(const l of L('cmb')){const m=l.match(/^(.+?)\+(.+?)=>(.+)$/);if(!m){er.push('Sai định dạng ghép: '+l);continue}
-   const A1=by.get(ck(m[1])),B1=by.get(ck(m[2])),[t,x]=P(m[3]);if(!A1||!B1){er.push('Ghép sai tên: '+l);continue}
-   const u={key:'clue_'+ck(t),title:t,description:x||''};by.set(ck(t),u);combos.push({requires:[A1.key,B1.key],unlocks:u})}
-  const required=String(d.req||'').split(';').map(x=>x.trim()).filter(Boolean).map(t=>{const c=by.get(ck(t));if(!c)er.push('Manh mối bắt buộc không có: '+t);return c&&c.key}).filter(Boolean);
-  if(!required.length)er.push('Cần ≥1 manh mối bắt buộc');
-  if(er.length)return alert('Cần sửa:\n- '+er.join('\n- '));
-  const slug=ck(title).replace(/_/g,'-')+'-'+Date.now().toString(36);
-  try{
-   const c=await sb().from('scf_cases').insert({slug,title:title.slice(0,140),description:String(d.desc||'').slice(0,1000),difficulty:d.diff||'medium',theme:'supernatural'}).select('id').single();
-   if(c.error)throw c.error;
-   const v=await sb().from('scf_case_versions').insert({case_id:c.data.id,version:1,source:'authored',status:d.status||'published',public_data:{intro:String(d.intro||'').trim(),locations,suspects,npcs,theories,combos},solution_data:{answer_key:a.key,explanation:String(d.exp||'').trim(),timeline:[],required_clues:required}});
-   if(v.error){await sb().from('scf_cases').delete().eq('id',c.data.id);throw v.error}
-   try{alog('case_add',null,title.slice(0,120))}catch(e){}
-   A.cd={};toast('Đã lưu vụ án '+slug);AD.go('case')
-  }catch(er2){if(er2&&(er2.code=='42501'||/permission|policy/i.test(er2.message||'')))toast('Thiếu quyền: hãy chạy file scf_admin.sql trong Supabase');else fail2(er2)}
- }
-};
 window.AD={
  cur:()=>A.v,
  async copy(id){try{await navigator.clipboard.writeText(id);toast('Đã chép ID')}catch(e){toast('ID: '+id)}},
@@ -6776,10 +6740,8 @@ window.AD={
    else if(v=='admins')await this._admins();
    else if(v=='ann')await this._ann();
    else if(v=='logs')await this._logs();
-   else if(v=='case')await this._case();
   }catch(er){fail2(er)}
   A.busy=0;redraw()},
- async _case(){const r=await sb().from('scf_cases').select('slug,title,difficulty,created_at').order('created_at',{ascending:false}).limit(30);if(r.error)throw r.error;A.cs=r.data||[]},
  async _stats(){const s=sb(),since=new Date(Date.now()-864e5).toISOString();
   const c=(t,col,f)=>{let r=s.from(t).select(col,{count:'exact',head:true});if(f)r=f(r);return r.then(x=>x.error?'?':x.count)};
   const cb=()=>s.from('banned_users').select('user_id',{count:'exact',head:true}).or('until.is.null,until.gt.'+new Date().toISOString()).then(x=>x.error?c('banned_users','user_id'):x.count);
@@ -6959,7 +6921,7 @@ function feedRm(u){try{const p=FEEDPFX();if(typeof u=='string'&&u.startsWith(p))
  const HK={
   friends:r=>{if(r&&r.status=='pending')pjSend(r.friend_id,'👥 '+actor()+' gửi lời mời kết bạn')},
   wall_messages:r=>{const m=String((r&&r.message)||'');
-   if(m.slice(0,8)=='JSGIFT1:'){try{const j=JSON.parse(m.slice(8));if(j&&j.bank)pjSend(r.to_user,'💳 '+actor()+' chuyển cho bạn '+Math.round(+j.amt||0).toLocaleString('vi-VN')+'đ')}catch(e){}return}
+   if(m.slice(0,8)=='JSGIFT1:'){try{const j=JSON.parse(m.slice(8));if(j&&j.bank&&j.rf)pjSend(r.to_user,'💳 Bạn được hoàn lại '+Math.round(+j.amt||0).toLocaleString('vi-VN')+'đ (người nhận vượt hạn mức ngày)')}catch(e){}return}
    pjSend(r.to_user,r.parent_id==null?'📝 '+actor()+' vừa ký tường của bạn':'📝 '+actor()+' đã trả lời trên tường')},
   wall_reactions:async r=>{if(r&&r.reaction=='heart')pjSend(await ownerOf('wall_messages','from_user',r.message_id),'❤️ '+actor()+' đã tim phần ký tường của bạn')},
   feed_likes:async r=>{pjSend(await ownerOf('feed_posts','user_id',r.post_id),'❤️ '+actor()+' đã thả tim bài đăng của bạn')},
@@ -8061,7 +8023,7 @@ function readyCount(){return G0().orders.filter(o=>o.st=='making'&&s.day>=o.due)
 function hdr(){
  const g=G0(),b=g.bul,tot=g.items.reduce((a,i)=>a+val(i),0),rc=readyCount();
  const line=b&&b.day==s.day?b.line:(GD.hb==s.day?'…':'Chào con, hôm nay con cần gì nè?');
- return `<div class=card style="background:linear-gradient(135deg,color-mix(in srgb,#ffd54a 30%,var(--card)),var(--card))"><div class=row style="flex-wrap:nowrap;align-items:flex-start;gap:10px"><span style="flex:0 0 auto">${ownerSvg(54)}</span><span style="flex:1;min-width:0"><b style="font-size:1.1rem">${SHOP}</b></span></div><div class=bub style="margin:8px 0 4px">${E(line)}</div>${promoPct()||perkPct()?`<div>${promoPct()?`<span class=chip>Khuyến mãi hôm nay: -${promoPct()}% tiền công</span>`:''}${perkPct()?`<span class=chip>Ưu đãi riêng: -${perkPct()}% tiền công</span>`:''}</div>`:''}<div class=row><span class=mut>Túi đồ: ${g.items.length} món vàng/trang sức · trị giá ${$(tot)}</span><span class=mut>Ví ${$(s.money)}</span></div>${rc?`<div class="bub" style="background:#ffe9a8;color:#5a4000">Có ${rc} đơn gia công đã xong, qua tab Gia công để nhận hàng nhé!</div>`:''}</div>`}
+ return `<div class="card ghd" style="background:linear-gradient(135deg,color-mix(in srgb,#ffd54a 30%,var(--card)),var(--card))"><div class=row style="flex-wrap:nowrap;align-items:flex-start;gap:10px"><span style="flex:0 0 auto">${ownerSvg(54)}</span><span style="flex:1;min-width:0"><b style="font-size:1.1rem">${SHOP}</b></span></div><div class=bub style="margin:8px 0 4px">${E(line)}</div>${promoPct()||perkPct()?`<div>${promoPct()?`<span class=chip>Khuyến mãi hôm nay: -${promoPct()}% tiền công</span>`:''}${perkPct()?`<span class=chip>Ưu đãi riêng: -${perkPct()}% tiền công</span>`:''}</div>`:''}<div class=row><span class=mut>Túi đồ: ${g.items.length} món vàng/trang sức · trị giá ${$(tot)}</span><span class=mut>Ví ${$(s.money)}</span></div>${rc?`<div class="bub" style="background:#ffe9a8;color:#5a4000">Có ${rc} đơn gia công đã xong, qua tab Gia công để nhận hàng nhé!</div>`:''}</div>`}
 function spark(code,days){
  const k=code+'|'+days,h=PR.H[k];let pts=h&&h.pts;
  if(!pts){try{const a=JSON.parse(lg('jsGoldS')||'[]').filter(x=>x.c==code);if(a.length>=2)pts=a.map(x=>({t:x.t/1e3,v:x.v}))}catch(e){}}
@@ -9555,7 +9517,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
 <div class=row><input maxlength=60 placeholder="Lời nhắn (tuỳ chọn)" value="${esc(Q.note)}" oninput="BKX.note(this.value)" style="width:100%"></div>
 <div class=row><button class=p ${Q.busy||!Q.who?'disabled':''} onclick="BKX.send()">Chuyển tiền</button></div>
 <p class=mut style="margin:4px 0 0">Không giới hạn mỗi lần chuyển, chỉ giới hạn theo hạn mức cấp trong ngày. Tiền chuyển đi không thể thu hồi.<br>Hạn mức hôm nay (cấp ${myLim().lv}): chuyển ${$(myLim().out)}/${$(myLim().send)} · nhận ${$(myLim().inn)}/${$(myLim().recv)}</p></div>`:'';
-  const tx=b.tx.slice(0,15);
+  const tx=b.tx.slice(0,30);
   const hist=`<div class=card><h3>Lịch sử giao dịch</h3>${tx.length?tx.map(x=>`<div class=row><span>${x.k=='in'?'Nhận từ':'Chuyển cho'} <b>${esc(x.who)}</b><br><span class=mut>${new Date(x.t).toLocaleString('vi-VN')}${x.note?' · '+esc(x.note):''}</span></span><b class="${x.k=='in'?'ok':'bad'}">${x.k=='in'?'+':'-'}${$(x.amt)}</b></div>`).join(''):'<p class=mut>Chưa có giao dịch nào.</p>'}</div>`;
   return `<div class=card><h3>💳 Thẻ ngân hàng</h3>${card}${b.no?`<div class=row><span class=mut>Số thẻ của bạn (đưa cho người khác để nhận tiền)</span><button class=s onclick="BKX.copy()">Sao chép</button></div>`:''}${err}</div>${form}${(window.BKLIM_T?BKLIM_T():'')}${hist}`};
  window.C_RETRY=()=>{C.tried=0;C.err='';ensure()};
@@ -9566,6 +9528,9 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
  /* người nhận đã vượt giới hạn nhận cả ngày: hoàn tiền lại cho người gửi (tin có cờ rf, không tính vào hạn mức nhận) */
  const bounce=async(to,amt,p)=>{if(!to)return false;try{const pay={v:1,bank:1,tid:'rf'+String(p.tid||tid()).slice(0,36),amt,note:'Hoàn lại: người nhận đã vượt giới hạn nhận trong ngày',rf:1};const r=await sb().from('wall_messages').insert({from_user:currentUser.id,to_user:to,message:PFX+JSON.stringify(pay)});return !(r&&r.error)}catch(e){return false}};
  window.BKX={
+   /* ghi 1 dòng lịch sử giao dịch (dùng cho cả thao tác từ bot); tid để tránh ghi trùng */
+   log(k,amt,who,note,tid){try{const b=B(),t=tid?'l:'+String(tid).slice(0,40):'';if(t){if(b.seen.includes(t))return false;b.seen.push(t)}
+    b.tx.unshift({k:k=='in'?'in':'out',amt:Math.round(+amt)||0,who:String(who||'Người chơi').slice(0,40),note:String(note||'').slice(0,60),t:Date.now()});b.tx=b.tx.slice(0,50);try{save()}catch(e){}return true}catch(e){return false}},
   my(){return B().no||''},isOk(){return ok()},
    no(v){Q.no=String(v);const d=Q.no.replace(/\D/g,'');if(Q.who&&Q.who.no!==d)Q.who=null},
   amt(v){Q.amt=String(v)},note(v){Q.note=String(v).slice(0,60)},
@@ -9669,7 +9634,16 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     const amt=Math.floor(+p.amt);
     if(!(amt>=1&&amt<=5000000))throw new Error('Số tiền không hợp lệ');
     s.money=(Number.isFinite(s.money)?s.money:0)+amt;
-    try{L('in','Thưởng',String(p.label||'Thưởng từ bot').slice(0,60),1,amt)}catch(e){}
+    {const lb=String(p.label||''),mm=/^(?:nhận từ|chuyển khoản từ|được chuyển từ)\s+(.+)$/i.exec(lb.trim()),fromN=String(p.from_name||p.from||p.who||(mm&&mm[1])||'').slice(0,40);
+     if(fromN||p.transfer||p.kind=='transfer'){ /* tiền do người chơi khác chuyển qua bot */
+      const w=fromN||'Người chơi';
+      try{L('in','Chuyển khoản','Nhận từ '+w,1,amt)}catch(e){}
+      try{if(window.BKX&&BKX.log)BKX.log('in',amt,w,p.note,'i'+String(p.tid||('c'+a.id)))}catch(e){}
+      note('💳 '+w+' chuyển cho bạn '+money(amt));
+      try{toast('💳 '+w+' chuyển cho bạn '+money(amt))}catch(e){}
+      return '+'+money(amt);
+     }}
+     try{L('in','Thưởng',String(p.label||'Thưởng từ bot').slice(0,60),1,amt)}catch(e){}
     note('🎁 '+String(p.label||'Bạn nhận được thưởng')+': +'+money(amt));
     try{toast('🎁 +'+money(amt))}catch(e){}
     return '+'+money(amt);
@@ -9690,6 +9664,7 @@ ${b.stf.map((t,j)=>`<div class=row><span>${esc(t.n)} · cấp ${t.l}/${MAXL}<br>
     try{if(window.BKLIM)window.BKLIM.my().b.lim.out+=amt}catch(e){}
     const to=String(p.to_name||'người chơi').slice(0,40);
     try{L('out','Chuyển khoản','Chuyển cho '+to,1,amt)}catch(e){}
+     try{if(window.BKX&&BKX.log)BKX.log('out',amt,to,pay.note,'o'+pay.tid)}catch(e){}
     note('💳 Bạn đã chuyển '+money(amt)+' cho '+to);
     try{const me=(s.pf&&s.pf.nm)||s.name||'Bạn bè';sb().from('push_jobs').upsert({user_id:p.to_user,ref:'bank-'+pay.tid,fire_at:new Date().toISOString(),title:'💳 Nhận tiền chuyển khoản',body:me+' vừa chuyển cho bạn '+money(amt)+'. Vào game để nhận nhé',sent:false},{onConflict:'user_id,ref'}).then(()=>{},()=>{})}catch(e){}
     return '';
@@ -12877,8 +12852,8 @@ if(window.MX||!window.MS||!window.MU||!window.__mx0)return;
 const $e=id=>document.getElementById(id),LSX='jsMusicX',IDR=/^[\w-]{11}$/,H=window.__mx0;
 const X={sc:{},pools:{},plays:{},pls:[],hq:[],sl:null,lm:'',lv:'q',res:[],rt:'',busy:0,err:''};
 try{Object.assign(X,JSON.parse(localStorage.getItem(LSX)||'{}'))}catch(e){}
-X.res=[];X.busy=0;X.err='';
-const sx=()=>{try{localStorage.setItem(LSX,JSON.stringify({sc:X.sc,pools:X.pools,plays:X.plays,pls:X.pls,hq:X.hq,sl:X.sl,lm:X.lm,lv:X.lv,rg:X.rg}))}catch(e){}};
+X.res=[];X.busy=0;X.err='';X.hq=[];
+const sx=()=>{try{localStorage.setItem(LSX,JSON.stringify({sc:X.sc,pools:X.pools,plays:X.plays,pls:X.pls,hq:[],sl:X.sl,lm:X.lm,lv:X.lv,rg:X.rg}))}catch(e){}};
 const cov=id=>'https://i.ytimg.com/vi/'+id+'/mqdefault.jpg';
 const full=t=>({id:t.id,name:t.name,ar:t.ar||'',dur:t.dur||0,th:cov(t.id),img:cov(t.id)});
 const slim=t=>({id:t.id,name:t.name,ar:t.ar||'',dur:t.dur||0});
@@ -12932,7 +12907,7 @@ const cyc=()=>X.res.length<2?'':'<div class="mxcy" data-cy="1">'+X.res.map((t,i)
 function rP(){if(X.busy)return '<p class="mut" style="margin:8px 0 0">Đang tìm…</p>';if(X.err)return `<p class="bad" style="margin:8px 0 0">${esc(X.err)}</p>`;if(!X.res.length)return '';
  return `<div class="mxrh"><b>${esc(X.rt)}</b><span><button class="s" onclick="MX.all(1)">▶ Phát hết</button><button class="s" onclick="MX.all(0)">＋ Thêm</button><button class="s" aria-label="Đóng" onclick="MX.x()">✕</button></span></div>`+cyc()+X.res.map((t,i)=>rowX(t,i,'r')).join('')}
 const rUI=()=>{const e=$e('mxr');if(e)e.innerHTML=rP()};
-function hq(){return X.hq.length?X.hq.map((q,i)=>`<button class="chip" onclick="MX.hq(${i})">${esc(q)}</button>`).join(''):''}
+function hq(){return ''}
 const gCv=(k,l)=>'<div class="mxcy" data-cy="1"'+(k=='k'?' data-rev="1"':'')+'>'+l.map((t,i)=>`<button class="mxc" data-dk="m" data-k="${k}" data-i="${i}" aria-label="Phát ${esc(t.name)}" onclick="MX.a('${k}',${i},0)"><img src="${esc(t.th||cov(t.id))}" alt="" loading="lazy"></button>`).join('')+'</div>';
 function gSec(k,ti,ex,l,bz,er,hint){l=l||[];
  
@@ -12956,8 +12931,8 @@ async function run(title,fn,play,ord){if(X.busy)return;X.busy=1;X.err='';X.rt=ti
  X.busy=0;rUI();const e=$e('mxr');if(e&&e.scrollIntoView)e.scrollIntoView({behavior:'smooth',block:'center'});if(play&&X.res.length)bulk(X.res.slice(0,6),1)}
 async function find(){const i=$e('msq'),v=(i?i.value:'').trim();if(!v||X.busy)return;
  const pl=v.match(/[?&]list=([\w-]{10,})/);
- if(!pl)return(X.hq=[v].concat(X.hq.filter(x=>x!=v)).slice(0,8),sx(),MU.search());
- X.hq=[v].concat(X.hq.filter(x=>x!=v)).slice(0,8);sx();const h=$e('mxh');if(h)h.innerHTML=hq();
+ if(!pl)return MU.search();
+ 
  if(pl)return run('Playlist YouTube',async()=>{const j=await yt('playlistItems',{part:'contentDetails',maxResults:'50',playlistId:pl[1]});return vids((j.items||[]).map(x=>x.contentDetails.videoId))},0,1);
  return MU.search()}
 async function mix(){const t=MS.now;if(!t)return;toast('Đang tìm bài giống…');
@@ -14918,6 +14893,21 @@ html.tvmode #tc.tin > * { animation: none !important; }
 #spEmb.tvm:not(.movie) iframe,#spEmb.movie iframe{position:absolute!important;left:0!important;width:100%!important;top:-96px!important;height:calc(100% + 192px)!important;pointer-events:none!important}
 #spEmb.tvm:not(.movie) #spEl{position:static}
 </style>
+<style id="skin-glass-gold">
+/* v126: giao diện Kính vẫn giữ thẻ vàng ở Tiệm vàng - kính mờ nhuốm vàng thay vì bị ghi đè thành kính trắng */
+:root[data-skin^=glass] .card.ghero{background:linear-gradient(135deg,rgba(255,241,176,.86),rgba(245,197,66,.78) 60%,rgba(224,164,22,.84))!important;color:#4a3000!important;-webkit-backdrop-filter:blur(18px) saturate(1.45);backdrop-filter:blur(18px) saturate(1.45);border:1px solid rgba(255,255,255,.7)!important;box-shadow:0 26px 44px -26px #c98a00,0 0 0 1px rgba(255,214,90,.35),inset 0 1.5px 0 rgba(255,255,255,.75)!important}
+:root[data-skin^=glass][data-theme=dark] .card.ghero{background:linear-gradient(135deg,rgba(255,225,120,.78),rgba(232,176,32,.7) 60%,rgba(190,130,10,.78))!important;border-color:rgba(255,255,255,.35)!important;box-shadow:0 26px 44px -26px rgba(0,0,0,.7),0 0 0 1px rgba(255,214,90,.3),inset 0 1.5px 0 rgba(255,255,255,.4)!important}
+:root[data-skin^=glass] .card.ghd{background:linear-gradient(135deg,rgba(255,213,74,.5),rgba(255,236,170,.2) 60%,color-mix(in srgb,var(--card) 46%,transparent))!important;border:1px solid rgba(255,225,130,.75)!important;box-shadow:0 26px 44px -28px #c98a00,inset 0 1px 0 rgba(255,255,255,.6)!important}
+:root[data-skin^=glass][data-theme=dark] .card.ghd{background:linear-gradient(135deg,rgba(255,213,74,.3),rgba(255,213,74,.08) 60%,color-mix(in srgb,var(--card) 55%,transparent))!important;border-color:rgba(255,213,74,.4)!important;box-shadow:0 26px 44px -28px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.16)!important}
+:root[data-skin^=glass] .gc{background:linear-gradient(180deg,rgba(255,213,74,.34),rgba(255,213,74,.1) 70%,color-mix(in srgb,var(--card) 46%,transparent));-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);border:1px solid rgba(255,225,130,.7);box-shadow:0 16px 26px -20px #c98a00,inset 0 1px 0 rgba(255,255,255,.55)}
+:root[data-skin^=glass] .gc.gh{border-color:#e3a000;box-shadow:0 0 0 3px rgba(255,213,74,.45),0 16px 26px -20px #c98a00,inset 0 1px 0 rgba(255,255,255,.55)}
+:root[data-skin^=glass][data-theme=dark] .gc{background:linear-gradient(180deg,rgba(255,213,74,.22),rgba(255,213,74,.06) 70%,color-mix(in srgb,var(--card) 55%,transparent));border-color:rgba(255,213,74,.35)}
+:root[data-skin^=glass] .gm.ow{background:linear-gradient(135deg,rgba(255,213,74,.4),rgba(255,236,170,.25))!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+:root[data-skin^=glass] .gsub button.on2{background:linear-gradient(135deg,#ffe27a,#e8b020)!important;color:#5b3b00!important;border-color:rgba(255,255,255,.6)!important;box-shadow:0 6px 12px -6px #c98a00}
+:root[data-skin^=glass] .gt tr.gsel td{background:linear-gradient(90deg,rgba(255,213,74,.4),rgba(255,213,74,.12))}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root[data-skin^=glass] .card.ghero{background:linear-gradient(135deg,#fff1b0,#f5c542 60%,#e0a416)!important}:root[data-skin^=glass] .card.ghd{background:linear-gradient(135deg,color-mix(in srgb,#ffd54a 40%,var(--card)),var(--card))!important}}
+</style>
+
 <script id="tvclean-js-v119">
 (function(){
   var last=0;
@@ -14930,199 +14920,6 @@ html.tvmode #tc.tin > * { animation: none !important; }
   },250);
 })();
 </script>
-<style id="jslib-css">
-#jl .jlq{display:flex;gap:6px;flex-wrap:wrap}#jl .jlq input,#jls input,#jls select{flex:1;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--ln);border-radius:12px;background:var(--card);color:var(--ink)}
-#jl .ch{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}#jl .ch button,#jlrd button{min-height:40px}
-#jl .gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-#jl .bk{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:4px;min-width:0}
-#jl .bk img,#jl .bk .nc{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:2rem}
-#jl .bk b{font-size:.92rem;line-height:1.25;overflow-wrap:anywhere}#jl .bk small{color:var(--mut);overflow-wrap:anywhere}
-#jl .bd2{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--g);width:max-content}
-#jl .bd2.f{background:var(--g2);color:#fff}#jl .bd2.n{background:var(--pk)}
-#jl .bk .row2{display:flex;gap:4px;flex-wrap:wrap;margin-top:auto}#jl .bk button,#jl .bk a{font-size:.8rem;min-height:36px}
-#jl a.s{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
-#jlrd{--rb:#fffdf7;--rt:#244033;position:fixed;inset:0;z-index:99990;background:var(--rb);color:var(--rt);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);animation:jlin .2s}
-#jlrd[data-th=d]{--rb:#13221a;--rt:#e6f4e8}@keyframes jlin{from{opacity:0;transform:translateY(12px)}}html.rm #jlrd{animation:none}
-#jlrd .jtb{display:flex;gap:4px;flex-wrap:wrap;padding:6px 8px;border-bottom:1px solid #8884;align-items:center}
-#jlrd .jtb button,#jlrd .jft button,#jls button{background:#8882;color:inherit;border:0;border-radius:10px;padding:6px 10px;font:inherit;cursor:pointer}
-#jlrd .jtt{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#jlb{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;position:relative;padding:14px 16px 40px}
-#jlt{max-width:42em;margin:auto;overflow-wrap:anywhere;white-space:pre-line}#jlt p{margin:0 0 .9em}#jlt h3{margin:1.2em 0 .6em}
-#jlrd .jft{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:6px 8px;border-top:1px solid #8884}
-#jlrd .jst{padding:6px 10px;font-size:.85rem;background:#8882}#jlrd iframe{flex:1;border:0;width:100%;background:#fff}
-#jls{position:fixed;inset:0;z-index:99995;background:#0007;display:flex;align-items:center;justify-content:center;padding:12px}
-#jls>div{background:var(--card,#fff);color:var(--ink,#222);border-radius:16px;padding:14px;max-width:460px;width:100%;max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
-#jls label{font-size:.85rem}#jls .li{display:flex;gap:6px;justify-content:space-between;align-items:center}
-</style>
-<script id="jslib-js">
-(function(){
-if(window.JL||typeof TABS==='undefined'||typeof V==='undefined')return;
-const LK='jslib_v1',TK='jslib_tr_v1',E=t=>String(t==null?'':t).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
-const sleep=(ms,sg)=>new Promise((ok,no)=>{const t=setTimeout(ok,ms);sg&&sg.addEventListener('abort',()=>{clearTimeout(t);no(new DOMException('Đã hủy','AbortError'))})});
-const tst=m=>{try{toast(m)}catch(e){alert(m)}};
-let D={v:1,shelf:{},bm:{},set:{}};try{D=Object.assign(D,JSON.parse(localStorage.getItem(LK)||'{}'))}catch(e){}
-D.set=Object.assign({sz:18,lh:1.7,th:'',key:'',model:'gemini-3.5-flash',lt:'',ltk:''},D.set);D.shelf=D.shelf||{};D.bm=D.bm||{};
-const save=()=>{try{localStorage.setItem(LK,JSON.stringify(D))}catch(e){}};
-let TR={};try{TR=JSON.parse(localStorage.getItem(TK)||'{}')}catch(e){}
-const trSave=()=>{try{let k=Object.keys(TR).sort((a,b)=>TR[a].t-TR[b].t);while(k.length>1&&JSON.stringify(TR).length>2.5e6)delete TR[k.shift()];localStorage.setItem(TK,JSON.stringify(TR))}catch(e){}};
-I.book='M4 4h6a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-6a3 3 0 00-3 3v13a2 2 0 012-2h7z';
-const nz=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-const L3={vie:'vi',jpn:'ja',kor:'ko',chi:'zh',zho:'zh',eng:'en',fre:'fr',fra:'fr'},L2={vi:'vie',ja:'jpn',ko:'kor',zh:'chi',en:'eng',fr:'fre'};
-/* Quốc gia -> chỉ lọc theo NGÔN NGỮ chính (API không cung cấp quốc gia tác giả đáng tin cậy). Mở rộng: thêm dòng vào đây. */
-const CT=[['','Tất cả'],['vi','Việt Nam'],['ja','Nhật Bản'],['ko','Hàn Quốc'],['zh','Trung Quốc'],['en','Mỹ / Anh'],['fr','Pháp']];
-/* Thể loại: [nhãn, từ khóa EN (subject), từ khóa VI]. Mở rộng: thêm dòng vào đây. */
-const GN=[['Tiểu thuyết','novel','tiểu thuyết'],['Truyện ngắn','short stories','truyện ngắn'],['Khoa học','science','khoa học'],['Lịch sử','history','lịch sử'],['Kinh tế','economics','kinh tế'],['Tâm lý học','psychology','tâm lý học'],['Triết học','philosophy','triết học'],['Giáo dục','education','giáo dục'],['Công nghệ','technology','công nghệ'],['Văn học','literature','văn học'],['Khác','','']];
-const SRC={gb:'Google Books',ol:'Open Library',ws:'Wikisource',gt:'Gutenberg'};
-async function fj(u,o={},ms=10000,rt=1){let er;for(let i=0;i<=rt;i++){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(u,Object.assign({signal:c.signal},o));clearTimeout(t);if(r.status>=500&&i<rt){await sleep(800);continue}if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){clearTimeout(t);er=e.name=='AbortError'?new Error('Quá thời gian chờ'):e;if(i<rt)await sleep(800)}}throw er}
-const mk=o=>Object.assign({au:[],lang:[],isbn:[],cover:'',desc:'',year:'',acc:'info',rd:null,fr:0,lic:'',url:'',alts:[]},o);
-const strip=h=>String(h||'').replace(/<[^>]*>/g,'').replace(/&quot;/g,'"').replace(/&amp;/g,'&').replace(/&#039;/g,"'");
-/* ===== NGUỒN ===== */
-const P=20;
-async function sGB(q,f,pg){const pre={title:'intitle:',author:'inauthor:',isbn:'isbn:'}[f.t]||'',qq=pre+q+(f.g&&f.g[1]?' subject:'+f.g[1]:''),ls=f.l?[f.l]:(pg?['']:['vi','']),out=[];
-for(const l of ls){const j=await fj('https://www.googleapis.com/books/v1/volumes?printType=books&maxResults='+P+'&startIndex='+pg*P+'&q='+encodeURIComponent(qq)+(l?'&langRestrict='+l:'')+(f.free?'&filter=free-ebooks':''));
-(j.items||[]).forEach(it=>{const v=it.volumeInfo||{},a=it.accessInfo||{},vw=a.viewability,acc=vw=='ALL_PAGES'?'full':vw=='PARTIAL'?'preview':'info';
-out.push(mk({id:'gb:'+it.id,src:'gb',title:v.title||'(không tên)',au:v.authors||[],lang:v.language?[v.language.slice(0,2)]:[],cover:((v.imageLinks||{}).thumbnail||'').replace('http:','https:'),desc:strip(v.description),year:(v.publishedDate||'').slice(0,4),isbn:(v.industryIdentifiers||[]).map(x=>x.identifier),acc,rd:a.embeddable&&acc!='info'?{k:'gb',id:it.id}:null,fr:vw=='ALL_PAGES'||(it.saleInfo||{}).saleability=='FREE'?1:0,url:v.infoLink||'',lic:a.publicDomain?'Phạm vi công cộng (theo Google Books)':'Theo điều khoản Google Books'}))})}
-return out}
-async function sOL(q,f,pg){const fld={title:'title',author:'author',isbn:'isbn'}[f.t],qq=(fld?fld+':"'+q+'"':q)+(f.g&&f.g[1]?' subject:"'+f.g[1]+'"':'')+(f.l&&L2[f.l]?' language:'+L2[f.l]:''),
-j=await fj('https://openlibrary.org/search.json?limit='+P+'&page='+(pg+1)+'&fields=key,title,author_name,first_publish_year,isbn,cover_i,language,ebook_access,ia&q='+encodeURIComponent(qq));
-return(j.docs||[]).map(d=>{const ea=d.ebook_access,ia=(d.ia||[])[0],acc=ea=='public'?'full':ea=='borrowable'?'borrow':'info';
-return mk({id:'ol:'+d.key,src:'ol',title:d.title,au:d.author_name||[],lang:(d.language||[]).map(x=>L3[x]||x),cover:d.cover_i?'https://covers.openlibrary.org/b/id/'+d.cover_i+'-M.jpg':'',year:d.first_publish_year||'',isbn:(d.isbn||[]).slice(0,6),acc,rd:acc=='full'&&ia?{k:'ia',id:ia}:null,fr:acc=='full'?1:0,url:'https://openlibrary.org'+d.key,lic:acc=='borrow'?'Cần mượn/đăng nhập tại Open Library':'Theo Internet Archive / Open Library'})})}
-async function sWS(q,f,pg){if((f.l&&f.l!='vi')||f.t=='isbn')return[];
-const j=await fj('https://vi.wikisource.org/w/api.php?action=query&list=search&srnamespace=0&srlimit='+P+'&sroffset='+pg*P+'&format=json&origin=*&srsearch='+encodeURIComponent(q+(f.g&&f.g[2]?' '+f.g[2]:'')));
-const seen={};return((j.query||{}).search||[]).filter(r=>{const t=r.title.split('/')[0];return!seen[t]&&(seen[t]=1)}).map(r=>{const t=r.title.split('/')[0];
-return mk({id:'ws:'+t,src:'ws',title:t,lang:['vi'],desc:strip(r.snippet),acc:'full',rd:{k:'ws',t},fr:1,url:'https://vi.wikisource.org/wiki/'+encodeURIComponent(t.replace(/ /g,'_')),lic:'Wikisource: CC BY-SA 4.0 / phạm vi công cộng (xem trang gốc)'})})}
-async function sGT(q,f,pg){if(f.t=='isbn')return[];const j=await fj('https://gutendex.com/books/?page='+(pg+1)+'&search='+encodeURIComponent(q)+(f.l?'&languages='+f.l:'')+(f.g&&f.g[1]?'&topic='+encodeURIComponent(f.g[1]):''),{},15000);
-return(j.results||[]).map(d=>{const fm=d.formats||{},k=x=>{const z=Object.keys(fm).find(y=>y.startsWith(x));return z?fm[z]:''},h=k('text/html'),x=k('text/plain');
-return mk({id:'gt:'+d.id,src:'gt',title:d.title,au:(d.authors||[]).map(a=>a.name.split(', ').reverse().join(' ')),lang:d.languages||[],cover:fm['image/jpeg']||'',acc:'full',rd:h||x?{k:'gt',h,x}:null,fr:1,url:'https://www.gutenberg.org/ebooks/'+d.id,lic:'Project Gutenberg – phạm vi công cộng (tại Mỹ)'})})}
-const SF={gb:sGB,ol:sOL,ws:sWS,gt:sGT};
-const rank=b=>(b.rd?10:0)+(b.acc=='full'?5:b.acc=='preview'?2:0)+(b.lang.includes('vi')?3:0)+(b.cover?1:0);
-function merge(a){const M=new Map(),G=[];for(const b of a){const ks=b.isbn.map(x=>'i'+x),kt='t'+nz(b.title)+'|'+nz(b.au[0]);let g=null;for(const k of ks)if(M.has(k)){g=M.get(k);break}
-if(!g&&M.has(kt)){const c=M.get(kt);if(!(c.m.some(x=>x.isbn.length)&&b.isbn.length&&!c.m.some(x=>x.isbn.some(i=>b.isbn.includes(i)))))g=c}
-if(!g){g={m:[]};G.push(g)}g.m.push(b);[...ks,kt].forEach(k=>{if(!M.has(k))M.set(k,g)})}
-return G.map(g=>{const m=g.m.slice().sort((x,y)=>rank(y)-rank(x)),b=m[0];b.alts=m.slice(1);b.alts.forEach(o=>{if(!b.cover)b.cover=o.cover;if(!b.desc)b.desc=o.desc;if(!b.year)b.year=o.year;if(!b.au.length)b.au=o.au;if(!b.lang.length)b.lang=o.lang});return b}).sort((x,y)=>rank(y)-rank(x))}
-/* ===== TRẠNG THÁI TÌM KIẾM ===== */
-const S={q:'',t:'',l:'',g:null,free:0,rd:0,vi:0,pg:0,raw:[],res:[],st:{},busy:0,more:0,v:'home',sh:'reading',done:0},CACHE=new Map();let dbt=0;
-function filt(a){return a.filter(b=>(!S.free||b.fr)&&(!S.rd||b.rd)&&(!S.vi||b.lang.includes('vi')))}
-async function search(more){const q=S.q.trim();if(q.length<2){tst('Nhập ít nhất 2 ký tự');return}if(S.busy)return;S.v='res';if(!more){S.pg=0;S.raw=[];S.res=[];S.st={};S.done=0}else S.pg++;S.busy=1;ui();
-const f={t:S.t,l:S.l,g:S.g,free:S.free},ck=JSON.stringify([q,f,S.pg]),hit=CACHE.get(ck);let rs;
-if(hit&&Date.now()-hit.t<6e5)rs=hit.rs;else{const ks=Object.keys(SF);rs=await Promise.allSettled(ks.map(k=>SF[k](q,f,S.pg)));rs=rs.map((r,i)=>({k:ks[i],ok:r.status=='fulfilled',v:r.value||[],e:r.reason&&r.reason.message}));if(rs.some(r=>r.ok))CACHE.set(ck,{t:Date.now(),rs})}
-let n=0;rs.forEach(r=>{S.st[r.k]=r.ok?(r.v.length?'ok':'0'):'err:'+(navigator.onLine?r.e:'mất kết nối');if(r.ok){S.raw.push(...r.v);n+=r.v.length}});
-S.res=filt(merge(S.raw));S.more=n>0;S.busy=0;S.done=1;ui()}
-const pend=()=>{clearTimeout(dbt);dbt=setTimeout(()=>{if(S.q.trim().length>=2)search()},800)};
-/* ===== GIAO DIỆN TAB ===== */
-const BL={full:['Toàn văn','f'],preview:['Đọc thử',''],info:['Chỉ xem thông tin','n'],borrow:['Cần quyền truy cập','n']};
-function card(b,i,arr){const bl=BL[b.acc],sh=D.shelf[b.id];
-return`<div class=bk>${b.cover?`<img src="${E(b.cover)}" alt="" loading=lazy onerror="this.outerHTML='<div class=nc>📖</div>'">`:'<div class=nc>📖</div>'}<b>${E(b.title)}</b><small>${E(b.au.slice(0,2).join(', ')||'Không rõ tác giả')}</small><small>${E([b.lang.join('/').toUpperCase(),b.year,SRC[b.src]].filter(Boolean).join(' · '))}</small><span class="bd2 ${bl[1]}">${bl[0]}</span>${b.lic?`<small title="${E(b.lic)}">⚖ ${E(b.lic.slice(0,48))}</small>`:''}
-<div class=row2>${b.rd?`<button class=p onclick="JL.open('${arr}',${i})">ĐỌC SÁCH</button>`:''}${b.url?`<a class=s target=_blank rel=noopener href="${E(b.url)}">Nguồn ↗</a>`:''}<button class=s onclick="JL.fav('${arr}',${i})">${sh&&sh.fav?'♥':'♡'}</button></div>
-${b.alts.filter(a=>a.rd||a.url).slice(0,3).map(a=>a.rd?`<button class=s style="font-size:.75rem" onclick="JL.open('${arr}',${i},${b.alts.indexOf(a)})">Đọc qua ${SRC[a.src]}</button>`:`<a class=s style="font-size:.75rem" target=_blank rel=noopener href="${E(a.url)}">${SRC[a.src]} ↗</a>`).join('')}</div>`}
-const chips=()=>`<div class=ch>${CT.map(c=>`<button class="s ${S.l==c[0]?'on2':''}" onclick="JL.set('l','${c[0]}')">${c[1]}</button>`).join('')}</div><div class=ch>${GN.map((g,i)=>`<button class="s ${S.g&&S.g[0]==g[0]?'on2':''}" onclick="JL.gn(${i})">${g[0]}</button>`).join('')}</div><div class=ch><button class="s ${S.free?'on2':''}" onclick="JL.tg('free')">Miễn phí</button><button class="s ${S.rd?'on2':''}" onclick="JL.tg('rd')">Đọc trực tuyến</button><button class="s ${S.vi?'on2':''}" onclick="JL.tg('vi')">Có bản tiếng Việt</button></div>`;
-function shelfH(){const T=[['reading','Đang đọc'],['fav','Yêu thích'],['read','Đã đọc'],['bm','Đánh dấu']],e=Object.entries(D.shelf).filter(([k,x])=>x.b),pick=S.sh=='fav'?e.filter(([k,x])=>x.fav):S.sh=='read'?e.filter(([k,x])=>x.st=='read'):S.sh=='reading'?e.filter(([k,x])=>x.st=='reading'):[];
-let h=`<div class=ch>${T.map(t=>`<button class="s ${S.sh==t[0]?'on2':''}" onclick="JL.sh('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
-if(S.sh=='bm'){const a=Object.entries(D.bm).flatMap(([k,l])=>l.map((m,i)=>({k,m,i}))).filter(x=>D.shelf[x.k]);h+=a.length?a.map(x=>`<div class=row><span style="min-width:0"><b>${E(D.shelf[x.k].b.title)}</b><br><small class=mut>${E(x.m.sn)}</small></span><button class=s onclick="JL.go('${x.k}',${x.m.c},${x.m.b})">Mở</button></div>`).join(''):'<p class=mut>Chưa có trang đánh dấu.</p>';return h}
-pick.sort((a,b)=>b[1].t-a[1].t);S.sa=pick.map(x=>x[1].b);return h+(pick.length?`<div class=gr>${S.sa.map((b,i)=>card(b,i,'sa')+'').join('')}</div>`:'<p class=mut>Chưa có sách trong mục này.</p>')}
-function body(){if(S.v=='shelf')return shelfH();if(S.v=='res'){const bad=Object.entries(S.st).filter(([k,v])=>v.startsWith('err'));
-let h=`<p class=mut style="font-size:.82rem">${Object.keys(SRC).map(k=>S.st[k]?(S.st[k]=='ok'?'✓':S.st[k]=='0'?'○':'⚠')+' '+SRC[k]:'').filter(Boolean).join(' · ')}${bad.length?'<br>Một số nguồn lỗi: '+bad.map(([k,v])=>SRC[k]+' ('+E(v.slice(4))+')').join('; ')+' <button class=s onclick="JL.go2()">Thử lại</button>':''}</p>`;
-if(S.busy&&!S.res.length)return h+'<p class=mut>⏳ Đang tìm trong các nguồn…</p>';
-if(S.done&&!S.res.length)return h+(bad.length==Object.keys(SRC).length?'<div class=card style="text-align:center"><p>📡 Không kết nối được tới nguồn nào.</p><p class=mut>Kiểm tra mạng rồi bấm Thử lại.</p></div>':'<div class=card style="text-align:center"><p>😕 Không tìm thấy sách phù hợp.</p><p class=mut>Thử từ khóa khác hoặc bỏ bớt bộ lọc.</p></div>');
-S.sr=S.res;return h+`<div class=gr>${S.res.map((b,i)=>card(b,i,'sr')).join('')}</div>${S.more?`<p style="text-align:center"><button class=s ${S.busy?'disabled':''} onclick="JL.more()">${S.busy?'Đang tải…':'Tải thêm'}</button></p>`:''}`}
-const rc=Object.values(D.shelf).filter(x=>x.b&&x.st=='reading').sort((a,b)=>b.t-a.t).slice(0,6);S.hr=rc.map(x=>x.b);
-const sg=q=>`<button class=s onclick="JL.q('${q}')">${q}</button>`;
-return`${S.hr.length?`<h3>Đang đọc gần đây</h3><div class=gr>${S.hr.map((b,i)=>card(b,i,'hr')).join('')}</div>`:''}<h3>Khám phá</h3><div class=ch><button class=s onclick="JL.pre('văn học Việt Nam','vi')">🇻🇳 Sách tiếng Việt</button><button class=s onclick="JL.pre('classic novel','')">🌍 Sách quốc tế</button><button class=s onclick="JL.pre('classic','',1)">🆓 Sách miễn phí</button></div><h3>Nổi bật (gợi ý tìm)</h3><div class=ch>${['Truyện Kiều','Tắt đèn','Sherlock Holmes','Pride and Prejudice','Alice in Wonderland'].map(sg).join('')}</div><div class=card><b>Học liệu mở VOER</b><p class=mut style="margin:4px 0">VOER không có API công khai nên chỉ có liên kết tới tài liệu gốc.</p><a class=s target=_blank rel=noopener href="https://voer.edu.vn/">Mở VOER ↗</a></div>`}
-function ui(){const r=document.getElementById('jlr');if(r)r.innerHTML=body();const f=document.getElementById('jlf');if(f)f.innerHTML=chips()}
-V.lib=()=>`<div id=jl><div class=card><div class=row><h3>📚 JUSTASEED BOOK LIBRARY</h3><span><button class=s onclick="JL.setv('${S.v=='shelf'?'home':'shelf'}')">${S.v=='shelf'?'← Thư viện':'Tủ sách của tôi'}</button> <button class=s onclick="JL.cfg()" aria-label="Cài đặt">⚙</button></span></div>
-<div class=jlq><input id=jlq type=search placeholder="Tên sách, tác giả hoặc ISBN…" value="${E(S.q)}" oninput="JL.inp(this.value)" onkeydown="if(event.key=='Enter')JL.go2()"><select onchange="JL.set('t',this.value)" aria-label="Tìm theo">${[['','Tất cả'],['title','Tên sách'],['author','Tác giả'],['isbn','ISBN']].map(o=>`<option value="${o[0]}" ${S.t==o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><button class=p onclick="JL.go2()">Tìm</button></div>
-<div id=jlf>${chips()}</div></div><div id=jlr>${body()}</div></div>`;
-{const i=TABS.findIndex(t=>t[0]=='up');TABS.splice(i<0?TABS.length:i,0,['lib','book','Thư viện'])}
-/* ===== TRÌNH ĐỌC ===== */
-const RD={b:null,chs:[],ci:0,bl:[],tr:null,mode:'o',ab:null,sv:0};let rt=0;
-const el=id=>document.getElementById(id);
-function blocks(root){const out=[],sk='.noprint,.reference,.mw-editsection,.navbox,#toc,.toc,script,style,table';root.querySelectorAll(sk).forEach(n=>n.remove());
-root.querySelectorAll('h1,h2,h3,h4,p,li,pre').forEach(n=>{n.querySelectorAll('br').forEach(b=>b.replaceWith('\n'));const t=n.textContent.replace(/[ \t]+/g,' ').replace(/\n\s+/g,'\n').trim();if(!t)return;const m=/^H(\d)$/.exec(n.tagName);out.push(m?{k:'h',l:+m[1],t}:{k:'p',t})});return out}
-function split(bl,tt){let lv=0;for(const l of [2,1,3])if(bl.filter(x=>x.k=='h'&&x.l==l).length>=2){lv=l;break}
-let ch=[],c={t:tt,bl:[]};bl.forEach(x=>{if(lv&&x.k=='h'&&x.l==lv&&c.bl.length){ch.push(c);c={t:x.t,bl:[]}}if(!c.t||c.t==tt&&x.k=='h'&&!c.bl.length)c.t=x.t;c.bl.push(x)});ch.push(c);
-const out=[];ch.forEach(c=>{let cur={t:c.t,bl:[]},n=0,p=1;c.bl.forEach(x=>{if(n>25000&&x.k=='p'){out.push(cur);p++;cur={t:c.t+' (phần '+p+')',bl:[]};n=0}cur.bl.push(x);n+=x.t.length});out.push(cur)});return out.filter(c=>c.bl.length)}
-async function loadBook(b){const r=b.rd;if(r.k=='ws'){const j=await fj('https://vi.wikisource.org/w/api.php?action=query&list=allpages&apnamespace=0&aplimit=200&format=json&origin=*&apprefix='+encodeURIComponent(r.t+'/'));
-const pg=((j.query||{}).allpages||[]).map(x=>x.title).sort(new Intl.Collator('vi',{numeric:true}).compare);return(pg.length?pg:[r.t]).map(p=>({t:p==r.t?r.t:p.slice(r.t.length+1),p}))}
-if(r.k=='gt'){const u=r.h||r.x;let tx;try{const x=await fetch(u);if(!x.ok)throw 0;tx=await x.text()}catch(e){return'frame'}
-let bl;if(r.h){const d=new DOMParser().parseFromString(tx,'text/html');bl=blocks(d.body);const a=bl.findIndex(x=>/\*\*\* ?START OF/i.test(x.t)),z=bl.findIndex(x=>/\*\*\* ?END OF/i.test(x.t));bl=bl.slice(a>=0?a+1:0,z>0?z:undefined)}
-else{tx=tx.replace(/^[\s\S]*?\*\*\* ?START OF[^\n]*\n/i,'').replace(/\*\*\* ?END OF[\s\S]*$/i,'');bl=tx.split(/\r?\n\s*\r?\n/).map(t=>t.replace(/\s*\r?\n\s*/g,' ').trim()).filter(Boolean).map(t=>/^(chapter|chương|book|part|phần)\b.{0,60}$/i.test(t)?{k:'h',l:2,t}:{k:'p',t})}
-return split(bl,b.title).map(c=>({t:c.t,bl:c.bl}))}return'frame'}
-async function chBl(c){if(c.bl)return c.bl;const j=await fj('https://vi.wikisource.org/w/api.php?action=parse&prop=text&redirects=1&disableeditsection=1&format=json&formatversion=2&origin=*&page='+encodeURIComponent(c.p),{},15000);
-if(j.error)throw new Error(j.error.info);const d=new DOMParser().parseFromString((j.parse||{}).text||'','text/html');return c.bl=blocks(d.body)}
-const isDark=()=>D.set.th?D.set.th=='d':document.documentElement.dataset.theme=='dark';
-function shell(b){const o=document.createElement('div');o.id='jlrd';o.dataset.th=isDark()?'d':'l';o.innerHTML=`<div class=jtb style="flex-wrap:nowrap"><button style="flex:none" onclick="JL.close()">← Thư viện</button><span class=jtt>${E(b.title)}${b.au[0]?' · '+E(b.au[0]):''}</span></div><div id=jlx></div>`;document.body.appendChild(o);document.body.style.overflow='hidden'}
-function tools(){const b=RD.b,vi=b.lang.includes('vi'),has=D.shelf[b.id];return`<div class=jtb><button onclick="JL.fs(-1)" aria-label="Giảm cỡ chữ">A−</button><button onclick="JL.fs(1)" aria-label="Tăng cỡ chữ">A+</button><button onclick="JL.lh(-.1)" aria-label="Giảm giãn dòng">≡−</button><button onclick="JL.lh(.1)" aria-label="Tăng giãn dòng">≡+</button><button onclick="JL.th()" aria-label="Sáng/Tối">${isDark()?'☀️':'🌙'}</button><button onclick="JL.bm()">🔖+</button><button onclick="JL.bml()">Đánh dấu</button><button onclick="JL.toc()">☰</button>${vi?'':RD.tr?`<button onclick="JL.mode('${RD.mode=='v'?'o':'v'}')">${RD.mode=='v'?'XEM BẢN GỐC':'XEM BẢN DỊCH'}</button>`:`<button onclick="JL.trans()">DỊCH SANG TIẾNG VIỆT</button>`}</div><div id=jlst class=jst style="display:none"></div>`}
-function paint(keep){const c=RD.chs[RD.ci],bl=RD.bl,tr=RD.mode=='v'&&RD.tr;const h=bl.map((x,i)=>{const t=tr&&tr[i]!=null?tr[i]:x.t;return x.k=='h'?`<h3 data-i=${i}>${E(t)}</h3>`:`<p data-i=${i}>${E(t)}</p>`}).join('');
-const x=el('jlx');x.innerHTML=tools()+`<div id=jlb style="font-size:${D.set.sz}px;line-height:${D.set.lh}"><div id=jlt>${bl[0]&&bl[0].k=='h'&&bl[0].t==c.t?'':`<h3>${E(c.t)}</h3>`}${h}</div></div><div class=jft><button onclick="JL.ch(-1)" ${RD.ci?'':'disabled'}>◀ Trước</button><span id=jlp></span><button onclick="JL.ch(1)" ${RD.ci<RD.chs.length-1?'':'disabled'}>Sau ▶</button></div>`;x.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0';
-const bd=el('jlb');bd.onscroll=()=>{clearTimeout(rt);rt=setTimeout(pos,400)};if(keep!=null){const n=bd.querySelector('[data-i="'+keep+'"]');if(n)bd.scrollTop=n.offsetTop-8}prog()}
-const top=()=>{const bd=el('jlb');if(!bd)return 0;const a=bd.querySelectorAll('[data-i]');for(const n of a)if(n.offsetTop+n.offsetHeight>bd.scrollTop+4)return+n.dataset.i;return 0};
-function prog(){const bd=el('jlb'),p=el('jlp');if(!bd||!p)return;const f=bd.scrollHeight>bd.clientHeight?bd.scrollTop/(bd.scrollHeight-bd.clientHeight):1,n=RD.chs.length;p.textContent=(RD.ci+1)+'/'+n+' · '+Math.min(100,Math.round((RD.ci+f)/n*100))+'%';return(RD.ci+f)/n}
-function pos(){const pr=prog(),s=D.shelf[RD.b.id];if(!s||pr==null)return;s.pos={c:RD.ci,b:top()};s.pr=pr;s.t=Date.now();if(pr>=.98)s.st='read';save()}
-async function showCh(i,at){RD.ci=Math.max(0,Math.min(RD.chs.length-1,i));RD.tr=null;RD.mode='o';const c=RD.chs[RD.ci];el('jlx').innerHTML='<p class=mut style="padding:20px">⏳ Đang tải…</p>';
-try{RD.bl=await chBl(c)}catch(e){el('jlx').innerHTML=`<div style="padding:20px"><p>⚠ Không tải được nội dung: ${E(e.message)}</p><button class=s onclick="JL.ch(0)">Thử lại</button> <a class=s target=_blank rel=noopener href="${E(RD.b.url)}">Mở nguồn ↗</a></div>`;return}
-if(!RD.bl.length)RD.bl=[{k:'p',t:'(Trang không có nội dung văn bản.)'}];const k=TR[trKey()];if(k&&k.p.length==RD.bl.length&&k.p.every(x=>x!=null)){RD.tr=k.p}
-paint(at);if(at==null)pos()}
-const eng=()=>D.set.key?'g:'+D.set.model:D.set.lt?'l':'';const trKey=()=>RD.b.id+'|'+RD.ci+'|'+eng();
-async function open(b,ci,bi){if(!b.rd){tst('Sách này không có nội dung đọc trực tiếp');return}const s=D.shelf[b.id]=D.shelf[b.id]||{t:0,st:'reading'};s.b=b;s.t=Date.now();if(s.st!='read')s.st='reading';save();
-RD.b=b;RD.chs=[];closeR();shell(b);const x=el('jlx');
-if(b.rd.k=='gb'||b.rd.k=='ia'){frame(b.rd.k=='gb'?'https://books.google.com/books?output=embed&id='+encodeURIComponent(b.rd.id):'https://archive.org/embed/'+encodeURIComponent(b.rd.id));return}
-x.innerHTML='<p style="padding:20px">⏳ Đang tải sách…</p>';
-try{const r=await loadBook(b);if(r=='frame'){frame(b.rd.h||b.rd.x);return}RD.chs=r}catch(e){x.innerHTML=`<div style="padding:20px"><p>⚠ Không tải được sách: ${E(e.message)}</p><a class=s target=_blank rel=noopener href="${E(b.url)}">Mở nguồn chính thức ↗</a></div>`;return}
-if(!RD.chs.length){x.innerHTML='<p style="padding:20px">Không có nội dung.</p>';return}
-const p=s.pos||{c:0,b:0};await showCh(ci!=null?ci:p.c,bi!=null?bi:p.b)}
-function frame(u){el('jlx').innerHTML=`<div class=jst>Đang dùng trình xem của nguồn: không đổi cỡ chữ / dịch được. <a target=_blank rel=noopener style="color:inherit" href="${E(RD.b.url||u)}">Mở nguồn chính thức ↗</a></div><iframe src="${E(u)}" allowfullscreen referrerpolicy="no-referrer"></iframe>`;el('jlx').style.cssText='display:flex;flex-direction:column;flex:1;min-height:0'}
-function closeR(){RD.ab&&RD.ab.abort();const o=el('jlrd');if(o)o.remove();document.body.style.overflow=''}
-/* ===== DỊCH ===== */
-const SYS='Bạn là dịch giả văn học chuyên nghiệp. Đầu vào là một mảng JSON các đoạn văn. Trả về MỘT mảng JSON có đúng cùng số phần tử, mỗi phần tử là bản dịch tiếng Việt của đoạn tương ứng. Dịch đầy đủ, không tóm tắt, không bỏ, gộp hay tách đoạn; giữ nguyên tên nhân vật và địa danh khi phù hợp; giữ thuật ngữ nhất quán; giữ tiêu đề; văn phong tiếng Việt tự nhiên, dễ đọc; không thêm tình tiết, chú thích hay lời bình.';
-let last=0;async function gap(sg){const w=3000-(Date.now()-last);if(w>0)await sleep(w,sg);last=Date.now()}
-async function call(arr,sg){for(let n=0;;n++){await gap(sg);try{
-if(D.set.key){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(D.set.model)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':D.set.key},signal:sg,body:JSON.stringify({systemInstruction:{parts:[{text:SYS}]},contents:[{role:'user',parts:[{text:JSON.stringify(arr)}]}],generationConfig:{responseMimeType:'application/json',responseSchema:{type:'ARRAY',items:{type:'STRING'}},temperature:.3}})});
-if(!r.ok){const j=await r.json().catch(()=>({}));const e=new Error((j.error&&j.error.message)||'HTTP '+r.status);e.st=r.status;throw e}
-const j=await r.json(),t=((((j.candidates||[])[0]||{}).content||{}).parts||[]).map(p=>p.text||'').join('');const o=JSON.parse(t);if(!Array.isArray(o))throw new Error('Phản hồi không đúng định dạng');return o.map(String)}
-const r=await fetch(D.set.lt.replace(/\/$/,'')+'/translate',{method:'POST',headers:{'Content-Type':'application/json'},signal:sg,body:JSON.stringify({q:arr,source:'auto',target:'vi',format:'text',api_key:D.set.ltk||undefined})});
-if(!r.ok){const e=new Error('LibreTranslate HTTP '+r.status);e.st=r.status;throw e}const j=await r.json();return[].concat(j.translatedText)
-}catch(e){if(e.name=='AbortError')throw e;if((e.st==429||e.st>=500)&&n<2){stat('⏳ Máy chủ dịch bận, thử lại sau '+(8*(n+1))+'s…');await sleep(8e3*(n+1),sg);continue}throw e}}}
-async function tChunk(arr,sg){const o=await call(arr,sg);if(o.length==arr.length)return o;if(arr.length==1)return[o.join('\n')];const h=arr.length>>1;return[...await tChunk(arr.slice(0,h),sg),...await tChunk(arr.slice(h),sg)]}
-const stat=(h,btn)=>{const s=el('jlst');if(s){s.style.display=h?'block':'none';s.innerHTML=h||''}};
-async function trans(){if(!eng()){cfg(1);return}const k=trKey(),bl=RD.bl,hit=TR[k];if(hit&&hit.p.length==bl.length&&hit.p.every(x=>x!=null)){RD.tr=hit.p;RD.mode='v';paint(top());return}
-const ent=TR[k]=hit&&hit.p.length==bl.length?hit:{t:Date.now(),p:bl.map(()=>null)},ck=[];let cur=[],n=0;bl.forEach((x,i)=>{if(ent.p[i]!=null)return;if(n+x.t.length>3500&&cur.length){ck.push(cur);cur=[];n=0}cur.push(i);n+=x.t.length});if(cur.length)ck.push(cur);
-if(ck.length>40&&!confirm('Chương này rất dài ('+ck.length+' lượt gọi API). Vẫn dịch?'))return;
-const ab=RD.ab=new AbortController(),at=RD.ci;let d=0;
-try{for(const c of ck){stat(`⏳ Đang dịch ${d+1}/${ck.length}… <button onclick="JL.cancel()">Hủy</button>`);const o=await tChunk(c.map(i=>bl[i].t),ab.signal);if(RD.ci!=at||!el('jlrd'))return;c.forEach((i,j)=>ent.p[i]=o[j]);ent.t=Date.now();d++}
-RD.tr=ent.p;RD.mode='v';trSave();stat('');paint(top())}catch(e){trSave();stat(e.name=='AbortError'?'Đã hủy dịch (phần đã dịch được giữ lại). <button onclick="JL.trans()">Dịch tiếp</button>':`⚠ Dịch thất bại: ${E(e.message)} <button onclick="JL.trans()">Thử lại</button>`)}}
-function cfg(need){const o=document.createElement('div');o.id='jls';o.onclick=e=>{if(e.target==o)o.remove()};const s=D.set;
-o.innerHTML=`<div><h3>⚙ Cài đặt dịch sách</h3>${need?'<p class=mut style="margin:0">Cần cấu hình công cụ dịch để dùng DỊCH SANG TIẾNG VIỆT. Thư viện vẫn dùng bình thường nếu không có key.</p>':''}
-<label>Gemini API Key (lấy miễn phí tại <a href="https://aistudio.google.com/apikey" target=_blank rel=noopener>aistudio.google.com/apikey</a>)<input id=jk type=password autocomplete=off value="${E(s.key)}" placeholder="AIza…"></label>
-<label>Model Gemini<input id=jm list=jml value="${E(s.model)}"><datalist id=jml><option value="gemini-3.5-flash"><option value="gemini-3.5-flash-lite"><option value="gemini-3.8-flash"></datalist></label>
-<label>LibreTranslate / máy chủ dịch riêng (tùy chọn, dùng khi không có key Gemini)<input id=jl1 value="${E(s.lt)}" placeholder="https://máy-chủ-của-bạn"></label><label>API key LibreTranslate (nếu có)<input id=jl2 type=password value="${E(s.ltk)}"></label>
-<p class=mut style="font-size:.8rem;margin:0">Key chỉ lưu trong trình duyệt của thiết bị này (localStorage, không mã hóa) và chỉ gửi tới Google (hoặc máy chủ dịch bạn nhập). Nên dùng key đã giới hạn hạn mức; không dùng chung thiết bị công cộng.</p>
-<div class=li><button onclick="JL.sv()" class=p style="padding:8px 14px">Lưu</button><button onclick="JL.rmk()">Xóa key</button><button onclick="JL.rmt()">Xóa bản dịch đã lưu</button></div></div>`;document.body.appendChild(o)}
-/* ===== API CÔNG KHAI ===== */
-const A=n=>S[n];
-window.JL={
-inp(v){S.q=v;pend()},go2(){clearTimeout(dbt);search()},more(){search(1)},
-set(k,v){S[k]=v;if(k=='l')S.g&&0;ui();if(S.q.trim().length>=2&&S.v=='res')search()},
-gn(i){S.g=S.g&&S.g[0]==GN[i][0]?null:GN[i];ui();if(S.q.trim().length>=2)search()},tg(k){S[k]=S[k]?0:1;if(S.v=='res'&&S.raw.length){S.res=filt(merge(S.raw))}ui()},
-q(t){S.q=t;const i=el('jlq');if(i)i.value=t;search()},pre(q,l,f){S.q=q;S.l=l;S.free=f?1:0;S.rd=f?1:0;const i=el('jlq');if(i)i.value=q;search()},
-setv(v){S.v=v;if(typeof R=='function')R()},sh(k){S.sh=k;ui()},
-fav(a,i){const b=S[a][i];const s=D.shelf[b.id]=D.shelf[b.id]||{t:Date.now(),st:''};s.b=b;s.fav=s.fav?0:1;save();ui()},
-open(a,i,j){const b=S[a][i];open(j!=null?b.alts[j]:b)},
-go(id,c,b){const x=D.shelf[id];if(x)open(x.b,c,b)},
-close(){pos();closeR();if(S.v=='shelf'||S.v=='home')ui()},
-fs(d){D.set.sz=Math.max(12,Math.min(34,D.set.sz+d*2));save();const b=el('jlb');if(b){const k=top();b.style.fontSize=D.set.sz+'px';const n=b.querySelector('[data-i="'+k+'"]');if(n)b.scrollTop=n.offsetTop-8}},
-lh(d){D.set.lh=Math.max(1.2,Math.min(2.4,+(D.set.lh+d).toFixed(1)));save();const b=el('jlb');if(b)b.style.lineHeight=D.set.lh},
-th(){D.set.th=isDark()?'l':'d';save();el('jlrd').dataset.th=D.set.th;const t=document.querySelector('#jlrd .jtb button[aria-label="Sáng/Tối"]');if(t)t.textContent=isDark()?'☀️':'🌙'},
-ch(d){pos();showCh(RD.ci+d,d?0:top())},
-bm(){const k=top(),n=el('jlb').querySelector('[data-i="'+k+'"]'),l=D.bm[RD.b.id]=D.bm[RD.b.id]||[];l.push({c:RD.ci,b:k,sn:(n?n.textContent:'').slice(0,70),t:Date.now()});D.shelf[RD.b.id]=D.shelf[RD.b.id]||{t:Date.now(),st:'reading'};D.shelf[RD.b.id].b=RD.b;save();tst('Đã đánh dấu trang')},
-bml(){const l=D.bm[RD.b.id]||[],o=document.createElement('div');o.id='jls';o.onclick=e=>{if(e.target==o)o.remove()};o.innerHTML=`<div><h3>Trang đã đánh dấu</h3>${l.length?l.map((m,i)=>`<div class=li><button style="flex:1;text-align:left" onclick="JL.bg(${i})">Ch.${m.c+1}: ${E(m.sn)}</button><button onclick="JL.bd(${i})">✕</button></div>`).join(''):'<p>Chưa có.</p>'}</div>`;document.body.appendChild(o)},
-bg(i){const m=D.bm[RD.b.id][i];el('jls').remove();showCh(m.c,m.b)},bd(i){D.bm[RD.b.id].splice(i,1);save();el('jls').remove();JL.bml()},
-toc(){const o=document.createElement('div');o.id='jls';o.onclick=e=>{if(e.target==o)o.remove()};o.innerHTML=`<div><h3>Mục lục</h3>${RD.chs.map((c,i)=>`<button style="text-align:left;${i==RD.ci?'font-weight:700':''}" onclick="el_('jls').remove();JL.jump(${i})">${i+1}. ${E(c.t)}</button>`).join('')}</div>`;document.body.appendChild(o)},
-jump(i){pos();showCh(i,0)},trans,cfg,cancel(){RD.ab&&RD.ab.abort()},mode(m){RD.mode=m;paint(top())},
-sv(){D.set.key=el('jk').value.trim();D.set.model=el('jm').value.trim()||'gemini-3.5-flash';D.set.lt=el('jl1').value.trim();D.set.ltk=el('jl2').value.trim();save();el('jls').remove();tst('Đã lưu cài đặt')},
-rmk(){D.set.key='';D.set.ltk='';save();el('jk').value='';el('jl2').value='';tst('Đã xóa key khỏi thiết bị')},rmt(){TR={};trSave();tst('Đã xóa bản dịch đã lưu')},
-_:{D,S,nz,merge,mk,blocks,split,tChunk}};
-window.el_=id=>document.getElementById(id);
-})();
-</script>
+<script>try{localStorage.removeItem("jslib_v1");localStorage.removeItem("jslib_tr_v1")}catch(e){}</script>
 
 </body></html>

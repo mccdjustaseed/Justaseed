@@ -131,6 +131,29 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
 <style id="mdesc-order">@media(min-width:900px){#tc#tc:has(#mnow){grid-template-areas:"now q" "ly tv" "info tv" "srch tv" "gen gen"}#tc#tc:has(#mnow.tvon){grid-template-areas:"now q" "now tv" "ly tv" "info tv" "srch tv" "gen gen";grid-template-rows:auto auto auto auto 1fr auto}}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style id="mxgc-font">#mxgc,#mxgc *{font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif!important}#mxgc .mxhd h3{letter-spacing:-.01em;font-weight:700}</style>
+<style id="cart-fix-v123">
+/* v123: khi bảng "Xác nhận đơn nhập hàng" hiện (cố định bên phải), vùng nội dung bị thu hẹp
+   nhưng danh sách vẫn chia 2-3 cột dạng hàng ngang (khối nút 176px) => cột bị vỡ/chữ rớt dòng.
+   Chuyển sang ô dọc gọn, số cột tự co theo bề rộng còn lại. */
+@media (min-width:701px){
+ #tc:has(>.card.cartc) .card:has(>.xbi){display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;column-gap:8px}
+ #tc:has(>.card.cartc) .card:has(>.xbi)>:not(.xbi){grid-column:1/-1}
+ #tc:has(>.card.cartc) .card:has(>.xbi)>.xbi{border:1px solid var(--ln)!important;border-radius:12px;background:color-mix(in srgb,var(--g) 14%,var(--card));padding:8px!important;gap:4px;display:flex;flex-direction:column;align-items:stretch;min-width:0;text-align:center}
+ #tc:has(>.card.cartc) .xbi .xba{display:flex;justify-content:center}
+ #tc:has(>.card.cartc) .xbi .xba svg{width:32px!important;height:32px!important}
+ #tc:has(>.card.cartc) .xbi .xbt{align-items:center;min-width:0;line-height:1.25;flex:none;white-space:normal}
+ #tc:has(>.card.cartc) .xbi .xbt b{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem}
+ #tc:has(>.card.cartc) .xbi .xbt .mut{font-size:.68rem;max-width:100%}
+ #tc:has(>.card.cartc) .xbi .xbt .bar{width:100%}
+ #tc:has(>.card.cartc) .xbi .xbq{flex:none;width:100%;gap:4px;margin-top:2px}
+ #tc:has(>.card.cartc) .xbq .xbs{gap:4px}
+ #tc:has(>.card.cartc) .xbq .xbs:first-child{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #tc:has(>.card.cartc) .xbq .xbs:first-child>:nth-child(3){grid-column:1/-1}
+ #tc:has(>.card.cartc) .xbq .xbs:last-child{grid-template-columns:30px minmax(0,1fr) 30px}
+ #tc:has(>.card.cartc) .xbq .xbs .s,#tc:has(>.card.cartc) .xbq .xbs .qi,#tc:has(>.card.cartc) .xbq .xbs button.stp{height:30px!important;font-size:.8rem!important;border-radius:9px!important}
+ #tc:has(>.card.cartc) .xbq .xbs button.stp{font-size:1rem!important}
+}
+</style>
 </head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
 <script id="yt-guard-js">
 /* v124: hàng đợi gọi YouTube API — giãn cách, tự thử lại khi 429, nghỉ 60s nếu vẫn bị giới hạn */
@@ -1550,7 +1573,7 @@ ini();
 </script><script>
 /* ===== BẢN CẬP NHẬT 5 ===== */
 const $q=id=>document.getElementById(id);
-let BKS=[],NOSIGN=0,BF='a',BQ=null,CO=null,CIM=null,CAV=null,CMI=null,CCV=null;
+let BKS=[],BL=40,NOSIGN=0,BF='a',BQ=null,CO=null,CIM=null,CAV=null,CMI=null,CCV=null;
 function cardLoadMi(){CMI=null;if(!(CO&&CO.m&&CO.mt))return Promise.resolve();return new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{CMI=i;r()};i.onerror=()=>r();i.src=CO.mt.th;setTimeout(r,4000)})}
 function cardLoadCv(){CCV=null;if(!(s.pf&&s.pf.cv))return Promise.resolve();return new Promise(r=>{const i=new Image();i.onload=()=>{CCV=i;r()};i.onerror=()=>r();i.src=s.pf.cv})}
 function cardMusic(){if(CO.m){CO.m=0;s.cd={...CO};save();cardUI();return}const c=window.MU&&MU.cur();if(!c)return toast('Chưa có bài nào đang nghe. Hãy mở một bài trong tab Nhạc trước');CO.m=1;CO.mt={id:c.id,name:c.name,ar:c.ar,th:c.th};s.cd={...CO};save();cardLoadMi().then(()=>{cardUI();toast('Đã gắn đĩa than: '+c.name)})}
@@ -1571,9 +1594,9 @@ const xr=c.xt&&!c.xm,st=ok&&s.rv[0]?s.rv[0].st:0;addBill({nm:c.nm||rnd(NM2),look
 {const o=endDay;endDay=function(){o();xp(20+(s.rpt&&s.rpt.pf>0?15:0))}}
 function bill(id){const b=(s.bills||[]).find(x=>x.id==id);if(!b)return;const ln=(t,v,c)=>`<div class=row style="margin:2px 0"><span>${t}</span><b class="${c||''}">${v}</b></div>`,it=b.all?['Toàn bộ hàng trong quầy']:[...b.fl.map(a=>nm(a[0])+' × '+a[1]),'Giấy '+b.z+(b.ps&&b.ps!='kr'?' '+PS[b.ps].n:''),...(b.gift||[]).map(a=>nm(a[0])+' × '+a[1]),...(b.xt?[nm(b.xt)]:[])];
 $q('modal').innerHTML=`<div class=mb onclick="if(event.target==this)mdl()"><div class=ms><div class=row><h2>Hóa đơn</h2><button class=s onclick=mdl()>✕</button></div><div class=card style="border-style:dashed"><div style="text-align:center"><b class=hand>${esc(s.name)}</b><br><span class=mut>Ngày ${b.d}${b.t?' · '+b.t:''}</span></div><div class=inq>Khách: <b>${esc(b.nm)}</b>${b.vip?' 👑':''}</div><div class=inq>${it.map(t=>`<div class=row style="margin:2px 0"><span>${esc(t)}</span></div>`).join('')}</div><div class=inq>${ln('Giá bán',$(b.pr))}${b.xp?ln('Đồ mưa nắng','+'+$(b.xp)):''}${b.tip?ln('Tiền boa','+'+$(b.tip)):''}${ln('Tổng',b.run?'0đ':$(b.pr+b.xp+b.tip),b.run?'bad':'ok')}</div><p class=mut style="text-align:center;margin:6px 0 0">${b.run?'Khách quỵt tiền':stars(b.st)+' · '+b.st+' sao'}</p></div></div></div>`}
-V.bills=()=>{const A=s.bills||[],by={};if(s.bk)Object.keys(s.bk).forEach(n=>{by[n]={n:s.bk[n][0],t:s.bk[n][1]}});else A.forEach(x=>{const k=by[x.nm]=by[x.nm]||{n:0,t:0};k.n++;k.t+=x.run?0:x.pr+x.xp+x.tip});const bt=(k,t)=>`<button class="s ${BF==k?'on2':''}" onclick="BF='${k}';BQ=null;R()">${t}</button>`;
+V.bills=()=>{const A=s.bills||[],by={};if(s.bk)Object.keys(s.bk).forEach(n=>{by[n]={n:s.bk[n][0],t:s.bk[n][1]}});else A.forEach(x=>{const k=by[x.nm]=by[x.nm]||{n:0,t:0};k.n++;k.t+=x.run?0:x.pr+x.xp+x.tip});const bt=(k,t)=>`<button class="s ${BF==k?'on2':''}" onclick="BF='${k}';BQ=null;BL=40;R()">${t}</button>`;
 const L2=A.filter(x=>(BF!='t'||x.d==s.day)&&(!BQ||x.nm==BQ));
-return `<div class=card><div class=row><span>${bt('a','Tất cả ('+A.length+')')} ${bt('t','Hôm nay')} ${bt('k','Theo khách')}</span></div><p class=mut style="margin:6px 0 0">Chỉ lưu hóa đơn 7 ngày gần nhất. Số lần mua của khách vẫn được giữ lại.</p>${BQ?`<div class=row><span>Khách: <b>${esc(BQ)}</b></span><button class=s onclick="BQ=null;R()">✕</button></div>`:''}</div><div class=card>${BF=='k'?(Object.keys(by).length?(BKS=Object.keys(by).sort((a,b)=>by[b].t-by[a].t)).map((k,i)=>`<div class=row><span><b>${esc(k)}</b><br><span class=mut>${by[k].n} lần mua</span></span><span><b>${$(by[k].t)}</b> <button class=s onclick="BF='a';BQ=BKS[${i}];R()">Xem</button></span></div>`).join(''):'<p class=mut>Chưa có khách nào.</p>'):L2.length?L2.map(x=>`<div class="row ${x.run?'runrow':''}"><span style="display:flex;gap:8px;align-items:center"><span style="zoom:.7">${cu(x.look,0,x.vip)}</span><span><b>${esc(x.nm)}</b><br><span class=mut>Ngày ${x.d}${x.t?' · '+x.t:''} · ${x.run?'quỵt':x.st+'★'}</span></span></span><span><b>${x.run?'0đ':$(x.pr+x.xp+x.tip)}</b> <button class=s onclick="bill('${x.id}')">Xem bill</button></span></div>`).join(''):'<p class=mut>Chưa có hóa đơn nào. Bán hàng cho khách để có lịch sử mua.</p>'}</div>`};
+return `<div class=card><div class=row><span>${bt('a','Tất cả ('+A.length+')')} ${bt('t','Hôm nay')} ${bt('k','Theo khách')}</span></div><p class=mut style="margin:6px 0 0">Chỉ lưu hóa đơn 7 ngày gần nhất. Số lần mua của khách vẫn được giữ lại.</p>${BQ?`<div class=row><span>Khách: <b>${esc(BQ)}</b></span><button class=s onclick="BQ=null;BL=40;R()">✕</button></div>`:''}</div><div class=card>${BF=='k'?(Object.keys(by).length?(BKS=Object.keys(by).sort((a,b)=>by[b].t-by[a].t)).slice(0,BL).map((k,i)=>`<div class=row><span><b>${esc(k)}</b><br><span class=mut>${by[k].n} lần mua</span></span><span><b>${$(by[k].t)}</b> <button class=s onclick="BF='a';BQ=BKS[${i}];BL=40;R()">Xem</button></span></div>`).join(''):'<p class=mut>Chưa có khách nào.</p>'):L2.length?L2.slice(0,BL).map(x=>`<div class="row ${x.run?'runrow':''}"><span style="display:flex;gap:8px;align-items:center"><span style="zoom:.7">${cu(x.look,0,x.vip)}</span><span><b>${esc(x.nm)}</b><br><span class=mut>Ngày ${x.d}${x.t?' · '+x.t:''} · ${x.run?'quỵt':x.st+'★'}</span></span></span><span><b>${x.run?'0đ':$(x.pr+x.xp+x.tip)}</b> <button class=s onclick="bill('${x.id}')">Xem bill</button></span></div>`).join(''):'<p class=mut>Chưa có hóa đơn nào. Bán hàng cho khách để có lịch sử mua.</p>'}${(BF=='k'?Object.keys(by).length:L2.length)>BL?`<div class=row style="justify-content:center"><button class=s onclick="BL+=40;R()">Xem thêm (${(BF=='k'?Object.keys(by).length:L2.length)-BL})</button></div>`:''}</div>`};
 TABS.splice(TABS.findIndex(t=>t[0]=='rev')+1,0,['bills','bill','Hóa đơn']);
 /* 15 phút */
 {const o=V.shop;V.shop=function(){return o().replace('8 phút</button>',`8 phút</button> <button class="s ${s.len==900?'on2':''}" onclick="s.len=900;R()">15 phút</button>`)}}
@@ -5425,8 +5448,8 @@ async function sync(){
   const lx=s.xp||0,ld=s.day||1,cx=row.xp||0,cd=row.day||1;
   const cr=+row.rev||0;let lr=0;try{lr=+localStorage.getItem('jsRev_'+uid)||0}catch(e){}
   CS.rev=cr;CS.hasRow=1;
-  if((cr>lr||cx>lx||(cx==lx&&cd>ld))&&typeof live!='undefined'&&live&&s.ph=='open'){CS.uid=null;CS.ready=0;CS.retry=Date.now();return} /* đang bán dở: khôi phục từ đám mây sẽ đóng quầy (load() ép về chuẩn bị), để sau khi hết ngày */
-   if(cr>lr||cx>lx||(cx==lx&&cd>ld)){
+  if((cd>ld||cr>lr||cx>lx||(cx==lx&&cd>ld))&&typeof live!='undefined'&&live&&s.ph=='open'){CS.uid=null;CS.ready=0;CS.retry=Date.now();return} /* đang bán dở: khôi phục từ đám mây sẽ đóng quầy (load() ép về chuẩn bị), để sau khi hết ngày */
+   if(cd>ld||cr>lr||cx>lx||(cx==lx&&cd>ld)){
    try{const o=await qrParse(row.data);try{localStorage.setItem('jas2_bak',JSON.stringify(s))}catch(e){}
     QRO=o;qrDo();save();CS.last=cj();CS.ready=1;CS.t=Date.now();try{localStorage.setItem('jsRev_'+uid,String(cr))}catch(e){}toast('☁️ Đã khôi phục tiến trình từ tài khoản Discord');return}
    catch(e){CS.off=1;warn('Không đọc được bản lưu đám mây, vẫn giữ tiến trình trong máy');return}

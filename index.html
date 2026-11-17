@@ -101,8 +101,7 @@ body.nh nav.fx{transform:translate(-50%,calc(100% + 30px))}
 .dtr *{transition:background-color .6s,color .6s,border-color .6s,fill .6s!important}
 .frA{background:conic-gradient(#ffd166,#ff6fa0,#6bb5ff,#7bd88f,#ffd166);animation:frg 3s linear infinite,frp 1.6s ease-in-out infinite}@keyframes frg{to{filter:hue-rotate(360deg)}}@keyframes frp{50%{box-shadow:0 0 14px 3px #ffd16699}}
 #cbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(78px + env(safe-area-inset-bottom,0px));width:min(92%,520px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border-radius:16px;background:var(--card);border:2px solid var(--g2);box-shadow:0 4px 14px rgba(0,0,0,.18);transition:bottom .3s}body.nh #cbar{bottom:calc(14px + env(safe-area-inset-bottom,0px))}
-</style><link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Dancing+Script:wght@600&family=Playfair+Display:wght@700&family=Comfortaa:wght@700&family=Bangers&family=Sriracha&family=Quicksand:wght@700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/gsap.min.js"></script><style>
+</style><link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Dancing+Script:wght@600&family=Playfair+Display:wght@700&family=Comfortaa:wght@700&family=Bangers&family=Sriracha&family=Quicksand:wght@700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/gsap.min.js"></script><style>
 .mspd{display:flex;gap:4px;justify-content:center;align-items:center;flex-wrap:nowrap;margin-top:8px}
 .mspd button{flex:1 1 0;min-width:0;padding:6px 0;font-size:.82rem;min-height:0;width:auto;height:auto;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .mctl{gap:2px;flex-wrap:nowrap}.mctl button{width:40px;height:40px;flex:0 1 auto;min-width:0;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation}.mctl button.big{width:52px;height:52px}.mctl button:disabled{opacity:.45}
@@ -135,6 +134,7 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
 </head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
 <script>
 const $=n=>Math.round(Number.isFinite(+n)?+n:0).toLocaleString('vi-VN')+'đ',esc=t=>String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const safeImageAttr=v=>{const u=String(v==null?'':v).trim();return /^(https?:\/\/[^\s\"'<>]+|blob:https?:\/\/[^\s\"'<>]+|data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/]+=*)$/i.test(u)?esc(u):''};
 const I={home:'M3 11l9-8 9 8M5 10v10h14V10',cart:'M3 4h3l2 11h10l2-8H7M9 20h.01M17 20h.01',tag:'M3 12V3h9l9 9-9 9z',shop:'M3 9l2-5h14l2 5M4 9v11h16V9M9 20v-6h6v6',star:'M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3 1.3-6.2L3 9.5l6.3-.7z',quest:'M6 3v18M6 4h12l-3 4 3 4H6',up:'M12 20V5M5 11l7-7 7 7',book:'M4 5h7a2 2 0 012 2v13a2 2 0 00-2-2H4zM20 5h-7a2 2 0 00-2 2',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6',moon:'M20 14a8 8 0 11-10-10 7 7 0 0010 10z',sun:'M12 8a4 4 0 100 8 4 4 0 000-8M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',music:'M9 18V6l10-2v12M9 18a3 3 0 11-6 0 3 3 0 016 0M19 16a3 3 0 11-6 0 3 3 0 016 0',mute:'M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6',undo:'M4 9h11a5 5 0 010 10H8M4 9l4-4M4 9l4 4',bill:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',spk:'M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2'};
 
 // ===== SUPABASE + DISCORD FRIENDS =====
@@ -242,7 +242,14 @@ async function loginDiscord() {
   if (error) toast('Lỗi liên kết: ' + error.message);
 }
 
+// Chỉ xóa dữ liệu phiên chơi khi đăng xuất; giữ nhạc, phim, API key và tùy chọn website.
+function clearGameLocalProgress(uid) {
+  try { ['jas2', 'jas2_bak', 'jas_live'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  try { if (uid) localStorage.removeItem('jsRev_' + uid); } catch (e) {}
+}
+
 async function logoutDiscord() {
+  const logoutUid = currentUser && currentUser.id;
   await supabaseClient.auth.signOut();
   currentUser = null;
   // Xóa toàn bộ tiến trình local khi hủy liên kết
@@ -251,11 +258,7 @@ async function logoutDiscord() {
   } catch (e) {}
   try { live = null; cur = null; CART = {}; pop = ''; } catch (e) {}
   try { s = def(); } catch (e) {}
-  try {
-    Object.keys(localStorage).forEach(k => {
-      if (!/^sb-|supabase/i.test(k)) localStorage.removeItem(k);
-    });
-  } catch (e) {}
+  clearGameLocalProgress(logoutUid);
   toast('Đã hủy liên kết và xóa dữ liệu local. Liên kết lại Discord để khôi phục tiến trình.');
   setTimeout(() => location.reload(), 900);
 }
@@ -585,7 +588,7 @@ async function viewMyPostedCard() {
     html += '<p class=mut>Bạn chưa đăng ảnh nào. Vào <b>Hồ sơ → Card visit</b>, tạo card rồi bấm "📌 Đăng danh thiếp lên tường".</p>';
   } else {
     const when = shop.updated_at ? new Date(shop.updated_at).toLocaleString('vi-VN') : '';
-    html += `<div style="position:relative;margin:8px 0"><img id="my-posted-card" src="${shop.card_image}" style="width:100%;border-radius:16px;display:block" alt="Danh thiếp đã đăng">${vinylHtml(parseGav(shop.game_avatar).mu)}</div>
+    html += `<div style="position:relative;margin:8px 0"><img id="my-posted-card" src="${safeImageAttr(shop.card_image)}" style="width:100%;border-radius:16px;display:block" alt="Danh thiếp đã đăng">${vinylHtml(parseGav(shop.game_avatar).mu)}</div>
       <p class=mut>${esc(shop.shop_name || 'Tiệm hoa')} · Ngày ${shop.day || '?'} · Tiền ${$(shop.money || 0)} · Cấp ${shop.level || '?'}${when ? '<br>Đăng lúc ' + esc(when) : ''}</p>
       <p class=mut style="font-size:.8rem">Giữ lâu vào ảnh để lưu nếu nút bên dưới không hoạt động.</p>
       <button class=p onclick="saveMyPostedCard()">Lưu ảnh về máy</button>`;
@@ -619,7 +622,7 @@ function friendAvH(raw, z) {
   const d = parseGav(raw);
   const f = FRM[Math.min(d.fr || 0, 5)], lock = f.a && !d.afr ? FRM[0] : f;
   let i;
-  if (d.av) i = `<img src="${d.av}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+  if (d.av) i = `<img src="${safeImageAttr(d.av)}" alt="" style="width:100%;height:100%;object-fit:cover">`;
   else if (d.pre && typeof FH !== 'undefined' && FH[d.pre]) i = fw(d.pre, z * .7);
   else if (d.pre && PEM[d.pre]) i = `<span style="font-size:${Math.round(z * .55)}px;line-height:1">${PEM[d.pre]}</span>`;
   else i = `<span style="font-size:${Math.round(z * .55)}px;line-height:1">👤</span>`;
@@ -809,7 +812,7 @@ async function visitFriend(friendId) {
   const name = shop?.shop_name || profile?.display_name || 'Tiệm hoa';
   const dname = profile?.display_name || profile?.username || shop?.shop_name || 'Tiệm hoa';
   const cardHtml = shop?.card_image 
-    ? `<div style="position:relative;margin:8px 0"><img src="${shop.card_image}" style="width:100%;border-radius:16px;display:block" alt="Danh thiếp">${vinylHtml(parseGav(shop.game_avatar).mu)}</div>`
+    ? `<div style="position:relative;margin:8px 0"><img src="${safeImageAttr(shop.card_image)}" style="width:100%;border-radius:16px;display:block" alt="Danh thiếp">${vinylHtml(parseGav(shop.game_avatar).mu)}</div>`
     : `<canvas id="visit-card" width="360" height="200" style="width:100%;border-radius:16px;margin:8px 0;background:#fff"></canvas>`;
   const avHtml = friendAvTap(shop?.game_avatar, 40, friendId);
   let html = `<div class=card>
@@ -1557,7 +1560,7 @@ TABS.splice(TABS.findIndex(t=>t[0]=='rev')+1,0,['bills','bill','Hóa đơn']);
 /* hồ sơ + level */
 const PEM={cat:'🐱',dog:'🐶',tul:'🌷',hong:'🌹',hd:'🌻',oai:'💜',cuc:'🌼',sen:'🪷'};
 const pemI=k=>k=='cat'?catSVG(s.cat,'face',26):k=='dog'?dogSVG(s.dog,'face',26):(typeof FH!='undefined'&&FH[k]?fw(k,26):PEM[k]);
-function avH(z){const p=s.pf,l=lvOf(s.xp||0);let i;if(p.av)i=`<img src="${p.av}" alt="" style="width:100%;height:100%;object-fit:cover">`;else if(p.pre=='cat')i=catSVG(s.cat,'face',z*.9);else if(p.pre=='dog')i=dogSVG(s.dog,'face',z*.9);else i=fw(p.pre,z*.8);return `<span style="display:inline-grid;place-items:center;width:${z}px;height:${z}px;border-radius:50%;overflow:hidden;background:var(--g);border:3px solid ${frc(l)};flex:0 0 auto;vertical-align:middle">${i}</span>`}
+function avH(z){const p=s.pf,l=lvOf(s.xp||0);let i;if(p.av)i=`<img src="${safeImageAttr(p.av)}" alt="" style="width:100%;height:100%;object-fit:cover">`;else if(p.pre=='cat')i=catSVG(s.cat,'face',z*.9);else if(p.pre=='dog')i=dogSVG(s.dog,'face',z*.9);else i=fw(p.pre,z*.8);return `<span style="display:inline-grid;place-items:center;width:${z}px;height:${z}px;border-radius:50%;overflow:hidden;background:var(--g);border:3px solid ${frc(l)};flex:0 0 auto;vertical-align:middle">${i}</span>`}
 function avUp(i){const f=i.files&&i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=192;const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,192,192);s.pf.av=c.toDataURL('image/jpeg',.85);save();if(scr=='game')R();pfm()};im.onerror=()=>toast('Không đọc được ảnh');im.src=r.result};r.readAsDataURL(f)}
 function setPf(k){s.pf.pre=k;s.pf.av=null;save();if(scr=='game')R();pfm()}
 function pfm(){const l=lvOf(s.xp||0),a=cum(l),b=cum(l+1),pc=Math.min(100,((s.xp||0)-a)/(b-a)*100),st=[['Ngày',s.day],['Khách đã phục vụ',s.sv],['Doanh thu',$(s.rev)],['Uy tín',s.rep.toFixed(1)+' ★'],['Hóa đơn',billN()],['Đánh giá 5 sao',s.five]];
@@ -1667,7 +1670,7 @@ function claimAch(id){const a=ACH.find(x=>x[0]==id);if(!a||s.ac[id]||!a[2](s))re
 V.ach=()=>`<div class=card><p class=mut style="margin:0">Hoàn thành thành tích để nhận XP, tiền và vật phẩm. Đủ 100 ngày nhận khung avatar động.</p>${ACH.map(a=>{const d=a[2](s),c=s.ac[a[0]];return `<div class=row><span>${a[1]}<br><span class=mut>${rwT(a[3])}</span></span><button class=p ${d&&!c?'':'disabled'} onclick="claimAch('${a[0]}')">${c?'Đã nhận':d?'Nhận':'Chưa xong'}</button></div>`}).join('')}</div>`;
 /* khung avatar */
 const FRM=[{n:'Chủ đề',c:'background:var(--g2)'},{n:'Hồng',c:'background:#ff6fa0'},{n:'Vàng',c:'background:linear-gradient(135deg,#ffe27a,#e0a800)'},{n:'Tím',c:'background:#b39ddb'},{n:'Cầu vồng',c:'background:linear-gradient(135deg,#ff6b6b,#ffd166,#7bd88f,#6bb5ff,#b39ddb)'},{n:'Ánh dương ✨',c:'',a:1}];
-function avH(z){const p=s.pf,f=FRM[Math.min(p.fr||0,5)],lock=f.a&&!p.afr?FRM[0]:f;let i;if(p.av)i=`<img src="${p.av}" alt="" style="width:100%;height:100%;object-fit:cover">`;else if(p.pre=='cat')i=catSVG(s.cat,'face',z*.8);else if(p.pre=='dog')i=dogSVG(s.dog,'face',z*.8);else i=fw(p.pre,z*.7);
+function avH(z){const p=s.pf,f=FRM[Math.min(p.fr||0,5)],lock=f.a&&!p.afr?FRM[0]:f;let i;if(p.av)i=`<img src="${safeImageAttr(p.av)}" alt="" style="width:100%;height:100%;object-fit:cover">`;else if(p.pre=='cat')i=catSVG(s.cat,'face',z*.8);else if(p.pre=='dog')i=dogSVG(s.dog,'face',z*.8);else i=fw(p.pre,z*.7);
 return `<span style="position:relative;display:inline-block;width:${z}px;height:${z}px;vertical-align:middle;flex:0 0 auto"><span class="${lock.a?'frA':''}" style="position:absolute;inset:0;border-radius:50%;${lock.c}"></span><span style="position:absolute;inset:${Math.max(3,Math.round(z*.06))}px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--g)">${i}</span></span>`}
 function setFr(i){if(FRM[i].a&&!s.pf.afr)return;s.pf.fr=i;save();if(scr=='game')R();pfm()}
 {const o=pfm;pfm=function(){o();const m=document.querySelector('.ms');if(m)m.insertAdjacentHTML('beforeend',`<div class=card><h3>Khung avatar</h3><div class=row style="justify-content:flex-start">${FRM.map((f,i)=>`<button class="s ${(s.pf.fr||0)==i?'on2':''}" ${f.a&&!s.pf.afr?'disabled':''} onclick="setFr(${i})">${f.n}${f.a&&!s.pf.afr?' 🔒':''}</button>`).join('')}</div></div>`)}}
@@ -1688,7 +1691,7 @@ ini();R();renderMenu();
 Object.assign(CI,{wpk:['hat','Tóc giả hồng',60000,`<path d="${B}" fill="#ff8fc7"/>`],wbl:['hat','Tóc giả xanh',60000,`<path d="${B}" fill="#6bb5ff"/><circle cx=30 cy=8 r=3 fill=#fff />`],wgd:['hat','Tóc xoăn vàng',75000,cs('#ffc83d',P,6.5)],wrb:['hat','Afro cầu vồng',90000,cs(['#ff6b6b','#ffd166','#7bd88f','#6bb5ff','#b39ddb'],P,6.5)],wpr:['hat','Tóc tím hai bím',80000,`<path d="${B}" fill="#9b7be0"/><ellipse cx=10 cy=34 rx=5 ry=11 fill="#9b7be0"/><ellipse cx=50 cy=34 rx=5 ry=11 fill="#9b7be0"/>`]});CK.length=0;CK.push(...Object.keys(CI))}
 /* chủ tiệm trong gian hàng */
 const OUTF=[['Xanh lá','#4fb06f'],['Hồng','#ff6fa0'],['Vàng','#ffc83d'],['Xanh dương','#5aa9e6'],['Tím','#b39ddb'],['Đỏ','#e0564f']];
-function ownerSVG(){const p=s.pf,o=OUTF[p.cl||0][1],f=p.g!='m',h=p.av?`<clipPath id=ocp><circle cx=0 cy=-34 r=12 /></clipPath><image href="${p.av}" x=-12 y=-46 width=24 height=24 clip-path="url(#ocp)" preserveAspectRatio="xMidYMid slice"/>`:`<circle cx=0 cy=-34 r=12 fill=#fff3d6 />${window.GIC?window.GIC.at(PEM[p.pre]||'🌸',-9,-43,18):''}`;
+function ownerSVG(){const p=s.pf,o=OUTF[p.cl||0][1],f=p.g!='m',h=p.av?`<clipPath id=ocp><circle cx=0 cy=-34 r=12 /></clipPath><image href="${safeImageAttr(p.av)}" x=-12 y=-46 width=24 height=24 clip-path="url(#ocp)" preserveAspectRatio="xMidYMid slice"/>`:`<circle cx=0 cy=-34 r=12 fill=#fff3d6 />${window.GIC?window.GIC.at(PEM[p.pre]||'🌸',-9,-43,18):''}`;
 const b=f?`<path d="M-9 -22h18l9 38h-36z" fill="${o}"/>`:`<rect x=-9 y=-22 width=18 height=20 rx=4 fill="${o}"/><rect x=-8 y=-2 width=7 height=18 fill=#4a5a7a /><rect x=1 y=-2 width=7 height=18 fill=#4a5a7a />`;
 return `<clipPath id=ocl><rect width=400 height=152 /></clipPath><g clip-path="url(#ocl)"><g transform="translate(322 160)"><animateTransform attributeName=transform type=translate values="322 160;322 160;260 160;200 160;140 160;100 160;100 160;150 160;220 160;290 160;322 160;322 160" dur=30s begin="-${(Date.now()/1000)%30}s" repeatCount=indefinite /><g><animateTransform attributeName=transform type=translate values="0 0;0 -1.6;0 0" dur=.6s repeatCount=indefinite additive=sum /><g transform="scale(1.05)"><ellipse cy=18 rx=17 ry=3 fill=#000 opacity=.15 />${b}<rect x=-6 y=-14 width=12 height=14 rx=3 fill=#fff opacity=.85 /><rect x=-14 y=-20 width=5 height=16 rx=2.5 fill="${o}"/><rect x=9 y=-20 width=5 height=16 rx=2.5 fill="${o}"/>${h}<circle cx=0 cy=-34 r=12 fill=none stroke="${o}" stroke-width=1.5 /></g></g></g></g>`}
 {const o=scene;scene=function(fs){let t=o(fs);if(0){const i=t.lastIndexOf('</svg>');if(i>0)t=t.slice(0,i)+ownerSVG()+t.slice(i)}return t}}
@@ -3138,11 +3141,11 @@ function frameAv(fi,z,inner,afr){
  if(f.sp)return `<span style="position:relative;display:inline-block;width:${z}px;height:${z}px;vertical-align:middle;flex:0 0 auto">${faSvg(f)}<span style="position:absolute;inset:11%;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--g)">${inner}</span></span>`;
  return `<span style="position:relative;display:inline-block;width:${z}px;height:${z}px;vertical-align:middle;flex:0 0 auto"><span class="${f.a?'frA':''}" style="position:absolute;inset:0;border-radius:50%;${f.c}"></span><span style="position:absolute;inset:${Math.max(3,Math.round(z*.06))}px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--g)">${inner}</span></span>`}
 function avH(z){const p=s.pf,sp=!!FRM[frIdx(p)].sp,q=sp?.78:.88;let i;
- if(p.av)i=`<img src="${p.av}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+ if(p.av)i=`<img src="${safeImageAttr(p.av)}" alt="" style="width:100%;height:100%;object-fit:cover">`;
  else if(p.pre=='cat')i=catSVG(s.cat,'face',z*q*.91);else if(p.pre=='dog')i=dogSVG(s.dog,'face',z*q*.91);else i=fw(p.pre,z*q*.8);
  return frameAv(p.fr,z,i,p.afr)}
 function friendAvH(raw,z){const d=parseGav(raw),sp=!!FRM[frIdx(d)].sp,q=sp?.78:.88;let i;
- if(d.av)i=`<img src="${d.av}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+ if(d.av)i=`<img src="${safeImageAttr(d.av)}" alt="" style="width:100%;height:100%;object-fit:cover">`;
  else if(d.pre&&typeof FH!=='undefined'&&FH[d.pre])i=fw(d.pre,z*q*.8);
  else if(d.pre&&PEM[d.pre])i=`<span style="font-size:${Math.round(z*q*.62)}px;line-height:1">${PEM[d.pre]}</span>`;
  else i=`<span style="font-size:${Math.round(z*q*.62)}px;line-height:1">👤</span>`;
@@ -3800,6 +3803,7 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
         return;
       }
     }
+    const logoutUid = currentUser && currentUser.id;
     try{ await safeSignOut(); }catch(e){}
     currentUser = null;
     window.DISCORD_OK = false;
@@ -3807,11 +3811,7 @@ Z.policy=()=>{const lv=L2(),T=120000*lv,W=1e6*lv**1.5,rt=Math.min(150000,6000*(l
     try{ if (typeof live !== 'undefined' && live && live.iv) clearInterval(live.iv); }catch(e){}
     try{ live = null; cur = null; CART = {}; pop = ''; }catch(e){}
     try{ s = def(); }catch(e){}
-    try{
-      Object.keys(localStorage).forEach(function(k){
-        if (!/^sb-|supabase|jsMode|jsAuthIntent/i.test(k)) localStorage.removeItem(k);
-      });
-    }catch(e){}
+    clearGameLocalProgress(logoutUid);
     // 2. Về ngay trang chủ, rồi tải lại để khởi tạo sạch
     try{ scr = 'menu'; document.body.classList.add('m'); mdl(); renderMenu(); }catch(e){}
     toast('Đã lưu tiến trình và đăng xuất. Đăng nhập lại để chơi tiếp.');
@@ -14866,19 +14866,199 @@ html.tvmode #tc.tin > * { animation: none !important; }
   },250);
 })();
 </script>
-<style id="m-order-v123">
-/* v123 (chỉ điện thoại): thẻ Tivi (Đang xem trên Tivi / Nghe nhạc · Xem tivi / Cửa sổ nổi) lên trên ô tìm kiếm; hàng đợi lên trên Gợi ý nhạc & phim */
-@media (max-width:899px){
-#tc:has(#mnow){display:flex;flex-direction:column;align-items:stretch}
-#tc:has(#mnow)>#mnow{order:1}
-#tc:has(#mnow)>#mly{order:2}
-#tc:has(#mnow)>#mtv{order:3}
-#tc:has(#mnow)>#mxs{order:4}
-#tc:has(#mnow)>#mdesc{order:5}
-#tc:has(#mnow)>#mq{order:6}
-#tc:has(#mnow)>#mxgc{order:7}
-/* chế độ xem tivi: ẩn thẻ lời bài hát */
-#tc:has(#mnow.tvon)>#mly,#tc:has(#mtv.tvon)>#mly,#tc#tc:has(#mnow.tvon)>#mly{display:none!important}
-}
+<style id="jslib-css">
+#jl .jlq{display:flex;gap:6px;flex-wrap:wrap}#jl .jlq input,#jls input,#jls select{flex:1;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--ln);border-radius:12px;background:var(--card);color:var(--ink)}
+#jl .ch{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}#jl .ch button,#jlrd button{min-height:40px}
+#jl .gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+#jl .bk{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:4px;min-width:0}
+#jl .bk img,#jl .bk .nc{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:2rem}
+#jl .bk b{font-size:.92rem;line-height:1.25;overflow-wrap:anywhere}#jl .bk small{color:var(--mut);overflow-wrap:anywhere}
+#jl .bd2{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--g);width:max-content}
+#jl .bd2.f{background:var(--g2);color:#fff}#jl .bd2.n{background:var(--pk)}
+#jl .bk .row2{display:flex;gap:4px;flex-wrap:wrap;margin-top:auto}#jl .bk button,#jl .bk a{font-size:.8rem;min-height:36px}
+#jl a.s{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
+#jlrd{--rb:#fffdf7;--rt:#244033;position:fixed;inset:0;z-index:99990;background:var(--rb);color:var(--rt);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);animation:jlin .2s}
+#jlrd[data-th=d]{--rb:#13221a;--rt:#e6f4e8}@keyframes jlin{from{opacity:0;transform:translateY(12px)}}html.rm #jlrd{animation:none}
+#jlrd .jtb{display:flex;gap:4px;flex-wrap:wrap;padding:6px 8px;border-bottom:1px solid #8884;align-items:center}
+#jlrd .jtb button,#jlrd .jft button,#jls button{background:#8882;color:inherit;border:0;border-radius:10px;padding:6px 10px;font:inherit;cursor:pointer}
+#jlrd .jtt{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#jlb{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;position:relative;padding:14px 16px 40px}
+#jlt{max-width:42em;margin:auto;overflow-wrap:anywhere;white-space:pre-line}#jlt p{margin:0 0 .9em}#jlt h3{margin:1.2em 0 .6em}
+#jlrd .jft{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:6px 8px;border-top:1px solid #8884}
+#jlrd .jst{padding:6px 10px;font-size:.85rem;background:#8882}#jlrd iframe{flex:1;border:0;width:100%;background:#fff}
+#jls{position:fixed;inset:0;z-index:99995;background:#0007;display:flex;align-items:center;justify-content:center;padding:12px}
+#jls>div{background:var(--card,#fff);color:var(--ink,#222);border-radius:16px;padding:14px;max-width:460px;width:100%;max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
+#jls label{font-size:.85rem}#jls .li{display:flex;gap:6px;justify-content:space-between;align-items:center}
 </style>
+<script id="jslib-js">
+(function(){
+if(window.JL||typeof TABS==='undefined'||typeof V==='undefined')return;
+const LK='jslib_v1',TK='jslib_tr_v1',E=t=>String(t==null?'':t).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep=(ms,sg)=>new Promise((ok,no)=>{const t=setTimeout(ok,ms);sg&&sg.addEventListener('abort',()=>{clearTimeout(t);no(new DOMException('Đã hủy','AbortError'))})});
+const tst=m=>{try{toast(m)}catch(e){alert(m)}};
+let D={v:1,shelf:{},bm:{},set:{}};try{D=Object.assign(D,JSON.parse(localStorage.getItem(LK)||'{}'))}catch(e){}
+D.set=Object.assign({sz:18,lh:1.7,th:'',key:'',model:'gemini-3.5-flash',lt:'',ltk:''},D.set);D.shelf=D.shelf||{};D.bm=D.bm||{};
+const save=()=>{try{localStorage.setItem(LK,JSON.stringify(D))}catch(e){}};
+let TR={};try{TR=JSON.parse(localStorage.getItem(TK)||'{}')}catch(e){}
+const trSave=()=>{try{let k=Object.keys(TR).sort((a,b)=>TR[a].t-TR[b].t);while(k.length>1&&JSON.stringify(TR).length>2.5e6)delete TR[k.shift()];localStorage.setItem(TK,JSON.stringify(TR))}catch(e){}};
+I.book='M4 4h6a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-6a3 3 0 00-3 3v13a2 2 0 012-2h7z';
+const nz=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const L3={vie:'vi',jpn:'ja',kor:'ko',chi:'zh',zho:'zh',eng:'en',fre:'fr',fra:'fr'},L2={vi:'vie',ja:'jpn',ko:'kor',zh:'chi',en:'eng',fr:'fre'};
+/* Quốc gia -> chỉ lọc theo NGÔN NGỮ chính (API không cung cấp quốc gia tác giả đáng tin cậy). Mở rộng: thêm dòng vào đây. */
+const CT=[['','Tất cả'],['vi','Việt Nam'],['ja','Nhật Bản'],['ko','Hàn Quốc'],['zh','Trung Quốc'],['en','Mỹ / Anh'],['fr','Pháp']];
+/* Thể loại: [nhãn, từ khóa EN (subject), từ khóa VI]. Mở rộng: thêm dòng vào đây. */
+const GN=[['Tiểu thuyết','novel','tiểu thuyết'],['Truyện ngắn','short stories','truyện ngắn'],['Khoa học','science','khoa học'],['Lịch sử','history','lịch sử'],['Kinh tế','economics','kinh tế'],['Tâm lý học','psychology','tâm lý học'],['Triết học','philosophy','triết học'],['Giáo dục','education','giáo dục'],['Công nghệ','technology','công nghệ'],['Văn học','literature','văn học'],['Khác','','']];
+const SRC={gb:'Google Books',ol:'Open Library',ws:'Wikisource',gt:'Gutenberg'};
+async function fj(u,o={},ms=10000,rt=1){let er;for(let i=0;i<=rt;i++){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(u,Object.assign({signal:c.signal},o));clearTimeout(t);if(r.status>=500&&i<rt){await sleep(800);continue}if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){clearTimeout(t);er=e.name=='AbortError'?new Error('Quá thời gian chờ'):e;if(i<rt)await sleep(800)}}throw er}
+const mk=o=>Object.assign({au:[],lang:[],isbn:[],cover:'',desc:'',year:'',acc:'info',rd:null,fr:0,lic:'',url:'',alts:[]},o);
+const strip=h=>String(h||'').replace(/<[^>]*>/g,'').replace(/&quot;/g,'"').replace(/&amp;/g,'&').replace(/&#039;/g,"'");
+/* ===== NGUỒN ===== */
+const P=20;
+async function sGB(q,f,pg){const pre={title:'intitle:',author:'inauthor:',isbn:'isbn:'}[f.t]||'',qq=pre+q+(f.g&&f.g[1]?' subject:'+f.g[1]:''),ls=f.l?[f.l]:(pg?['']:['vi','']),out=[];
+for(const l of ls){const j=await fj('https://www.googleapis.com/books/v1/volumes?printType=books&maxResults='+P+'&startIndex='+pg*P+'&q='+encodeURIComponent(qq)+(l?'&langRestrict='+l:'')+(f.free?'&filter=free-ebooks':''));
+(j.items||[]).forEach(it=>{const v=it.volumeInfo||{},a=it.accessInfo||{},vw=a.viewability,acc=vw=='ALL_PAGES'?'full':vw=='PARTIAL'?'preview':'info';
+out.push(mk({id:'gb:'+it.id,src:'gb',title:v.title||'(không tên)',au:v.authors||[],lang:v.language?[v.language.slice(0,2)]:[],cover:((v.imageLinks||{}).thumbnail||'').replace('http:','https:'),desc:strip(v.description),year:(v.publishedDate||'').slice(0,4),isbn:(v.industryIdentifiers||[]).map(x=>x.identifier),acc,rd:a.embeddable&&acc!='info'?{k:'gb',id:it.id}:null,fr:vw=='ALL_PAGES'||(it.saleInfo||{}).saleability=='FREE'?1:0,url:v.infoLink||'',lic:a.publicDomain?'Phạm vi công cộng (theo Google Books)':'Theo điều khoản Google Books'}))})}
+return out}
+async function sOL(q,f,pg){const fld={title:'title',author:'author',isbn:'isbn'}[f.t],qq=(fld?fld+':"'+q+'"':q)+(f.g&&f.g[1]?' subject:"'+f.g[1]+'"':'')+(f.l&&L2[f.l]?' language:'+L2[f.l]:''),
+j=await fj('https://openlibrary.org/search.json?limit='+P+'&page='+(pg+1)+'&fields=key,title,author_name,first_publish_year,isbn,cover_i,language,ebook_access,ia&q='+encodeURIComponent(qq));
+return(j.docs||[]).map(d=>{const ea=d.ebook_access,ia=(d.ia||[])[0],acc=ea=='public'?'full':ea=='borrowable'?'borrow':'info';
+return mk({id:'ol:'+d.key,src:'ol',title:d.title,au:d.author_name||[],lang:(d.language||[]).map(x=>L3[x]||x),cover:d.cover_i?'https://covers.openlibrary.org/b/id/'+d.cover_i+'-M.jpg':'',year:d.first_publish_year||'',isbn:(d.isbn||[]).slice(0,6),acc,rd:acc=='full'&&ia?{k:'ia',id:ia}:null,fr:acc=='full'?1:0,url:'https://openlibrary.org'+d.key,lic:acc=='borrow'?'Cần mượn/đăng nhập tại Open Library':'Theo Internet Archive / Open Library'})})}
+async function sWS(q,f,pg){if((f.l&&f.l!='vi')||f.t=='isbn')return[];
+const j=await fj('https://vi.wikisource.org/w/api.php?action=query&list=search&srnamespace=0&srlimit='+P+'&sroffset='+pg*P+'&format=json&origin=*&srsearch='+encodeURIComponent(q+(f.g&&f.g[2]?' '+f.g[2]:'')));
+const seen={};return((j.query||{}).search||[]).filter(r=>{const t=r.title.split('/')[0];return!seen[t]&&(seen[t]=1)}).map(r=>{const t=r.title.split('/')[0];
+return mk({id:'ws:'+t,src:'ws',title:t,lang:['vi'],desc:strip(r.snippet),acc:'full',rd:{k:'ws',t},fr:1,url:'https://vi.wikisource.org/wiki/'+encodeURIComponent(t.replace(/ /g,'_')),lic:'Wikisource: CC BY-SA 4.0 / phạm vi công cộng (xem trang gốc)'})})}
+async function sGT(q,f,pg){if(f.t=='isbn')return[];const j=await fj('https://gutendex.com/books/?page='+(pg+1)+'&search='+encodeURIComponent(q)+(f.l?'&languages='+f.l:'')+(f.g&&f.g[1]?'&topic='+encodeURIComponent(f.g[1]):''),{},15000);
+return(j.results||[]).map(d=>{const fm=d.formats||{},k=x=>{const z=Object.keys(fm).find(y=>y.startsWith(x));return z?fm[z]:''},h=k('text/html'),x=k('text/plain');
+return mk({id:'gt:'+d.id,src:'gt',title:d.title,au:(d.authors||[]).map(a=>a.name.split(', ').reverse().join(' ')),lang:d.languages||[],cover:fm['image/jpeg']||'',acc:'full',rd:h||x?{k:'gt',h,x}:null,fr:1,url:'https://www.gutenberg.org/ebooks/'+d.id,lic:'Project Gutenberg – phạm vi công cộng (tại Mỹ)'})})}
+const SF={gb:sGB,ol:sOL,ws:sWS,gt:sGT};
+const rank=b=>(b.rd?10:0)+(b.acc=='full'?5:b.acc=='preview'?2:0)+(b.lang.includes('vi')?3:0)+(b.cover?1:0);
+function merge(a){const M=new Map(),G=[];for(const b of a){const ks=b.isbn.map(x=>'i'+x),kt='t'+nz(b.title)+'|'+nz(b.au[0]);let g=null;for(const k of ks)if(M.has(k)){g=M.get(k);break}
+if(!g&&M.has(kt)){const c=M.get(kt);if(!(c.m.some(x=>x.isbn.length)&&b.isbn.length&&!c.m.some(x=>x.isbn.some(i=>b.isbn.includes(i)))))g=c}
+if(!g){g={m:[]};G.push(g)}g.m.push(b);[...ks,kt].forEach(k=>{if(!M.has(k))M.set(k,g)})}
+return G.map(g=>{const m=g.m.slice().sort((x,y)=>rank(y)-rank(x)),b=m[0];b.alts=m.slice(1);b.alts.forEach(o=>{if(!b.cover)b.cover=o.cover;if(!b.desc)b.desc=o.desc;if(!b.year)b.year=o.year;if(!b.au.length)b.au=o.au;if(!b.lang.length)b.lang=o.lang});return b}).sort((x,y)=>rank(y)-rank(x))}
+/* ===== TRẠNG THÁI TÌM KIẾM ===== */
+const S={q:'',t:'',l:'',g:null,free:0,rd:0,vi:0,pg:0,raw:[],res:[],st:{},busy:0,more:0,v:'home',sh:'reading',done:0},CACHE=new Map();let dbt=0;
+function filt(a){return a.filter(b=>(!S.free||b.fr)&&(!S.rd||b.rd)&&(!S.vi||b.lang.includes('vi')))}
+async function search(more){const q=S.q.trim();if(q.length<2){tst('Nhập ít nhất 2 ký tự');return}if(S.busy)return;S.v='res';if(!more){S.pg=0;S.raw=[];S.res=[];S.st={};S.done=0}else S.pg++;S.busy=1;ui();
+const f={t:S.t,l:S.l,g:S.g,free:S.free},ck=JSON.stringify([q,f,S.pg]),hit=CACHE.get(ck);let rs;
+if(hit&&Date.now()-hit.t<6e5)rs=hit.rs;else{const ks=Object.keys(SF);rs=await Promise.allSettled(ks.map(k=>SF[k](q,f,S.pg)));rs=rs.map((r,i)=>({k:ks[i],ok:r.status=='fulfilled',v:r.value||[],e:r.reason&&r.reason.message}));if(rs.some(r=>r.ok))CACHE.set(ck,{t:Date.now(),rs})}
+let n=0;rs.forEach(r=>{S.st[r.k]=r.ok?(r.v.length?'ok':'0'):'err:'+(navigator.onLine?r.e:'mất kết nối');if(r.ok){S.raw.push(...r.v);n+=r.v.length}});
+S.res=filt(merge(S.raw));S.more=n>0;S.busy=0;S.done=1;ui()}
+const pend=()=>{clearTimeout(dbt);dbt=setTimeout(()=>{if(S.q.trim().length>=2)search()},800)};
+/* ===== GIAO DIỆN TAB ===== */
+const BL={full:['Toàn văn','f'],preview:['Đọc thử',''],info:['Chỉ xem thông tin','n'],borrow:['Cần quyền truy cập','n']};
+function card(b,i,arr){const bl=BL[b.acc],sh=D.shelf[b.id];
+return`<div class=bk>${b.cover?`<img src="${E(b.cover)}" alt="" loading=lazy onerror="this.outerHTML='<div class=nc>📖</div>'">`:'<div class=nc>📖</div>'}<b>${E(b.title)}</b><small>${E(b.au.slice(0,2).join(', ')||'Không rõ tác giả')}</small><small>${E([b.lang.join('/').toUpperCase(),b.year,SRC[b.src]].filter(Boolean).join(' · '))}</small><span class="bd2 ${bl[1]}">${bl[0]}</span>${b.lic?`<small title="${E(b.lic)}">⚖ ${E(b.lic.slice(0,48))}</small>`:''}
+<div class=row2>${b.rd?`<button class=p onclick="JL.open('${arr}',${i})">ĐỌC SÁCH</button>`:''}${b.url?`<a class=s target=_blank rel=noopener href="${E(b.url)}">Nguồn ↗</a>`:''}<button class=s onclick="JL.fav('${arr}',${i})">${sh&&sh.fav?'♥':'♡'}</button></div>
+${b.alts.filter(a=>a.rd||a.url).slice(0,3).map(a=>a.rd?`<button class=s style="font-size:.75rem" onclick="JL.open('${arr}',${i},${b.alts.indexOf(a)})">Đọc qua ${SRC[a.src]}</button>`:`<a class=s style="font-size:.75rem" target=_blank rel=noopener href="${E(a.url)}">${SRC[a.src]} ↗</a>`).join('')}</div>`}
+const chips=()=>`<div class=ch>${CT.map(c=>`<button class="s ${S.l==c[0]?'on2':''}" onclick="JL.set('l','${c[0]}')">${c[1]}</button>`).join('')}</div><div class=ch>${GN.map((g,i)=>`<button class="s ${S.g&&S.g[0]==g[0]?'on2':''}" onclick="JL.gn(${i})">${g[0]}</button>`).join('')}</div><div class=ch><button class="s ${S.free?'on2':''}" onclick="JL.tg('free')">Miễn phí</button><button class="s ${S.rd?'on2':''}" onclick="JL.tg('rd')">Đọc trực tuyến</button><button class="s ${S.vi?'on2':''}" onclick="JL.tg('vi')">Có bản tiếng Việt</button></div>`;
+function shelfH(){const T=[['reading','Đang đọc'],['fav','Yêu thích'],['read','Đã đọc'],['bm','Đánh dấu']],e=Object.entries(D.shelf).filter(([k,x])=>x.b),pick=S.sh=='fav'?e.filter(([k,x])=>x.fav):S.sh=='read'?e.filter(([k,x])=>x.st=='read'):S.sh=='reading'?e.filter(([k,x])=>x.st=='reading'):[];
+let h=`<div class=ch>${T.map(t=>`<button class="s ${S.sh==t[0]?'on2':''}" onclick="JL.sh('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
+if(S.sh=='bm'){const a=Object.entries(D.bm).flatMap(([k,l])=>l.map((m,i)=>({k,m,i}))).filter(x=>D.shelf[x.k]);h+=a.length?a.map(x=>`<div class=row><span style="min-width:0"><b>${E(D.shelf[x.k].b.title)}</b><br><small class=mut>${E(x.m.sn)}</small></span><button class=s onclick="JL.go('${x.k}',${x.m.c},${x.m.b})">Mở</button></div>`).join(''):'<p class=mut>Chưa có trang đánh dấu.</p>';return h}
+pick.sort((a,b)=>b[1].t-a[1].t);S.sa=pick.map(x=>x[1].b);return h+(pick.length?`<div class=gr>${S.sa.map((b,i)=>card(b,i,'sa')+'').join('')}</div>`:'<p class=mut>Chưa có sách trong mục này.</p>')}
+function body(){if(S.v=='shelf')return shelfH();if(S.v=='res'){const bad=Object.entries(S.st).filter(([k,v])=>v.startsWith('err'));
+let h=`<p class=mut style="font-size:.82rem">${Object.keys(SRC).map(k=>S.st[k]?(S.st[k]=='ok'?'✓':S.st[k]=='0'?'○':'⚠')+' '+SRC[k]:'').filter(Boolean).join(' · ')}${bad.length?'<br>Một số nguồn lỗi: '+bad.map(([k,v])=>SRC[k]+' ('+E(v.slice(4))+')').join('; ')+' <button class=s onclick="JL.go2()">Thử lại</button>':''}</p>`;
+if(S.busy&&!S.res.length)return h+'<p class=mut>⏳ Đang tìm trong các nguồn…</p>';
+if(S.done&&!S.res.length)return h+(bad.length==Object.keys(SRC).length?'<div class=card style="text-align:center"><p>📡 Không kết nối được tới nguồn nào.</p><p class=mut>Kiểm tra mạng rồi bấm Thử lại.</p></div>':'<div class=card style="text-align:center"><p>😕 Không tìm thấy sách phù hợp.</p><p class=mut>Thử từ khóa khác hoặc bỏ bớt bộ lọc.</p></div>');
+S.sr=S.res;return h+`<div class=gr>${S.res.map((b,i)=>card(b,i,'sr')).join('')}</div>${S.more?`<p style="text-align:center"><button class=s ${S.busy?'disabled':''} onclick="JL.more()">${S.busy?'Đang tải…':'Tải thêm'}</button></p>`:''}`}
+const rc=Object.values(D.shelf).filter(x=>x.b&&x.st=='reading').sort((a,b)=>b.t-a.t).slice(0,6);S.hr=rc.map(x=>x.b);
+const sg=q=>`<button class=s onclick="JL.q('${q}')">${q}</button>`;
+return`${S.hr.length?`<h3>Đang đọc gần đây</h3><div class=gr>${S.hr.map((b,i)=>card(b,i,'hr')).join('')}</div>`:''}<h3>Khám phá</h3><div class=ch><button class=s onclick="JL.pre('văn học Việt Nam','vi')">🇻🇳 Sách tiếng Việt</button><button class=s onclick="JL.pre('classic novel','')">🌍 Sách quốc tế</button><button class=s onclick="JL.pre('classic','',1)">🆓 Sách miễn phí</button></div><h3>Nổi bật (gợi ý tìm)</h3><div class=ch>${['Truyện Kiều','Tắt đèn','Sherlock Holmes','Pride and Prejudice','Alice in Wonderland'].map(sg).join('')}</div><div class=card><b>Học liệu mở VOER</b><p class=mut style="margin:4px 0">VOER không có API công khai nên chỉ có liên kết tới tài liệu gốc.</p><a class=s target=_blank rel=noopener href="https://voer.edu.vn/">Mở VOER ↗</a></div>`}
+function ui(){const r=document.getElementById('jlr');if(r)r.innerHTML=body();const f=document.getElementById('jlf');if(f)f.innerHTML=chips()}
+V.lib=()=>`<div id=jl><div class=card><div class=row><h3>📚 JUSTASEED BOOK LIBRARY</h3><span><button class=s onclick="JL.setv('${S.v=='shelf'?'home':'shelf'}')">${S.v=='shelf'?'← Thư viện':'Tủ sách của tôi'}</button> <button class=s onclick="JL.cfg()" aria-label="Cài đặt">⚙</button></span></div>
+<div class=jlq><input id=jlq type=search placeholder="Tên sách, tác giả hoặc ISBN…" value="${E(S.q)}" oninput="JL.inp(this.value)" onkeydown="if(event.key=='Enter')JL.go2()"><select onchange="JL.set('t',this.value)" aria-label="Tìm theo">${[['','Tất cả'],['title','Tên sách'],['author','Tác giả'],['isbn','ISBN']].map(o=>`<option value="${o[0]}" ${S.t==o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><button class=p onclick="JL.go2()">Tìm</button></div>
+<div id=jlf>${chips()}</div></div><div id=jlr>${body()}</div></div>`;
+{const i=TABS.findIndex(t=>t[0]=='up');TABS.splice(i<0?TABS.length:i,0,['lib','book','Thư viện'])}
+/* ===== TRÌNH ĐỌC ===== */
+const RD={b:null,chs:[],ci:0,bl:[],tr:null,mode:'o',ab:null,sv:0};let rt=0;
+const el=id=>document.getElementById(id);
+function blocks(root){const out=[],sk='.noprint,.reference,.mw-editsection,.navbox,#toc,.toc,script,style,table';root.querySelectorAll(sk).forEach(n=>n.remove());
+root.querySelectorAll('h1,h2,h3,h4,p,li,pre').forEach(n=>{n.querySelectorAll('br').forEach(b=>b.replaceWith('\n'));const t=n.textContent.replace(/[ \t]+/g,' ').replace(/\n\s+/g,'\n').trim();if(!t)return;const m=/^H(\d)$/.exec(n.tagName);out.push(m?{k:'h',l:+m[1],t}:{k:'p',t})});return out}
+function split(bl,tt){let lv=0;for(const l of [2,1,3])if(bl.filter(x=>x.k=='h'&&x.l==l).length>=2){lv=l;break}
+let ch=[],c={t:tt,bl:[]};bl.forEach(x=>{if(lv&&x.k=='h'&&x.l==lv&&c.bl.length){ch.push(c);c={t:x.t,bl:[]}}if(!c.t||c.t==tt&&x.k=='h'&&!c.bl.length)c.t=x.t;c.bl.push(x)});ch.push(c);
+const out=[];ch.forEach(c=>{let cur={t:c.t,bl:[]},n=0,p=1;c.bl.forEach(x=>{if(n>25000&&x.k=='p'){out.push(cur);p++;cur={t:c.t+' (phần '+p+')',bl:[]};n=0}cur.bl.push(x);n+=x.t.length});out.push(cur)});return out.filter(c=>c.bl.length)}
+async function loadBook(b){const r=b.rd;if(r.k=='ws'){const j=await fj('https://vi.wikisource.org/w/api.php?action=query&list=allpages&apnamespace=0&aplimit=200&format=json&origin=*&apprefix='+encodeURIComponent(r.t+'/'));
+const pg=((j.query||{}).allpages||[]).map(x=>x.title).sort(new Intl.Collator('vi',{numeric:true}).compare);return(pg.length?pg:[r.t]).map(p=>({t:p==r.t?r.t:p.slice(r.t.length+1),p}))}
+if(r.k=='gt'){const u=r.h||r.x;let tx;try{const x=await fetch(u);if(!x.ok)throw 0;tx=await x.text()}catch(e){return'frame'}
+let bl;if(r.h){const d=new DOMParser().parseFromString(tx,'text/html');bl=blocks(d.body);const a=bl.findIndex(x=>/\*\*\* ?START OF/i.test(x.t)),z=bl.findIndex(x=>/\*\*\* ?END OF/i.test(x.t));bl=bl.slice(a>=0?a+1:0,z>0?z:undefined)}
+else{tx=tx.replace(/^[\s\S]*?\*\*\* ?START OF[^\n]*\n/i,'').replace(/\*\*\* ?END OF[\s\S]*$/i,'');bl=tx.split(/\r?\n\s*\r?\n/).map(t=>t.replace(/\s*\r?\n\s*/g,' ').trim()).filter(Boolean).map(t=>/^(chapter|chương|book|part|phần)\b.{0,60}$/i.test(t)?{k:'h',l:2,t}:{k:'p',t})}
+return split(bl,b.title).map(c=>({t:c.t,bl:c.bl}))}return'frame'}
+async function chBl(c){if(c.bl)return c.bl;const j=await fj('https://vi.wikisource.org/w/api.php?action=parse&prop=text&redirects=1&disableeditsection=1&format=json&formatversion=2&origin=*&page='+encodeURIComponent(c.p),{},15000);
+if(j.error)throw new Error(j.error.info);const d=new DOMParser().parseFromString((j.parse||{}).text||'','text/html');return c.bl=blocks(d.body)}
+const isDark=()=>D.set.th?D.set.th=='d':document.documentElement.dataset.theme=='dark';
+function shell(b){const o=document.createElement('div');o.id='jlrd';o.dataset.th=isDark()?'d':'l';o.innerHTML=`<div class=jtb style="flex-wrap:nowrap"><button style="flex:none" onclick="JL.close()">← Thư viện</button><span class=jtt>${E(b.title)}${b.au[0]?' · '+E(b.au[0]):''}</span></div><div id=jlx></div>`;document.body.appendChild(o);document.body.style.overflow='hidden'}
+function tools(){const b=RD.b,vi=b.lang.includes('vi'),has=D.shelf[b.id];return`<div class=jtb><button onclick="JL.fs(-1)" aria-label="Giảm cỡ chữ">A−</button><button onclick="JL.fs(1)" aria-label="Tăng cỡ chữ">A+</button><button onclick="JL.lh(-.1)" aria-label="Giảm giãn dòng">≡−</button><button onclick="JL.lh(.1)" aria-label="Tăng giãn dòng">≡+</button><button onclick="JL.th()" aria-label="Sáng/Tối">${isDark()?'☀️':'🌙'}</button><button onclick="JL.bm()">🔖+</button><button onclick="JL.bml()">Đánh dấu</button><button onclick="JL.toc()">☰</button>${vi?'':RD.tr?`<button onclick="JL.mode('${RD.mode=='v'?'o':'v'}')">${RD.mode=='v'?'XEM BẢN GỐC':'XEM BẢN DỊCH'}</button>`:`<button onclick="JL.trans()">DỊCH SANG TIẾNG VIỆT</button>`}</div><div id=jlst class=jst style="display:none"></div>`}
+function paint(keep){const c=RD.chs[RD.ci],bl=RD.bl,tr=RD.mode=='v'&&RD.tr;const h=bl.map((x,i)=>{const t=tr&&tr[i]!=null?tr[i]:x.t;return x.k=='h'?`<h3 data-i=${i}>${E(t)}</h3>`:`<p data-i=${i}>${E(t)}</p>`}).join('');
+const x=el('jlx');x.innerHTML=tools()+`<div id=jlb style="font-size:${D.set.sz}px;line-height:${D.set.lh}"><div id=jlt>${bl[0]&&bl[0].k=='h'&&bl[0].t==c.t?'':`<h3>${E(c.t)}</h3>`}${h}</div></div><div class=jft><button onclick="JL.ch(-1)" ${RD.ci?'':'disabled'}>◀ Trước</button><span id=jlp></span><button onclick="JL.ch(1)" ${RD.ci<RD.chs.length-1?'':'disabled'}>Sau ▶</button></div>`;x.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0';
+const bd=el('jlb');bd.onscroll=()=>{clearTimeout(rt);rt=setTimeout(pos,400)};if(keep!=null){const n=bd.querySelector('[data-i="'+keep+'"]');if(n)bd.scrollTop=n.offsetTop-8}prog()}
+const top=()=>{const bd=el('jlb');if(!bd)return 0;const a=bd.querySelectorAll('[data-i]');for(const n of a)if(n.offsetTop+n.offsetHeight>bd.scrollTop+4)return+n.dataset.i;return 0};
+function prog(){const bd=el('jlb'),p=el('jlp');if(!bd||!p)return;const f=bd.scrollHeight>bd.clientHeight?bd.scrollTop/(bd.scrollHeight-bd.clientHeight):1,n=RD.chs.length;p.textContent=(RD.ci+1)+'/'+n+' · '+Math.min(100,Math.round((RD.ci+f)/n*100))+'%';return(RD.ci+f)/n}
+function pos(){const pr=prog(),s=D.shelf[RD.b.id];if(!s||pr==null)return;s.pos={c:RD.ci,b:top()};s.pr=pr;s.t=Date.now();if(pr>=.98)s.st='read';save()}
+async function showCh(i,at){RD.ci=Math.max(0,Math.min(RD.chs.length-1,i));RD.tr=null;RD.mode='o';const c=RD.chs[RD.ci];el('jlx').innerHTML='<p class=mut style="padding:20px">⏳ Đang tải…</p>';
+try{RD.bl=await chBl(c)}catch(e){el('jlx').innerHTML=`<div style="padding:20px"><p>⚠ Không tải được nội dung: ${E(e.message)}</p><button class=s onclick="JL.ch(0)">Thử lại</button> <a class=s target=_blank rel=noopener href="${E(RD.b.url)}">Mở nguồn ↗</a></div>`;return}
+if(!RD.bl.length)RD.bl=[{k:'p',t:'(Trang không có nội dung văn bản.)'}];const k=TR[trKey()];if(k&&k.p.length==RD.bl.length&&k.p.every(x=>x!=null)){RD.tr=k.p}
+paint(at);if(at==null)pos()}
+const eng=()=>D.set.key?'g:'+D.set.model:D.set.lt?'l':'';const trKey=()=>RD.b.id+'|'+RD.ci+'|'+eng();
+async function open(b,ci,bi){if(!b.rd){tst('Sách này không có nội dung đọc trực tiếp');return}const s=D.shelf[b.id]=D.shelf[b.id]||{t:0,st:'reading'};s.b=b;s.t=Date.now();if(s.st!='read')s.st='reading';save();
+RD.b=b;RD.chs=[];closeR();shell(b);const x=el('jlx');
+if(b.rd.k=='gb'||b.rd.k=='ia'){frame(b.rd.k=='gb'?'https://books.google.com/books?output=embed&id='+encodeURIComponent(b.rd.id):'https://archive.org/embed/'+encodeURIComponent(b.rd.id));return}
+x.innerHTML='<p style="padding:20px">⏳ Đang tải sách…</p>';
+try{const r=await loadBook(b);if(r=='frame'){frame(b.rd.h||b.rd.x);return}RD.chs=r}catch(e){x.innerHTML=`<div style="padding:20px"><p>⚠ Không tải được sách: ${E(e.message)}</p><a class=s target=_blank rel=noopener href="${E(b.url)}">Mở nguồn chính thức ↗</a></div>`;return}
+if(!RD.chs.length){x.innerHTML='<p style="padding:20px">Không có nội dung.</p>';return}
+const p=s.pos||{c:0,b:0};await showCh(ci!=null?ci:p.c,bi!=null?bi:p.b)}
+function frame(u){el('jlx').innerHTML=`<div class=jst>Đang dùng trình xem của nguồn: không đổi cỡ chữ / dịch được. <a target=_blank rel=noopener style="color:inherit" href="${E(RD.b.url||u)}">Mở nguồn chính thức ↗</a></div><iframe src="${E(u)}" allowfullscreen referrerpolicy="no-referrer"></iframe>`;el('jlx').style.cssText='display:flex;flex-direction:column;flex:1;min-height:0'}
+function closeR(){RD.ab&&RD.ab.abort();const o=el('jlrd');if(o)o.remove();document.body.style.overflow=''}
+/* ===== DỊCH ===== */
+const SYS='Bạn là dịch giả văn học chuyên nghiệp. Đầu vào là một mảng JSON các đoạn văn. Trả về MỘT mảng JSON có đúng cùng số phần tử, mỗi phần tử là bản dịch tiếng Việt của đoạn tương ứng. Dịch đầy đủ, không tóm tắt, không bỏ, gộp hay tách đoạn; giữ nguyên tên nhân vật và địa danh khi phù hợp; giữ thuật ngữ nhất quán; giữ tiêu đề; văn phong tiếng Việt tự nhiên, dễ đọc; không thêm tình tiết, chú thích hay lời bình.';
+let last=0;async function gap(sg){const w=3000-(Date.now()-last);if(w>0)await sleep(w,sg);last=Date.now()}
+async function call(arr,sg){for(let n=0;;n++){await gap(sg);try{
+if(D.set.key){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(D.set.model)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':D.set.key},signal:sg,body:JSON.stringify({systemInstruction:{parts:[{text:SYS}]},contents:[{role:'user',parts:[{text:JSON.stringify(arr)}]}],generationConfig:{responseMimeType:'application/json',responseSchema:{type:'ARRAY',items:{type:'STRING'}},temperature:.3}})});
+if(!r.ok){const j=await r.json().catch(()=>({}));const e=new Error((j.error&&j.error.message)||'HTTP '+r.status);e.st=r.status;throw e}
+const j=await r.json(),t=((((j.candidates||[])[0]||{}).content||{}).parts||[]).map(p=>p.text||'').join('');const o=JSON.parse(t);if(!Array.isArray(o))throw new Error('Phản hồi không đúng định dạng');return o.map(String)}
+const r=await fetch(D.set.lt.replace(/\/$/,'')+'/translate',{method:'POST',headers:{'Content-Type':'application/json'},signal:sg,body:JSON.stringify({q:arr,source:'auto',target:'vi',format:'text',api_key:D.set.ltk||undefined})});
+if(!r.ok){const e=new Error('LibreTranslate HTTP '+r.status);e.st=r.status;throw e}const j=await r.json();return[].concat(j.translatedText)
+}catch(e){if(e.name=='AbortError')throw e;if((e.st==429||e.st>=500)&&n<2){stat('⏳ Máy chủ dịch bận, thử lại sau '+(8*(n+1))+'s…');await sleep(8e3*(n+1),sg);continue}throw e}}}
+async function tChunk(arr,sg){const o=await call(arr,sg);if(o.length==arr.length)return o;if(arr.length==1)return[o.join('\n')];const h=arr.length>>1;return[...await tChunk(arr.slice(0,h),sg),...await tChunk(arr.slice(h),sg)]}
+const stat=(h,btn)=>{const s=el('jlst');if(s){s.style.display=h?'block':'none';s.innerHTML=h||''}};
+async function trans(){if(!eng()){cfg(1);return}const k=trKey(),bl=RD.bl,hit=TR[k];if(hit&&hit.p.length==bl.length&&hit.p.every(x=>x!=null)){RD.tr=hit.p;RD.mode='v';paint(top());return}
+const ent=TR[k]=hit&&hit.p.length==bl.length?hit:{t:Date.now(),p:bl.map(()=>null)},ck=[];let cur=[],n=0;bl.forEach((x,i)=>{if(ent.p[i]!=null)return;if(n+x.t.length>3500&&cur.length){ck.push(cur);cur=[];n=0}cur.push(i);n+=x.t.length});if(cur.length)ck.push(cur);
+if(ck.length>40&&!confirm('Chương này rất dài ('+ck.length+' lượt gọi API). Vẫn dịch?'))return;
+const ab=RD.ab=new AbortController(),at=RD.ci;let d=0;
+try{for(const c of ck){stat(`⏳ Đang dịch ${d+1}/${ck.length}… <button onclick="JL.cancel()">Hủy</button>`);const o=await tChunk(c.map(i=>bl[i].t),ab.signal);if(RD.ci!=at||!el('jlrd'))return;c.forEach((i,j)=>ent.p[i]=o[j]);ent.t=Date.now();d++}
+RD.tr=ent.p;RD.mode='v';trSave();stat('');paint(top())}catch(e){trSave();stat(e.name=='AbortError'?'Đã hủy dịch (phần đã dịch được giữ lại). <button onclick="JL.trans()">Dịch tiếp</button>':`⚠ Dịch thất bại: ${E(e.message)} <button onclick="JL.trans()">Thử lại</button>`)}}
+function cfg(need){const o=document.createElement('div');o.id='jls';o.onclick=e=>{if(e.target==o)o.remove()};const s=D.set;
+o.innerHTML=`<div><h3>⚙ Cài đặt dịch sách</h3>${need?'<p class=mut style="margin:0">Cần cấu hình công cụ dịch để dùng DỊCH SANG TIẾNG VIỆT. Thư viện vẫn dùng bình thường nếu không có key.</p>':''}
+<label>Gemini API Key (lấy miễn phí tại <a href="https://aistudio.google.com/apikey" target=_blank rel=noopener>aistudio.google.com/apikey</a>)<input id=jk type=password autocomplete=off value="${E(s.key)}" placeholder="AIza…"></label>
+<label>Model Gemini<input id=jm list=jml value="${E(s.model)}"><datalist id=jml><option value="gemini-3.5-flash"><option value="gemini-3.5-flash-lite"><option value="gemini-3.8-flash"></datalist></label>
+<label>LibreTranslate / máy chủ dịch riêng (tùy chọn, dùng khi không có key Gemini)<input id=jl1 value="${E(s.lt)}" placeholder="https://máy-chủ-của-bạn"></label><label>API key LibreTranslate (nếu có)<input id=jl2 type=password value="${E(s.ltk)}"></label>
+<p class=mut style="font-size:.8rem;margin:0">Key chỉ lưu trong trình duyệt của thiết bị này (localStorage, không mã hóa) và chỉ gửi tới Google (hoặc máy chủ dịch bạn nhập). Nên dùng key đã giới hạn hạn mức; không dùng chung thiết bị công cộng.</p>
+<div class=li><button onclick="JL.sv()" class=p style="padding:8px 14px">Lưu</button><button onclick="JL.rmk()">Xóa key</button><button onclick="JL.rmt()">Xóa bản dịch đã lưu</button></div></div>`;document.body.appendChild(o)}
+/* ===== API CÔNG KHAI ===== */
+const A=n=>S[n];
+window.JL={
+inp(v){S.q=v;pend()},go2(){clearTimeout(dbt);search()},more(){search(1)},
+set(k,v){S[k]=v;if(k=='l')S.g&&0;ui();if(S.q.trim().length>=2&&S.v=='res')search()},
+gn(i){S.g=S.g&&S.g[0]==GN[i][0]?null:GN[i];ui();if(S.q.trim().length>=2)search()},tg(k){S[k]=S[k]?0:1;if(S.v=='res'&&S.raw.length){S.res=filt(merge(S.raw))}ui()},
+q(t){S.q=t;const i=el('jlq');if(i)i.value=t;search()},pre(q,l,f){S.q=q;S.l=l;S.free=f?1:0;S.rd=f?1:0;const i=el('jlq');if(i)i.value=q;search()},
+setv(v){S.v=v;if(typeof R=='function')R()},sh(k){S.sh=k;ui()},
+fav(a,i){const b=S[a][i];const s=D.shelf[b.id]=D.shelf[b.id]||{t:Date.now(),st:''};s.b=b;s.fav=s.fav?0:1;save();ui()},
+open(a,i,j){const b=S[a][i];open(j!=null?b.alts[j]:b)},
+go(id,c,b){const x=D.shelf[id];if(x)open(x.b,c,b)},
+close(){pos();closeR();if(S.v=='shelf'||S.v=='home')ui()},
+fs(d){D.set.sz=Math.max(12,Math.min(34,D.set.sz+d*2));save();const b=el('jlb');if(b){const k=top();b.style.fontSize=D.set.sz+'px';const n=b.querySelector('[data-i="'+k+'"]');if(n)b.scrollTop=n.offsetTop-8}},
+lh(d){D.set.lh=Math.max(1.2,Math.min(2.4,+(D.set.lh+d).toFixed(1)));save();const b=el('jlb');if(b)b.style.lineHeight=D.set.lh},
+th(){D.set.th=isDark()?'l':'d';save();el('jlrd').dataset.th=D.set.th;const t=document.querySelector('#jlrd .jtb button[aria-label="Sáng/Tối"]');if(t)t.textContent=isDark()?'☀️':'🌙'},
+ch(d){pos();showCh(RD.ci+d,d?0:top())},
+bm(){const k=top(),n=el('jlb').querySelector('[data-i="'+k+'"]'),l=D.bm[RD.b.id]=D.bm[RD.b.id]||[];l.push({c:RD.ci,b:k,sn:(n?n.textContent:'').slice(0,70),t:Date.now()});D.shelf[RD.b.id]=D.shelf[RD.b.id]||{t:Date.now(),st:'reading'};D.shelf[RD.b.id].b=RD.b;save();tst('Đã đánh dấu trang')},
+bml(){const l=D.bm[RD.b.id]||[],o=document.createElement('div');o.id='jls';o.onclick=e=>{if(e.target==o)o.remove()};o.innerHTML=`<div><h3>Trang đã đánh dấu</h3>${l.length?l.map((m,i)=>`<div class=li><button style="flex:1;text-align:left" onclick="JL.bg(${i})">Ch.${m.c+1}: ${E(m.sn)}</button><button onclick="JL.bd(${i})">✕</button></div>`).join(''):'<p>Chưa có.</p>'}</div>`;document.body.appendChild(o)},
+bg(i){const m=D.bm[RD.b.id][i];el('jls').remove();showCh(m.c,m.b)},bd(i){D.bm[RD.b.id].splice(i,1);save();el('jls').remove();JL.bml()},
+toc(){const o=document.createElement('div');o.id='jls';o.onclick=e=>{if(e.target==o)o.remove()};o.innerHTML=`<div><h3>Mục lục</h3>${RD.chs.map((c,i)=>`<button style="text-align:left;${i==RD.ci?'font-weight:700':''}" onclick="el_('jls').remove();JL.jump(${i})">${i+1}. ${E(c.t)}</button>`).join('')}</div>`;document.body.appendChild(o)},
+jump(i){pos();showCh(i,0)},trans,cfg,cancel(){RD.ab&&RD.ab.abort()},mode(m){RD.mode=m;paint(top())},
+sv(){D.set.key=el('jk').value.trim();D.set.model=el('jm').value.trim()||'gemini-3.5-flash';D.set.lt=el('jl1').value.trim();D.set.ltk=el('jl2').value.trim();save();el('jls').remove();tst('Đã lưu cài đặt')},
+rmk(){D.set.key='';D.set.ltk='';save();el('jk').value='';el('jl2').value='';tst('Đã xóa key khỏi thiết bị')},rmt(){TR={};trSave();tst('Đã xóa bản dịch đã lưu')},
+_:{D,S,nz,merge,mk,blocks,split,tChunk}};
+window.el_=id=>document.getElementById(id);
+})();
+</script>
+
 </body></html>

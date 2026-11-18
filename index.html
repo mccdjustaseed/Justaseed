@@ -16294,13 +16294,14 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
   }
   #sd:has(#msgroot[data-lay="d"]){transform:translateX(-102%)}
   #sd:has(#msgroot[data-lay="d"]).on{transform:none}
+  /* Giữ nguyên cấu trúc và kích thước thanh tab Cộng đồng như thiết kế cũ.
+     Chỉ mở rộng vùng nội dung tin nhắn bên dưới. */
   #sd:has(#msgroot) .sdt{
-    width:100%!important;max-width:none!important;align-self:stretch!important;
-    box-sizing:border-box;padding-left:24px;padding-right:24px;
+    width:100%;max-width:640px;align-self:center;
   }
   #sd:has(#msgroot) #sdtabs{
-    width:calc(100% - 48px)!important;max-width:none!important;
-    align-self:stretch!important;margin-left:24px;margin-right:24px;
+    width:calc(100% - 24px);max-width:616px;
+    align-self:center;margin:4px 12px;
     box-sizing:border-box;
   }
   #sdbody:has(#msgroot){

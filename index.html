@@ -16411,4 +16411,41 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
 }
 </style>
 
+
+<style id="v126-desktop-scale-and-chat-align">
+/* Thu tỷ lệ desktop về gần mức cũ, giữ nguyên cấu trúc và hành vi các tab. */
+@media (min-width:900px){
+  #app{zoom:.92!important}
+  /* Phần nội dung tin nhắn thẳng hàng và cùng bề rộng với thanh tab Cộng đồng. */
+  #sdbody:has(#msgroot){
+    width:calc(100% - 24px)!important;
+    max-width:616px!important;
+    align-self:center!important;
+    flex:1 1 auto!important;
+    min-width:0!important;min-height:0!important;
+    box-sizing:border-box!important;
+    padding:10px 0 18px!important;
+    overflow:hidden!important;
+  }
+  #msgroot:has(.cmside){
+    width:100%!important;max-width:616px!important;
+    min-width:0!important;min-height:0!important;
+    height:100%!important;box-sizing:border-box!important;
+  }
+  #sd:has(#msgroot) #sdtabs{
+    width:calc(100% - 24px)!important;
+    max-width:616px!important;
+    align-self:center!important;
+    margin:4px 12px!important;
+    box-sizing:border-box!important;
+  }
+  #sd:has(#msgroot) .sdt{
+    width:100%!important;max-width:640px!important;
+    align-self:center!important;box-sizing:border-box!important;
+  }
+  #msgroot .cmside{min-width:180px!important;width:36%!important;max-width:240px!important}
+  #msgroot .cmmain{flex:1 1 0!important;width:0!important;min-width:0!important}
+}
+</style>
+
 </body></html>

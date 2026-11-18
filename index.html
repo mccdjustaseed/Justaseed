@@ -16727,7 +16727,7 @@ nav .nvI{box-shadow:0 8px 14px -8px var(--g3)}
 }
 </style>
 <style id="v132-glass-gold-balance">
-/* v132: (1) Giao diện Kính - số tiền ở trang chủ (.hd .bal ở tiệm, .balp ở màn hình chính) dùng pill đặc màu chủ đề + chữ trắng, luôn nổi rõ trên nền kính cả sáng lẫn tối.
+/* v132 (lý do bản đầu không ăn: luật kính gốc dùng :is(.card,...,#mp) nên mang độ ưu tiên của #id; nên ở đây cũng dùng :is(.card,#mp) để thắng) (1) Giao diện Kính - số tiền ở trang chủ (.hd .bal ở tiệm, .balp ở màn hình chính) dùng pill đặc màu chủ đề + chữ trắng, luôn nổi rõ trên nền kính cả sáng lẫn tối.
    (2) Thẻ vàng ở Tiệm vàng (.card.ghero) trả về đúng vàng gốc như các chủ đề khác: nền vàng đặc, không pha kính mờ/viền trắng. */
 :root[data-skin^=glass] #app>.hd .bal,:root[data-skin^=glass] .hd .bal,:root[data-skin^=glass][data-theme=dark] #app>.hd .bal,:root[data-skin^=glass][data-theme=dark] .hd .bal,:root[data-skin^=glass] .balp,:root[data-skin^=glass][data-theme=dark] .balp{
   background:linear-gradient(135deg,var(--g2),var(--g3))!important;
@@ -16737,7 +16737,7 @@ nav .nvI{box-shadow:0 8px 14px -8px var(--g3)}
   -webkit-backdrop-filter:none;backdrop-filter:none;
   font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.35);
 }
-:root[data-skin^=glass] .card.ghero,:root[data-skin^=glass][data-theme=dark] .card.ghero{
+:root[data-skin^=glass] :is(.card,#mp).ghero,:root[data-skin^=glass][data-theme=dark] :is(.card,#mp).ghero{
   background:linear-gradient(135deg,#fff1b0,#f5c542 60%,#e0a416)!important;
   color:#4a3000!important;
   border:0!important;

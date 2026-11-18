@@ -16220,37 +16220,103 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
 </style>
 
 
-<style id="v127-tvfix">
-/* v127: hào quang tivi chỉ toả xuống dưới/hai bên, không tràn lên làm chìm header & nội dung phía trên */
-@media (max-width:899px){
- #mnow#mnow.tvon{box-shadow:0 40px 54px -34px hsl(var(--mh,150) 75% 52%/.55),0 30px 40px -30px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.34)!important}
- :root[data-skin^=glass] #mnow#mnow.tvon{box-shadow:0 36px 50px -32px var(--g2),0 24px 40px -26px rgba(20,30,60,.45),inset 0 0 0 1px rgba(255,255,255,.5),inset 0 1.5px 0 rgba(255,255,255,.95)!important}
- :root[data-skin^=glass][data-theme=dark] #mnow#mnow.tvon{box-shadow:0 36px 50px -32px var(--g2),0 24px 40px -26px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.16),inset 0 1.5px 0 rgba(255,255,255,.32)!important}
- :root[data-skin^=cat] #mnow#mnow.tvon{box-shadow:0 34px 46px -28px rgba(60,30,0,.5),0 36px 50px -30px var(--g2),inset 0 0 0 1px rgba(255,255,255,.3),inset 0 2px 0 rgba(255,255,255,.5)!important}
+<style id="jas-desktop-fix-v127">
+/* v127: sửa bố cục desktop cho các tab game/quản lý; không thay đổi logic game */
+@media (min-width:900px){
+  #app{
+    width:100%;
+    max-width:1600px;
+    padding:14px 30px 64px;
+    grid-template-columns:240px minmax(0,1fr);
+    column-gap:24px;
+  }
+  #app>main{min-width:0;width:100%}
+  #tc{
+    width:100%;
+    min-width:0;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:18px;
+    row-gap:18px;
+    align-items:start;
+  }
+  #tc>*{min-width:0;max-width:100%}
+  #tc .card,#tc .bub{min-width:0;max-width:100%}
+  #tc .card :is(input,textarea,select){max-width:100%;min-width:0}
+  #tc .card :is(img,svg,canvas,video){max-width:100%}
+  #tc .card :is(p,span,b,strong,small,label){overflow-wrap:anywhere}
+  #tc .row{min-width:0;align-items:center}
+  #tc .row>*{min-width:0}
+  #tc .row input{width:min(100%,220px)}
+  #tc .strip,#tc .tabs2,#tc .hui-nav{max-width:100%;min-width:0}
+  #tc .card:has(table),#tc .card:has(.jlist),#tc .card:has(.xbi),
+  #tc>[data-jfull],#tc>.card:has(.rvw),#tc>.card:has(.ivt){
+    grid-column:1/-1!important;
+  }
+  #tc .card:has(>.xbi){
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  #cbar{max-width:min(720px,calc(100vw - 300px))}
+  .ms{width:min(760px,calc(100vw - 320px))}
+}
+@media (min-width:1360px){
+  #app{max-width:1760px;grid-template-columns:252px minmax(0,1fr);column-gap:28px}
+  #tc{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:20px}
+  #tc>.card[style*="padding:0"]{grid-column:span 2}
+  #tc .card:has(>.xbi){grid-template-columns:repeat(2,minmax(0,1fr))}
+  #tc .card:has(table),#tc .card:has(.jlist),#tc .card:has(.xbi),
+  #tc>[data-jfull],#tc>.card:has(.rvw),#tc>.card:has(.ivt){grid-column:1/-1!important}
+}
+@media (min-width:900px) and (max-width:1100px){
+  #app{padding-left:18px;padding-right:18px;grid-template-columns:205px minmax(0,1fr);column-gap:16px}
+  #app nav.fx button{padding:8px 9px;font-size:.88rem}
+  #app nav.fx button span{font-size:.88rem}
+  #tc{column-gap:12px;row-gap:14px}
+}
+@media (min-width:900px){
+  #tc .card{overflow-wrap:anywhere}
+  #tc .card :is(.xbi,.xbt,.xbq){min-width:0}
+  #tc .card :is(.xbs,.xbq){max-width:100%}
+  #tc .card button{max-width:100%;white-space:normal}
 }
 </style>
-<script id="v127-js">
-/* v127: tab Nhạc — hàng đợi lên trên Gợi ý; thẻ "đang xem Tivi" lên trên thẻ Tìm kiếm.
-   Máy tính xếp thẻ bằng grid-area theo id nên không bị ảnh hưởng. */
-(function(){
- if(window.__v127||typeof V=='undefined'||typeof V.music!='function')return;window.__v127=1;
- const o=V.music;
- V.music=function(){
-  const h=o.apply(this,arguments);
-  if(typeof h!='string')return h;
-  try{
-   const t=document.createElement('template');t.innerHTML=h;
-   const f=t.content,g=id=>f.getElementById(id);
-   const mq=g('mq'),gc=g('mxgc'),md=g('mdesc'),mtv=g('mtv'),mxs=g('mxs');
-   if(mq&&gc&&mq.parentNode===gc.parentNode){
-    const ref=(md&&md.parentNode===gc.parentNode)?md:gc;
-    ref.parentNode.insertBefore(mq,ref);
-   }
-   if(mtv&&mxs&&mtv.parentNode===mxs.parentNode)mxs.parentNode.insertBefore(mtv,mxs);
-   return t.innerHTML;
-  }catch(e){return h}
- };
- try{if(typeof tab!='undefined'&&tab=='music')R()}catch(e){}
-})();
-</script>
+
+
+<style id="v126-desktop-community-chat-fullscreen">
+/* Fix: tin nhắn trong Cộng đồng phủ toàn màn hình máy tính */
+@media (min-width:900px){
+  #sd,
+  #sd:has(#msgroot),
+  #sd:has(#msgroot[data-lay="d"]){
+    left:0!important;right:0!important;top:0!important;bottom:0!important;
+    width:100vw!important;width:100dvw!important;max-width:none!important;
+    height:100vh!important;height:100dvh!important;
+    border-radius:0!important;box-shadow:none!important;
+  }
+  #sd:has(#msgroot[data-lay="d"]){transform:translateX(-102%)}
+  #sd:has(#msgroot[data-lay="d"]).on{transform:none}
+  #sd:has(#msgroot) .sdt{
+    width:100%!important;max-width:none!important;align-self:stretch!important;
+    box-sizing:border-box;padding-left:24px;padding-right:24px;
+  }
+  #sd:has(#msgroot) #sdtabs{
+    width:calc(100% - 48px)!important;max-width:none!important;
+    align-self:stretch!important;margin-left:24px;margin-right:24px;
+    box-sizing:border-box;
+  }
+  #sdbody:has(#msgroot){
+    width:100%!important;max-width:none!important;align-self:stretch!important;
+    flex:1 1 auto!important;min-width:0!important;min-height:0!important;
+    box-sizing:border-box;padding:12px 24px 20px!important;
+    overflow:hidden!important;zoom:1!important;
+  }
+  #msgroot{
+    width:100%!important;max-width:none!important;height:100%!important;
+    min-width:0!important;min-height:0!important;flex:1 1 auto!important;
+    box-sizing:border-box;
+  }
+  #msgroot[data-lay="d"]{width:100%!important;max-width:none!important}
+  #msgroot .cmside{min-width:220px;width:clamp(220px,25%,340px);max-width:340px}
+  #msgroot .cmmain{flex:1 1 0;min-width:0;width:0}
+}
+</style>
 </body></html>

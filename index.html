@@ -16485,4 +16485,9 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
 /* v129: nền không bị cụt (dải đen ở đáy) khi trang ngắn hơn khung nhìn */
 html,body{min-height:100vh}
 </style>
+<style id="v130-tabglow-sync">
+/* v130: vầng sáng (box-shadow) dưới tab đang chọn nằm trên chính nút .on nên nhảy tức thì sang tab mới, trong khi viền .nvI lướt 420ms => viền bị trễ so với phần phát quang. Chuyển vầng sáng sang .nvI để cả hai lướt cùng nhau. */
+nav.nvA button.on,#sdtabs.nvA button.on{box-shadow:none!important;filter:none!important}
+nav .nvI{box-shadow:0 8px 14px -8px var(--g3)}
+</style>
 </body></html>

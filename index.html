@@ -16465,5 +16465,14 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
  #app nav.fx,body.scrl #app nav.fx,body.nh #app nav.fx{transition:none!important;box-shadow:0 6px 18px rgba(20,70,40,.12)!important;border:2px solid var(--ln)!important;background:var(--card)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;transform:none!important}
  #app nav.fx button:active{transform:none}
 }
+
+/* v128: chiều cao sidebar cố định. dvh đổi liên tục khi thanh địa chỉ Safari/iPad co giãn lúc cuộn nên sidebar lúc to lúc nhỏ; svh thì không đổi */
+@supports (height:100svh){
+ @media (min-width:900px) and (min-height:640px){
+  #app nav.fx,body.scrl #app nav.fx,body.nh #app nav.fx{max-height:calc(100svh - 24px)!important;top:12px!important;will-change:auto}
+ }
+}
+/* không để overscroll/bounce của sidebar kéo trang theo */
+@media (min-width:900px){#app nav.fx{overscroll-behavior:contain}}
 </style>
 </body></html>

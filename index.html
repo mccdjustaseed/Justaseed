@@ -16320,4 +16320,71 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
   #msgroot .cmmain{flex:1 1 0;min-width:0;width:0}
 }
 </style>
+
+<style id="v126-desktop-restock-layout-fix">
+/* Desktop restock: keep the existing left navigation; restore the wide product-grid + right cart layout. */
+@media (min-width:900px){
+  #tc:has(.xbi){
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:14px!important;
+    align-items:start!important;
+  }
+  #tc:has(.xbi)>:nth-child(1),
+  #tc:has(.xbi)>.bseg,
+  #tc:has(.xbi)>details{grid-column:1/-1!important;min-width:0!important}
+  #tc:has(.xbi)>:nth-child(3),
+  #tc:has(.xbi)>:nth-child(4){grid-column:1!important;min-width:0!important;width:100%!important}
+  #tc:has(.xbi)>:nth-child(3){display:block!important}
+  #tc:has(.xbi)>:nth-child(3)>.xbi,
+  #tc:has(.xbi) .card:has(>.xbi)>.xbi{min-width:0}
+  #tc:has(.xbi) .card:has(>.xbi){
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px 12px!important;
+    align-content:start;
+  }
+  #tc:has(.xbi) .card:has(>.xbi)>p,
+  #tc:has(.xbi) .card:has(>.xbi)>input,
+  #tc:has(.xbi) .card:has(>.xbi)>button{grid-column:1/-1!important}
+  #tc:has(.xbi) .xbi{
+    display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    gap:7px!important;min-width:0!important;padding:10px!important;margin:0!important;
+    border:1px solid var(--ln)!important;border-radius:14px!important;
+    background:color-mix(in srgb,var(--card) 92%,var(--g) 8%)!important;
+    text-align:center;box-sizing:border-box;
+  }
+  #tc:has(.xbi) .xba{display:flex;justify-content:center;align-items:center;min-height:34px}
+  #tc:has(.xbi) .xbt{width:100%;min-width:0;align-items:center;text-align:center;overflow-wrap:anywhere}
+  #tc:has(.xbi) .xbt .bar{width:100%;max-width:100%}
+  #tc:has(.xbi) .xbq{width:100%;min-width:0;align-items:stretch!important;gap:5px!important}
+  #tc:has(.xbi) .xbs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:4px!important}
+  #tc:has(.xbi) .xbs:first-child button:last-child{grid-column:1/-1}
+  #tc:has(.xbi) .xbs:nth-child(2){grid-template-columns:34px minmax(0,1fr) 34px}
+  #tc:has(.xbi) .xbs button{min-width:0;width:100%;padding:5px 4px!important;white-space:nowrap!important}
+  #tc:has(.xbi) .xbs .qi{width:100%!important;min-width:0!important;box-sizing:border-box}
+  #tc:has(.xbi) .cartc,
+  #tc:has(.xbi)>:nth-child(4){min-width:0;max-width:100%;box-sizing:border-box}
+  #tc:has(.xbi) .cartc .cll{max-height:48vh;overflow:auto;overscroll-behavior:contain}
+  #tc:has(.xbi) .cartc .row{min-width:0;overflow-wrap:anywhere}
+  #tc:has(.xbi) .cartc .row>*{min-width:0}
+  #tc:has(.xbi) #cbar{max-width:100%}
+}
+@media (min-width:1200px){
+  #tc:has(.xbi){grid-template-columns:minmax(0,2fr) minmax(320px,.92fr)!important;column-gap:18px!important;row-gap:14px!important}
+  #tc:has(.xbi)>:nth-child(1),#tc:has(.xbi)>.bseg,#tc:has(.xbi)>details{grid-column:1/-1!important}
+  #tc:has(.xbi)>:nth-child(3){grid-column:1!important;grid-row:3!important}
+  #tc:has(.xbi)>:nth-child(4){grid-column:2!important;grid-row:3!important;align-self:start!important}
+  #tc:has(.xbi) .card:has(>.xbi){grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  #tc:has(.xbi) .cartc{position:sticky;top:12px}
+  #tc:has(.xbi) .cartc .cll{max-height:52vh}
+}
+@media (min-width:1500px){
+  #tc:has(.xbi) .card:has(>.xbi){grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+@media (min-width:900px) and (max-width:1199px){
+  #tc:has(.xbi) .card:has(>.xbi){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #tc:has(.xbi) .cartc{position:static}
+}
+</style>
 </body></html>

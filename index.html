@@ -16321,70 +16321,94 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
 }
 </style>
 
-<style id="v126-desktop-restock-layout-fix">
-/* Desktop restock: keep the existing left navigation; restore the wide product-grid + right cart layout. */
+<style id="v126-restock-match-reference">
+/* Nhập hàng desktop: bố cục bám sát ảnh chuẩn người dùng cung cấp.
+   Thanh tab trái giữ nguyên; lưới hoa ở giữa; giỏ xác nhận riêng bên phải. */
 @media (min-width:900px){
-  #tc:has(.xbi){
+  /* Khi có giỏ nhập hàng, tab này dùng một vùng nội dung chính duy nhất. */
+  #tc:has(>.card.cartc){
+    display:block!important;
+    position:relative;
+    box-sizing:border-box;
+    padding-right:clamp(390px,26vw,430px)!important;
+    min-width:0;
+  }
+  #tc:has(>.card.cartc)>:not(.cartc){max-width:100%;min-width:0}
+
+  /* Bảng hàng: phần đầu (nhà cung cấp/tìm kiếm/thêm tất cả) nằm ngang phía trên,
+     từng mặt hàng là một thẻ dọc trong lưới 4 cột như ảnh chuẩn. */
+  #tc .card:has(>.xbi){
     display:grid!important;
-    grid-template-columns:minmax(0,1fr)!important;
-    gap:14px!important;
-    align-items:start!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:8px!important;
+    align-items:stretch;
+    min-width:0;
+    padding:10px!important;
   }
-  #tc:has(.xbi)>:nth-child(1),
-  #tc:has(.xbi)>.bseg,
-  #tc:has(.xbi)>details{grid-column:1/-1!important;min-width:0!important}
-  #tc:has(.xbi)>:nth-child(3),
-  #tc:has(.xbi)>:nth-child(4){grid-column:1!important;min-width:0!important;width:100%!important}
-  #tc:has(.xbi)>:nth-child(3){display:block!important}
-  #tc:has(.xbi)>:nth-child(3)>.xbi,
-  #tc:has(.xbi) .card:has(>.xbi)>.xbi{min-width:0}
-  #tc:has(.xbi) .card:has(>.xbi){
-    display:grid!important;
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:8px 12px!important;
-    align-content:start;
+  #tc .card:has(>.xbi)>:not(.xbi){grid-column:1/-1!important;min-width:0}
+  #tc .card:has(>.xbi)>.xbi{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    justify-content:flex-start;
+    gap:5px!important;
+    box-sizing:border-box;
+    min-width:0;
+    width:100%;
+    padding:9px 8px!important;
+    border:1px solid var(--ln)!important;
+    border-radius:14px!important;
+    background:color-mix(in srgb,var(--g) 13%,var(--card))!important;
+    text-align:center;
   }
-  #tc:has(.xbi) .card:has(>.xbi)>p,
-  #tc:has(.xbi) .card:has(>.xbi)>input,
-  #tc:has(.xbi) .card:has(>.xbi)>button{grid-column:1/-1!important}
-  #tc:has(.xbi) .xbi{
-    display:flex!important;flex-direction:column!important;align-items:stretch!important;
-    gap:7px!important;min-width:0!important;padding:10px!important;margin:0!important;
-    border:1px solid var(--ln)!important;border-radius:14px!important;
-    background:color-mix(in srgb,var(--card) 92%,var(--g) 8%)!important;
-    text-align:center;box-sizing:border-box;
+  #tc .card:has(>.xbi)>.xbi .xba{display:flex;justify-content:center;align-items:center;min-height:34px}
+  #tc .card:has(>.xbi)>.xbi .xba svg{width:30px!important;height:30px!important}
+  #tc .card:has(>.xbi)>.xbi .xbt{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    min-width:0;width:100%;line-height:1.2;flex:0 0 auto;
   }
-  #tc:has(.xbi) .xba{display:flex;justify-content:center;align-items:center;min-height:34px}
-  #tc:has(.xbi) .xbt{width:100%;min-width:0;align-items:center;text-align:center;overflow-wrap:anywhere}
-  #tc:has(.xbi) .xbt .bar{width:100%;max-width:100%}
-  #tc:has(.xbi) .xbq{width:100%;min-width:0;align-items:stretch!important;gap:5px!important}
-  #tc:has(.xbi) .xbs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:4px!important}
-  #tc:has(.xbi) .xbs:first-child button:last-child{grid-column:1/-1}
-  #tc:has(.xbi) .xbs:nth-child(2){grid-template-columns:34px minmax(0,1fr) 34px}
-  #tc:has(.xbi) .xbs button{min-width:0;width:100%;padding:5px 4px!important;white-space:nowrap!important}
-  #tc:has(.xbi) .xbs .qi{width:100%!important;min-width:0!important;box-sizing:border-box}
-  #tc:has(.xbi) .cartc,
-  #tc:has(.xbi)>:nth-child(4){min-width:0;max-width:100%;box-sizing:border-box}
-  #tc:has(.xbi) .cartc .cll{max-height:48vh;overflow:auto;overscroll-behavior:contain}
-  #tc:has(.xbi) .cartc .row{min-width:0;overflow-wrap:anywhere}
-  #tc:has(.xbi) .cartc .row>*{min-width:0}
-  #tc:has(.xbi) #cbar{max-width:100%}
+  #tc .card:has(>.xbi)>.xbi .xbt b{font-size:.94rem;white-space:normal;overflow-wrap:anywhere}
+  #tc .card:has(>.xbi)>.xbi .xbt .mut{font-size:.78rem;white-space:normal}
+  #tc .card:has(>.xbi)>.xbi .bar{width:100%;height:9px;margin:2px 0}
+  #tc .card:has(>.xbi)>.xbi .xbq{
+    display:flex!important;flex:0 0 auto!important;flex-direction:column!important;
+    align-items:stretch!important;gap:4px!important;
+    width:100%!important;max-width:none!important;min-width:0!important;
+  }
+  #tc .card:has(>.xbi)>.xbi .xbq .xbs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;width:100%}
+  #tc .card:has(>.xbi)>.xbi .xbq .xbs:first-child button:nth-child(3){grid-column:1/-1}
+  #tc .card:has(>.xbi)>.xbi .xbq .xbs:last-child{grid-template-columns:34px minmax(0,1fr) 34px!important}
+  #tc .card:has(>.xbi)>.xbi .xbq .s,
+  #tc .card:has(>.xbi)>.xbi .xbq .qi{width:100%!important;min-width:0!important;box-sizing:border-box}
+
+  /* Giỏ xác nhận: panel dọc cố định bên phải, không đè lên lưới hàng. */
+  #tc>.card.cartc{
+    position:fixed!important;
+    top:clamp(105px,15.7vh,148px)!important;
+    right:16px!important;left:auto!important;bottom:16px!important;
+    width:clamp(350px,23.5vw,400px)!important;
+    max-width:calc(100vw - 32px)!important;
+    max-height:none!important;height:auto!important;
+    margin:0!important;
+    display:flex!important;flex-direction:column!important;
+    z-index:7;box-sizing:border-box;
+  }
+  #tc>.card.cartc>*{flex:0 0 auto}
+  #tc>.card.cartc>.cll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin:0 -6px;padding:0 6px}
+  #tc>.card.cartc .inq{flex:0 0 auto}
+  #tc>.card.cartc>.row:last-child{display:flex;flex-wrap:nowrap;gap:8px}
+  #tc>.card.cartc>.row:last-child>*{min-width:0;white-space:nowrap}
+  #tc>.card.cartc>.row:last-child .p{flex:1 1 auto}
+  #cbar{display:none!important}
 }
-@media (min-width:1200px){
-  #tc:has(.xbi){grid-template-columns:minmax(0,2fr) minmax(320px,.92fr)!important;column-gap:18px!important;row-gap:14px!important}
-  #tc:has(.xbi)>:nth-child(1),#tc:has(.xbi)>.bseg,#tc:has(.xbi)>details{grid-column:1/-1!important}
-  #tc:has(.xbi)>:nth-child(3){grid-column:1!important;grid-row:3!important}
-  #tc:has(.xbi)>:nth-child(4){grid-column:2!important;grid-row:3!important;align-self:start!important}
-  #tc:has(.xbi) .card:has(>.xbi){grid-template-columns:repeat(3,minmax(0,1fr))!important}
-  #tc:has(.xbi) .cartc{position:sticky;top:12px}
-  #tc:has(.xbi) .cartc .cll{max-height:52vh}
+@media (min-width:900px) and (max-width:1150px){
+  #tc:has(>.card.cartc){padding-right:350px!important}
+  #tc>.card.cartc{width:330px!important;right:10px!important}
+  #tc .card:has(>.xbi){grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
-@media (min-width:1500px){
-  #tc:has(.xbi) .card:has(>.xbi){grid-template-columns:repeat(4,minmax(0,1fr))!important}
-}
-@media (min-width:900px) and (max-width:1199px){
-  #tc:has(.xbi) .card:has(>.xbi){grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  #tc:has(.xbi) .cartc{position:static}
+@media (max-width:899px){
+  /* Không thay đổi bố cục điện thoại/tablet nhỏ. */
 }
 </style>
+
 </body></html>

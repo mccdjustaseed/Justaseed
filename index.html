@@ -10405,7 +10405,8 @@ setTimeout(()=>{try{if(s.otr>=0&&s.onb&&scr=='game')tour(1)}catch(e){}},1200);
 nav .nvI,nav .nvH,#sdtabs .nvI,#sdtabs .nvH{position:absolute;pointer-events:none;border-radius:16px;z-index:0;left:0;top:0;width:0;height:0}
 #sdtabs .nvI,#sdtabs .nvH{border-radius:15px}@media(max-width:899px){#sdtabs .nvI,#sdtabs .nvH{border-radius:12px}}
 nav .nvI{background:var(--g2)}
-nav .nvH,#sdtabs .nvH{background:color-mix(in srgb,var(--ink) 10%,transparent);opacity:0;transition:left .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),opacity .18s}
+nav .nvH,#sdtabs .nvH{background:color-mix(in srgb,var(--ink) 10%,transparent);opacity:0;transition:left .28s cubic-bezier(.2,.8,.2,1),top .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),height .28s cubic-bezier(.2,.8,.2,1),opacity .18s}
+nav .nvP,#sdtabs .nvP{position:absolute;left:0;top:0;width:100px;height:0;visibility:hidden;pointer-events:none;transition:none!important}
 nav.nvA button,#sdtabs.nvA button{z-index:1;transition:color .2s!important}
 nav.nvA button.on,#sdtabs.nvA button.on{background:transparent}
 @media(prefers-reduced-motion:reduce){nav .nvH,#sdtabs .nvH{transition:none}}
@@ -10414,12 +10415,15 @@ nav.nvA button.on,#sdtabs.nvA button.on{background:transparent}
 /* ===== Animation thanh tab: chỉ báo lướt đến tab được chọn (mobile) + vệt sáng lướt theo chuột (desktop) ===== */
 (function(){try{
 const RM=matchMedia('(prefers-reduced-motion:reduce)'),FINE=matchMedia('(hover:hover) and (pointer:fine)');
-const LS=new Map(),SLM=new Map(),KY=n=>n.id=='sdtabs'?'sd':'nav';let busy=0;
+const LS=new Map(),SLM=new Map(),KY=n=>n.id=='sdtabs'?'sd':'nav';let busy=0,SCR=0,SCT=0;
 const mk=(n,c)=>{let e=n.querySelector('.'+c);if(!e){e=document.createElement('i');e.className=c;n.insertBefore(e,n.firstChild)}return e};
-const box=(e,b)=>{e.style.left=b.offsetLeft+'px';e.style.width=b.offsetWidth+'px';e.style.top=b.offsetTop+'px';e.style.height=b.offsetHeight+'px'};
+/* Đo bằng getBoundingClientRect so với 1 điểm gốc (probe) trong chính thanh tab: đúng cả khi #app có CSS zoom, thanh bị cuộn hay có viền */
+const box=(e,b)=>{const n=b.parentNode,P=mk(n,'nvP'),pr=P.getBoundingClientRect(),br=b.getBoundingClientRect(),k=pr.width/100||1,
+o={x:(br.left-pr.left)/k,y:(br.top-pr.top)/k,w:br.width/k,h:br.height/k},st=e.style;
+st.left=o.x+'px';st.top=o.y+'px';st.width=o.w+'px';st.height=o.h+'px';return o};
 function place(){if(busy)return;document.querySelectorAll('nav,#sdtabs').forEach(n=>{const on=n.querySelector('button.on');if(!on||!on.offsetWidth||n.querySelector('.nvI'))return;const last=LS.get(KY(n)),SL=SLM.get(KY(n))||0;
-busy=1;n.classList.add('nvA');if(getComputedStyle(n).position=='static')n.style.position='relative';const I=mk(n,'nvI');box(I,on);
-const x1=on.offsetLeft,w1=on.offsetWidth,y1=on.offsetTop,h1=on.offsetHeight;
+busy=1;n.classList.add('nvA');if(getComputedStyle(n).position=='static')n.style.position='relative';const I=mk(n,'nvI'),B=box(I,on);
+const x1=B.x,w1=B.w,y1=B.y,h1=B.h;
 if(SL)n.scrollLeft=SL;
 try{n.scrollTo({left:Math.max(0,x1-(n.clientWidth-w1)/2),behavior:RM.matches?'auto':'smooth'})}catch(e){}
 if(last&&!RM.matches&&(last.x!=x1||last.y!=y1)){const x0=last.x,w0=last.w,y0=last.y,h0=last.h,sx=Math.min(Math.abs(x1-x0)*.12,12),sy=Math.min(Math.abs(y1-y0)*.12,12),wm=(w0+w1)/2+sx,hm=(h0+h1)/2+sy,lm=(x0+w0/2+x1+w1/2)/2-wm/2,tm=(y0+h0/2+y1+h1/2)/2-hm/2;
@@ -10428,10 +10432,17 @@ LS.set(KY(n),{x:x1,w:w1,y:y1,h:h1});busy=0})}
 new MutationObserver(()=>{try{place()}catch(e){busy=0}}).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('scroll',e=>{if(e.target&&(e.target.tagName=='NAV'||e.target.id=='sdtabs'))SLM.set(KY(e.target),e.target.scrollLeft)},true);
 /* desktop: vệt sáng lướt theo chuột */
-document.addEventListener('mouseover',e=>{if(!FINE.matches)return;const b=e.target.closest&&e.target.closest('nav button,#sdtabs button');if(!b)return;const n=b.closest('nav,#sdtabs'),h=mk(n,'nvH'),vis=h.style.opacity==1;
+document.addEventListener('mouseover',e=>{if(!FINE.matches||SCR)return;const b=e.target.closest&&e.target.closest('nav button,#sdtabs button');if(!b)return;const n=b.closest('nav,#sdtabs'),h=mk(n,'nvH'),vis=h.style.opacity==1;
 if(!vis){h.style.transition='none';box(h,b);h.offsetWidth;h.style.transition=''}else box(h,b);h.style.opacity=1},true);
 document.addEventListener('mouseout',e=>{const n=e.target.closest&&e.target.closest('nav,#sdtabs');if(n&&!n.contains(e.relatedTarget)){const h=n.querySelector('.nvH');if(h)h.style.opacity=0}},true);
 setTimeout(()=>{try{place()}catch(e){}},300);
+/* cuộn trang: ẩn vệt hover (tránh co giãn khi nút trượt dưới con trỏ) */
+addEventListener('scroll',()=>{SCR=1;document.querySelectorAll('nav .nvH,#sdtabs .nvH').forEach(h=>{h.style.transition='none';h.style.opacity=0;h.offsetWidth;h.style.transition=''});clearTimeout(SCT);SCT=setTimeout(()=>{SCR=0},160)},{passive:true});
+/* đổi kích thước / nạp font / đổi zoom: căn lại viền sáng của tab đang chọn, không animation */
+let RT=0;const sync=()=>{cancelAnimationFrame(RT);RT=requestAnimationFrame(()=>{try{document.querySelectorAll('nav,#sdtabs').forEach(n=>{const I=n.querySelector('.nvI'),on=n.querySelector('button.on');if(!I||!on||!on.offsetWidth)return;const o=box(I,on);LS.set(KY(n),{x:o.x,w:o.w,y:o.y,h:o.h})})}catch(e){}})};
+addEventListener('resize',sync);
+try{document.fonts&&document.fonts.ready&&document.fonts.ready.then(sync)}catch(e){}
+try{const ro=new ResizeObserver(sync);const watch=()=>document.querySelectorAll('nav,#sdtabs').forEach(n=>{if(!n.__ro){n.__ro=1;ro.observe(n)}});watch();new MutationObserver(watch).observe(document.body,{childList:true,subtree:true})}catch(e){}
 }catch(e){console.error('navanim',e)}})();
 </script>
 <script>
@@ -16448,4 +16459,11 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
 }
 </style>
 
+<style id="v127-tabbar-fix">
+/* v127: thanh tab dọc (desktop) giữ nguyên hình dạng khi cuộn: không đổi bóng/viền/nền theo body.scrl / body.nh */
+@media (min-width:900px){
+ #app nav.fx,body.scrl #app nav.fx,body.nh #app nav.fx{transition:none!important;box-shadow:0 6px 18px rgba(20,70,40,.12)!important;border:2px solid var(--ln)!important;background:var(--card)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;transform:none!important}
+ #app nav.fx button:active{transform:none}
+}
+</style>
 </body></html>

@@ -16474,5 +16474,15 @@ window.addEventListener('beforeunload', () => { try { if (DIRTY) save(); } catch
 }
 /* không để overscroll/bounce của sidebar kéo trang theo */
 @media (min-width:900px){#app nav.fx{overscroll-behavior:contain}}
+
+/* v129: nguyên nhân thật của sidebar lúc to lúc nhỏ: khi cuộn, body.scrl/body.nh làm selector nặng hơn nên padding 6px→10px, gap 2px→4px (cao 528→560px). Ép cố định theo kích thước màn hình, không phụ thuộc trạng thái cuộn */
+@media (min-width:900px){
+ #app nav.fx,body.scrl #app nav.fx,body.nh #app nav.fx{padding:10px!important;gap:4px!important}
+}
+@media (min-width:900px) and (max-height:820px){
+ #app nav.fx,body.scrl #app nav.fx,body.nh #app nav.fx{padding:6px!important;gap:2px!important}
+}
+/* v129: nền không bị cụt (dải đen ở đáy) khi trang ngắn hơn khung nhìn */
+html,body{min-height:100vh}
 </style>
 </body></html>

@@ -9180,7 +9180,7 @@ document.addEventListener('wheel',e=>{
 })();
 </script>
 <style>
-.cpm{position:fixed;inset:0;z-index:99999;background:rgba(10,30,20,.62);display:grid;place-items:center;padding:16px}
+.cpmod{position:fixed;inset:0;z-index:99999;background:rgba(10,30,20,.62);display:grid;place-items:center;padding:16px}
 .cpb{background:var(--card);color:var(--ink);border-radius:22px;padding:14px;max-width:100%;width:fit-content}
 .cpb canvas{display:block;margin:8px auto;background:#0002;border-radius:12px;touch-action:none;cursor:grab;max-width:100%}
 .cpb canvas.rd{border-radius:50%}.cpb input[type=range]{width:100%;padding:0;border:0}
@@ -9212,8 +9212,8 @@ const money=n=>(typeof $==='function'?$(n):Number(n).toLocaleString('vi-VN')+'đ
 function crop(file,w,h,round,done){
  const r=new FileReader();r.onload=()=>{const im=new Image();im.onerror=()=>toast('Không đọc được ảnh');im.onload=()=>{
   const W=Math.min(320,innerWidth-64),Hh=Math.round(W*h/w);let z=1,rot=0,ox=0,oy=0;
-  const m=document.createElement('div');m.className='cpm';
-  m.innerHTML=`<div class=cpb><h3>${round?'Cắt ảnh đại diện':'Cắt ảnh bìa'}</h3><canvas id=cpc class="${round?'rd':''}" width=${W} height=${Hh}></canvas><label class=mut>Phóng to<input id=cpz type=range min=1 max=4 step=.01 value=1></label><p class=mut style="margin:4px 0">Kéo ảnh để chỉnh vị trí.</p><div class=row><button class=s id=cpr>↻ Xoay</button><span><button class=s id=cpx>Hủy</button> <button class=p id=cpo>Lưu ảnh</button></span></div></div>`;
+  const m=document.createElement('div');m.className='cpmod';
+  m.innerHTML=`<div class=cpb><h3>${round?'Cắt ảnh đại diện':'Cắt ảnh bìa'}</h3><canvas id=cpc class="${round?'rd':''}" width=${W} height=${Hh}></canvas><label class=mut>Phóng to<input id=cpzm type=range min=1 max=4 step=.01 value=1></label><p class=mut style="margin:4px 0">Kéo ảnh để chỉnh vị trí.</p><div class=row><button class=s id=cpr>↻ Xoay</button><span><button class=s id=cpx>Hủy</button> <button class=p id=cpo>Lưu ảnh</button></span></div></div>`;
   document.body.appendChild(m);const cv=Q('cpc');
   const dims=()=>{const sw=rot%2;const iw=sw?im.height:im.width,ih=sw?im.width:im.height;return[iw,ih,Math.max(W/iw,Hh/ih)*z]};
   const clamp=()=>{const[iw,ih,k]=dims(),mx=Math.max(0,(iw*k-W)/2),my=Math.max(0,(ih*k-Hh)/2);ox=Math.max(-mx,Math.min(mx,ox));oy=Math.max(-my,Math.min(my,oy))};
@@ -9222,7 +9222,7 @@ function crop(file,w,h,round,done){
   let d=null;cv.onpointerdown=e=>{d=[e.clientX,e.clientY,ox,oy];cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'};
   cv.onpointermove=e=>{if(!d)return;ox=d[2]+e.clientX-d[0];oy=d[3]+e.clientY-d[1];paint()};
   cv.onpointerup=cv.onpointercancel=()=>{d=null;cv.style.cursor='grab'};
-  Q('cpz').oninput=e=>{z=+e.target.value;paint()};
+  Q('cpzm').oninput=e=>{z=+e.target.value;paint()};
   Q('cpr').onclick=()=>{rot=(rot+1)%4;ox=oy=0;paint()};
   Q('cpx').onclick=()=>m.remove();
   Q('cpo').onclick=()=>{const o=document.createElement('canvas');o.width=w;o.height=h;draw(o.getContext('2d'),w/W);m.remove();done(o)};
@@ -9252,10 +9252,10 @@ async function load(){
 }
 /* khung avatar sạp: lưu kèm trong trường avatar dạng ~f<số>~<ảnh> (không cần đổi database) */
 const FR=()=>typeof FRM!='undefined'?FRM:[{n:'Chủ đề',c:'background:var(--g2)'}];
-const AVP=a=>{const m=/^~f(\d)~/.exec(a||'');return{fr:m?+m[1]:0,src:m?a.slice(m[0].length):(a||'')}};
+const AVP=a=>{const m=/^~f(\d+)~/.exec(a||'');return{fr:m?+m[1]:0,src:m?a.slice(m[0].length):(a||'')}};
 const frCur=()=>{const p=s.pf||{},f=p.fr||0,F=FR()[f];return F&&!(F.a&&!p.afr)?f:0};
 const avWith=a=>{const f=frCur();return f>0?'~f'+f+'~'+(a||''):a};
-function avHtml(x,st){let p=AVP(x.avatar);try{if(x.user_id==uid())p={fr:frCur(),src:(s.pf&&s.pf.av)||p.src}}catch(e){}const f=FR()[p.fr]||FR()[0];return `<div class=sta style="${st||''}"><span class="fr ${f.a?'frA':''}" style="${f.c||''}"></span><span class=sai style="${p.src?`background-image:url('${H(p.src)}')`:''}">${p.src?'':H((x.name||'?')[0].toUpperCase())}</span></div>`}
+function avHtml(x,st){let p=AVP(x.avatar);try{if(x.user_id==uid())p={fr:frCur(),src:(s.pf&&s.pf.av)||p.src}}catch(e){}const f=FR()[p.fr]||FR()[0];return `<div class=sta style="${st||''}">${f.sp&&typeof faSvg=='function'?faSvg(f):`<span class="fr ${f.a?'frA':''}" style="${f.c||''}"></span>`}<span class=sai style="${f.sp?'inset:11%;':''}${p.src?`background-image:url('${H(p.src)}')`:''}">${p.src?'':H((x.name||'?')[0].toUpperCase())}</span></div>`}
 /* món workshop trên sạp: id = 'w:' + snapshot mã hóa */
 const PMX={fa:4e5,pf:5e5,br:2e5,ca:25e4,po:35e4,sh:4e5,ar:45e4};
 const b64e=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -17796,4 +17796,294 @@ var st=document.createElement('style');st.id='tv-themes-css';st.textContent=T.ma
 }catch(e){console.warn('[tv-themes]',e)}})();
 </script>
 
+
+<style id="frame-v137-css">
+/* v137: khung avatar đẹp hơn */
+.fav{isolation:isolate}
+.frb{border-radius:14px;transition:transform .15s,box-shadow .15s,background .15s}
+.frb:not(:disabled):hover{transform:translateY(-2px)}
+.frb.on2{box-shadow:0 0 0 2.5px var(--g2),0 6px 14px -6px rgba(0,0,0,.35)}
+.frb:disabled{filter:grayscale(.55)}
+.frg{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px 8px}
+.sta .fr{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),inset 0 -3px 4px rgba(0,0,0,.2)}
+.sta .sai{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.8),inset 0 2px 5px rgba(0,0,0,.2)}
+</style>
+
+<script id="frame-v137-js">
+(function(){try{
+/* --- hình dạng mới: dấu chân mèo --- */
+const c=(x,y,r)=>`M${(x-r).toFixed(2)} ${y.toFixed(2)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0Z`;
+FA_SH.paw=s=>c(0,s*.5,s*.62)+c(-s*.95,-s*.05,s*.27)+c(-s*.36,-s*.72,s*.29)+c(s*.36,-s*.72,s*.29)+c(s*.95,-s*.05,s*.27);
+
+/* --- vòng kim loại nổi: vòng gradient + vạch sáng bên trong + bóng mờ bên ngoài --- */
+const MT=(r,w,gr,hl)=>[{k:'ring',r:r,w:w,gr:gr},{k:'ring',r:r-w*.28,w:Math.max(.6,w*.2),c:'#fff',op:hl||.55},{k:'ring',r:r+w*.38,w:Math.max(.5,w*.18),c:'#000',op:.2}];
+
+/* --- làm đậm các khung pastel để nổi trên nền sáng --- */
+const F=n=>FRM.find(f=>f.n.indexOf(n)==0);
+let f;
+if(f=F('Cánh hoa')){f.gl='#e0567f';f.sp.unshift({k:'ring',r:41.4,w:3.8,gr:['#ff86b0','#e0467f']})}
+if(f=F('Anh đào')){f.gl='#e0567f';f.sp[0]={k:'ring',r:42,w:3.8,gr:['#ffb3cd','#ff6f9f']}}
+if(f=F('Băng giá')){f.gl='#3f9be0';f.sp[0]={k:'ring',r:43,w:5.5,gr:['#d6f1ff','#5fb8f5','#a9ddff']};f.sp.push({k:'ring',r:46.4,w:.8,c:'#6bb5f0',op:.8,d:[.03,.05],g:'rotr',du:30})}
+if(f=F('Thiên thần')){f.gl='#c9a64a'}
+if(f=F('Pha lê')){f.gl='#5aa9e0';f.sp[0]={k:'ring',r:43,w:4.8,gr:['#bfeeff','#7fc8f0','#c9b6ff']}}
+
+/* --- 5 khung mới --- */
+FRM.push(
+ {n:'Bánh ngọt 🥐',gl:'#b9733a',sp:[...MT(41.6,5.4,['#f6c27a','#c9803c','#a2602a']),{k:'orb',sh:'gem',n:24,rad:45,s:2.5,cols:['#fff7e6','#ffe9c7']},{k:'orb',sh:'gem',n:12,rad:41.6,s:1.2,cols:['#ff8fab','#7fd8b0','#ffd166','#8ec5ff'],ph:7.5},{k:'ring',r:38.9,w:1,c:'#fff3dc',op:.9}]},
+ {n:'Dấu chân mèo 🐾',gl:'#c0507a',sp:[...MT(41.8,3.8,['#ffc2d6','#ff7aa8']),{k:'orb',sh:'paw',n:8,rad:47.4,s:4.6,cols:['#ef6a9a','#f58ab0'],g:'rot',du:70},{k:'orb',sh:'gem',n:16,rad:39.2,s:.9,cols:['#fff'],ph:11,an:'tw'}]},
+ {n:'Ngọc lục bảo 💚',gl:'#1f8f5f',sp:[...MT(43,5.6,['#7fe3b0','#1fa070','#0e6a47']),{k:'ring',r:46.3,w:1,c:'#d4a017'},{k:'ring',r:39.8,w:1.1,c:'#ffe08a'},{k:'orb',sh:'gem',n:8,rad:43,s:3.4,cols:['#d4a017'],ph:22.5},{k:'orb',sh:'gem',n:8,rad:43,s:2.1,cols:['#37e59a'],ph:22.5,an:'tw'}]},
+ {n:'Neon 🌌',gl:'#ff3fd0',sp:[{k:'ring',r:43.5,w:5.4,c:'#1a0a33'},{k:'ring',r:43.5,w:2.2,gr:['#00e5ff','#7a5cff','#ff2fd0']},{k:'ring',r:40.2,w:.9,c:'#00e5ff',op:.85},{k:'ring',r:46.8,w:.9,c:'#ff2fd0',op:.8,d:[.1,.15],g:'rot2',du:12},{k:'orb',sh:'star4',n:4,rad:46.5,s:2.8,cols:['#fff'],an:'tw',ph:20}]},
+ {n:'Hoàng hôn 🌇',gl:'#ff7a59',sp:[...MT(43.5,5.6,['#ffd36a','#ff7a59','#a24bd6']),{k:'orb',sh:'star4',n:6,rad:46.8,s:2.3,cols:['#fff3c4'],an:'tw',ph:15},{k:'orb',sh:'gem',n:24,rad:43.5,s:.6,cols:['#fff'],ph:3,op:.8}]}
+);
+
+/* --- khung có chiều sâu: bóng đổ, viền nổi, đĩa avatar có ánh sáng --- */
+frameAv=function(fi,z,inner,afr){
+ const f0=FRM[Math.min(fi||0,FRM.length-1)]||FRM[0],f=f0.a&&!afr?FRM[0]:f0,sp=!!f.sp,bw=Math.max(1,z*.03),ins=sp?(f.ins||'10%'):Math.max(3,Math.round(z*.06))+'px';
+ const ring=sp?faSvg(f):`<span class="${f.a?'frA':''}" style="position:absolute;inset:0;border-radius:50%;${f.c};box-shadow:inset 0 0 0 ${(bw*.6).toFixed(1)}px rgba(255,255,255,.35),inset 0 ${(-bw*1.4).toFixed(1)}px ${(bw*2).toFixed(1)}px rgba(0,0,0,.22),inset 0 ${bw.toFixed(1)}px ${(bw*1.6).toFixed(1)}px rgba(255,255,255,.3)"></span>`;
+ const base=`<span style="position:absolute;inset:${sp?9:2}%;border-radius:50%;box-shadow:0 ${bw.toFixed(1)}px ${(bw*2.4).toFixed(1)}px rgba(0,0,0,.3)"></span>`;
+ const disc=`<span style="position:absolute;inset:${ins};border-radius:50%;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle at 35% 28%,color-mix(in srgb,var(--g) 55%,#fff),var(--g));box-shadow:inset 0 0 0 ${(bw*.5).toFixed(1)}px rgba(255,255,255,.8),inset 0 ${bw.toFixed(1)}px ${(bw*2.4).toFixed(1)}px rgba(0,0,0,.2)">${inner}</span>`;
+ return `<span class="fav" style="position:relative;display:inline-block;width:${z}px;height:${z}px;vertical-align:middle;overflow:visible;flex:0 0 auto">${base}${disc}${ring}</span>`};
+
+/* --- viền phát sáng hai lớp rõ hơn --- */
+const _fs=faSvg;
+faSvg=function(f){return _fs(f).replace(/filter:drop-shadow\(0 0 1\.5px ([^)]*)\)/,(m,c)=>`filter:drop-shadow(0 0 1px ${c}) drop-shadow(0 1px 1.5px rgba(0,0,0,.28))`)};
+
+/* --- bảng chọn khung: xem trước bằng chính avatar của người chơi --- */
+const inn=z=>{const p=s.pf||{};if(p.av)return `<img src="${safeImageAttr(p.av)}" alt="" style="width:100%;height:100%;object-fit:cover">`;const k=z*.7;return p.pre=='cat'?catSVG(s.cat,'face',k):p.pre=='dog'?dogSVG(s.dog,'face',k):fw(p.pre,z*.6)};
+const _pm=window.pfmModal;
+window.pfmModal=function(){_pm.apply(this,arguments);try{const g=document.querySelector('#modal .frg');if(!g)return;const p=s.pf||{};
+ g.innerHTML=FRM.map((f,i)=>{const lk=f.a&&!p.afr;return `<button class="s frb ${(p.fr||0)==i?'on2':''}" ${lk?'disabled':''} onclick="setFr(${i})">${frameAv(i,64,inn(64),p.afr)}<small>${f.n}${lk?' 🔒':''}</small></button>`}).join('')}catch(e){console.warn('[frame-v137]',e)}};
+}catch(e){console.warn('[frame-v137]',e)}})();
+</script>
+<style id="frame-v138-css">
+/* v138: khung luôn nằm TRÊN avatar, không bị viền avatar cắt */
+.fav,.sta{overflow:visible!important}
+.fav>svg,.sta>svg,.fav>span.frA{z-index:3}
+.sta>.sai{z-index:1}
+</style>
+<style id="frame-illus-css">
+.fa-float{animation:faflt 4.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.fa-spin{animation:farot 9s linear infinite;transform-box:view-box;transform-origin:0 0}
+.fa-sway{animation:fasw 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 90%}
+@keyframes faflt{50%{transform:translateY(-1.3px)}}
+@keyframes fasw{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+</style>
+<script id="frame-illus-js">
+/* ===== v137b: KHUNG MINH HOẠ (phong cách kawaii / thủ công) ===== */
+(function(){try{
+const n2=v=>(+v).toFixed(2),rad=a=>a*Math.PI/180;
+const PT=(a,r)=>[50+r*Math.sin(rad(a)),50-r*Math.cos(rad(a))];
+const G=(x,y,rot,sc,inner,cls,dl)=>`<g transform="translate(${n2(x)} ${n2(y)}) rotate(${rot||0}) scale(${sc||1})"><g${cls?` class="${cls}"`:''}${dl!=null?` style="animation-delay:${dl}s"`:''}>${inner}</g></g>`;
+const HEART='M0 3.4C-6.4 -1 -5 -5.6 -2.2 -5.6C-.9 -5.6 0 -4.7 0 -3.9C0 -4.7 .9 -5.6 2.2 -5.6C5 -5.6 6.4 -1 0 3.4Z';
+const heart=(f,st,sw)=>`<path d="${HEART}" fill="${f}" stroke="${st}" stroke-width="${sw||.9}" stroke-linejoin="round"/>`;
+const star5=(R,r,f,st,sw)=>{let d='';for(let i=0;i<10;i++){const a=rad(i*36),q=i%2?r:R;d+=(i?'L':'M')+n2(Math.sin(a)*q)+' '+n2(-Math.cos(a)*q)}return `<path d="${d}Z" fill="${f}" stroke="${st}" stroke-width="${sw||1}" stroke-linejoin="round"/>`};
+const spark=(s,f,st,sw)=>`<path d="${FA_SH.star4(s)}" fill="${f}"${st?` stroke="${st}" stroke-width="${sw||.7}" stroke-linejoin="round"`:''}/>`;
+const circ=(x,y,r,f,st,sw)=>`<circle cx="${n2(x)}" cy="${n2(y)}" r="${n2(r)}" fill="${f}"${st?` stroke="${st}" stroke-width="${sw||.8}"`:''}/>`;
+/* đám tròn có viền ngoài gọn: vẽ vòng viền (bán kính +sw) rồi vẽ nền */
+const blob=(cs,f,st,sw)=>cs.map(c=>circ(c[0],c[1],c[2]+sw,st)).join('')+cs.map(c=>circ(c[0],c[1],c[2],f)).join('');
+const flower=(n,pr,pd,f,st,cc,cr,sw,cst)=>{const cs=[];for(let i=0;i<n;i++){const a=rad(i*360/n);cs.push([Math.sin(a)*pd,-Math.cos(a)*pd,pr])}return blob(cs,f,st,sw)+circ(0,0,cr,cc,cst||st,.5)};
+const sakura=(f,st,cc)=>{let o='';const pet='M0 .6C-4.6 -1.6 -5.6 -7.4 -1.5 -8.4L0 -6.6L1.5 -8.4C5.6 -7.4 4.6 -1.6 0 .6Z';for(let i=0;i<5;i++)o+=`<path transform="rotate(${i*72})" d="${pet}" fill="${f}" stroke="${st}" stroke-width=".8" stroke-linejoin="round"/>`;return o+circ(0,0,1.9,cc,'#e9a43a',.4)};
+const daisy=(n,L,W,f,st,cc,cr)=>{let o='';for(let i=0;i<n;i++)o+=`<ellipse transform="rotate(${i*360/n}) translate(0 ${-L*.62})" rx="${W}" ry="${L*.5}" fill="${f}" stroke="${st}" stroke-width=".6"/>`;return o+circ(0,0,cr,cc,'#e0a93a',.4)};
+const leaf=(L,W,f,st)=>`<path d="M0 0C${W} ${-L*.3} ${W} ${-L*.8} 0 ${-L}C${-W} ${-L*.8} ${-W} ${-L*.3} 0 0Z" fill="${f}" stroke="${st}" stroke-width=".6" stroke-linejoin="round"/><path d="M0 -1.2L0 ${-L*.85}" stroke="${st}" stroke-width=".45" fill="none" opacity=".7"/>`;
+const bow=(f,st,hl,knot,heartF,tails)=>{const lp='M0 0C-5 -9-17 -10-18 -2C-19 6-6 9 0 0Z',rp='M0 0C5 -9 17 -10 18 -2C19 6 6 9 0 0Z';let o='';
+ if(tails)o+=`<path d="M-1.5 2L-9 14L-4 12.6L-1.6 16L1 4Z" fill="${f}" stroke="${st}" stroke-width=".9" stroke-linejoin="round"/><path d="M1.5 2L9 14L4 12.6L1.6 16L-1 4Z" fill="${f}" stroke="${st}" stroke-width=".9" stroke-linejoin="round"/>`;
+ o+=`<path d="${lp}" fill="${f}" stroke="${st}" stroke-width=".95" stroke-linejoin="round"/><path d="${rp}" fill="${f}" stroke="${st}" stroke-width=".95" stroke-linejoin="round"/>`;
+ o+=`<path d="M-4 -1C-8 -4-12 -4-14 -1.6M4 -1C8 -4 12 -4 14 -1.6" stroke="${st}" stroke-width=".5" fill="none" opacity=".6"/>`;
+ o+=`<ellipse cx="-11" cy="-4.6" rx="3.2" ry="1.3" fill="${hl}" opacity=".85" transform="rotate(-18 -11 -4.6)"/><ellipse cx="11" cy="-4.6" rx="3.2" ry="1.3" fill="${hl}" opacity=".85" transform="rotate(18 11 -4.6)"/>`;
+ o+=heartF?G(0,.3,0,1.05,heart(heartF,'#d9a21f',.8)):circ(0,0,3.3,knot||f,st,.9);return o};
+const face=(blush)=>`<circle cx="-3" cy="1" r=".95" fill="#7a4545"/><circle cx="3" cy="1" r=".95" fill="#7a4545"/><ellipse cx="-5.2" cy="3" rx="1.7" ry="1" fill="${blush||'#ffb3c1'}" opacity=".9"/><ellipse cx="5.2" cy="3" rx="1.7" ry="1" fill="${blush||'#ffb3c1'}" opacity=".9"/><path d="M-1.4 3C-.6 4.2 .6 4.2 1.4 3" stroke="#7a4545" stroke-width=".7" fill="none" stroke-linecap="round"/>`;
+const ringArcs=(r,w,cols,rot,gap)=>cols.map((c,i)=>`<circle cx="50" cy="50" r="${r}" fill="none" stroke="${c}" stroke-width="${w}" pathLength="100" stroke-dasharray="${100/cols.length+(gap==null?.6:gap)} ${100-100/cols.length-(gap==null?.6:gap)}" stroke-dashoffset="${-i*100/cols.length}" transform="rotate(${rot||-90} 50 50)"/>`).join('');
+const ring=(r,w,c,op,d)=>`<circle cx="50" cy="50" r="${r}" fill="none" stroke="${c}" stroke-width="${w}"${op!=null?` opacity="${op}"`:''}${d?` stroke-dasharray="${d}"`:''}/>`;
+const FR=[];
+
+/* 1) Kẹo cầu vồng: vòng cầu vồng, nơ hồng, mây mặt cười, hoa */
+FR.push({n:'Kẹo cầu vồng 🎀',ins:'11%',raw:id=>{let o='';
+ o+=ring(49.2,.7,'#c3cfea',.9,'46 3 20 4 30 3');
+ o+=ringArcs(43.9,9,['#ffbfd6','#ffd6a5','#fff0a3','#cfeea3','#b6dcfb','#d9c9ff'],-100);
+ o+=ring(40.2,.9,'#fff',.9)+ring(39.4,.6,'#f4c7a8',.9,'1.2 1.6');
+ o+=G(15,20,-6,1.12,blob([[-8,1.5,6],[-1,-3,7.6],[7,0,6.4],[0,3.4,6.4]],'#fffdf8','#b86a64',1.1)+face(),'fa-float',0);
+ o+=G(86,20,6,1.12,blob([[-8,1.5,6],[-1,-3,7.6],[7,0,6.4],[0,3.4,6.4]],'#fffdf8','#b86a64',1.1)+face(),'fa-float',1.2);
+ o+=G(50,5,0,1.3,bow('#ffb8d2','#c0576f','#fff','#ffb8d2','#ffd24a'),'fa-bob');
+ o+=G(6,55,0,1.1,flower(5,4.4,4.7,'#ffb6c9','#d9647f','#ffd84d',2.6,.9,'#d9a21f')+G(0,8,0,1,leaf(6,3.2,'#9ed16a','#5d9a3a'),'',0),'fa-sway');
+ o+=G(94,40,0,1.1,flower(5,4.4,4.7,'#fff09a','#d9a62a','#ffd84d',2.6,.9,'#d9a21f')+G(0,8,0,1,leaf(6,3.2,'#9ed16a','#5d9a3a'),'',0),'fa-sway',.7);
+ o+=G(74,91,6,1.0,bow('#b9d8ff','#6c86c9','#fff','#b9d8ff','#ffd24a'));
+ o+=G(33,94,-8,1.2,star5(6,2.9,'#ffe27a','#d9a62a',1),'fa-float',.4);
+ o+=G(21,82,-12,1.2,heart('#a9e29a','#5d9a3a',1));
+ o+=G(90,78,10,1.1,heart('#d9c9ff','#8c78c9',.9))+G(94,87,0,1.0,heart('#b9d8ff','#6c86c9',.9))+G(88,86,0,.8,heart('#ff9fbe','#d9647f',.9),'fa-beat');
+ o+=G(95,64,0,.9,star5(4.4,2,'#ffb6d2','#d9647f',.8))+G(10,74,0,.55,star5(4,1.8,'#ffe27a','#d9a62a',.7));
+ [[27,7,1.7],[95,22,1.4],[4,34,1.5],[84,72,1.6],[40,98,1.3]].forEach((p,i)=>o+=G(p[0],p[1],0,1,spark(p[2],'#ffe27a','#e0b23f',.5),'fa-tw',i*.5));
+ return o}});
+
+/* 2) Mây bồng bềnh: vòng mây, sao, tim có cánh */
+FR.push({n:'Mây bồng bềnh ☁️',ins:'11%',raw:id=>{let o='',cs=[];const rr=[8.4,9.6,7.8,9.2,8.2,10,7.8,9,8.4,9.6,7.6];
+ rr.forEach((r,i)=>{const a=i*360/rr.length+14,p=PT(a,46.2);cs.push([p[0],p[1],r])});
+ o+=blob(cs,'#f5faff','#a9c4e4',1.3);
+ o+=ring(41.4,4.2,'#dbeafd',.9)+ring(43.6,.6,'#fff',.0);
+ o+=cs.map((c,i)=>{const dx=c[0]-50,dy=c[1]-50,d=Math.hypot(dx,dy),p=[c[0]+dx/d*2.4,c[1]+dy/d*2.4];return `<path d="M${n2(p[0]-c[2]*.5)} ${n2(p[1]-c[2]*.2)}A${n2(c[2]*.55)} ${n2(c[2]*.55)} 0 0 1 ${n2(p[0]+c[2]*.1)} ${n2(p[1]-c[2]*.55)}" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".95" transform="rotate(${i*13} ${n2(c[0])} ${n2(c[1])})"/>`}).join('');
+ o+=G(7,36,0,1.15,'<path d="M-3 2C-9 -2-14 -4-16 -1.5C-12 -1-12 1-9 2.4C-11 3-10 4.6-7 4.4C-5 4.2-4 3.6-3 2Z" fill="#f2f7ff" stroke="#b7cdea" stroke-width=".8" stroke-linejoin="round"/><path d="M3 2C9 -2 14 -4 16 -1.5C12 -1 12 1 9 2.4C11 3 10 4.6 7 4.4C5 4.2 4 3.6 3 2Z" fill="#f2f7ff" stroke="#b7cdea" stroke-width=".8" stroke-linejoin="round"/>'+heart('#ffb3c9','#f0698f',1.1),'fa-bob');
+ [[80,22,1.25],[95,60,1.1],[88,88,.8],[22,92,1],[30,6,1.05]].forEach((p,i)=>o+=G(p[0],p[1],-8,p[2],star5(5.6,2.6,'#f7dc8d','#e3b53f',1.1),'fa-float',i*.6));
+ [[40,10,3.4],[8,62,3],[94,36,3.2],[66,96,3.4]].forEach((p,i)=>o+=G(p[0],p[1],0,1,spark(p[2],'#bcd0ff','#7f9be8',.9),'fa-tw',i*.7));
+ o+=G(66,5,0,1.1,'<path d="M-7 1C-7 -4 0 -4 0 0C0 3-4 3-4 0C-4 -2-1 -2 -1 0" fill="none" stroke="#cdb6ee" stroke-width="1.8" stroke-linecap="round"/><path d="M0 0C1 -3 7 -3 7 1" fill="none" stroke="#cdb6ee" stroke-width="1.8" stroke-linecap="round"/>','fa-float',.3);
+ o+=G(46,97,0,1.1,'<path d="M-6 0C-6 -4 0 -4 0 0C0 3-4 3-4 0C-4 -2-1 -2 -1 0M0 0C1 -3 7 -3 7 1" fill="none" stroke="#ffc2dc" stroke-width="1.9" stroke-linecap="round"/>','fa-float',1.1);
+ o+=circ(12,14,2.6,'#dcebfc','#a9c4e4',.8)+circ(3,22,1.7,'#dcebfc','#a9c4e4',.7)+circ(96,76,2,'#dcebfc','#a9c4e4',.7);
+ return o}});
+
+/* 3) Anh đào: vòng hoa & cánh hoa rơi */
+FR.push({n:'Anh đào bay 🌸',ins:'10%',raw:id=>{let o='';
+ const FL=[[0,45.5,6.4,'w'],[26,46,4.6,'p'],[48,45,6,'w'],[74,46.5,5.4,'c'],[98,45.5,5,'w'],[122,46,6.2,'c'],[146,45,4.4,'p'],[168,46.5,5.6,'w'],[192,45,5,'c'],[214,46.5,6,'w'],[238,45.5,4.6,'p'],[262,46,5.8,'c'],[288,45,5.2,'w'],[312,46.5,6.4,'w'],[336,45.5,4.8,'c']];
+ FL.forEach((f,i)=>{const p=PT(f[0],f[1]);const fill=f[3]=='w'?'#fffefe':f[3]=='p'?'#ffd1e0':'#ffb6cf';o+=G(p[0],p[1],i*37%72,f[2]/8.2,sakura(fill,'#ee8fb2','#ffd96b'),'fa-sway',(i*.43)%3)});
+ [[13,43,.7],[37,48,.55],[61,45,.62],[86,47,.5],[134,46,.6],[157,44.6,.55],[180,47.4,.62],[203,44,.55],[226,46.6,.5],[250,45.8,.6],[274,47,.55],[300,44.4,.62],[324,47.2,.5],[350,45,.56]].forEach((q,i)=>{const p=PT(q[0],q[1]);o+=G(p[0],p[1],q[0]+i*20,q[2],'<path d="M0 -5C4.6 -4 5 3 0 5C-1 3 -1 1 0 -.8C-1 -2 -1 -3.6 0 -5Z" fill="'+(i%2?'#ffb6cf':'#ffd9e6')+'" stroke="#ee8fb2" stroke-width="1" stroke-linejoin="round"/>','fa-float',(i*.37)%3)});
+ return o}});
+
+/* 4) Vòng cúc & nơ xanh: ruy băng nhẹ nhàng */
+FR.push({n:'Cúc & nơ xanh 🎀',ins:'10%',raw:id=>{let o='';
+ o+=ring(43.5,5.2,'#d2eafc')+ring(40.9,.7,'#9d90bb',.95)+ring(46.1,.7,'#9d90bb',.95)+ring(43.5,1,'#fff',.7,'1.5 3');
+ const D=[[0,3.6,1],[38,2.9,1],[78,3.7,1],[118,3.3,1],[160,3.9,1],[205,3.1,1],[246,3.8,1],[290,3.1,1],[326,3.6,1]];
+ D.forEach((d,i)=>{const p=PT(d[0]+8,43.5);o+=G(p[0],p[1],i*23,d[1]/8.2*2.2*.5*1.6,daisy(8,8,2.9,'#fff','#9d90bb','#f7d76d',2.2),'fa-sway',i*.5)});
+ const SM=[[22,'#ffd0dc'],[58,'#d9c9ff'],[98,'#cdeaa6'],[140,'#ffd0dc'],[186,'#fff0a3'],[228,'#d9c9ff'],[268,'#cdeaa6'],[308,'#ffd0dc'],[345,'#fff0a3']];
+ SM.forEach((m,i)=>{const p=PT(m[0],i%2?41:46);o+=G(p[0],p[1],i*40,.5,flower(5,3.1,3.2,m[1],'#9d90bb',m[1],1.3,.8,'#9d90bb'),'fa-tw',i*.35)});
+ o+=G(50,95,0,1.15,bow('#cfe8ff','#8a86b8','#fff','#cfe8ff',null,true),'fa-bob');
+ return o}});
+
+/* 5) Dây leo & hoa cúc: màu nước dịu */
+FR.push({n:'Dây leo & hoa 🌼',ins:'10%',raw:id=>{let o='';
+ const wav=(r,k,ph,amp,col,w,op)=>{let d='';for(let i=0;i<=120;i++){const a=i*3,t=rad(a),rr=r+amp*Math.sin(k*t+ph),x=50+rr*Math.sin(t),y=50-rr*Math.cos(t);d+=(i?'L':'M')+n2(x)+' '+n2(y)}return `<path d="${d}Z" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" opacity="${op||1}"/>`};
+ o+=wav(43.6,3,0,2.4,'#7fae4a',2.3)+wav(43.4,4,2,2.2,'#5e8f3a',1.8)+wav(44,2,4,1.8,'#a3c96a',1.5,.95)+wav(42.6,5,1,1.6,'#6c9a3f',1.1,.9);
+ for(let i=0;i<22;i++){const a=i*360/22+5,p=PT(a,(i%2?47.2:41.2));o+=G(p[0],p[1],a+(i%2?-35:215),.5+(i%3)*.08,leaf(8,3.2,i%3?'#a8cf72':'#86b255','#5f8f3b'))}
+ [[300,5.4],[330,4.8],[352,4.2],[28,4],[75,5],[150,5.2],[200,4.4],[245,5.4]].forEach((d,i)=>{const p=PT(d[0],44);o+=G(p[0],p[1],d[0]+i*30,d[1]/7.5,daisy(10,8,2.6,'#fff','#d6cfae','#f4cf5a',2),'fa-sway',i*.4)});
+ const mg=PT(222,45);o+=G(mg[0],mg[1],-20,1.25,flower(6,5.4,5.4,'#fffaf0','#e3d3ad','#f2c862',3.6,.9,'#d9b25a')+G(-7,7,0,.8,flower(5,3.2,3.4,'#ffe7c2','#e3c58f','#f2c862',1.6,.7)),'fa-sway',.2);
+ const tp=PT(46,45);o+=G(tp[0],tp[1],226,.8,'<path d="M0 0C0 8-.5 14-.6 20" stroke="#8fb85a" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M-4 22C-5.4 15-3 11 0 10C3 11 5.4 15 4 22C2 24-2 24-4 22Z" fill="#f9c5b5" stroke="#e59a86" stroke-width=".8" stroke-linejoin="round"/>','fa-sway',.6);
+ const tw=PT(358,46);o+=G(tw[0],tw[1],0,1,'<path d="M-4 3C-5.4 -3-3 -6.4 0 -7.4C3 -6.4 5.4 -3 4 3C2 5-2 5-4 3Z" fill="#fbc9bb" stroke="#e59a86" stroke-width=".8" stroke-linejoin="round"/><path d="M-1 -7C0 -4 0 0 -1 3M1.6 -6.6C2.4 -3 2.2 0 1.4 3" stroke="#f0a898" stroke-width=".5" fill="none"/>');
+ return o}});
+
+/* 6) Thiên hà tím: vòng kim loại, sao lớn, hành tinh */
+FR.push({n:'Thiên hà tím 🪐',ins:'11%',raw:id=>{let o='';
+ const g1=id+'a',g2=id+'b',g3=id+'c';
+ o+=`<defs><linearGradient id="${g1}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c7a4ff"/><stop offset=".55" stop-color="#9a6cf0"/><stop offset="1" stop-color="#7fb2ff"/></linearGradient><linearGradient id="${g2}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7fdcff"/><stop offset="1" stop-color="#b6a2ff"/></linearGradient><radialGradient id="${g3}"><stop offset="0" stop-color="#5a2aa8"/><stop offset="1" stop-color="#2a0f66"/></radialGradient></defs>`;
+ o+=`<path d="M8 62A44 44 0 0 1 30 12" fill="none" stroke="url(#${g2})" stroke-width="6" stroke-linecap="round" opacity=".9"/><path d="M96 46A46 46 0 0 1 78 88" fill="none" stroke="url(#${g2})" stroke-width="5" stroke-linecap="round" opacity=".9"/>`;
+ o+=ring(43.8,7.6,'#a64df0')+ring(43.8,6,`url(#${g1})`)+ring(43.8,2,'#fff',.55,'14 6 3 6 22 8')+ring(39.8,1.1,'#d98cff')+ring(47.6,.8,'#a64df0',.9);
+ o+=ring(43.8,6,'#fff',.35,'1.2 5');
+ o+=G(30,10,0,1,'<path d="M-9 4L-4 -3L6 -3L8 3Z" fill="#d6c0ff" stroke="#a64df0" stroke-width=".9" stroke-linejoin="round"/>');
+ o+=G(7,52,0,1,'<path d="M-3 -9L3 -8L3 8L-3 9Z" fill="#cdb4ff" stroke="#a64df0" stroke-width=".9" stroke-linejoin="round"/>');
+ o+=circ(9,24,5.2,'#b9d8ff','#7aa8ee',1)+circ(8.2,23,1.6,'#e8f3ff')+circ(93,87,5,'#b9d8ff','#7aa8ee',1)+circ(92.2,86,1.5,'#e8f3ff');
+ [[96,59,1.1],[94,66,1.1],[90,32,1.6]].forEach(p=>o+=circ(p[0],p[1],p[2],'#fff','#7aa8ee',.8));
+ const bs=(S,tw)=>G(0,0,0,1,`<path d="${FA_SH.star4(S)}" fill="url(#${g3})" stroke="#e6d3ff" stroke-width="1.2" stroke-linejoin="round"/><path d="${FA_SH.star4(S*.55)}" fill="#fff" stroke="#d98cff" stroke-width=".6" stroke-linejoin="round"/>`+circ(-S*.18,-S*.22,.5,'#fff')+circ(S*.2,S*.15,.4,'#ffb6f2'),tw);
+ o+=G(84,14,0,1.1,bs(13,'fa-tw'));
+ o+=G(20,81,0,1,circ(0,0,10,'#e6d6ff','#a64df0',1)+'<path d="M-9 -3C-3 -7 5 -7 9 -3" stroke="#fff" stroke-width="1.4" fill="none" opacity=".8" stroke-linecap="round"/>'+G(0,0,0,.7,bs(11)),'');
+ o+=G(20,81,-25,1,`<ellipse rx="15" ry="5" fill="none" stroke="#ff9bd8" stroke-width="2" /><ellipse rx="15" ry="5" fill="none" stroke="#fff" stroke-width=".7" opacity=".8"/>`+G(15,0,0,1,circ(0,0,1.9,'#fff','#ff9bd8',.9),'fa-spin'));
+ o+=G(8,70,0,1,spark(5,'#fff','#7aa8ee',.9),'fa-tw',.3)+G(4,40,0,1,spark(3.2,'#e6d3ff','#a64df0',.7),'fa-tw',.8)+G(30,94,0,1,spark(5,'#e6d3ff','#a64df0',.8),'fa-tw',1.3)+G(96,12,0,1,spark(3.2,'#c9a4ff','#a64df0',.5),'fa-tw',.6);
+ return o}});
+
+/* 7) Táo nhạc: vòng đỏ viền vàng, lá, sóng, nốt nhạc */
+FR.push({n:'Táo nhạc 🍎',ins:'11%',raw:id=>{let o='';
+ const arc=(r,a1,a2,col,w,op)=>{const p1=PT(a1,r),p2=PT(a2,r);return `<path d="M${n2(p1[0])} ${n2(p1[1])}A${r} ${r} 0 ${a2-a1>180?1:0} 1 ${n2(p2[0])} ${n2(p2[1])}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round"${op!=null?` opacity="${op}"`:''}/>`};
+ o+=ring(43.2,7.4,'#f3dc8a')+ring(43.2,5.8,'#e2566f')+ring(43.2,1.2,'#f08aa0',.8,'30 20 12 30');
+ /* dải lụa kem-hồng uốn quanh bên phải */
+ o+=arc(47.8,14,158,'#f3dc8a',4.6)+arc(47.8,14,158,'#f6ecc9',3.2)+arc(47.2,22,150,'#f7c5d6',1.1)+arc(48.6,30,140,'#fff9e6',.8);
+ /* sóng xanh góc trái dưới, phủ lên vòng */
+ const wv=[[205,5.6],[220,6.4],[236,6.6],[252,5.6]].map(q=>{const p=PT(q[0],44.5);return [p[0],p[1],q[1]]});
+ o+=blob(wv,'#6fb8e3','#f3dc8a',1.1);
+ o+=blob([[wv[1][0]-2.5,wv[1][1]-3,3.6],[wv[2][0]-1.5,wv[2][1]-3.4,3.2]],'#f4f9ff','#f3dc8a',.7);
+ o+=`<path d="M${n2(wv[1][0]+1)} ${n2(wv[1][1]+1)}C${n2(wv[1][0]-3)} ${n2(wv[1][1]-3)} ${n2(wv[1][0]+1)} ${n2(wv[1][1]-6)} ${n2(wv[1][0]+3)} ${n2(wv[1][1]-4)}" stroke="#2f7fb8" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+ /* lá + cuống */
+ const lp=PT(336,43.5);
+ o+=G(lp[0],lp[1],-22,1,'<path d="M0 0C-4 -9 -16 -11 -27 -4C-19 6 -6 7 0 0Z" fill="#9fcb4e" stroke="#f3dc8a" stroke-width="1" stroke-linejoin="round"/><path d="M-1 0C-8 -1-16 -2-24 -4M-8 -1.5L-9 -7M-14 -2.4L-16 -7.4M-8 -1.2L-10 4M-14 -2.4L-17 1.4" stroke="#f3dc8a" stroke-width=".6" fill="none" stroke-linecap="round"/>','fa-sway');
+ const sp=PT(10,43);
+ o+=G(sp[0],sp[1],18,1,'<rect x="-3.2" y="-10" width="6.4" height="11" rx="3" fill="#f8c88a" stroke="#f3dc8a" stroke-width="1"/><path d="M-4.6 -10C-4.6 -14.4 4.6 -14.4 4.6 -10Z" fill="#fff3d9" stroke="#f3dc8a" stroke-width="1" stroke-linejoin="round"/>');
+ /* sao + nốt nhạc */
+ [[300,46],[282,45]].forEach((q,i)=>{const p=PT(q[0],q[1]);o+=G(p[0],p[1],-15+i*25,1.1,star5(4.8,2.2,'#f7d77d','#e8b84a',.9),'fa-tw',i*.7)});
+ const note=f=>`<ellipse cx="0" cy="0" rx="2.8" ry="2" transform="rotate(-22)" fill="${f}" stroke="#d9a93a" stroke-width=".8"/><path d="M2.4 -.8L2.4 -9.4C4.4 -8.6 6.2 -7.6 6.4 -5.2" fill="none" stroke="#d9a93a" stroke-width="2" stroke-linecap="round"/><path d="M2.4 -.8L2.4 -9.4C4.4 -8.6 6.2 -7.6 6.4 -5.2" fill="none" stroke="${f}" stroke-width=".9" stroke-linecap="round"/>`;
+ [[40,53],[64,54.5],[88,54],[112,52]].forEach((q,i)=>{const p=PT(q[0],q[1]);o+=G(p[0],p[1],q[0]*.2-10,1.2,note('#f8e08e'),'fa-float',i*.45)});
+ return o}});
+
+/* ---- đăng ký ---- */
+let RID=0;
+FR.forEach(f=>{f.sp=[];f.gl=null});
+FRM.push(...FR);
+const _fs2=faSvg;
+faSvg=function(f){if(f&&f.raw){const id='ra'+(++RID);return `<svg viewBox="0 0 100 100" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.25))">${f.raw(id)}</svg>`}return _fs2(f)};
+/* bản ảnh để vẽ lên card visit */
+const rawImg=f=>{if(f._im)return f._im;const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -15 130 130" width="520" height="520">${f.raw('rc')}</svg>`);return f._im=im};
+FR.forEach(rawImg);
+/* ===== v138: vẽ lại 19 khung cũ theo phong cách minh hoạ ===== */
+const around=(n,rad,fn,ph,cls,rot)=>{let o='';for(let i=0;i<n;i++){const a=(ph||0)+i*360/n,p=PT(a,rad);o+=G(p[0],p[1],rot===false?0:a,1,fn(i,a),cls===undefined?'fa-sway':cls,(i*.37)%3)}return o};
+const cr=(r,w,fill,line)=>ring(r,w+1.8,line)+ring(r,w,fill)+ring(r-w*.28,.7,'#fff',.85);
+const cloud=()=>blob([[-8,1.5,6],[-1,-3,7.6],[7,0,6.4],[0,3.4,6.4]],'#fffdf8','#b86a64',1.1)+face();
+const paw=f=>`<ellipse cx="0" cy="2" rx="3.4" ry="2.8" fill="${f}"/>`+[[-4.2,-2.2],[-1.5,-4.4],[1.5,-4.4],[4.2,-2.2]].map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="1.6" fill="${f}"/>`).join('');
+const gemP=(f,st)=>`<path d="M0 -4.2L3.6 -1L0 4.2L-3.6 -1Z" fill="${f}" stroke="${st}" stroke-width=".9" stroke-linejoin="round"/><path d="M-3.6 -1L3.6 -1M0 -4.2L-1.4 -1L0 4.2L1.4 -1Z" stroke="#fff" stroke-width=".4" fill="none" opacity=".8"/>`;
+const flame=(f,st,s)=>`<path d="${FA_SH.flame(s)}" fill="${f}" stroke="${st}" stroke-width=".7" stroke-linejoin="round"/>`;
+const sp4=(pts,f,st)=>pts.map((p,i)=>G(p[0],p[1],0,1,spark(p[2],f,st,.6),'fa-tw',i*.5)).join('');
+const OLD={
+'Chủ đề':id=>cr(43.5,6,'#a8dfae','#4f9a62')+around(10,47,i=>leaf(8,3.4,i%2?'#7fc98a':'#a9dc87','#3f8a52'),12)+G(50,5,0,1.25,bow('#c9f0cd','#4f9a62','#fff','#c9f0cd','#ffe27a'),'fa-bob')+G(88,84,10,1,heart('#ffd0dc','#d9647f',.9))+sp4([[10,22,1.6],[93,30,1.4],[24,93,1.5]],'#fff2a8','#e0b23f'),
+'Hồng':id=>cr(43.5,6,'#ffb8d0','#d9647f')+G(50,5,0,1.3,bow('#ff9fc0','#c0576f','#fff','#ff9fc0','#ffd24a'),'fa-bob')+around(6,47,i=>heart(i%2?'#ffd0dc':'#ff8fb3','#d9647f',.9),150,'fa-float',false)+G(14,80,0,1,star5(5,2.4,'#ffe27a','#d9a62a',.9),'fa-float')+sp4([[8,30,1.6],[92,60,1.5]],'#fff','#ffb3cd'),
+'Vàng':id=>cr(43.5,6,'#ffe27a','#c98f12')+around(8,46.8,i=>star5(i%2?5:3.6,i%2?2.3:1.7,i%2?'#fff3b0':'#ffd24a','#c98f12',.9),0,'fa-tw',false)+G(50,4,0,1.5,star5(6,2.8,'#fff3b0','#c98f12',1),'fa-float')+sp4([[14,16,1.6],[88,86,1.6]],'#fff','#e0b23f'),
+'Tím':id=>cr(43.5,6,'#d4c4f7','#8c78c9')+around(6,47,i=>spark(i%2?4.6:3.2,'#fff','#8c78c9',.8),20,'fa-tw',false)+G(50,5,0,1.2,bow('#c9b6ff','#7c68b9','#fff','#c9b6ff','#fff2a8'),'fa-bob')+G(86,84,0,1,heart('#e4d9ff','#8c78c9',.9))+G(12,78,0,.9,star5(5,2.3,'#fff3b0','#d9a62a',.9),'fa-float'),
+'Cầu vồng':id=>ringArcs(43.5,7,['#ff9fb3','#ffc88a','#fff0a3','#bfe8a3','#a9d4fb','#d2bfff'],-90)+ring(39.7,.8,'#fff',.9)+ring(47.4,.7,'#c3cfea',.9)+G(18,16,-6,1,cloud(),'fa-float')+G(84,16,6,1,cloud(),'fa-float',1)+G(50,95,0,1,heart('#ff9fbe','#d9647f',.9),'fa-beat')+sp4([[50,3,2],[4,50,1.6],[97,52,1.6]],'#ffe27a','#e0b23f'),
+'Ánh dương':id=>around(16,47.5,i=>`<path d="M0 0L-2 -6L0 -9L2 -6Z" fill="${i%2?'#ffe27a':'#ffb347'}" stroke="#d9941a" stroke-width=".7" stroke-linejoin="round"/>`,0,'fa-tw')+cr(41.5,6,'#ffd24a','#d9941a')+ring(38.5,.7,'#fff8d0',.9)+sp4([[50,3,2.2],[7,28,1.5],[93,72,1.5]],'#fff','#e0b23f'),
+'Hoàng gia':id=>cr(43.5,6,'#ffd54a','#a8720a')+around(8,43.5,i=>circ(0,0,2.5,i%2?'#e8334f':'#3a8bff','#fff',.8),22.5,'',false)+G(50,4,0,1.5,'<path d="M-9 5L-10 -4L-5 0L0 -7L5 0L10 -4L9 5Z" fill="#ffd54a" stroke="#a8720a" stroke-width=".9" stroke-linejoin="round"/>'+circ(0,-7.8,1.3,'#e8334f')+circ(-10,-4.8,1.2,'#3a8bff')+circ(10,-4.8,1.2,'#3a8bff'),'fa-bob')+sp4([[10,20,1.7],[92,84,1.7]],'#fff6c4','#e0b23f'),
+'Cánh hoa':id=>cr(42,4.6,'#ffd0de','#ee8fb2')+around(10,46.5,i=>sakura(i%2?'#ffd1e0':'#fffefe','#ee8fb2','#ffd96b'),0,undefined,false).replace(/scale\(1\)/g,'scale(.8)')+around(9,47,i=>'<path d="M0 -4C4 -3 4 3 0 4C-1 2-1 1 0 -1C-1 -2-1 -3 0 -4Z" fill="#ffb6cf" stroke="#ee8fb2" stroke-width=".8"/>',17,'fa-float',false),
+'Nguyệt quế':id=>ring(42.5,1.4,'#d4a017',.9)+around(24,44.5,i=>leaf(8.5,3.4,i%3?'#7fc46a':'#4fa05a','#2f7a3f'),0)+around(12,44.5,i=>circ(0,0,1.5,'#ffd54a','#c98f12',.5),8,'',false)+G(50,95,0,1.15,bow('#ffe08a','#c98f12','#fff','#ffe08a',null,true),'fa-bob'),
+'Anh đào':id=>cr(42,4.4,'#ffdbe6','#ee8fb2')+around(7,46.6,i=>flower(5,3.6,3.9,i%2?'#ffb6cf':'#fff','#e0658f','#ffd96b',1.8,.8,'#d9a21f'),10,'fa-sway',false)+around(7,46.6,i=>leaf(6,2.6,'#9ed16a','#5d9a3a'),35,'',true)+sp4([[8,18,1.5],[94,48,1.4]],'#fff','#ffb3cd'),
+'Thiên hà':id=>ring(44,8,'#1a1040')+ringArcs(44,4.2,['#ff6bd6','#7a5cff','#3fc1ff','#7ae582','#ffd54a','#ff6b6b'],-90,.4)+ring(40.2,.8,'#d9b8ff',.9)+around(8,47.8,i=>spark(i%2?3.2:2.2,'#fff','#a98bff',.6),10,'fa-tw',false)+G(88,15,0,1,circ(0,0,5,'#c9b6ff','#7a5cff',1)+'<ellipse rx="9" ry="2.6" fill="none" stroke="#ff9bd8" stroke-width="1.2" transform="rotate(-20)"/>','fa-float'),
+'Băng giá':id=>cr(43,5.4,'#d6f1ff','#5fa8e0')+around(8,46.8,i=>'<path d="M0 -5L0 5M-4.3 -2.5L4.3 2.5M-4.3 2.5L4.3 -2.5" stroke="#5fa8e0" stroke-width="1.3" stroke-linecap="round" fill="none"/>'+circ(0,0,1.2,'#fff','#5fa8e0',.6),0,'fa-tw',false)+around(8,45.5,i=>`<path d="M0 -3L1.6 0L0 3L-1.6 0Z" fill="#fff" stroke="#8fc6ef" stroke-width=".6"/>`,22.5,'',true)+G(50,95,0,1,star5(4.6,2.1,'#fff','#8fc6ef',.8),'fa-tw'),
+'Lửa':id=>cr(41.8,4.6,'#ffb04a','#d9541a')+around(18,43.5,i=>flame('#ff7a1a','#d9541a',3.6)+G(0,-.6,0,.55,flame('#ffe27a','#ffb01a',3.4),''),0,'fa-fk',true)+sp4([[8,20,1.5],[92,86,1.5]],'#ffe27a','#ff9a1a'),
+'Kẹo ngọt':id=>cr(43,6.4,'#fff','#ff7fa6')+ring(43,6.4,'#ff9db6',1,'2.2 3.2')+around(6,47.4,i=>circ(0,0,2.6,['#ffb8d0','#b9e7ff','#fff0a3'][i%3],'#d9647f',.8)+circ(-.8,-.8,.8,'#fff'),20,'fa-float',false)+G(50,5,0,1.3,bow('#ff9fc0','#c0576f','#fff','#ff9fc0','#fff'),'fa-bob')+sp4([[12,86,1.7],[92,20,1.5]],'#fff','#ffb3cd'),
+'Bánh ngọt':id=>cr(42.8,5.6,'#f8cf8a','#b9733a')+around(12,46.4,i=>circ(0,0,2.9,['#ffd0dc','#c9f2dd','#fff0a3','#cfe6ff'][i%4],'#b9733a',.7)+circ(-.9,-.9,.8,'#fff'),8,'fa-float',false)+G(50,5,0,1.1,circ(-3,0,2.8,'#e2455f','#8a1f33',.7)+circ(3.4,.8,2.8,'#e2455f','#8a1f33',.7)+'<path d="M-3 -2.6C-1 -7 1 -7 3.4 -2M0 -6.4L3 -9" stroke="#5d9a3a" stroke-width="1" fill="none" stroke-linecap="round"/>','fa-bob'),
+'Dấu chân mèo':id=>cr(42.5,5,'#ffc9dc','#d9647f')+around(6,47.4,i=>paw(i%2?'#ef6a9a':'#f7a1c0'),30,'fa-float',false)+around(6,47,i=>heart('#fff','#ffb3cd',.7),0,'',false).replace(/scale\(1\)/g,'scale(.5)'),
+'Ngọc lục bảo':id=>cr(43,6,'#86e6b8','#0e6a47')+ring(46.8,.8,'#d4a017',.9)+around(8,43,i=>gemP('#37e59a','#b8860b'),22.5,'',false)+G(50,5,0,1.5,gemP('#ffd54a','#a8720a'),'fa-tw')+sp4([[10,22,1.6],[92,80,1.6]],'#fff','#7fe3b0'),
+'Neon':id=>`<defs><linearGradient id="${id}n" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00e5ff"/><stop offset=".5" stop-color="#7a5cff"/><stop offset="1" stop-color="#ff2fd0"/></linearGradient></defs>`+ring(43.5,6.2,'#1a0a33')+ring(43.5,3,`url(#${id}n)`)+ring(40,.9,'#00e5ff',.9)+ring(47.2,.9,'#ff2fd0',.8)+around(6,47.5,i=>spark(i%2?4:2.6,'#fff',i%2?'#00e5ff':'#ff2fd0',.8),15,'fa-tw',false),
+'Hoàng hôn':id=>cr(43.5,6,'#ffb36a','#a24bd6')+ringArcs(43.5,4,['#ffd36a','#ff9a59','#ff6f91','#a24bd6'],-90,0)+G(50,4,0,1.1,'<path d="M-9 4A9 9 0 0 1 9 4Z" fill="#ffd36a" stroke="#e0803a" stroke-width="1"/>','fa-bob')+G(14,86,0,1,cloud().replace(/#fffdf8/g,'#ffe9f0'),'fa-float')+sp4([[88,16,2],[94,70,1.5],[8,40,1.5]],'#fff3c4','#e0b23f')};
+Object.keys(OLD).forEach(k=>{const f=FRM.find(x=>x.n.indexOf(k)==0&&!x.raw);if(!f)return;const g=OLD[k];f.raw=id=>{try{return g(id)}catch(e){console.warn('[frame-old]',k,e);return ''}};f.sp=[];f.gl=null;f.ins='11%';rawImg(f)});
+const _df2=drawFrame;
+drawFrame=function(x,cx,cy,R){const f=FRM[frIdx(s.pf||{})];if(f&&f.raw){const im=rawImg(f);if(im.complete&&im.naturalWidth){const S=130*R/39;x.save();x.shadowColor='rgba(0,0,0,.25)';x.shadowBlur=R*.05;x.drawImage(im,cx-S/2,cy-S/2,S,S);x.restore()}return}_df2(x,cx,cy,R)};
+}catch(e){console.warn('[frame-illus]',e)}})();
+
+</script>
+
+<style id="pfr-css">
+.pfxo{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:4;padding:var(--bw,5px);background:var(--bg);-webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.pfxw{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.25))}
+.pfxw>svg{position:absolute;width:var(--cs,30px);height:var(--cs,30px);overflow:visible}
+.pfxw>.a{left:3px;top:3px}.pfxw>.b{right:3px;top:3px}.pfxw>.c{left:3px;bottom:3px}.pfxw>.d{right:3px;bottom:3px}.pfxw>.t{left:50%;top:-1px;margin-left:calc(var(--cs,30px)/-2)}
+.pfxg{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px 8px}
+.pfxb{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px}
+.pfxb .pfxv{position:relative;width:100%;height:56px;border-radius:12px;background:linear-gradient(160deg,var(--g),var(--card));--cs:16px}
+</style>
+<script id="pfr-js">
+(function(){try{
+const sv=(b)=>`<svg viewBox="0 0 24 24" aria-hidden="true">${b}</svg>`;
+const G={
+heart:(a,b)=>`<path d="M12 20C3 13 4 6.5 8.5 6.5C10.4 6.5 12 8 12 9.5C12 8 13.600 6.5 15.500 6.500C20 6.500 21 13 12 20Z" fill="${a}" stroke="${b}" stroke-width="1.6" stroke-linejoin="round"/>`,
+star:(a,b)=>`<path d="M12 2.5L14.800 8.800L21.500 9.500L16.500 14L18 20.800L12 17.300L6 20.800L7.500 14L2.500 9.500L9.200 8.800Z" fill="${a}" stroke="${b}" stroke-width="1.500" stroke-linejoin="round"/>`,
+spark:(a,b)=>`<path d="M12 1L14.500 9.500L23 12L14.500 14.500L12 23L9.500 14.500L1 12L9.500 9.500Z" fill="${a}" stroke="${b}" stroke-width="1.300" stroke-linejoin="round"/>`,
+flower:(a,b)=>[0,72,144,216,288].map(r=>`<ellipse cx="12" cy="6.500" rx="4" ry="5" fill="${a}" stroke="${b}" stroke-width="1.200" transform="rotate(${r} 12 12)"/>`).join('')+`<circle cx="12" cy="12" r="3" fill="#ffd84d" stroke="#d9a21f" stroke-width="1"/>`,
+bow:(a,b)=>`<path d="M12 12C8 3 1 4 1.500 11C2 18 8 17 12 12ZM12 12C16 3 23 4 22.500 11C22 18 16 17 12 12Z" fill="${a}" stroke="${b}" stroke-width="1.500" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="${a}" stroke="${b}" stroke-width="1.400"/>`,
+cloud:(a,b)=>`<path d="M6 19C2 19 1.500 13 5.500 12.500C5 8 10 6 13 9C16 6 21 9 19.500 13C23 14 22 19 18 19Z" fill="${a}" stroke="${b}" stroke-width="1.500" stroke-linejoin="round"/><circle cx="9.500" cy="14.500" r=".9" fill="#7a4545"/><circle cx="14.500" cy="14.500" r=".9" fill="#7a4545"/>`,
+leaf:(a,b)=>`<path d="M3 21C3 9 10 3 21 3C21 14 15 21 3 21Z" fill="${a}" stroke="${b}" stroke-width="1.500" stroke-linejoin="round"/><path d="M3 21L15 9" stroke="${b}" stroke-width="1.200" fill="none"/>`,
+note:(a,b)=>`<ellipse cx="8" cy="18" rx="4" ry="3" fill="${a}" stroke="${b}" stroke-width="1.400" transform="rotate(-20 8 18)"/><path d="M11.500 17L11.500 4C15 5 18 6.500 18 10" fill="none" stroke="${b}" stroke-width="2.200" stroke-linecap="round"/><path d="M11.500 17L11.500 4C15 5 18 6.500 18 10" fill="none" stroke="${a}" stroke-width="1" stroke-linecap="round"/>`,
+crown:(a,b)=>`<path d="M2 19L3.500 7L8.500 12L12 4L15.500 12L20.500 7L22 19Z" fill="${a}" stroke="${b}" stroke-width="1.500" stroke-linejoin="round"/><circle cx="12" cy="4" r="1.800" fill="#e8334f"/>`
+};
+const PFR=[
+{n:'Không khung'},
+{n:'Kẹo cầu vồng 🎀',bw:5,bg:'linear-gradient(135deg,#ffbfd6,#ffd6a5,#fff0a3,#cfeea3,#b6dcfb,#d9c9ff)',c:{a:['bow','#ffb8d2','#c0576f'],b:['cloud','#fffdf8','#b86a64'],c:['heart','#a9e29a','#5d9a3a'],d:['bow','#b9d8ff','#6c86c9']}},
+{n:'Anh đào 🌸',bw:4,bg:'linear-gradient(135deg,#ffd1e0,#ff8fb3,#ffd1e0)',c:{a:['flower','#ffb6cf','#e0658f'],b:['flower','#fff','#e0658f'],c:['flower','#fff','#e0658f'],d:['flower','#ffb6cf','#e0658f']}},
+{n:'Mây bồng bềnh ☁️',bw:5,bg:'linear-gradient(135deg,#e8f2ff,#a9c4e4,#e8f2ff)',c:{a:['cloud','#f5faff','#a9c4e4'],b:['star','#f7dc8d','#e3b53f'],c:['star','#f7dc8d','#e3b53f'],d:['cloud','#f5faff','#a9c4e4']}},
+{n:'Cúc & nơ xanh 🌼',bw:4,bg:'linear-gradient(135deg,#d2eafc,#b6a9e0,#d2eafc)',c:{a:['flower','#fff','#9d90bb'],b:['flower','#fff','#9d90bb'],c:['flower','#fff','#9d90bb'],d:['flower','#fff','#9d90bb'],t:['bow','#cfe8ff','#8a86b8']}},
+{n:'Dây leo 🌿',bw:4,bg:'linear-gradient(135deg,#a3c96a,#5e8f3a,#a3c96a)',c:{a:['leaf','#a8cf72','#5f8f3b'],b:['flower','#fff','#d6cfae'],c:['flower','#fff','#d6cfae'],d:['leaf','#a8cf72','#5f8f3b']}},
+{n:'Thiên hà 🪐',bw:5,bg:'linear-gradient(135deg,#c7a4ff,#7fdcff,#ff9bd8,#9a6cf0)',c:{a:['spark','#fff','#a64df0'],b:['spark','#d9b8ff','#7a5cff'],c:['spark','#d9b8ff','#7a5cff'],d:['spark','#fff','#a64df0']}},
+{n:'Táo nhạc 🍎',bw:5,bg:'linear-gradient(135deg,#e2566f,#f3dc8a,#e2566f)',c:{a:['leaf','#9fcb4e','#f3dc8a'],b:['note','#f8e08e','#d9a93a'],c:['note','#f8e08e','#d9a93a'],d:['star','#f7d77d','#e8b84a']}},
+{n:'Hoàng gia 👑',bw:5,bg:'linear-gradient(135deg,#fff1a8,#e0a800,#fff1a8,#b9830a)',c:{a:['star','#ffe27a','#a8720a'],b:['star','#ffe27a','#a8720a'],c:['star','#ffe27a','#a8720a'],d:['star','#ffe27a','#a8720a'],t:['crown','#ffd54a','#a8720a']}}
+];
+window.PFR=PFR;
+const ov=(i,cs)=>{const f=PFR[i];if(!f||!f.bg)return'';return `<div class="pfxo" style="--bw:${f.bw}px;--bg:${f.bg}"></div><div class="pfxw"${cs?` style="--cs:${cs}px"`:''}>${Object.keys(f.c).map(k=>`<span class="${k}" style="display:contents"></span>`).join('')&&Object.keys(f.c).map(k=>{const g=f.c[k];return sv(G[g[0]](g[1],g[2])).replace('<svg',`<svg class="${k}"`)}).join('')}</div>`};
+window.setPfr=i=>{s.pf.pfr=i;save();if(scr=='game')R();pfm()};
+const _o=window.pfmModal;
+window.pfmModal=function(){_o.apply(this,arguments);try{
+ const ms=document.querySelector('#modal .ms');if(!ms)return;const p=s.pf||{},cur=Math.min(p.pfr||0,PFR.length-1);
+ const hd=ms.firstElementChild;if(hd&&cur>0){hd.style.position='relative';hd.insertAdjacentHTML('beforeend',ov(cur))}
+ const h=[...ms.querySelectorAll('h3')].find(x=>/^(Khung avatar|Avatar frame)$/.test(x.textContent.trim()));
+ if(h&&!window.__pfmV)h.closest('.card').insertAdjacentHTML('afterend',`<div class=card><h3>Khung hồ sơ</h3><p class=mut style="margin:0 0 6px">Viền trang trí quanh phần đầu hồ sơ của bạn.</p><div class=pfxg>${PFR.map((f,i)=>`<button class="s pfxb ${cur==i?'on2':''}" onclick="setPfr(${i})"><span class=pfxv>${ov(i,16)}</span><small>${f.n}</small></button>`).join('')}</div></div>`)
+}catch(e){console.warn('[pfr]',e)}};
+}catch(e){console.warn('[pfr]',e)}})();
+</script>
 </body></html>

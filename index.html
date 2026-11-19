@@ -115,7 +115,7 @@ body.nh nav.fx{transform:translate(-50%,calc(100% + 30px))}
 .pdot.on,.pdi.on{background:#2ecc71}
 .pdi{display:inline-block;width:9px;height:9px;border-radius:50%;background:#9aa3a0;margin-right:5px;vertical-align:1px}
 .ptxt{font-size:.78rem}.ptxt.ptxt-on{color:#27ae60}
-</style><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" type="image/png" href="icon-192.png"><meta name="apple-mobile-web-app-title" content="Justaseed"><meta name="theme-color" content="#388a55"><style id="ux">
+</style><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" type="image/png" href="icon-192.png"><meta name="apple-mobile-web-app-title" content="Justaseed"><meta name="theme-color" content="#388a55"><style id="ux">
 /* UI/UX pass theo checklist ui-ux-pro-max: tương phản chữ >= 4.5:1, focus nhìn thấy, vùng chạm >= 40px, chữ không mồ côi, hover chỉ trên chuột */
 :root{--g2:#2f7d4a;--g3:#25683d;--mut:#4f7260;--bad:#b83a36}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--on-g2:#0d2216;--bad:#ff8a80}}
@@ -131,7 +131,14 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
 <style id="mdesc-order">@media(min-width:900px){#tc#tc:has(#mnow){grid-template-areas:"now q" "ly tv" "info tv" "srch tv" "gen gen"}#tc#tc:has(#mnow.tvon){grid-template-areas:"now q" "now tv" "ly tv" "info tv" "srch tv" "gen gen";grid-template-rows:auto auto auto auto 1fr auto}}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style id="mxgc-font">#mxgc,#mxgc *{font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif!important}#mxgc .mxhd h3{letter-spacing:-.01em;font-weight:700}</style>
-</head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
+<style id="v139-statusbar-cap">
+/* v139: bỏ dải mờ của iOS dưới Dynamic Island. Cho khung web phủ kín màn hình (black-translucent + viewport-fit=cover) rồi dùng một nắp đặc đúng bằng safe-area-top để nội dung cuộn không lọt vào vùng thanh trạng thái. Chữ trạng thái là màu trắng nên nắp dùng xanh đậm của theme. */
+#sbcap{display:none}
+@media (display-mode:standalone){
+#sbcap{display:block;position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#388a55;z-index:2147483600;pointer-events:none}
+:root[data-theme=dark] #sbcap{background:#13221a}
+}
+</style></head><body><div id="sbcap" aria-hidden="true"></div><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
 <script id="yt-guard-js">
 /* v124: hàng đợi gọi YouTube API — giãn cách, tự thử lại khi 429, nghỉ 60s nếu vẫn bị giới hạn */
 (()=>{

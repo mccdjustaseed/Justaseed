@@ -9211,7 +9211,8 @@ document.head.insertAdjacentHTML('beforeend','<style>html:not(.dcok) button[oncl
  #app nav.fx button span{display:block;font-size:.95rem;white-space:nowrap}
  #app nav.fx button svg{width:22px;height:22px;flex:0 0 auto}
  #app nav.fx button .bd{position:static;margin-left:auto}
- #app nav.fx button:not(.on):hover{background:color-mix(in srgb,var(--g2) 14%,transparent);color:var(--ink)}
+ #app nav.fx button:not(.on):hover{color:var(--ink)}
+ #app nav.fx:not(.nvA) button:not(.on):hover{background:color-mix(in srgb,var(--g2) 14%,transparent)}
  #navh{display:none!important}
  /* nội dung: 2 cột, thẻ lớn trải toàn chiều rộng */
  #tc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:20px;align-items:start}
@@ -18308,4 +18309,5 @@ if(typeof FALL!=='undefined'&&typeof fallKind==='function'&&typeof fallRefresh==
  document.addEventListener('visibilitychange',function(){if(document.hidden)flush()});
 }catch(e){console.warn('[tabfix]',e)}})();
 </script>
+<style id="tv-glow-under">/* hào quang (box-shadow) của tivi nằm dưới header, không phủ lên tên shop / số dư / nút */#app>.hd{position:relative;z-index:1}</style>
 </body></html>

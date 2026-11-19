@@ -5672,7 +5672,7 @@ function buildProfileSnap(){
 function buildGav(){
  const p=s.pf||{};
  return 'gav:'+JSON.stringify({av:p.av||null,pre:p.pre||null,fr:p.fr||0,cv:(p.cv&&p.cvs)||null,afr:p.afr?1:0,hb:p.hb?1:0,nm:p.nm||null,bio:p.bio||null,col:p.col||null,
-  mu:(s.cd&&s.cd.m&&s.cd.mt)?{id:s.cd.mt.id,name:s.cd.mt.name,ar:s.cd.mt.ar,th:s.cd.mt.th,r:s.cd.l==2?1:0}:null,sn:buildProfileSnap()})}
+  mu:(s.cd&&s.cd.m&&s.cd.mt)?{id:s.cd.mt.id,name:s.cd.mt.name,ar:s.cd.mt.ar,th:s.cd.mt.th,r:s.cd.l==2?1:0}:null,sk:(document.documentElement.dataset.skin||null),sn:buildProfileSnap()})}
 let LASTG='';
 async function syncProfile(force){
  try{
@@ -13155,7 +13155,7 @@ P.forEach(function(o){if(t<o.dl)return;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.g)o.vy+=o.
 if(t<(fx=='rain'?2.1:1.6))requestAnimationFrame(f);else c.remove()})(t0)}
 /* ---- đổi giao diện (View Transitions + clip-path, có dự phòng) ---- */
 function setSkin(id,ev){var fx=fxOf(),x=ev&&ev.clientX!=null?ev.clientX:innerWidth/2,y=ev&&ev.clientY!=null?ev.clientY:innerHeight/2,col=SK.filter(function(z){return z.id==id})[0]||SK[0];
-var ap=function(){if(id)R.dataset.skin=id;else delete R.dataset.skin;cur=id;p(K,id);try{s.skx=id;save()}catch(e){}try{fallRefresh()}catch(e){}paint()};
+var ap=function(){if(id)R.dataset.skin=id;else delete R.dataset.skin;cur=id;p(K,id);try{s.skx=id;save()}catch(e){}try{syncProfile(true)}catch(e){}try{fallRefresh()}catch(e){}paint()};
 if(matchMedia('(prefers-reduced-motion:reduce)').matches||!document.startViewTransition){ap();return}
 var rad=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),clip=fx=='rain'?['inset(0 0 100% 0)','inset(0 0 0 0)']:['circle(0px at '+x+'px '+y+'px)','circle('+rad+'px at '+x+'px '+y+'px)'];
 try{burst(fx,x,y,col);var t=document.startViewTransition(ap);t.ready.then(function(){R.animate({clipPath:clip},{duration:fx=='fire'?650:fx=='rain'?950:800,easing:'cubic-bezier(.4,0,.2,1)',pseudoElement:'::view-transition-new(root)'})}).catch(function(){})}catch(e){ap()}}

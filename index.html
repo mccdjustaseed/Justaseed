@@ -12803,6 +12803,17 @@ window.__MAGIC=[
 {id:'witch',n:'Tiệm phù thủy',e:'🔮',a:'#8f6fd8',a3:'#5a3d9a',l:'#f4edff',d:'#16111f',pk:'#e4d4ff',s1:'#d7c9ff',s2:'#fbf1ff',f:'Baloo 2'}
 ];
 </script>
+<script id="fairy-defs">
+/* v141: 6 chủ đề cổ tích — Tiên rừng · Pha lê · Voan · Lâu đài · Nàng thơ lả lơi · Ruy băng organza */
+window.__FAIRY=[
+{id:'fairy',n:'Tiên rừng lấp lánh',e:'🧚',a:'#34b58e',a3:'#1b7a63',l:'#eafcf4',d:'#0c1f1b',pk:'#ffd6ee',s1:'#c4f3e1',s2:'#fff3e0',f:'Quicksand'},
+{id:'crystal',n:'Pha lê băng giá',e:'💠',a:'#5aa2ff',a3:'#3558c0',l:'#eaf4ff',d:'#0a1226',pk:'#f1dcff',s1:'#cfe8ff',s2:'#f3e9ff',f:'Comfortaa'},
+{id:'veil',n:'Voan trong suốt',e:'🕊️',a:'#c98fb3',a3:'#80506f',l:'#fdf5fa',d:'#1d1420',pk:'#ffe4f1',s1:'#efe4ff',s2:'#fffaf4',f:'Playfair Display'},
+{id:'castle',n:'Lâu đài cổ tích',e:'🏰',a:'#6d7fe8',a3:'#38409f',l:'#e8edff',d:'#090d28',pk:'#ffe8a6',s1:'#b8c8ff',s2:'#f0e9ff',f:'Playfair Display'},
+{id:'coquette',n:'Nàng thơ lả lơi',e:'🩰',a:'#e97ba3',a3:'#a83f6b',l:'#fff0f6',d:'#2a1320',pk:'#ffd0e2',s1:'#ffd8e8',s2:'#fff7ef',f:'Mali'},
+{id:'organza',n:'Ruy băng organza',e:'🎗️',a:'#9a88f2',a3:'#5a4bb8',l:'#f2eeff',d:'#14102b',pk:'#ffd8ef',s1:'#d6e6ff',s2:'#fff0fa',f:'Comfortaa'}
+];
+</script>
 <script>
 /* Ý tưởng tham khảo (đã đối chiếu, không chép mã):
    - Pin UI "Theme Switch": đổi giao diện bằng giọt nước / mưa / pháo hoa  -> 3 hiệu ứng bên dưới
@@ -12833,7 +12844,7 @@ var SK=[
 {id:'catpink',n:'Mèo hồng',e:'😻',a:'#ec7fb0',a3:'#b8497f',l:'#ffeaf3',d:'#2a1520',pk:'#ffc9de',s1:'#ffd3e5',s2:'#fff3f8',f:'Comfortaa'},
 {id:'candy',n:'Kẹo hồng',e:'🎀',a:'#ec4079',a3:'#b81f57',l:'#ffeaf2',d:'#2a1019',pk:'#ffb8d0',s1:'#ffc9dc',s2:'#fff0f6',f:'Baloo 2'},
 {id:'bakery',n:'Tiệm bánh mì',e:'🍞',a:'#35a58b',a3:'#7d4c2b',l:'#fff4dc',d:'#1f1a14',pk:'#ffc6d3',s1:'#cdeee4',s2:'#fff9e8',f:'Patrick Hand'},
-{id:'croffy',n:'Croffy',e:'🥐',a:'#b4722f',a3:'#5a3315',l:'#fdecd8',d:'#22150c',pk:'#f8d3b0',s1:'#f6d9b5',s2:'#fff5e8',f:'Nunito'}].concat(window.__SWEET||[]).concat(window.__MOON||[]).concat(window.__MAGIC||[]);
+{id:'croffy',n:'Croffy',e:'🥐',a:'#b4722f',a3:'#5a3315',l:'#fdecd8',d:'#22150c',pk:'#f8d3b0',s1:'#f6d9b5',s2:'#fff5e8',f:'Nunito'}].concat(window.__SWEET||[]).concat(window.__MOON||[]).concat(window.__MAGIC||[]).concat(window.__FAIRY||[]);
 var FX=[['drop','💧','Giọt nước'],['rain','🌧️','Mưa hoa'],['fire','🎆','Pháo hoa']];
 function g(k){try{return localStorage.getItem(k)}catch(e){return null}}function p(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 var cur=g(K)||'';if(cur&&SK.some(function(x){return x.id==cur}))R.dataset.skin=cur;else cur='';setTimeout(function(){try{if(typeof s!='undefined'&&s&&(s.skx||'')!==cur){s.skx=cur;save()}}catch(e){}},4000);
@@ -16615,6 +16626,8 @@ var st=document.createElement('style');st.id='sweet-css';st.textContent=S.map(cs
 .bk-pr{width:92px;text-align:right}
 .bk-lock{opacity:.8}
 .bk-note{font-size:.85rem}
+.bk-dc{width:100%;margin-top:6px}
+.bk-staff{display:inline-block;margin-top:4px;padding:2px 10px;border-radius:999px;background:var(--card);border:1px solid var(--g2);font-size:.85rem}
 .bk-sm{animation:bksm 2.4s linear infinite;transform-box:fill-box;opacity:0}
 @keyframes bkb{from{transform:translateY(0)}to{transform:translateY(-1.6px)}}
 .bk-bob{animation:bkb 1.6s ease-in-out infinite alternate}
@@ -16717,7 +16730,7 @@ RC.forEach(r => {
 const OVEN_COST = [0, 0, 250000, 600000], MAX_OVEN = 4, SHELF_CAP = 80;
 const NAMES = ['Cô Lan', 'Anh Minh', 'Bé Na', 'Chị Hà', 'Bác Tư', 'Em Vy', 'Chú Hùng', 'Cậu Nam', 'Chị Mai', 'Bà Sáu', 'Anh Khoa', 'Em Bin'];
 const FACES = ['🧑‍🦰', '👩', '👨', '👧', '🧓', '👦', '🧑', '👵'];
-const SECS = [['rec', '📖', 'Công thức'], ['ing', '🛒', 'Nguyên liệu'], ['oven', '🔥', 'Lò nướng'], ['shop', '🧁', 'Quầy bán'], ['class', '🎓', 'Lớp học'], ['sty', '🏠', 'Gian hàng'], ['furn', '🪑', 'Nội thất']];
+const SECS = [['rec', '📖', 'Công thức'], ['ing', '🛒', 'Nguyên liệu'], ['oven', '🔥', 'Lò nướng'], ['shop', '🧁', 'Quầy bán'], ['staff', '👩‍🍳', 'Nhân viên'], ['class', '🎓', 'Lớp học'], ['sty', '🏠', 'Gian hàng'], ['furn', '🪑', 'Nội thất']];
 
 /* ---------- tiện ích ---------- */
 const one = a => a[Math.floor(Math.random() * a.length)];
@@ -16750,6 +16763,38 @@ const mood = (b, st) => { b.rep = Math.max(1, Math.min(5, b.rep * .92 + st * .08
 const ldg = (k, cat, name, q, amt) => { try { L(k, cat, name, q, amt); } catch (e) { } };
 
 let CU = [], CID = 0, nextIn = 0, lastT = Date.now();
+
+/* ---------- nhân viên tiệm bánh (như shop hoa): ngày cần cấp 30, tháng cần cấp 50 ---------- */
+const WAGE_D = 500000, WAGE_M = 10000000, LV_D = 30, LV_M = 50, MAXH = 3, DAY_MS = 864e5;
+let stT = 0;
+const myLv = () => (typeof lvOf === 'function' ? lvOf(s.xp || 0) : 1);
+const dKey = () => new Date().toLocaleDateString('en-CA');
+/* trạng thái nhân viên lưu riêng ở s.bks (s.bk đang dùng chung với bảng hóa đơn nên không thêm vào đó) */
+function SB() {
+  let o = s.bks; if (!o || typeof o !== 'object') o = s.bks = {};
+  if (!o.hd || typeof o.hd !== 'object') o.hd = { d: '', n: 0, e: 0 };
+  if (o.hd.d !== dKey()) { o.hd.d = dKey(); o.hd.n = 0; }
+  if (!Number.isFinite(o.hd.e)) o.hd.e = 0;
+  if (!Number.isFinite(o.dec)) o.dec = 0;
+  if (typeof o.hmd !== 'string') o.hmd = '';
+  if (o.sm && (typeof o.sm !== 'object' || (o.sm.p ? !Number.isFinite(o.sm.left) : !Number.isFinite(o.sm.e)))) o.sm = null;
+  return o;
+}
+const mState = o => o.sm ? (o.sm.p ? 'pause' : (Date.now() < o.sm.e ? 'on' : 'none')) : 'none';
+const staffOn = o => mState(o) === 'on' || Date.now() < o.hd.e;
+const fmtL = ms => { const m = Math.max(0, Math.ceil(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60); return d ? d + ' ngày ' + h + ' giờ' : h ? h + ' giờ ' + (m % 60) + ' phút' : m + ' phút'; };
+const staffBadge = () => { try { const o = SB(), m = mState(o); return staffOn(o) ? `<span class="bk-staff">👩‍🍳 Nhân viên ${m === 'on' ? 'theo tháng' : 'theo ngày'} đang phục vụ</span>` : ''; } catch (e) { return ''; } };
+/* mỗi 2 giây: bán cho khách đủ bánh; thiếu bánh (đã chờ >= 6 giây) thì từ chối khéo. Nhân viên ngày không mặc cả, nhân viên tháng tự mặc cả */
+function staffAct(b) {
+  const o = SB(); if (!staffOn(o)) return 0;
+  if (++stT % 2) return 0;
+  const mo = mState(o) === 'on';
+  const ok = CU.find(c => (b.shelf[c.rid] || 0) >= c.q && (!c.hg || mo));
+  if (ok) { BAKE.sell(ok.id, ok.hg ? 'hg' : 'full', 1); return 1; }
+  const no = CU.find(c => (b.shelf[c.rid] || 0) < c.q && c.max - c.pat >= 6);
+  if (no) { BAKE.decline(no.id, 1); return 1; }
+  return 0;
+}
 
 /* ---------- ảnh cửa hàng & nội thất ---------- */
 const SFN = ['Baloo 2', 'Pacifico', 'Lobster', 'Dancing Script', 'Playfair Display', 'Comfortaa', 'Bangers', 'Sriracha', 'Quicksand', 'Patrick Hand'];
@@ -16845,6 +16890,7 @@ function scene(b) {
   o += fur('f');
   /* thợ bánh sau quầy */
   o += `<g class="bk-bob">${person(240, 182, 7, { hat: 1, apron: 1, cloth: '#f4efe6', skin: '#f2c9a0' })}</g>`;
+  try { if (staffOn(SB())) o += `<g class="bk-bob">${person(285, 184, 11, { hat: 1, apron: 1, cloth: '#ffd9e2', skin: '#e8b88a' })}</g>`; } catch (e) { }
   if (night) o += '<rect width="400" height="270" fill="#1b1030" opacity=".36"/>';
   /* quầy */
   o += `<rect x="50" y="176" width="300" height="46" fill="${wd[0]}"/><rect x="50" y="176" width="300" height="46" fill="url(#bkSh)" opacity=".25"/>` + [0, 1, 2, 3, 4, 5].map(i => `<rect x="${60 + i * 48}" y="184" width="40" height="30" rx="3" fill="none" stroke="${wd[1]}" stroke-width="1.6" opacity=".7"/>`).join('') + `<rect x="46" y="170" width="308" height="8" rx="3" fill="${wd[0]}" stroke="${wd[1]}" stroke-width="1.5"/><rect x="48" y="171" width="304" height="2" fill="#fff" opacity=".35"/><rect x="50" y="218" width="300" height="4" fill="${wd[1]}"/>`;
@@ -16903,17 +16949,17 @@ function ingH(b) {
 }
 function shopH(b) {
   const lr = learned(b), t = shelfN(b);
-  const head = `<div class="card bk-scene" style="padding:0;overflow:hidden">${scene(b)}</div><div class="card bk-ctl"><div class=row><h3>🧁 Quầy bán</h3><button class="${b.open ? 's' : 'p'}" style="width:auto" onclick="BAKE.toggle()">${b.open ? 'Đóng cửa' : 'Mở cửa'}</button></div><p class="mut bk-note">${b.open ? 'Đang mở cửa, khách đến liên tục. Bấm Bán khi quầy có đủ bánh.' : 'Cửa đang đóng. Bày bánh và đặt giá, rồi bấm Mở cửa.'} Quầy chứa ${t}/${SHELF_CAP} bánh.</p></div>`;
+  const head = `<div class="card bk-scene" style="padding:0;overflow:hidden">${scene(b)}</div><div class="card bk-ctl"><div class=row><h3>🧁 Quầy bán</h3><button class="${b.open ? 's' : 'p'}" style="width:auto" onclick="BAKE.toggle()">${b.open ? 'Đóng cửa' : 'Mở cửa'}</button></div><p class="mut bk-note">${b.open ? 'Đang mở cửa, khách đến liên tục. Bấm Bán khi quầy có đủ bánh.' : 'Cửa đang đóng. Bày bánh và đặt giá, rồi bấm Mở cửa.'} Quầy chứa ${t}/${SHELF_CAP} bánh.</p>${staffBadge()}</div>`;
   const cus = b.open ? `<div class="card bk-cus"><h3>Khách đang chờ</h3>${CU.length ? CU.map(c => {
     const r = RCI[c.rid], have = b.shelf[c.rid] || 0, ok = have >= c.q, u = price(b, c.rid);
     const act = c.hg ? `<div class=bk-note>💬 “Bớt giúp em còn ${money(c.hg)}/cái nha!”</div><div class="bk-btns"><button class=p style="width:auto" ${ok ? '' : 'disabled'} onclick="BAKE.sell(${c.id},'hg')">Đồng ý ${money(c.hg * c.q)}</button><button class=s ${ok ? '' : 'disabled'} onclick="BAKE.sell(${c.id},'full')">Giữ giá ${money(u * c.q)}</button></div>` : `<button class=p ${ok ? '' : 'disabled'} onclick="BAKE.sell(${c.id},'full')">${ok ? 'Bán ' + money(u * c.q) : 'Thiếu bánh (có ' + have + '/' + c.q + ')'}</button>`;
-    return `<div class="bk-cu ${c.hg ? 'hg' : ''}"><div class=who><span class=face>${c.e}</span><span style="flex:1"><b>${c.nm}</b><br><span class=mut>Muốn ${r.e} ${r.n} × ${c.q}</span></span><button class=s onclick="BAKE.drop(${c.id})" aria-label="Mời khách về">✕</button></div><div class=bk-bar><i data-bkc="${c.id}" style="width:${c.pat / c.max * 100}%"></i></div>${act}</div>`;
+    return `<div class="bk-cu ${c.hg ? 'hg' : ''}"><div class=who><span class=face>${c.e}</span><span style="flex:1"><b>${c.nm}</b><br><span class=mut>Muốn ${r.e} ${r.n} × ${c.q}</span></span><button class=s onclick="BAKE.drop(${c.id})" aria-label="Mời khách về">✕</button></div><div class=bk-bar><i data-bkc="${c.id}" style="width:${c.pat / c.max * 100}%"></i></div>${act}${ok ? '' : '<div class="mut bk-note">Thiếu bánh? Từ chối khéo để khách thông cảm, không bị trừ uy tín.</div>'}<button class="s bk-dc" onclick="BAKE.decline(${c.id})">🙏 Từ chối khéo</button></div>`;
   }).join('') : '<p class=mut>Chưa có khách, chờ chút nhé…</p>'}</div>` : '';
   const sh = `<div class="card bk-px"><h3>Bánh trên quầy & giá bán</h3><p class="mut bk-note">Giá gợi ý = vốn × 4. Thấp nhất bằng vốn, cao nhất +30%. Giá cao hơn +10% khách hay mặc cả.</p>${lr.map(r => {
     const u = price(b, r.id), tag = u > r.base * 1.2 ? '<b class=bad>Đắt</b>' : u < r.base * .85 ? '<b class=ok>Rẻ</b>' : '';
     return `<div class=bk-rc><div class=row><b>${r.e} ${r.n}</b><span>Trên quầy: <b>${b.shelf[r.id] || 0}</b></span></div><div class=row><span class="mut bk-note">Vốn ${money(r.unit)} · gợi ý ${money(r.base)} ${tag}</span><input class=bk-pr type=number inputmode=numeric step=500 min=${r.min} max=${r.max} value=${u} onchange="BAKE.price('${r.id}',this.value)"></div></div>`;
   }).join('')}</div>`;
-  const st = `<div class="card bk-stat"><div class=row><span>Uy tín</span><b>${stars(Math.max(1, Math.round(b.rep)))} ${b.rep.toFixed(1)}</b></div><div class=row><span class=mut>Đã bán</span><span class=mut>${b.sold} bánh · ${b.sv} khách · ${money(b.rev)}</span></div></div>`;
+  const st = `<div class="card bk-stat"><div class=row><span>Uy tín</span><b>${stars(Math.max(1, Math.round(b.rep)))} ${b.rep.toFixed(1)}</b></div><div class=row><span class=mut>Đã bán</span><span class=mut>${b.sold} bánh · ${b.sv} khách · ${money(b.rev)}</span></div><div class=row><span class=mut>Từ chối khéo</span><span class=mut>${SB().dec} khách</span></div></div>`;
   return head + cus + sh + st;
 }
 function recH(b) {
@@ -16949,7 +16995,27 @@ function styH(b) {
 function furnH(b) {
   return `<div class="card bk-scene" style="padding:0;overflow:hidden">${scene(b)}</div><div class=card><h3>Cửa hàng nội thất</h3><p class="mut bk-note">Mỗi món đang bày giúp khách đến nhanh hơn 3%. Hiện tại: nhanh hơn ${Math.round((1 - speed(b)) * 100)}%.</p>${Object.keys(FUR).map(k => `<div class=row><span><b>${FUR[k][0]}</b><br><span class=mut>${money(FUR[k][1])}</span></span>${b.fo[k] ? `<button class=s onclick="BAKE.tgFu('${k}')">${b.fo[k] === 1 ? 'Cất đi' : 'Bày lại'}</button>` : `<button class=p style="width:auto" ${s.money < FUR[k][1] ? 'disabled' : ''} onclick="BAKE.buyFu('${k}')">Mua</button>`}</div>`).join('')}</div>`;
 }
-const SEC = { oven: ovenH, ing: ingH, shop: shopH, rec: recH, class: classH, sty: styH, furn: furnH };
+function staffH(b) {
+  const o = SB(), lv = myLv(), m = mState(o), now = Date.now();
+  const dOn = now < o.hd.e, n = o.hd.n, usedM = o.hmd === dKey(), lk = m !== 'none';
+  const dNote = lk ? (m === 'pause' ? 'Đang khóa vì còn gói nhân viên theo tháng (đang nghỉ phép)' : 'Đang khóa vì đã thuê nhân viên theo tháng')
+    : dOn ? `Đang làm việc · còn <b data-bks="${o.hd.e}">${fmtL(o.hd.e - now)}</b>`
+    : lv < LV_D ? `Mở khóa khi đạt cấp ${LV_D} (hiện cấp ${lv})`
+    : n >= MAXH ? 'Đã hết 3 lượt thuê hôm nay (ngày mai có lại). Bạn vẫn tự bán bình thường.' : `Còn ${MAXH - n}/${MAXH} lượt thuê hôm nay`;
+  const dDis = lk || dOn || lv < LV_D || n >= MAXH || s.money < WAGE_D;
+  const dBtn = lk ? '🔒 Đã khóa' : lv < LV_D ? '🔒 Cấp ' + LV_D : dOn ? 'Đã thuê' : n >= MAXH ? 'Hết lượt' : money(WAGE_D);
+  const mLeft = m === 'pause' ? o.sm.left : m === 'on' ? o.sm.e - now : 0;
+  const mNote = m === 'pause' ? `🏖️ Đang nghỉ phép · bảo lưu <b>${fmtL(mLeft)}</b>, bạn đang tự bán`
+    : m === 'on' ? `Còn <b data-bks="${o.sm.e}">${fmtL(mLeft)}</b> · có thể cho nghỉ phép bất cứ lúc nào`
+    : lv < LV_M ? `Mở khóa khi đạt cấp ${LV_M} (hiện cấp ${lv})`
+    : usedM ? 'Hôm nay bạn đã thuê theo tháng rồi (ngày mai thuê lại được)' : 'Mỗi ngày thực chỉ thuê được 1 lần';
+  const mDis = m === 'none' && (lv < LV_M || usedM || s.money < WAGE_M);
+  const mBtn = m === 'pause' ? '▶ Gọi đi làm lại' : m === 'on' ? '🏖️ Cho nghỉ phép' : lv < LV_M ? '🔒 Cấp ' + LV_M : usedM ? 'Hết lượt' : money(WAGE_M);
+  return `<div class="card"><h3>👩‍🍳 Nhân viên tiệm bánh</h3><p class="mut bk-note">Nhân viên tự bán bánh cho khách khi quầy đang mở và có đủ bánh trên quầy. Nếu thiếu bánh, nhân viên sẽ từ chối khéo để khách thông cảm, không bị trừ uy tín. Bạn vẫn phải tự nướng bánh và mang lên quầy.</p>
+<div class=row><span><b>👩‍🍳 Nhân viên theo ngày</b><br><span class=mut>Tự bán bánh trong 24 giờ, khách mặc cả bạn tự xử lý · ${money(WAGE_D)}<br>${dNote}</span></span><button class=p ${dDis ? 'disabled' : ''} onclick="BAKE.hireDay()">${dBtn}</button></div>
+<div class=row style="margin-top:10px"><span><b>📅 Nhân viên theo tháng</b><br><span class=mut>30 ngày (720 giờ) · tự bán bánh và tự mặc cả với khách · ${money(WAGE_M)}<br>${mNote}</span></span><button class=p ${mDis ? 'disabled' : ''} onclick="${m === 'none' ? 'BAKE.hireMonth()' : 'BAKE.monToggle()'}">${mBtn}</button></div></div>`;
+}
+const SEC = { oven: ovenH, staff: staffH, ing: ingH, shop: shopH, rec: recH, class: classH, sty: styH, furn: furnH };
 function VIEW() {
   const b = B(), sec = SEC[b.sec] ? b.sec : 'oven';
   const nav = SECS.map(x => `<button class="s ${sec === x[0] ? 'on2' : ''}" onclick="BAKE.go('${x[0]}')">${x[1]} ${x[2]}</button>`).join('');
@@ -16991,7 +17057,7 @@ window.BAKE = {
     if (b.open && !learned(b).some(r => (b.shelf[r.id] || 0) > 0)) toast('Quầy chưa có bánh nào, hãy nướng trước nhé');
     refresh();
   },
-  sell(id, mode) {
+  sell(id, mode, by) {
     const b = B(), i = CU.findIndex(c => c.id == id); if (i < 0) return;
     const c = CU[i], r = RCI[c.rid];
     if ((b.shelf[c.rid] || 0) < c.q) return toast('Chưa đủ bánh trên quầy');
@@ -17002,8 +17068,8 @@ window.BAKE = {
     }
     const amt = u * c.q; b.shelf[c.rid] -= c.q; s.money += amt; b.rev += amt; b.sold += c.q; b.sv++;
     mood(b, c.pat / c.max > .5 ? 5 : c.pat / c.max > .25 ? 4 : 3);
-    ldg('in', 'Bán bánh', r.n, c.q, amt);
-    CU.splice(i, 1); sound(900); toast('+' + money(amt) + ' · ' + r.n + ' ×' + c.q); refresh();
+    ldg('in', 'Bán bánh', r.n + (by ? ' (nhân viên)' : ''), c.q, amt);
+    CU.splice(i, 1); sound(900); toast((by ? '👩‍🍳 ' : '') + '+' + money(amt) + ' · ' + r.n + ' ×' + c.q); refresh();
   },
   drop(id) { const b = B(), i = CU.findIndex(c => c.id == id); if (i < 0) return; CU.splice(i, 1); mood(b, 2); refresh(); },
   price(id, v) {
@@ -17034,6 +17100,35 @@ window.BAKE = {
     if (s.money < c) return toast('Không đủ tiền');
     s.money -= c; b.st.lv++; ldg('out', 'Nâng cấp', 'Ngoại hình tiệm bánh cấp ' + b.st.lv, 1, c); sound(800); refresh();
   },
+  decline(id, by) {
+    const i = CU.findIndex(c => c.id == id); if (i < 0) return;
+    const c = CU[i]; CU.splice(i, 1); SB().dec++;
+    toast(by ? 'Nhân viên đã từ chối khéo ' + c.nm + ' vì không đủ bánh' : 'Đã từ chối khéo, khách thông cảm và không đánh giá');
+    sound(400); refresh();
+  },
+  hireDay() {
+    const o = SB(), m = mState(o); if (m !== 'none') return toast(m === 'pause' ? 'Nhân viên theo tháng đang nghỉ phép, hãy gọi quay lại làm hoặc tự bán' : 'Đang thuê nhân viên theo tháng, nút thuê theo ngày bị khóa');
+    if (Date.now() < o.hd.e) return;
+    if (myLv() < LV_D) return toast('Cần cấp ' + LV_D + ' để thuê nhân viên');
+    if (o.hd.n >= MAXH) return toast('Hôm nay bạn đã thuê đủ ' + MAXH + ' lần');
+    fixMoney(); if (s.money < WAGE_D) return toast('Không đủ tiền');
+    s.money -= WAGE_D; o.hd.n++; o.hd.e = Date.now() + DAY_MS;
+    ldg('out', 'Nhân viên', 'Thuê 1 ngày (tiệm bánh)', 1, WAGE_D); sound(700); toast('Đã thuê nhân viên tiệm bánh 24 giờ'); refresh();
+  },
+  hireMonth() {
+    const o = SB(); if (mState(o) !== 'none') return toast('Nhân viên theo tháng vẫn còn hiệu lực');
+    if (myLv() < LV_M) return toast('Cần cấp ' + LV_M + ' để thuê nhân viên theo tháng');
+    if (o.hmd === dKey()) return toast('Hôm nay bạn đã thuê theo tháng rồi, ngày mai thuê lại được');
+    fixMoney(); if (s.money < WAGE_M) return toast('Không đủ tiền thuê theo tháng');
+    s.money -= WAGE_M; o.hmd = dKey(); o.sm = { e: Date.now() + 30 * DAY_MS, p: 0 };
+    ldg('out', 'Nhân viên', 'Thuê theo tháng (30 ngày, tiệm bánh)', 1, WAGE_M); sound(700); toast('Đã thuê nhân viên tiệm bánh theo tháng'); refresh();
+  },
+  monToggle() {
+    const o = SB(), m = mState(o); if (m === 'none') return;
+    if (m === 'on') { o.sm.p = 1; o.sm.left = Math.max(0, o.sm.e - Date.now()); delete o.sm.e; toast('Nhân viên đã nghỉ phép, bạn tự bán. Còn ' + fmtL(o.sm.left) + ' được bảo lưu'); sound(500); }
+    else { o.sm.e = Date.now() + o.sm.left; o.sm.p = 0; delete o.sm.left; toast('Nhân viên đã đi làm lại, còn ' + fmtL(o.sm.e - Date.now())); sound(700); }
+    refresh();
+  },
   _s: () => ({ B, RC, ING, CU: () => CU, tick })
 };
 
@@ -17043,6 +17138,9 @@ function tick() {
     if (typeof s === 'undefined' || !s) return;
     const b = B(), t = Date.now(); let dirty = 0;
     b.ov.forEach((o, i) => { if (o && !o.nt && t >= o.t1) { o.nt = 1; dirty = 1; try { toast('🔔 ' + RCI[o.rid].n + ' đã chín, mang lên tiệm nhé!'); } catch (e) { } } });
+    { const o = SB();
+      if (o.sm && !o.sm.p && t >= o.sm.e) { o.sm = null; dirty = 1; try { toast('Nhân viên theo tháng của tiệm bánh đã hết hạn'); } catch (e) { } }
+      if (o.hd.e && t >= o.hd.e) { o.hd.e = 0; dirty = 1; try { toast('Nhân viên theo ngày của tiệm bánh đã hết ca'); } catch (e) { } } }
     if (b.cl && t >= b.cl.t1) { const r = RCI[b.cl.rid]; b.lr[b.cl.rid] = 1; b.cl = null; dirty = 1; try { toast('🎓 Đã học xong công thức ' + r.n + '!'); } catch (e) { } sound(880); }
     if (b.open && typeof scr !== 'undefined' && scr === 'game' && !document.hidden) {
       const dt = Math.min(3, (t - lastT) / 1000);
@@ -17060,12 +17158,14 @@ function tick() {
         }
         nextIn = Math.max(3, (13 - b.rep * 1.5 + Math.random() * 4) * speed(b));
       }
+      if (staffAct(b)) dirty = 1;
       if (CU.length !== n0) dirty = 1;
     }
     lastT = t;
     if (typeof tab !== 'undefined' && tab === 'bake') {
       document.querySelectorAll('[data-bk]').forEach(el => { const p = el.dataset.bk.split(',').map(Number); el.style.width = Math.max(0, Math.min(100, (t - p[0]) / (p[1] - p[0]) * 100)) + '%'; });
       document.querySelectorAll('[data-bkt]').forEach(el => { el.textContent = fmt(+el.dataset.bkt - t); });
+      document.querySelectorAll('[data-bks]').forEach(el => { el.textContent = fmtL(+el.dataset.bks - t); });
       document.querySelectorAll('[data-bkc]').forEach(el => { const c = CU.find(x => x.id == el.dataset.bkc); if (c) el.style.width = Math.max(0, c.pat / c.max * 100) + '%'; });
     }
     if (dirty) refresh();
@@ -17826,6 +17926,134 @@ if(typeof FALL!=='undefined'&&typeof fallKind==='function'&&typeof fallRefresh==
  try{fallRefresh()}catch(e){}
 }
 }catch(e){console.warn('[magic-v140]',e)}})();
+</script>
+<script id="fairy-v141">
+/* v141: 6 chủ đề cổ tích — Tiên rừng lấp lánh · Pha lê băng giá · Voan trong suốt · Lâu đài cổ tích · Nàng thơ lả lơi · Ruy băng organza.
+   Mỗi chủ đề có: nền riêng, viền ren trên/dưới, vật nhỏ ở góc, hạt rơi, lấp lánh nhấp nháy, hiệu ứng chạm, thẻ + nút riêng. */
+(function(){try{
+if(window.__fy141||typeof FALL==='undefined'||typeof fallKind!=='function')return;window.__fy141=1;
+var R=document.documentElement;
+var U=function(x){return 'url("data:image/svg+xml,'+encodeURIComponent(x)+'")'};
+var S=function(w,h,b){return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+b+'</svg>'};
+var mixh=function(a,b,t){var g=function(h,i){return parseInt(h.slice(1+i*2,3+i*2),16)},o='#';for(var i=0;i<3;i++){var v=Math.round(g(a,i)*(1-t)+g(b,i)*t);o+=('0'+Math.max(0,Math.min(255,v)).toString(16)).slice(-2)}return o};
+var q=function(f,s,w){return ' fill="'+f+'" stroke="'+s+'" stroke-width="'+(w||1.2)+'" stroke-linejoin="round"'};
+/* ---- thư viện hình (viewBox 24x24) ---- */
+var SH={
+spark:function(f,s){return '<path d="M12 1.5Q13.6 10.4 22.5 12Q13.6 13.6 12 22.5Q10.4 13.6 1.5 12Q10.4 10.4 12 1.5Z"'+q(f,s,1)+'/>'},
+star:function(f,s){return '<path d="M12 1L14.5 9.5L23 12L14.5 14.5L12 23L9.5 14.5L1 12L9.5 9.5z"'+q(f,s,1.1)+'/>'},
+heart:function(f,s){return '<path d="M12 21C4 15 2 10 5 6.5C7.5 4 11 5 12 8C13 5 16.5 4 19 6.5C22 10 20 15 12 21Z"'+q(f,s)+'/>'},
+bow:function(f,s){return '<path d="M12 12C7 4 2 6 3 11C4 15 9 14.5 12 12ZM12 12C17 4 22 6 21 11C20 15 15 14.5 12 12Z"'+q(f,s)+'/><path d="M11 13L7.5 21L11.5 18.5L12.5 14ZM13 13L16.5 21L12.5 18.5L11.5 14Z"'+q(f,s,1)+'/><rect x="9.5" y="9.5" width="5" height="5" rx="2" fill="'+s+'"/>'},
+petal:function(f,s){return '<path d="M12 22C4 16 3 8 9 3L12 6L15 3C21 8 20 16 12 22z"'+q(f,s,1)+'/>'},
+gem:function(f,s){return '<path d="M12 2L21 9L12 22L3 9Z"'+q(f,s)+'/><path d="M3 9H21M8 9L12 2L16 9L12 22" stroke="#fff" stroke-opacity=".75" stroke-width=".9" fill="none"/>'},
+pearl:function(f,s){return '<circle cx="12" cy="12" r="8"'+q(f,s,1.3)+'/><circle cx="9.2" cy="9.2" r="2.4" fill="#fff" fill-opacity=".9"/>'},
+orb:function(f,s){return '<circle cx="12" cy="12" r="6.5"'+q(f,s,1)+'/><circle cx="10" cy="10" r="1.9" fill="#fff" fill-opacity=".85"/>'},
+bubble:function(f,s){return '<circle cx="12" cy="12" r="9" fill="'+f+'" fill-opacity=".3" stroke="'+s+'" stroke-width="1.4"/><path d="M7.5 10A5.5 5.5 0 0 1 11 6.8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+leaf:function(f,s){return '<path d="M2 20C2 8 12 2 22 2c0 12-6 20-20 18z"'+q(f,s,1.1)+'/><path d="M3 19L14 9" stroke="'+s+'" stroke-width="1" fill="none"/>'},
+wing:function(f,s){return '<path d="M3 20C2 9 10 2 20 3C21 12 14 20 3 20Z"'+q(f,s,1.1)+'/><path d="M5 18C9 12 13 8 18 5M8 19C11 15 14 12 19 8" stroke="'+s+'" stroke-width=".8" fill="none"/>'},
+feather:function(f,s){return '<path d="M12 22C5 16 5 8 12 2C19 8 19 16 12 22Z"'+q(f,s,1)+'/><path d="M12 22V5" stroke="'+s+'" stroke-width="1" fill="none"/>'},
+ribbon:function(f,s){return '<path d="M3 5C11 1 9 10 14 12S16 21 21 20" fill="none" stroke="'+s+'" stroke-width="4.6" stroke-linecap="round"/><path d="M3 5C11 1 9 10 14 12S16 21 21 20" fill="none" stroke="'+f+'" stroke-width="3" stroke-linecap="round"/>'}
+};
+var MO={
+ fairy:{dx:[30,90],rot:[-70,70],d:[11,20],z:[13,24],sw:30,gl:1},
+ prism:{dx:[10,50],rot:[-120,120],d:[12,22],z:[12,24],sw:18,gl:1},
+ soft:{dx:[20,60],rot:[-30,30],d:[16,28],z:[14,24],sw:26},
+ glint:{dx:[40,110],rot:[0,0],d:[9,18],z:[9,22],sw:10,gl:1},
+ tumb:{dx:[30,90],rot:[-200,200],d:[9,17],z:[16,26],sw:22},
+ flut:{dx:[40,100],rot:[-50,50],d:[12,22],z:[16,26],sw:34}
+};
+function build(id,items,mo){[0,1].forEach(function(dk){var cols=[],map={};
+ items.forEach(function(it){var c=dk?mixh(it[1],'#ffffff',.3):it[1];while(map[c])c=c.slice(0,5)+((parseInt(c.slice(5),16)+1)&255).toString(16).padStart(2,'0');map[c]=it[0];cols.push(c)});
+ var o=Object.assign({},MO[mo]);o.c=cols;o.p=function(c){return SH[map[c]](c,mixh(c,'#000000',.34))};FALL['fy_'+id+(dk?'d':'')]=o})}
+/* ---- viền ren trên/dưới (tile 44x22) ---- */
+var TOP={
+fairy:S(44,22,'<path d="M0 3Q11 10 22 3T44 3" stroke="#4fbf9c" fill="none" stroke-width="1.6"/><path d="M11 6.6q-4.4 4-1.2 8.4q4.4-2.2 1.2-8.4z" fill="#8fe3c6" stroke="#4fbf9c" stroke-width=".7"/><path d="M33 6.6q-4.4 4-1.2 8.4q4.4-2.2 1.2-8.4z" fill="#8fe3c6" stroke="#4fbf9c" stroke-width=".7"/><path d="M22 5.5L23.4 9L27 10L23.4 11L22 14.5L20.6 11L17 10L20.6 9Z" fill="#ffd75e" stroke="#d9a62a" stroke-width=".6"/>'),
+crystal:S(44,22,'<path d="M0 2.5H44" stroke="#8fc4ff" stroke-width="1.4"/><path d="M11 3L16.5 9L11 20L5.5 9Z" fill="#cfe8ff" stroke="#6aa8ff" stroke-width="1.1" stroke-linejoin="round"/><path d="M5.5 9H16.5M11 3L9 9L11 20" stroke="#fff" stroke-width=".8" fill="none"/><path d="M33 3L38.5 9L33 20L27.5 9Z" fill="#e8d6ff" stroke="#a98cf0" stroke-width="1.1" stroke-linejoin="round"/><path d="M27.5 9H38.5M33 3L31 9L33 20" stroke="#fff" stroke-width=".8" fill="none"/>'),
+veil:S(44,22,'<circle cx="11" cy="0" r="13" fill="#fff" fill-opacity=".85" stroke="#f0c6dc" stroke-width="1.2"/><circle cx="33" cy="0" r="13" fill="#fff" fill-opacity=".85" stroke="#f0c6dc" stroke-width="1.2"/><circle cx="11" cy="15" r="2.3" fill="#fff6fb" stroke="#d9a1c2" stroke-width="1"/><circle cx="33" cy="15" r="2.3" fill="#fff6fb" stroke="#d9a1c2" stroke-width="1"/>'),
+castle:S(44,22,'<path d="M1 0H21L11 19Z" fill="#6d7fe8"/><path d="M23 0H43L33 19Z" fill="#ffd36a"/><path d="M0 1H44" stroke="#c99a2b" stroke-width="2"/><path d="M11 5L12.2 8L15 8.6L12.8 10.6L13.4 13.6L11 12L8.6 13.6L9.2 10.6L7 8.6L9.8 8Z" fill="#ffe9a8"/><circle cx="33" cy="9" r="2.4" fill="#fff6d6"/>'),
+coquette:S(44,22,'<circle cx="11" cy="0" r="13" fill="#ffd6e6" stroke="#ff9fc0" stroke-width="1.1" stroke-dasharray="3 2"/><circle cx="33" cy="0" r="13" fill="#ffd6e6" stroke="#ff9fc0" stroke-width="1.1" stroke-dasharray="3 2"/><g transform="translate(15 8) scale(.6)"><path d="M12 12C7 4 2 6 3 11C4 15 9 14.5 12 12ZM12 12C17 4 22 6 21 11C20 15 15 14.5 12 12Z" fill="#ff8fb4" stroke="#d9507c" stroke-width="1.4"/><rect x="9.5" y="9.5" width="5" height="5" rx="2" fill="#d9507c"/></g>'),
+organza:S(44,22,'<path d="M0 0H44V8Q33 21 22 8Q11 -5 0 8Z" fill="#cbbdff" fill-opacity=".85"/><path d="M0 0H44V4Q33 15 22 4Q11 -6 0 4Z" fill="#ffd0ec" fill-opacity=".85"/><path d="M0 8Q11 -5 22 8T44 8" stroke="#fff" stroke-width="1.2" fill="none" stroke-opacity=".9"/>')
+};
+/* ---- vật nhỏ nhún nhảy ở góc (64x44) ---- */
+var COR={
+fairy:S(64,44,'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9f5e4"/><stop offset="1" stop-color="#ffd0ec"/></linearGradient></defs><g stroke="#4fbf9c" stroke-width="1.2" fill="url(#g)" fill-opacity=".88"><path d="M32 24C22 2 4 2 3 13C3 22 18 28 32 24Z"/><path d="M32 24C42 2 60 2 61 13C61 22 46 28 32 24Z"/><path d="M32 26C24 34 12 40 10 34C9 29 20 26 32 26Z"/><path d="M32 26C40 34 52 40 54 34C55 29 44 26 32 26Z"/></g><path d="M32 18V34" stroke="#4fbf9c" stroke-width="2.2" stroke-linecap="round"/><path d="M32 4Q33 10 39 11Q33 12 32 18Q31 12 25 11Q31 10 32 4Z" fill="#ffd75e" stroke="#d9a62a" stroke-width=".8"/>'),
+crystal:S(64,44,'<g stroke="#4f8fe0" stroke-width="1.2" stroke-linejoin="round"><path d="M32 2L42 14L32 42L22 14Z" fill="#cfe8ff"/><path d="M14 16L21 24L14 42L7 24Z" fill="#e6d4ff"/><path d="M50 18L57 26L50 42L43 26Z" fill="#c9f1ee"/></g><path d="M22 14H42M32 2L28 14L32 42M32 2L36 14M7 24H21M43 26H57" stroke="#fff" stroke-opacity=".9" fill="none"/>'),
+veil:S(64,44,'<g fill="#fff" stroke="#d9a1c2" stroke-width="1.3" stroke-linejoin="round"><path d="M32 22C24 8 8 10 10 20C12 30 26 28 32 22Z" fill-opacity=".9"/><path d="M32 22C40 8 56 10 54 20C52 30 38 28 32 22Z" fill-opacity=".9"/><path d="M30 25L24 42L31 38L33 26Z" fill="#fde4f0"/><path d="M34 25L40 42L33 38L31 26Z" fill="#fde4f0"/></g><circle cx="32" cy="22" r="4.6" fill="#fff6fb" stroke="#d9a1c2" stroke-width="1.3"/><circle cx="30.5" cy="20.5" r="1.3" fill="#fff"/>'),
+castle:S(64,44,'<path d="M10 40L42 12" stroke="#a8791c" stroke-width="3.6" stroke-linecap="round"/><path d="M10 40L16 34.5" stroke="#ffe9a8" stroke-width="3.6" stroke-linecap="round"/><path d="M46 3L49 10.5L57 11.5L51 17L52.6 25L46 21L39.4 25L41 17L35 11.5L43 10.5Z" fill="#ffd36a" stroke="#c99a2b" stroke-width="1.2" stroke-linejoin="round"/><circle cx="24" cy="6" r="1.5" fill="#6d7fe8"/><circle cx="58" cy="32" r="1.5" fill="#ffd36a"/>'),
+coquette:S(64,44,'<g stroke="#c8527f" stroke-width="1.4" stroke-linejoin="round"><path d="M32 20C22 4 4 6 6 18C8 30 26 28 32 20Z" fill="#ff9fc0"/><path d="M32 20C42 4 60 6 58 18C56 30 38 28 32 20Z" fill="#ff9fc0"/><path d="M29 24L21 42L29 38L33 26Z" fill="#ffc2d8"/><path d="M35 24L43 42L35 38L31 26Z" fill="#ffc2d8"/></g><rect x="27" y="15" width="10" height="10" rx="4" fill="#ff7fa8" stroke="#c8527f" stroke-width="1.4"/><path d="M14 14Q18 10 22 13M42 13Q46 10 50 14" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8"/>'),
+organza:S(64,44,'<g fill="#b9a8ff" fill-opacity=".72" stroke="#7a68d8" stroke-width="1.2" stroke-linejoin="round"><path d="M32 18C22 4 6 6 8 16C10 26 26 26 32 18Z"/><path d="M32 18C42 4 58 6 56 16C54 26 38 26 32 18Z"/></g><path d="M30 21C26 28 34 34 26 43M34 21C38 28 30 34 38 43" stroke="#ff9fd0" stroke-width="3" fill="none" stroke-linecap="round" stroke-opacity=".9"/><circle cx="32" cy="18" r="4" fill="#e3daff" stroke="#7a68d8" stroke-width="1.2"/>')
+};
+/* ---- lâu đài (nền) ---- */
+var CASTLE=function(c,w){return S(600,260,'<g fill="'+c+'"><rect x="250" y="110" width="100" height="150"/><path d="M240 112L300 42L360 112Z"/><rect x="170" y="140" width="54" height="120"/><path d="M162 142L197 94L232 142Z"/><rect x="376" y="140" width="54" height="120"/><path d="M368 142L403 94L438 142Z"/><rect x="82" y="172" width="44" height="88"/><path d="M74 174L104 134L134 174Z"/><rect x="474" y="172" width="44" height="88"/><path d="M466 174L496 134L526 174Z"/><rect x="0" y="206" width="600" height="54"/><path d="M0 206V196H12V206ZM28 206V196H40V206ZM56 206V196H68V206ZM140 206V196H152V206ZM236 206V196H248V206ZM352 206V196H364V206ZM448 206V196H460V206ZM532 206V196H544V206ZM560 206V196H572V206Z"/><path d="M300 42V18" stroke="'+c+'" stroke-width="3"/><path d="M300 18L324 25L300 32Z"/><path d="M197 94V74" stroke="'+c+'" stroke-width="2.5"/><path d="M197 74L214 79L197 84Z"/><path d="M403 94V74" stroke="'+c+'" stroke-width="2.5"/><path d="M403 74L420 79L403 84Z"/></g><g fill="'+w+'"><path d="M286 206V176A14 14 0 0 1 314 176V206Z"/><rect x="291" y="130" width="8" height="16" rx="4"/><rect x="301" y="130" width="8" height="16" rx="4"/><rect x="190" y="168" width="8" height="16" rx="4"/><rect x="402" y="168" width="8" height="16" rx="4"/><rect x="100" y="196" width="7" height="14" rx="3.5"/><rect x="494" y="196" width="7" height="14" rx="3.5"/></g>')};
+var BOWT=function(c,d,o){return '<g transform="translate('+o[0]+' '+o[1]+') scale('+o[2]+')" opacity="'+(o[3]||1)+'"><path d="M12 12C7 4 2 6 3 11C4 15 9 14.5 12 12ZM12 12C17 4 22 6 21 11C20 15 15 14.5 12 12Z" fill="'+c+'"/><rect x="9.5" y="9.5" width="5" height="5" rx="2" fill="'+d+'"/></g>'};
+var HT=function(c,o){return '<g transform="translate('+o[0]+' '+o[1]+') scale('+o[2]+')"><path d="M12 21C4 15 2 10 5 6.5C7.5 4 11 5 12 8C13 5 16.5 4 19 6.5C22 10 20 15 12 21Z" fill="'+c+'"/></g>'};
+var BOWPAT=U(S(96,96,BOWT('#ffbcd4','#ff8fb4',[10,10,1.7])+HT('#ffd0e0',[64,14,.9])+BOWT('#ffcfe0','#ffa6c6',[58,56,1.7])+HT('#ffbcd4',[14,62,.9])+'<circle cx="48" cy="48" r="1.6" fill="#fff"/><circle cx="2" cy="2" r="1.4" fill="#fff"/>'));
+/* ---- định nghĩa 6 chủ đề ---- */
+var TH=[
+{id:'fairy',fx:'#ffd75e',icon:['spark','#ffd75e','#c99a2b'],btn:['#7fe0bf','#34b58e','#1b7a63','#14604d'],line:'#34b58e',glow:'255,226,140',sel:'#c9f5e4',
+ taps:'✨ 🧚 🦋 🌸 💫 🍄',mo:'fairy',items:[['spark','#ffd75e'],['wing','#8fe3c6'],['heart','#ffa9d6'],['leaf','#6fd3ac'],['spark','#ffb0e0'],['petal','#ffc2e6']],
+ bg:'radial-gradient(38% 28% at 12% 8%,color-mix(in srgb,var(--pk) 75%,transparent),transparent),radial-gradient(42% 32% at 92% 78%,color-mix(in srgb,#ffe9a8 45%,transparent),transparent),radial-gradient(50% 36% at 8% 96%,color-mix(in srgb,var(--g) 85%,transparent),transparent),radial-gradient(2px 2px at 20px 30px,#ffd75e,transparent) 0 0/90px 90px,radial-gradient(1.6px 1.6px at 60px 70px,#fff,transparent) 0 0/70px 70px,linear-gradient(170deg,var(--sk1),var(--bg) 45%,var(--sk2))',
+ card:'outline:2px dotted rgba(52,181,142,.6);outline-offset:-7px;border-radius:24px;box-shadow:0 0 22px -8px rgba(255,226,140,.8),0 16px 28px -24px var(--g3)'},
+{id:'crystal',fx:'#bfe3ff',icon:['gem','#bfe0ff','#4f8fe0'],btn:['#9fd3ff','#5aa2ff','#3558c0','#26408f'],line:'#7fb6f5',glow:'160,210,255',sel:'#d6e8ff',
+ taps:'💎 ✨ 🔮 🩵 ❄️ 💠',mo:'prism',items:[['gem','#9fd0ff'],['spark','#d6b8ff'],['bubble','#8fc4ff'],['gem','#e2c4ff'],['spark','#8fe3f2'],['gem','#bfe0ff']],
+ bg:'radial-gradient(40% 30% at 86% 10%,rgba(255,196,246,.5),transparent),radial-gradient(42% 32% at 8% 72%,rgba(150,222,255,.5),transparent),repeating-linear-gradient(115deg,transparent 0 70px,rgba(255,255,255,.26) 70px 72px,transparent 72px 160px),repeating-linear-gradient(62deg,transparent 0 96px,color-mix(in srgb,var(--g2) 14%,transparent) 96px 98px,transparent 98px 210px),linear-gradient(160deg,var(--sk1),var(--bg) 40%,var(--sk2) 78%,var(--pk))',
+ card:'border:1.5px solid rgba(255,255,255,.85)!important;background:linear-gradient(125deg,rgba(255,255,255,.55),rgba(255,255,255,0) 38%),color-mix(in srgb,var(--card) 66%,transparent)!important;box-shadow:0 0 0 1px rgba(150,200,255,.7),0 0 16px -3px rgba(236,190,255,.6),0 16px 30px -22px var(--g3);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);border-radius:22px',
+ sheen:'linear-gradient(115deg,transparent 38%,rgba(255,255,255,.4) 48%,rgba(255,200,246,.25) 52%,transparent 62%)'},
+{id:'veil',fx:'#f5b8d8',icon:['pearl','#fff2f8','#d9a1c2'],btn:['#f3c3dc','#c98fb3','#80506f','#5e3a52'],line:'#e5b3cf',glow:'255,255,255',sel:'#ffe0f0',
+ taps:'🤍 🕊️ 🪽 ✨ 🌸 🫧',mo:'soft',items:[['pearl','#fff2f8'],['petal','#ffd0e4'],['feather','#ffffff'],['pearl','#f6dff0'],['heart','#ffc7e0'],['petal','#ffe9f3']],
+ bg:'repeating-linear-gradient(98deg,color-mix(in srgb,var(--card) 70%,transparent) 0 3px,transparent 3px 46px),repeating-linear-gradient(82deg,color-mix(in srgb,var(--pk) 32%,transparent) 0 14px,transparent 14px 72px),linear-gradient(90deg,color-mix(in srgb,var(--card) 92%,transparent),transparent 20%,transparent 80%,color-mix(in srgb,var(--card) 92%,transparent)),radial-gradient(55% 35% at 50% 0,color-mix(in srgb,var(--pk) 60%,transparent),transparent),linear-gradient(180deg,var(--sk2),var(--bg) 40%,var(--sk1))',
+ card:'background:color-mix(in srgb,var(--card) 48%,transparent)!important;-webkit-backdrop-filter:blur(18px) saturate(1.15);backdrop-filter:blur(18px) saturate(1.15);border:1px solid rgba(255,255,255,.8)!important;outline:1.5px solid rgba(255,255,255,.75);outline-offset:-6px;border-radius:26px;box-shadow:0 12px 32px -20px var(--g3),inset 0 0 22px rgba(255,255,255,.35)'},
+{id:'castle',fx:'#ffd36a',icon:['star','#ffd75e','#c99a2b'],btn:['#8fa0ff','#6d7fe8','#38409f','#262d78'],line:'#d6aa3c',glow:'255,214,110',sel:'#d9e0ff',
+ taps:'🏰 ⭐ ✨ 👑 🪄 🌙',mo:'glint',items:[['star','#ffd75e'],['spark','#ffe9a0'],['star','#ffb84a'],['spark','#bcc8ff'],['orb','#ffd36a'],['star','#fff0b0']],
+ bg:'radial-gradient(60% 40% at 50% 108%,color-mix(in srgb,#ffd36a 55%,transparent),transparent),radial-gradient(1.6px 1.6px at 30px 40px,#ffd36a,transparent) 0 0/120px 120px,radial-gradient(1.2px 1.2px at 90px 100px,#fff,transparent) 0 0/150px 150px,radial-gradient(2px 2px at 70px 20px,#ffbf47,transparent) 0 0/210px 210px,linear-gradient(180deg,var(--sk1),var(--bg) 55%,var(--sk2))',
+ card:'outline:3px double rgba(214,170,60,.75);outline-offset:-7px;border-radius:22px;box-shadow:0 0 20px -8px rgba(255,214,110,.7),0 16px 28px -24px var(--g3)',
+ root:function(P){return P+'::before{content:"";position:fixed;left:0;right:0;bottom:0;height:min(46vh,380px);z-index:-1;pointer-events:none;background:'+U(CASTLE('#3a4590','#ffd36a'))+' center bottom/auto 100% no-repeat;opacity:.2}'
+  +P+'[data-theme=dark]::before{background-image:'+U(CASTLE('#9fb0ff','#ffe08a'))+';opacity:.22}'}},
+{id:'coquette',fx:'#ff9fc0',icon:['bow','#ff9fc0','#d9507c'],btn:['#ffa8c8','#e97ba3','#a83f6b','#7c2a4d'],line:'#f08fb4',glow:'255,170,200',sel:'#ffd0e2',
+ taps:'🎀 🩰 💗 🌷 ✨ 🍓',mo:'tumb',items:[['bow','#ff9fc0'],['heart','#ff7fa8'],['petal','#ffc2d8'],['bow','#ffb3cf'],['heart','#ffa6c6'],['spark','#fff0a8']],
+ bg:'radial-gradient(40% 30% at 90% 8%,color-mix(in srgb,var(--pk) 70%,transparent),transparent),radial-gradient(45% 34% at 6% 94%,color-mix(in srgb,var(--g) 70%,transparent),transparent),linear-gradient(170deg,var(--sk1),var(--bg) 50%,var(--sk2))',
+ card:'outline:2px dashed rgba(233,123,163,.65);outline-offset:-7px;border-radius:24px;box-shadow:0 14px 28px -22px var(--g3)',
+ root:function(P){return P+'::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:'+BOWPAT+' 0 0/96px 96px;opacity:.55}'
+  +P+'[data-theme=dark]::before{opacity:.18}'}},
+{id:'organza',fx:'#c9b8ff',icon:['ribbon','#b9a8ff','#7a68d8'],btn:['#c2b6ff','#9a88f2','#5a4bb8','#3f3388'],line:'#a898f0',glow:'201,184,255',sel:'#e0d8ff',
+ taps:'🎀 🎗️ ✨ 💜 🦋 🫧',mo:'flut',items:[['ribbon','#b9a8ff'],['bow','#ffc2e6'],['ribbon','#a8d4ff'],['spark','#fff2a8'],['ribbon','#ffb8de'],['bow','#cbb8ff']],
+ bg:'linear-gradient(118deg,transparent 0 10%,color-mix(in srgb,var(--pk) 66%,transparent) 10% 17%,rgba(255,255,255,.35) 17% 19%,transparent 19% 38%,color-mix(in srgb,var(--sk1) 72%,transparent) 38% 44%,rgba(255,255,255,.35) 44% 46%,transparent 46% 66%,color-mix(in srgb,var(--g) 72%,transparent) 66% 72%,rgba(255,255,255,.3) 72% 74%,transparent 74%),radial-gradient(40% 30% at 90% 10%,color-mix(in srgb,var(--pk) 55%,transparent),transparent),linear-gradient(160deg,var(--sk2),var(--bg) 50%,var(--sk1))',
+ card:'background:linear-gradient(90deg,var(--pk),var(--sk1),var(--g)) 0 0/100% 5px no-repeat,color-mix(in srgb,var(--card) 74%,transparent)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:24px;box-shadow:0 14px 28px -22px var(--g3)',
+ sheen:'linear-gradient(115deg,transparent 40%,rgba(255,255,255,.38) 50%,transparent 60%)'}
+];
+var css='@keyframes fyBob{0%,100%{transform:translateY(8px) rotate(-3deg)}50%{transform:translateY(-4px) rotate(3deg)}}@keyframes fySheen{0%{transform:translateX(-28%)}100%{transform:translateX(28%)}}@keyframes fyTw{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:.95;transform:scale(1) rotate(45deg)}}\n'
++'#fyfx{display:none;position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}#fyfx i{position:absolute;background:var(--fxc,#fff);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;animation:fyTw 3s ease-in-out infinite}\n';
+var ids=[],MYK={};
+TH.forEach(function(t,i){var P=':root[data-skin='+t.id+']',side=i%2?'right':'left';ids.push(t.id);MYK[t.id]=1;
+ build(t.id,t.items,t.mo);window.__TAPS=window.__TAPS||{};window.__TAPS[t.id]=t.taps.split(' ');
+ css+=P+' #fyfx{display:block;--fxc:'+t.fx+'}\n'
+ +P+' body{background:'+t.bg+'!important;background-attachment:fixed!important}\n'
+ +P+' body::before,'+P+'::after{content:"";position:fixed;left:0;right:0;height:22px;z-index:22;pointer-events:none;background:'+U(TOP[t.id])+' repeat-x 0 0/44px 22px;filter:drop-shadow(0 0 3px rgba('+t.glow+',.55))}\n'
+ +P+' body::before{top:0}'+P+'::after{bottom:0;transform:scaleY(-1)}\n'
+ +P+'[data-theme=dark] body::before,'+P+'[data-theme=dark]::after{opacity:.35}\n'
+ +P+' body::after{content:"";position:fixed;'+side+':14px;bottom:24px;width:64px;height:44px;z-index:21;pointer-events:none;background:'+U(COR[t.id])+' center/contain no-repeat;animation:fyBob 5s ease-in-out infinite;transform-origin:50% 100%}\n'
+ +P+' .card{'+t.card+'}\n'
+ +P+'[data-theme=dark] .card{outline-color:'+t.line+'80}\n'
+ +P+' .card>h3:first-child::after{content:"";display:inline-block;width:1em;height:1em;vertical-align:-.15em;margin-left:.35em;background:'+U(S(24,24,SH[t.icon[0]](t.icon[1],t.icon[2])))+' center/contain no-repeat}\n'
+ +P+' nav{border-radius:28px}'+P+' button.p,'+P+' button.s{border-radius:20px}\n'
+ +P+':not([data-theme=dark]) button.p{background:linear-gradient(135deg,'+t.btn[0]+','+t.btn[1]+' 55%,'+t.btn[2]+')!important;color:#fff;box-shadow:0 4px 0 '+t.btn[3]+',inset 0 2px 0 rgba(255,255,255,.45)}\n'
+ +P+' ::selection{background:'+t.sel+';color:#3a2a3a}\n'
+ +P+' .hd h2{text-shadow:0 0 14px rgba('+t.glow+',.7)}\n';
+ if(t.root)css+=t.root(P)+'\n';
+ if(t.sheen)css+=P+'::before{content:"";position:fixed;inset:-20%;z-index:-1;pointer-events:none;background:'+t.sheen+';animation:fySheen 9s linear infinite alternate}\n';
+});
+css+='@media(prefers-reduced-motion:reduce){'+ids.map(function(i){return ':root[data-skin='+i+'] body::after,:root[data-skin='+i+']::before'}).join(',')+'{animation:none!important}#fyfx i{animation:none;opacity:.45}}\n';
+var st=document.createElement('style');st.id='fairy-v141-css';st.textContent=css;document.head.appendChild(st);
+/* lớp lấp lánh nhấp nháy */
+var fx=document.createElement('div');fx.id='fyfx';fx.setAttribute('aria-hidden','true');
+for(var k=0;k<22;k++){var e=document.createElement('i'),z=6+Math.floor(Math.random()*12);e.style.cssText='left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)+'%;width:'+z+'px;height:'+z+'px;animation-delay:'+(Math.random()*4).toFixed(2)+'s;animation-duration:'+(2.2+Math.random()*2.8).toFixed(2)+'s';fx.appendChild(e)}
+document.body.appendChild(fx);
+/* hạt rơi theo chủ đề */
+var _fk=fallKind;
+fallKind=function(c){var k=R.dataset.skin;
+ if(MYK[k]){var d=R.dataset.theme=='dark'||(R.dataset.theme!='light'&&matchMedia('(prefers-color-scheme:dark)').matches);return 'fy_'+k+(d?'d':'')}
+ return _fk.apply(this,arguments)};
+try{fallRefresh()}catch(e){}
+}catch(e){console.warn('[fairy-v141]',e)}})();
 </script>
 
 <script>

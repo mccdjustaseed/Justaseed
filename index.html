@@ -3408,8 +3408,8 @@ restart=function(){
  RS2=0;if(live&&live.iv)clearInterval(live.iv);live=null;cur=null;CART={};pop='';s=def();
  try{Object.keys(localStorage).forEach(k=>{if(!/^sb-|supabase/i.test(k))localStorage.removeItem(k)})}catch(e){}
  toast('Đã xóa dữ liệu, bạn bè được giữ lại');setTimeout(()=>location.reload(),500)};
-Z.push=async()=>{try{if(typeof currentUser=='undefined'||!currentUser||!s.pf)return;const{data}=await supabaseClient.from('shop_public').select('game_avatar').eq('user_id',currentUser.id).maybeSingle();const d=parseGav(data&&data.game_avatar);Object.assign(d,{av:s.pf.av||null,pre:s.pf.pre||null,fr:s.pf.fr||0,afr:s.pf.afr?1:0});await supabaseClient.from('shop_public').update({game_avatar:'gav:'+JSON.stringify(d)}).eq('user_id',currentUser.id)}catch(e){}};
-Z.pull=async()=>{try{if(typeof currentUser=='undefined'||!currentUser||(s.pf&&s.pf.av))return;const{data}=await supabaseClient.from('shop_public').select('game_avatar').eq('user_id',currentUser.id).maybeSingle();const d=parseGav(data&&data.game_avatar);if(!d.av)return;s.pf=s.pf||{nm:'Chủ tiệm',av:null,pre:'cat'};s.pf.av=d.av;if(d.pre)s.pf.pre=d.pre;if(d.fr!=null)s.pf.fr=d.fr;if(d.afr)s.pf.afr=1;save();scr=='game'?R():renderMenu();toast('Đã khôi phục cả avatar')}catch(e){}};
+Z.push=()=>{try{return window.profSync&&profSync(true)}catch(e){}};
+Z.pull=()=>{try{return window.profSync&&profSync(true,true)}catch(e){}};
 {const o=load;load=function(id){o(id);Z.pull()}}
 {const o=qrOpen;qrOpen=function(){Z.push();return o.apply(this,arguments)}}
 if(typeof currentUser!='undefined')setTimeout(Z.push,4000);
@@ -5685,6 +5685,51 @@ setInterval(()=>syncProfile(),60000);
 setTimeout(()=>syncProfile(),6000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)syncProfile()});
 addEventListener('pagehide',()=>syncProfile());
+
+/* ===== v140: đồng bộ HAI CHIỀU avatar + ảnh bìa (bản mới hơn thắng) =====
+   Trước đây: chỉ đẩy lên; tải về chỉ lấy avatar khi máy chưa có, không lấy bìa, và Z.push ghi đè avatar cũ lên bản mới.
+   Nay: pf.pt = thời điểm đổi gần nhất, pf.ph = chữ ký nội dung đã đồng bộ. Máy nào đổi sau cùng thì thắng. */
+const pfHs=str=>{let h=5381;for(let i=0;i<str.length;i++)h=(h*33^str.charCodeAt(i))|0;return h+':'+str.length};
+const pfSig=p=>{p=p||{};return pfHs([p.av||'',p.pre||'',p.fr||0,p.afr?1:0,(p.cv&&p.cvs)||''].join('|'))};
+const pfEmpty=p=>!p||(!p.av&&!(p.cv&&p.cvs));
+function profTouch(){
+ const p=typeof s!=='undefined'&&s&&s.pf;if(!p)return;
+ const sig=pfSig(p);if(p.ph===sig)return;
+ if(p.ph===undefined&&pfEmpty(p)){p.ph=sig;p.pt=0;return}
+ p.ph=sig;p.pt=Date.now();try{save()}catch(e){}}
+{const o=buildGav;buildGav=function(){
+ try{profTouch()}catch(e){}
+ const r=o();
+ try{const d=JSON.parse(r.slice(4));d.pt=(s.pf&&s.pf.pt)||0;return 'gav:'+JSON.stringify(d)}catch(e){return r}}}
+let PPB=0,PPL=0;
+async function profSync(force,noPush){
+ if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s)return;
+ if(PPB)return;
+ if(!force&&Date.now()-PPL<25000)return syncProfile();
+ PPB=1;
+ try{
+  const{data}=await supabaseClient.from('shop_public').select('game_avatar').eq('user_id',currentUser.id).maybeSingle();
+  PPL=Date.now();
+  const d=parseGav(data&&data.game_avatar),rpt=+d.pt||0;
+  const rp={av:d.av,pre:d.pre,fr:d.fr,afr:d.afr,cv:d.cv,cvs:d.cv},rEmpty=pfEmpty(rp);
+  let p=s.pf;
+  if(p&&p.ph===undefined&&!pfEmpty(p)&&rpt>0){p.ph=pfSig(p);p.pt=0}
+  profTouch();p=s.pf;
+  const lpt=(p&&p.pt)||0;
+  if(!rEmpty&&pfSig(rp)!==pfSig(p)&&(rpt>lpt||pfEmpty(p))){
+   s.pf=s.pf||{nm:'Chủ tiệm',av:null,pre:'cat'};const q=s.pf;
+   q.av=d.av||null;if(d.pre)q.pre=d.pre;q.fr=d.fr||0;q.afr=(q.afr||d.afr)?1:0;
+   q.cv=d.cv||null;q.cvs=d.cv||null;q.pt=rpt;q.ph=pfSig(q);
+   try{save()}catch(e){}
+   try{scr=='game'?R():renderMenu()}catch(e){}
+   try{toast('Đã đồng bộ avatar & ảnh bìa từ tài khoản')}catch(e){}
+  }
+ }catch(e){console.warn('profSync',e)}
+ finally{PPB=0}
+ if(!noPush)return syncProfile(!!force)}
+setInterval(()=>profSync(),45000);
+setTimeout(()=>profSync(true),3000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)profSync(true)});
 
 /* ---- xem hồ sơ bạn bè ---- */
 let FPV=null;

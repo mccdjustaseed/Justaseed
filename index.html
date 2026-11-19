@@ -16986,6 +16986,63 @@ var st=document.createElement('style');st.id='sweet-css';st.textContent=S.map(cs
 .bk-gl{animation:bkgl .8s ease-in-out infinite alternate}
 @keyframes bksm{0%{opacity:.7;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(6px,-18px) scale(1.4)}}
 </style>
+
+<style id="bake-desktop-v137">
+/* v137: Tiệm bánh trên máy tính (>=900px). Điện thoại giữ nguyên. */
+@media (min-width:900px){
+ .bk-root{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+ .bk-root>.card{margin:0;min-width:0}
+ .bk-root>.card:hover{border-color:color-mix(in srgb,var(--g2) 45%,var(--ln))}
+
+ /* Thanh đầu: tên tiệm bên trái, các mục bên phải, không còn phải cuộn ngang */
+ .bk-hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;padding:10px 14px}
+ .bk-hd>.row{margin:0;flex:0 0 auto;gap:14px}
+ .bk-hd .bk-nav{flex:1 1 auto;justify-content:flex-end;flex-wrap:wrap;overflow:visible;padding:0;gap:6px}
+ .bk-hd .bk-nav button{min-height:38px;font-size:.95rem}
+
+ /* Danh sách thẻ con tự chia cột theo bề rộng */
+ .bk-root .card:has(>.bk-rc),.bk-root .card:has(>.bk-ig),.bk-root .card:has(>.bk-slot),.bk-root .card:has(>.bk-cu){
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--bkw,290px),1fr));gap:0 14px;align-items:stretch}
+ .bk-root .card:has(>.bk-rc)>:not(.bk-rc):not(.bk-ig):not(.bk-slot):not(.bk-cu),
+ .bk-root .card:has(>.bk-ig)>:not(.bk-rc):not(.bk-ig):not(.bk-slot):not(.bk-cu),
+ .bk-root .card:has(>.bk-slot)>:not(.bk-rc):not(.bk-ig):not(.bk-slot):not(.bk-cu),
+ .bk-root .card:has(>.bk-cu)>:not(.bk-rc):not(.bk-ig):not(.bk-slot):not(.bk-cu){grid-column:1/-1}
+ .bk-rc,.bk-ig,.bk-slot,.bk-cu{margin:6px 0}
+ .bk-rc{display:flex;flex-direction:column}
+ .bk-rc>.row:last-child{margin-top:auto}
+ .bk-pr{width:120px}
+ .bk-s-ing{--bkw:300px}.bk-s-oven{--bkw:300px}.bk-s-rec{--bkw:320px}.bk-s-class{--bkw:320px}
+ .bk-s-shop .bk-px{--bkw:270px}.bk-s-shop .bk-cus{--bkw:210px}
+
+ /* Cảnh tiệm: bo gọn, không méo, luôn thấy trọn vẹn */
+ .bk-scene{display:block;line-height:0}
+ .bk-scene>svg{display:block;width:100%;height:auto}
+}
+
+@media (min-width:900px) and (max-width:1099px){.bk-hd .bk-nav{flex:1 1 100%;justify-content:flex-start}}
+/* >=1100px: cảnh tiệm bên trái, thông tin/điều khiển bên phải */
+@media (min-width:1100px){
+ .bk-s-shop,.bk-s-sty,.bk-s-furn{grid-template-columns:minmax(0,7fr) minmax(0,5fr);column-gap:20px;row-gap:0}
+ .bk-s-shop>.card,.bk-s-sty>.card,.bk-s-furn>.card{margin-bottom:16px}
+ .bk-s-shop>.bk-hd,.bk-s-sty>.bk-hd,.bk-s-furn>.bk-hd{grid-column:1/-1}
+ .bk-s-shop>.bk-scene,.bk-s-sty>.bk-scene,.bk-s-furn>.bk-scene{grid-column:1;grid-row:2/5}
+ .bk-s-shop{grid-template-rows:auto auto auto 1fr auto}
+ .bk-s-shop>.bk-ctl{grid-column:2;grid-row:2}
+ .bk-s-shop>.bk-cus{grid-column:2;grid-row:3}
+ .bk-s-shop>.bk-stat{grid-column:2;grid-row:4;align-self:start}
+ .bk-s-shop>.bk-px{grid-column:1/-1;grid-row:5}
+ .bk-s-sty,.bk-s-furn{grid-template-rows:auto auto auto 1fr auto}
+ .bk-s-sty>.card:nth-child(n+3),.bk-s-furn>.card:nth-child(n+3){grid-column:2}
+ .bk-s-sty>.card:nth-child(3){grid-row:2}.bk-s-sty>.card:nth-child(4){grid-row:3}.bk-s-sty>.card:nth-child(5){grid-row:4}
+ .bk-s-furn>.card:nth-child(3){grid-row:2/5}
+ .bk-s-oven>.card:first-of-type+.card{margin-top:0}
+}
+/* >=1500px: thêm một cột cho danh sách dài */
+@media (min-width:1500px){
+ .bk-s-ing{--bkw:270px}.bk-s-oven{--bkw:280px}.bk-s-rec{--bkw:300px}
+ .bk-s-shop .bk-px{--bkw:300px}
+}
+</style>
 <script id="bake-v1">
 (function () {
 'use strict';
@@ -17210,17 +17267,17 @@ function ingH(b) {
 }
 function shopH(b) {
   const lr = learned(b), t = shelfN(b);
-  const head = `<div class=card style="padding:0;overflow:hidden">${scene(b)}</div><div class=card><div class=row><h3>🧁 Quầy bán</h3><button class="${b.open ? 's' : 'p'}" style="width:auto" onclick="BAKE.toggle()">${b.open ? 'Đóng cửa' : 'Mở cửa'}</button></div><p class="mut bk-note">${b.open ? 'Đang mở cửa, khách đến liên tục. Bấm Bán khi quầy có đủ bánh.' : 'Cửa đang đóng. Bày bánh và đặt giá, rồi bấm Mở cửa.'} Quầy chứa ${t}/${SHELF_CAP} bánh.</p></div>`;
-  const cus = b.open ? `<div class=card><h3>Khách đang chờ</h3>${CU.length ? CU.map(c => {
+  const head = `<div class="card bk-scene" style="padding:0;overflow:hidden">${scene(b)}</div><div class="card bk-ctl"><div class=row><h3>🧁 Quầy bán</h3><button class="${b.open ? 's' : 'p'}" style="width:auto" onclick="BAKE.toggle()">${b.open ? 'Đóng cửa' : 'Mở cửa'}</button></div><p class="mut bk-note">${b.open ? 'Đang mở cửa, khách đến liên tục. Bấm Bán khi quầy có đủ bánh.' : 'Cửa đang đóng. Bày bánh và đặt giá, rồi bấm Mở cửa.'} Quầy chứa ${t}/${SHELF_CAP} bánh.</p></div>`;
+  const cus = b.open ? `<div class="card bk-cus"><h3>Khách đang chờ</h3>${CU.length ? CU.map(c => {
     const r = RCI[c.rid], have = b.shelf[c.rid] || 0, ok = have >= c.q, u = price(b, c.rid);
     const act = c.hg ? `<div class=bk-note>💬 “Bớt giúp em còn ${money(c.hg)}/cái nha!”</div><div class="bk-btns"><button class=p style="width:auto" ${ok ? '' : 'disabled'} onclick="BAKE.sell(${c.id},'hg')">Đồng ý ${money(c.hg * c.q)}</button><button class=s ${ok ? '' : 'disabled'} onclick="BAKE.sell(${c.id},'full')">Giữ giá ${money(u * c.q)}</button></div>` : `<button class=p ${ok ? '' : 'disabled'} onclick="BAKE.sell(${c.id},'full')">${ok ? 'Bán ' + money(u * c.q) : 'Thiếu bánh (có ' + have + '/' + c.q + ')'}</button>`;
     return `<div class="bk-cu ${c.hg ? 'hg' : ''}"><div class=who><span class=face>${c.e}</span><span style="flex:1"><b>${c.nm}</b><br><span class=mut>Muốn ${r.e} ${r.n} × ${c.q}</span></span><button class=s onclick="BAKE.drop(${c.id})" aria-label="Mời khách về">✕</button></div><div class=bk-bar><i data-bkc="${c.id}" style="width:${c.pat / c.max * 100}%"></i></div>${act}</div>`;
   }).join('') : '<p class=mut>Chưa có khách, chờ chút nhé…</p>'}</div>` : '';
-  const sh = `<div class=card><h3>Bánh trên quầy & giá bán</h3><p class="mut bk-note">Giá gợi ý = vốn × 4. Thấp nhất bằng vốn, cao nhất +30%. Giá cao hơn +10% khách hay mặc cả.</p>${lr.map(r => {
+  const sh = `<div class="card bk-px"><h3>Bánh trên quầy & giá bán</h3><p class="mut bk-note">Giá gợi ý = vốn × 4. Thấp nhất bằng vốn, cao nhất +30%. Giá cao hơn +10% khách hay mặc cả.</p>${lr.map(r => {
     const u = price(b, r.id), tag = u > r.base * 1.2 ? '<b class=bad>Đắt</b>' : u < r.base * .85 ? '<b class=ok>Rẻ</b>' : '';
     return `<div class=bk-rc><div class=row><b>${r.e} ${r.n}</b><span>Trên quầy: <b>${b.shelf[r.id] || 0}</b></span></div><div class=row><span class="mut bk-note">Vốn ${money(r.unit)} · gợi ý ${money(r.base)} ${tag}</span><input class=bk-pr type=number inputmode=numeric step=500 min=${r.min} max=${r.max} value=${u} onchange="BAKE.price('${r.id}',this.value)"></div></div>`;
   }).join('')}</div>`;
-  const st = `<div class=card><div class=row><span>Uy tín</span><b>${stars(Math.max(1, Math.round(b.rep)))} ${b.rep.toFixed(1)}</b></div><div class=row><span class=mut>Đã bán</span><span class=mut>${b.sold} bánh · ${b.sv} khách · ${money(b.rev)}</span></div></div>`;
+  const st = `<div class="card bk-stat"><div class=row><span>Uy tín</span><b>${stars(Math.max(1, Math.round(b.rep)))} ${b.rep.toFixed(1)}</b></div><div class=row><span class=mut>Đã bán</span><span class=mut>${b.sold} bánh · ${b.sv} khách · ${money(b.rev)}</span></div></div>`;
   return head + cus + sh + st;
 }
 function recH(b) {
@@ -17244,7 +17301,7 @@ function styH(b) {
   const st = b.st, c = 180000 * (st.lv + 1);
   const sw = (k, i, h) => `<button class="s ${st[k] === i ? 'on2' : ''}" onclick="BAKE.sty('${k}',${i})"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${h};vertical-align:-2px;border:1px solid #0003"></span> `;
   const row = x => `<div class=row style="justify-content:flex-start">${x}</div>`;
-  return `<div class=card style="padding:0;overflow:hidden">${scene(b)}</div>
+  return `<div class="card bk-scene" style="padding:0;overflow:hidden">${scene(b)}</div>
 <div class=card><h3>Tên tiệm</h3><input value="${esc(b.name)}" maxlength=20 onchange="BAKE.nm(this.value)"></div>
 <div class=card><h3>Màu mái hiên</h3>${row(AW.map((a, i) => sw('aw', i, a[0]) + a[2] + '</button>').join(''))}
 <h3>Màu gỗ quầy và cửa</h3>${row(WD.map((a, i) => sw('wd', i, a[0]) + a[2] + '</button>').join(''))}
@@ -17254,13 +17311,13 @@ function styH(b) {
 <div class=card><div class=row><span>Ngoại hình cấp ${st.lv}/4<br><span class=mut>${LVN[st.lv]}${st.lv < 4 ? ' → ' + LVN[st.lv + 1] : ''}</span></span><button class=p style="width:auto" ${st.lv < 4 && s.money >= c ? '' : 'disabled'} onclick="BAKE.look()">${st.lv < 4 ? money(c) : 'Tối đa'}</button></div></div>`;
 }
 function furnH(b) {
-  return `<div class=card style="padding:0;overflow:hidden">${scene(b)}</div><div class=card><h3>Cửa hàng nội thất</h3><p class="mut bk-note">Mỗi món đang bày giúp khách đến nhanh hơn 3%. Hiện tại: nhanh hơn ${Math.round((1 - speed(b)) * 100)}%.</p>${Object.keys(FUR).map(k => `<div class=row><span><b>${FUR[k][0]}</b><br><span class=mut>${money(FUR[k][1])}</span></span>${b.fo[k] ? `<button class=s onclick="BAKE.tgFu('${k}')">${b.fo[k] === 1 ? 'Cất đi' : 'Bày lại'}</button>` : `<button class=p style="width:auto" ${s.money < FUR[k][1] ? 'disabled' : ''} onclick="BAKE.buyFu('${k}')">Mua</button>`}</div>`).join('')}</div>`;
+  return `<div class="card bk-scene" style="padding:0;overflow:hidden">${scene(b)}</div><div class=card><h3>Cửa hàng nội thất</h3><p class="mut bk-note">Mỗi món đang bày giúp khách đến nhanh hơn 3%. Hiện tại: nhanh hơn ${Math.round((1 - speed(b)) * 100)}%.</p>${Object.keys(FUR).map(k => `<div class=row><span><b>${FUR[k][0]}</b><br><span class=mut>${money(FUR[k][1])}</span></span>${b.fo[k] ? `<button class=s onclick="BAKE.tgFu('${k}')">${b.fo[k] === 1 ? 'Cất đi' : 'Bày lại'}</button>` : `<button class=p style="width:auto" ${s.money < FUR[k][1] ? 'disabled' : ''} onclick="BAKE.buyFu('${k}')">Mua</button>`}</div>`).join('')}</div>`;
 }
 const SEC = { oven: ovenH, ing: ingH, shop: shopH, rec: recH, class: classH, sty: styH, furn: furnH };
 function VIEW() {
   const b = B(), sec = SEC[b.sec] ? b.sec : 'oven';
   const nav = SECS.map(x => `<button class="s ${sec === x[0] ? 'on2' : ''}" onclick="BAKE.go('${x[0]}')">${x[1]} ${x[2]}</button>`).join('');
-  return `<div class=card><div class=row><h3>🥖 ${esc(b.name)}</h3><span class=mut>★ ${b.rep.toFixed(1)} · ${b.sold} bánh đã bán</span></div><div class=bk-nav>${nav}</div></div>` + SEC[sec](b);
+  return `<div class="bk-root bk-s-${sec}"><div class="card bk-hd"><div class=row><h3>🥖 ${esc(b.name)}</h3><span class=mut>★ ${b.rep.toFixed(1)} · ${b.sold} bánh đã bán</span></div><div class=bk-nav>${nav}</div></div>` + SEC[sec](b) + '</div>';
 }
 
 /* ---------- hành động ---------- */

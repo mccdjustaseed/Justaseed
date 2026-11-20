@@ -12792,6 +12792,20 @@ button.sw::after{box-shadow:0 2px 5px rgba(0,0,0,.28)!important}
 .skx-t em{position:absolute;left:0;right:0;bottom:6px;z-index:1;text-align:center;font-style:normal;font-size:1.35rem}
 .skx-t b{display:block;margin:7px 2px 0;font-size:.9rem;color:var(--ink);white-space:nowrap}
 .skx-t.on i{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--g2),0 14px 22px -12px var(--g3);transform:translateY(-3px)}
+.skx-fs{display:flex;flex-direction:column;gap:10px}
+.skx-f{border-radius:22px;background:color-mix(in srgb,var(--card) 70%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--g2) 22%,transparent);overflow:hidden;transition:box-shadow .3s}
+.skx-f.has{box-shadow:inset 0 0 0 2px var(--g2)}
+.skx-fh{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:10px 14px;text-align:left;color:var(--ink);cursor:pointer}
+.skx-fi{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;width:46px;height:46px;padding:4px;border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--g2) 25%,var(--card)),color-mix(in srgb,var(--pk) 55%,var(--card)))}
+.skx-fi i{font-style:normal;font-size:.95rem;line-height:19px;text-align:center}
+.skx-fn{flex:1;display:flex;flex-direction:column;min-width:0}.skx-fn b{font:700 .95rem 'Baloo 2',sans-serif}.skx-fn small{font:400 .75rem Onest,sans-serif;color:var(--mut)}
+.skx-fh u{text-decoration:none;font-size:1.5rem;line-height:1;color:var(--mut);transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.skx-f.open .skx-fh u{transform:rotate(90deg)}
+.skx-f:not(.open) .skx-gal{display:none}
+.skx-f .skx-gal{margin:0;padding:4px 8px 14px}
+.skx-f.open .skx-gal{animation:skxFo .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes skxFo{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.skx-f.open .skx-gal{animation:none}}
 canvas.skx-cv{position:fixed;inset:0;width:100%;height:100%;z-index:99;pointer-events:none;view-transition-name:skxfx}
 ::view-transition-old(skxfx),::view-transition-new(skxfx){animation:none}
 @media(prefers-reduced-motion:reduce){#menu::before,#menu .bq::before,#menu button.p.big::after,.skx-hero .fl span{animation:none}}
@@ -12896,15 +12910,19 @@ var ap=function(){if(id)R.dataset.skin=id;else delete R.dataset.skin;cur=id;p(K,
 if(matchMedia('(prefers-reduced-motion:reduce)').matches||!document.startViewTransition){ap();return}
 var rad=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),clip=['circle(0px at '+x+'px '+y+'px)','circle('+rad+'px at '+x+'px '+y+'px)'];
 try{burst(fx,x,y,col);var t=document.startViewTransition(ap);t.ready.then(function(){R.animate({clipPath:clip},{duration:800,easing:'cubic-bezier(.4,0,.2,1)',pseudoElement:'::view-transition-new(root)'})}).catch(function(){})}catch(e){ap()}}
+/* v149: gom chủ đề thành thư mục */
+var GRP=[['Cơ bản','🌿',['','sakura','kraft','dusk','lavender','ocean','sea']],['Kính','💎',['glass','glassrose','glassmint','glassviolet','glassamber','glassgraphite']],['Mèo','🐱',['catorange','catcalico','catwhite','catblack','catgray','catpink']],['Kẹo & bánh','🍰',['rbblue','rbpink','rblilac','rbcherry','candy','bakery','croffy','mmmatcha','mmhoney','mmberry','mmcocoa']],['Cổ tích & phép thuật','🪄',['lamb','lunar','moonmilk','mgirl','witch','fairy','crystal','veil','castle','coquette','organza']],['Dark Romantic','🖤',['nrswan','nrmirror','nrwilt','nrdusk','nrbswan','nrshatter','nrvoid','nrmoon']]];
+function TILE(x){return '<button class="skx-t" data-sk="'+x.id+'" style="--t1:'+x.s1+';--t2:'+x.s2+';--ta:'+x.a+';--tp:'+x.pk+';--td:'+x.d+'"><i><em>'+x.e+'</em></i><b style="font-family:\''+x.f+'\',sans-serif">'+x.n+'</b></button>'}
+function FOLD(){var used={},out=GRP.map(function(g){var l=SK.filter(function(x){return g[2].indexOf(x.id)>=0});l.forEach(function(x){used[x.id]=1});return{n:g[1]+' '+g[0],l:l}}),rest=SK.filter(function(x){return!used[x.id]});if(rest.length)out.push({n:'✨ Khác',l:rest});return out.filter(function(g){return g.l.length})}
 function html(){return '<section id="skx" class="skx" data-dk="'+dk()+'"><div class="skx-hero"><i class="sun"></i><i class="h h1"></i><i class="h h2"></i><div class="fl"><span>🌷</span><span>🌼</span><span>🌹</span></div><div class="cap"><b id="skx-name"></b><small>Giao diện đang dùng</small></div></div>'
 +'<div class="skx-lab">Chế độ</div><div class="skx-md"><button data-md="0">☀️ Sáng</button><button data-md="1">🌙 Tối</button></div>'
-+'<div class="skx-lab">Chọn giao diện <small>vuốt ngang để xem thêm</small></div><div class="skx-gal">'+SK.map(function(x){return '<button class="skx-t" data-sk="'+x.id+'" style="--t1:'+x.s1+';--t2:'+x.s2+';--ta:'+x.a+';--tp:'+x.pk+';--td:'+x.d+'"><i><em>'+x.e+'</em></i><b style="font-family:\''+x.f+'\',sans-serif">'+x.n+'</b></button>'}).join('')+'</div>'
++'<div class="skx-lab">Chọn giao diện <small>chạm thư mục để mở</small></div><div class="skx-fs">'+FOLD().map(function(g,gi){return '<div class="skx-f"><button class="skx-fh" data-fold="'+gi+'"><span class="skx-fi">'+g.l.slice(0,4).map(function(x){return '<i>'+x.e+'</i>'}).join('')+'</span><span class="skx-fn"><b>'+g.n+'</b><small>'+g.l.length+' chủ đề</small></span><u>›</u></button><div class="skx-gal">'+g.l.map(TILE).join('')+'</div></div>'}).join('')+'</div>'
 +'</section>'}
 function paint(){var b=document.getElementById('skx');if(!b)return;b.dataset.dk=dk();var sk=SK.filter(function(z){return z.id==cur})[0]||SK[0];
-b.querySelectorAll('[data-sk]').forEach(function(e){e.classList.toggle('on',e.dataset.sk==cur)});b.querySelectorAll('[data-md]').forEach(function(e){e.classList.toggle('on',+e.dataset.md==dk())});b.querySelector('#skx-name').textContent=sk.e+' '+sk.n}
+b.querySelectorAll('[data-sk]').forEach(function(e){e.classList.toggle('on',e.dataset.sk==cur)});b.querySelectorAll('[data-md]').forEach(function(e){e.classList.toggle('on',+e.dataset.md==dk())});b.querySelector('#skx-name').textContent=sk.e+' '+sk.n;b.querySelectorAll('.skx-f').forEach(function(f){f.classList.toggle('has',!!f.querySelector('.skx-t.on'))})}
 function enhance(){var ms=document.querySelector('#modal .ms');if(!ms||ms.classList.contains('setx'))return;var hd=ms.querySelector(':scope>.row');if(!hd)return;ms.classList.add('setx');hd.insertAdjacentHTML('afterend',html());
 ms.querySelectorAll('.card .row').forEach(function(r){var sp=r.querySelector('span');if(sp&&/^(Chế độ tối|Dark mode)$/.test(sp.textContent.trim()))r.classList.add('skx-dup')});
-var b=document.getElementById('skx');b.addEventListener('click',function(ev){var t=ev.target.closest('button');if(!t)return;if(t.dataset.sk!=null)setSkin(t.dataset.sk,ev);else if(t.dataset.md!=null&&+t.dataset.md!=dk()){setDark(+t.dataset.md,ev);setTimeout(paint,60);setTimeout(paint,900)}});paint()}
+var b=document.getElementById('skx');b.addEventListener('click',function(ev){var t=ev.target.closest('button');if(!t)return;if(t.dataset.fold!=null){t.parentNode.classList.toggle('open');return}if(t.dataset.sk!=null)setSkin(t.dataset.sk,ev);else if(t.dataset.md!=null&&+t.dataset.md!=dk()){setDark(+t.dataset.md,ev);setTimeout(paint,60);setTimeout(paint,900)}});paint();var hf=b.querySelector('.skx-f.has');if(hf)hf.classList.add('open')}
 var om=mdl;mdl=function(k){var r=om.apply(this,arguments);if(k=='s'){enhance();setTimeout(enhance,0);setTimeout(enhance,150)}return r};
 window.skxSet=setSkin;
 })();
@@ -13422,7 +13440,22 @@ fx.lamb=function(o,dk,P,W,H){var S=Math.max(W,H),cx=W/2,i,e,T=4200,pc=['#fff','#
  twink(o,22,pc,[12,32],300,2800,75)};
 
 /* ===== v146: 8 chủ đề Dark Romantic đen-trắng (thiên nga · gương · hoa hồng · hoàng hôn · mảnh vỡ · đêm · trăng) ===== */
-function nrG(c,gl){return '<svg viewBox="-4 0 68 150" style="display:block;width:100%;height:100%;overflow:visible'+(gl?';filter:drop-shadow(0 0 9px '+gl+')':'')+'"><g fill="'+c+'"><circle cx="30" cy="14" r="9"/><path d="M26 22h8l1 6h-10z"/><path d="M22 28Q30 23 38 28L36 60Q30 64 24 60Z"/><path d="M24 58Q30 54 36 58Q58 118 64 148H-4Q2 118 24 58Z"/></g></svg>'}
+var nrU=0;function nrLm(c){var m=/^#([0-9a-f]{6})$/i.exec(c||''),n;if(!m)return .5;n=parseInt(m[1],16);return(.299*(n>>16)+.587*(n>>8&255)+.114*(n&255))/255}
+/* v148: người phụ nữ thanh thoát — tóc dài bay, cổ cao, vai trần, váy xòe; có khối sáng-tối, da ấm (nền sáng) hoặc viền sáng (bóng đêm) */
+function nrG(c,gl){var i='ng'+(++nrU),lt=nrLm(c)>.55,
+sk='<ellipse cx="30" cy="14" rx="6.6" ry="8.2" transform="rotate(-5 30 14)"/><path d="M27.2 20L26.7 29L33.4 29L32.8 20Z"/><path d="M21.4 31.5Q25 27.6 30 28.8Q35 27.6 38.7 31.5L37.2 38Q30 41.5 22.8 38Z"/><path d="M22 31Q17.2 45 19.8 62L22.7 62Q22.2 46 25.4 35Z"/><path d="M38.4 31Q43.2 44 40.8 61L38 61Q38.8 46 35 35Z"/>',
+dr='<path d="M22.8 37Q30 42.5 37.2 37L37.8 47Q35.6 53 36.5 59L23.5 59Q24.4 53 22.3 47Z"/><path d="M23.5 56.5Q30 53.5 36.5 56.5C43.5 88 55 128 63 149H-3C5.5 128 17 88 23.5 56.5Z"/><path d="M14 112C9 126 13 140 24 149H-3C5 138 11 126 14 112Z" opacity=".6"/>',
+hr='<path d="M22.4 13.5C20.6 2 32 -1.8 37.6 6.4C41.2 12.4 39 22 43 31C46.4 39.4 42 47 46.5 58C40 53.6 36.6 47 36.2 40C35.2 33 36.4 27 33 22.6C30.6 19.4 27.4 19.6 25.6 22.4C23 19 22.2 16.4 22.4 13.5Z"/><path d="M40.4 22C47.5 33 44.6 45 51 60C43.5 54.6 39.8 46.4 40.6 36Z" opacity=".75"/>',
+fr='<path d="M22.8 14C21.6 4.6 31.6 1.2 37.2 7.6C33 6.4 27.6 8.2 25.2 16Z"/>',
+u=function(k){return '<use href="#'+i+k+'"'},ov=lt?'<use href="#'+i+'h" fill="rgba(70,82,112,.5)"/>':'';
+return '<svg viewBox="-4 0 68 150" style="display:block;width:100%;height:100%;overflow:visible'+(gl?';filter:drop-shadow(0 0 7px '+gl+')':'')+'"><defs><g id="'+i+'b">'+sk+dr+'</g><g id="'+i+'s">'+sk+'</g><g id="'+i+'h">'+hr+'</g><g id="'+i+'f">'+fr+'</g><linearGradient id="'+i+'g" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="'+(lt?.6:.16)+'"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="'+(lt?.24:.4)+'"/></linearGradient></defs>'
++u('h')+' fill="'+c+'"/>'+ov+u('b')+' fill="'+c+'"/>'+(lt?u('s')+' fill="rgba(236,186,170,.3)"/>':'')+u('b')+' fill="url(#'+i+'g)"/>'
++u('f')+' fill="'+c+'"/>'+(lt?'<use href="#'+i+'f" fill="rgba(70,82,112,.5)"/>':'')
++'<path d="M30 60C28 84 22 112 14 148M34.5 62C38 90 48 120 58 148M27 70C20 96 10 124 3 148" fill="none" stroke="'+(lt?'rgba(80,92,125,.22)':'rgba(255,255,255,.13)')+'" stroke-width=".8"/>'
++'<path d="M23.6 56.5Q30 59.6 36.4 56.5L36.2 60.5Q30 63.6 23.8 60.5Z" fill="'+(lt?'rgba(70,82,112,.35)':'rgba(255,255,255,.15)')+'"/>'
++'<path d="M28.4 18.6Q29.9 19.8 31.5 18.4" fill="none" stroke="'+(lt?'#b86a72':'rgba(255,255,255,.35)')+'" stroke-width=".9" stroke-linecap="round"/>'
++(lt?'':u('b')+' fill="none" stroke="'+(gl||'#fff')+'" stroke-opacity=".55" stroke-width=".6"/>')+'</svg>'}
+window.__nrG=nrG;
 function nrS(c,e,bk){return '<svg viewBox="0 0 110 80" style="display:block;width:100%;height:100%;overflow:visible"><g stroke="'+e+'" stroke-width="1.2" stroke-linejoin="round"><path d="M8 50C16 72 76 74 94 54C84 57 70 52 62 44C46 46 24 42 8 50Z" fill="'+c+'"/><path d="M84 52C100 44 98 24 86 20C78 18 74 26 80 32" fill="none" stroke="'+c+'" stroke-width="8" stroke-linecap="round"/><circle cx="85" cy="19" r="6" fill="'+c+'"/><path d="M90 18L101 22L90 25Z" fill="'+(bk||'#e9a36b')+'" stroke="none"/></g><path d="M30 48C44 34 66 36 82 50C64 53 46 54 30 48Z" fill="'+e+'" opacity=".35"/></svg>'}
 function nrF(c,e){return '<svg viewBox="0 0 24 24" style="display:block;width:100%;height:100%"><path d="M12 1C19 8 18 18 12 23C6 18 5 8 12 1Z" fill="'+c+'" stroke="'+e+'" stroke-width="1"/><path d="M12 4V21" stroke="'+e+'" stroke-width=".8"/></svg>'}
 function nrP(c,e){return '<svg viewBox="0 0 24 24" style="display:block;width:100%;height:100%"><path d="M12 22C4 16 3 8 9 3L12 6L15 3C21 8 20 16 12 22z" fill="'+c+'" stroke="'+e+'" stroke-width="1"/></svg>'}
@@ -19654,6 +19687,57 @@ var T=[
   [V(60,18,'<path d="M0 10Q15 0 30 10T60 10" fill="none" stroke="#d6caff" stroke-width="6" stroke-linecap="round"/><path d="M0 10Q15 0 30 10T60 10" fill="none" stroke="#fff" stroke-width="1.6" opacity=".9"/>'),'0','60px 16px','repeat-x']],
  feet:[[V(30,34,'<path d="M15 2Q4 10 12 18T9 32M15 2Q26 10 18 18T21 32" fill="none" stroke="#c9b8ff" stroke-width="4.5" stroke-linecap="round"/><path d="M15 2Q4 10 12 18T9 32M15 2Q26 10 18 18T21 32" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>'),'9%','30px 34px'],[V(30,34,'<path d="M15 2Q4 10 12 18T9 32M15 2Q26 10 18 18T21 32" fill="none" stroke="#ffc2e4" stroke-width="4.5" stroke-linecap="round"/><path d="M15 2Q4 10 12 18T9 32M15 2Q26 10 18 18T21 32" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>'),'91%','30px 34px']],chin:bow('#c9b8ff','#9a88f2')}
 ];
+/* v147: trang trí Tivi cho 8 chủ đề Dark Romantic đen-trắng */
+var nS=function(c,e){return V(60,44,'<path d="M6 32C10 44 44 46 54 34C48 36 40 32 36 27C26 28 14 26 6 32Z" fill="'+c+'" stroke="'+e+'" stroke-width="1.6" stroke-linejoin="round"/><path d="M48 31C58 26 57 13 50 11C45 10 43 15 46 19" fill="none" stroke="'+e+'" stroke-width="7.4" stroke-linecap="round"/><path d="M48 31C58 26 57 13 50 11C45 10 43 15 46 19" fill="none" stroke="'+c+'" stroke-width="5" stroke-linecap="round"/><circle cx="49" cy="10.5" r="3.8" fill="'+c+'" stroke="'+e+'" stroke-width="1.2"/><path d="M52 10L58 12.5L52 14.5Z" fill="#e9a36b"/><path d="M18 30C26 21 40 22 48 31C38 33 28 33 18 30Z" fill="'+e+'" opacity=".3"/>')},
+nF=function(c,e){return V(24,34,'<path d="M12 1C20 9 19 24 12 33C5 24 4 9 12 1Z" fill="'+c+'" stroke="'+e+'" stroke-width="1.4"/><path d="M12 4V31" stroke="'+e+'" stroke-width="1"/>')},
+nR=function(c,e){var g='';[0,72,144,216,288].forEach(function(a){g+='<ellipse cx="18" cy="10" rx="6.5" ry="8.5" transform="rotate('+a+' 18 18)"/>'});return V(36,36,'<g fill="'+c+'" stroke="'+e+'" stroke-width="1.2">'+g+'<circle cx="18" cy="18" r="5.5"/></g><path d="M14 18Q18 13 22 18Q18 23 15 19" fill="none" stroke="'+e+'" stroke-width="1"/>')},
+nP=function(c,e){return V(22,26,'<path d="M11 25C3 19 2 9 8 3L11 6L14 3C20 9 19 19 11 25Z" fill="'+c+'" stroke="'+e+'" stroke-width="1.2"/>')},
+nK=function(c,e){return V(24,24,'<path d="M12 1Q13.6 10.4 23 12Q13.6 13.6 12 23Q10.4 13.6 1 12Q10.4 10.4 12 1Z" fill="'+c+'" stroke="'+e+'" stroke-width="1"/>')},
+nM=function(c,e){return V(30,30,'<path d="M20 3A12 12 0 1 0 27 20A10 10 0 0 1 20 3Z" fill="'+c+'" stroke="'+e+'" stroke-width="1.3"/>')},
+nO=function(cr){return V(36,46,'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#b9c8e0"/></linearGradient></defs><ellipse cx="18" cy="23" rx="14" ry="19" fill="url(#g)" stroke="#aab4c8" stroke-width="3"/><path d="M10 12Q13 8 18 7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'+(cr?'<path d="M18 4L16 14L8 20L15 26L12 40M16 14L26 18L22 28L30 34M15 26L24 30" fill="none" stroke="#6f86ad" stroke-width="1.3" stroke-linejoin="round"/>':''))},
+nH=function(c,e){return V(26,28,'<path d="M13 2L24 16L10 26L3 11Z" fill="'+c+'" stroke="'+e+'" stroke-width="1.3"/><path d="M13 2L10 26M3 11L24 16" stroke="'+e+'" stroke-width=".8" opacity=".7"/>')},
+nU=function(){return V(60,34,'<g stroke="#ffb454" stroke-width="2.4" stroke-linecap="round"><path d="M30 2V7M10 8L13 12M50 8L47 12M3 22H9M57 22H51"/></g><path d="M12 32A18 18 0 0 1 48 32Z" fill="#ff9a4a" stroke="#fff" stroke-width="1.6"/>')},
+nW=function(c){return V(60,12,'<path d="M0 6Q15 0 30 6T60 6" fill="none" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/>')},
+nN=function(c,e){return V(56,56,'<circle cx="28" cy="28" r="20" fill="'+c+'" stroke="'+e+'" stroke-width="2"/><circle cx="21" cy="22" r="4" fill="'+e+'" opacity=".25"/><circle cx="33" cy="33" r="6" fill="'+e+'" opacity=".2"/>')};
+var nz=function(id,A,a3,tag,tc,cc,cd,bL,bD,top,feet,chin,tb){return {id:id,A:A,a3:a3,tag:tag,tc:tc,cc:cc,cd:cd,bL:bL,bD:bD,top:top,feet:feet,chin:chin,tb:tb||'outline:2px dashed '+cm(A,55)+';outline-offset:-7px;'}},
+nB=function(l,d){return ['radial-gradient(circle,rgba(255,255,255,.8) 1.5px,transparent 2.1px) 0 0/20px 20px,linear-gradient(160deg,'+l[0]+','+l[1]+')','radial-gradient(circle,rgba(255,255,255,.09) 1.5px,transparent 2.1px) 0 0/20px 20px,linear-gradient(160deg,'+d[0]+','+d[1]+')']},
+nl=function(a){return a};
+/* v148: nâng cấp trang trí Tivi */
+var wm=function(c,g){var f=window.__nrG;return f?U(f(c,g).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ')):null};
+nS=function(c,e){var b='M5 33C9 45 43 47 54 34C47 36 40 32 36 27C26 28 13 27 5 33Z';return V(60,46,'<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="'+e+'" stop-opacity=".5"/></linearGradient></defs><path d="'+b+'" fill="'+c+'" stroke="'+e+'" stroke-width="1.3"/><path d="'+b+'" fill="url(#a)"/><path d="M12 31Q22 19 38 24Q47 27 51 35Q38 37 25 36Q16 35 12 31Z" fill="'+c+'" stroke="'+e+'" stroke-width=".9"/><path d="M17 31Q27 25 38 28M22 34Q32 30 43 32M28 25Q38 24 45 31" fill="none" stroke="'+e+'" stroke-width=".7" opacity=".7"/><path d="M48 30C58 26 57 13 50 11C45 10 43 15 46 19" fill="none" stroke="'+e+'" stroke-width="7.4" stroke-linecap="round"/><path d="M48 30C58 26 57 13 50 11C45 10 43 15 46 19" fill="none" stroke="'+c+'" stroke-width="5" stroke-linecap="round"/><circle cx="49" cy="10.5" r="3.8" fill="'+c+'" stroke="'+e+'" stroke-width="1.2"/><circle cx="50.4" cy="9.6" r=".9" fill="'+e+'"/><path d="M52 10L58 12.5L52 14.5Z" fill="#e9a36b"/><path d="M4 41Q15 44 30 42T58 42" fill="none" stroke="'+e+'" stroke-width=".8" opacity=".5"/>')};
+nR=function(c,e){var g='',a;for(a=0;a<8;a++)g+='<ellipse cx="18" cy="9.5" rx="6" ry="8.2" transform="rotate('+a*45+' 18 18)"/>';return V(36,36,'<defs><radialGradient id="r"><stop offset="0" stop-color="'+e+'" stop-opacity=".6"/><stop offset="1" stop-color="'+c+'"/></radialGradient></defs><g fill="url(#r)" stroke="'+e+'" stroke-width="1">'+g+'</g><circle cx="18" cy="18" r="8" fill="'+c+'" stroke="'+e+'" stroke-width=".9"/><path d="M18 18Q22 14 18 11.5Q12 11.5 12.5 18Q13.5 24.5 21 23.5Q26 21 24.5 15" fill="none" stroke="'+e+'" stroke-width=".9" stroke-linecap="round"/>')};
+nO=function(cr){return V(36,48,'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#d4deef"/><stop offset="1" stop-color="#9fb2d2"/></linearGradient></defs><ellipse cx="18" cy="23" rx="14.5" ry="19.5" fill="url(#g)" stroke="#8d9ab4" stroke-width="3.4"/><ellipse cx="18" cy="23" rx="12.4" ry="17.4" fill="none" stroke="#fff" stroke-width=".9" opacity=".9"/><path d="M18 2Q14 0 12 3M18 2Q22 0 24 3" fill="none" stroke="#8d9ab4" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 14Q12 8.5 18 7.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 35L20 18" stroke="#fff" stroke-width="1.2" opacity=".6"/>'+(cr?'<path d="M18 4L16 14L8 20L15 26L12 41M16 14L26 18L22 28L30 34M15 26L24 30" fill="none" stroke="#5f76a0" stroke-width="1.3" stroke-linejoin="round"/>':''))};
+var WM={nrswan:['#f6f9fd','#9fb2cf'],nrmirror:['#ffffff','#a9b6cf'],nrwilt:['#ffffff','#b9b4b8'],nrdusk:['#2a1c26','rgba(255,170,90,.8)'],nrbswan:['#14141a','#8a8fa6'],nrshatter:['#dbe8f8','#7fa0c8'],nrvoid:['#0a0b10','rgba(200,215,255,.8)'],nrmoon:['#c9d3ea','rgba(225,235,255,.9)']};
+
+var NZ=[
+(function(){var b=nB(['#ffffff','#dbe4f1'],['#252d40','#0b0e16']);return nz('nrswan','#8fa3c0','#4a5a74','THIÊN NGA TRẮNG TV','#2c3a52','#4a5a74','#e8eef7',b[0],b[1],
+ [[nS('#fff','#9fb2cf'),'50%','60px 44px'],[nF('#fff','#9fb2cf'),'17%','24px 34px'],[nF('#fff','#9fb2cf'),'83%','24px 34px'],[nK('#fff','#b4c2da'),'32%','18px 18px'],[nK('#fff','#b4c2da'),'68%','18px 18px'],[nW('#c9d6ea'),'0','60px 12px','repeat-x']],
+ [[nF('#fff','#9fb2cf'),'9%','24px 34px'],[nF('#fff','#9fb2cf'),'91%','24px 34px']],nF('#fff','#9fb2cf'))})(),
+(function(){var b=nB(['#ffffff','#d5dce8'],['#242a38','#0a0c12']);return nz('nrmirror','#9aa5b5','#505a6a','VẠN LẦN PHẢN CHIẾU TV','#2c3442','#505a6a','#e3e8ef',b[0],b[1],
+ [[nO(0),'50%','36px 46px'],[nO(0),'27%','26px 34px'],[nO(0),'73%','26px 34px'],[nK('#fff','#aab4c8'),'14%','18px 18px'],[nK('#fff','#aab4c8'),'86%','18px 18px'],[nW('#d2dae8'),'0','60px 12px','repeat-x']],
+ [[nO(0),'9%','24px 32px'],[nO(0),'91%','24px 32px']],nH('#fff','#9aa5b5'))})(),
+(function(){var b=nB(['#fbf9f8','#e3dedc'],['#1d1d24','#08080b']);return nz('nrwilt','#8a8d96','#3a3a42','HOA TÀN TV','#2a2a32','#3a3a42','#ece8e6',b[0],b[1],
+ [[nR('#fff','#9a9498'),'50%','36px 36px'],[nR('#1b1b20','#777'),'22%','30px 30px'],[nR('#1b1b20','#777'),'78%','30px 30px'],[nP('#fff','#9a9498'),'35%','16px 20px'],[nP('#1b1b20','#777'),'65%','16px 20px'],[nW('#8a8590'),'0','60px 12px','repeat-x']],
+ [[nP('#fff','#9a9498'),'9%','20px 24px'],[nP('#1b1b20','#777'),'91%','20px 24px']],nR('#fff','#9a9498'))})(),
+(function(){var b=nB(['#fff0e4','#ffc9a0'],['#1a2036','#070a14']);return nz('nrdusk','#d9825a','#6a3a3a','HOÀNG HÔN CỦA EM TV','#5a2f2a','#8a4a3a','#ffd9c2',b[0],b[1],
+ [[nU(),'50%','60px 34px'],[nK('#fff','#c9a58a'),'20%','16px 16px'],[nK('#fff','#c9a58a'),'80%','16px 16px'],[nM('#fff4d6','#c9a58a'),'88%','26px 26px'],[nW('#ffb28a'),'0','60px 12px','repeat-x']],
+ [[nK('#ffd9a8','#d9825a'),'9%','20px 20px'],[nK('#ffd9a8','#d9825a'),'91%','20px 20px']],nM('#fff4d6','#d9825a'))})(),
+(function(){var b=nB(['#e9eaf0','#aeb2c4'],['#1b1c26','#050508']);return nz('nrbswan','#6b6f80','#2a2b36','THIÊN NGA ĐEN TV','#14141c','#2a2b36','#d9dae4',b[0],b[1],
+ [[nS('#14141a','#8a8fa6'),'50%','60px 44px'],[nF('#14141a','#8a8fa6'),'17%','24px 34px'],[nF('#14141a','#8a8fa6'),'83%','24px 34px'],[nK('#fff','#8a8fa6'),'32%','18px 18px'],[nK('#fff','#8a8fa6'),'68%','18px 18px'],[nW('#6b6f80'),'0','60px 12px','repeat-x']],
+ [[nF('#14141a','#8a8fa6'),'9%','24px 34px'],[nF('#14141a','#8a8fa6'),'91%','24px 34px']],nF('#14141a','#8a8fa6'))})(),
+(function(){var b=nB(['#f6faff','#cfdcee'],['#1a2536','#080c14']);return nz('nrshatter','#7fa0c8','#3a4f70','MẢNH VỠ TV','#26364e','#3a4f70','#dfe9f5',b[0],b[1],
+ [[nO(1),'50%','36px 46px'],[nH('#dbe8f8','#7fa0c8'),'25%','24px 26px'],[nH('#fff','#7fa0c8'),'75%','22px 24px'],[nH('#b9d0ee','#7fa0c8'),'14%','16px 18px'],[nH('#dbe8f8','#7fa0c8'),'86%','16px 18px']],
+ [[nH('#dbe8f8','#7fa0c8'),'9%','24px 26px'],[nH('#fff','#7fa0c8'),'91%','24px 26px']],nH('#dbe8f8','#7fa0c8'))})(),
+(function(){var b=nB(['#e4e6ee','#a9aec0'],['#10121a','#030305']);return nz('nrvoid','#7a7f94','#30323f','ĐÊM KHÔNG NGƯỜI TV','#14161e','#30323f','#d2d5e0',b[0],b[1],
+ [[nM('#e9edf8','#8f94a8'),'50%','34px 34px'],[nK('#fff','#8f94a8'),'28%','14px 14px'],[nK('#fff','#8f94a8'),'72%','14px 14px'],[nK('#fff','#8f94a8'),'16%','10px 10px'],[nK('#fff','#8f94a8'),'84%','10px 10px'],[nW('#6a6f84'),'0','60px 12px','repeat-x']],
+ [[nK('#fff','#8f94a8'),'9%','16px 16px'],[nK('#fff','#8f94a8'),'91%','16px 16px']],nM('#e9edf8','#8f94a8'))})(),
+(function(){var b=nB(['#f7f9fd','#d3dcee'],['#1d2540','#070a14']);return nz('nrmoon','#b8c3d9','#56627c','ÁNH TRĂNG SAU CÙNG TV','#2e3a54','#56627c','#eef0f8',b[0],b[1],
+ [[nN('#fdfeff','#b8c3d9'),'50%','56px 56px'],[nP('#fff','#aab6cf'),'20%','20px 24px'],[nP('#fff','#aab6cf'),'80%','20px 24px'],[nK('#fff','#aab6cf'),'34%','16px 16px'],[nK('#fff','#aab6cf'),'66%','16px 16px']],
+ [[nP('#fff','#aab6cf'),'9%','20px 24px'],[nP('#fff','#aab6cf'),'91%','20px 24px']],nP('#fff','#aab6cf'))})()
+];
+NZ.forEach(function(x){var w=WM[x.id],o=x.top,h=o[0],rp=o.filter(function(q){return q[3]}),sd=o.filter(function(q){var p=parseFloat(q[1]);return !q[3]&&q!==h&&(p<=22||p>=78)}),m=wm(w[0],w[1]);
+ x.th=62;x.top=(m?[[m,'50%','28px 62px']]:[]).concat([[h[0],'30%',h[2]],[h[0],'70%',h[2]]],sd,rp)});
+NZ.forEach(function(x){T.push(x)});
 function lay(a){return a.map(function(i){return i[0]+' '+i[1]+' 100%/'+i[2]+' '+(i[3]||'no-repeat')}).join(',')}
 function css(k){
  var P=k.id?':root[data-skin='+k.id+']':':root:not([data-skin])',D=P+'[data-theme=dark]',A=k.A,o='';
@@ -19682,6 +19766,17 @@ function css(k){
  o+=P+' #mnow.tvon .mni::before{background:#fff;box-shadow:0 0 8px '+A+',0 0 0 2px '+cm(A,60)+'}\n';
  return o}
 var st=document.createElement('style');st.id='tv-themes-css2';st.textContent=T.map(css).join('\n');document.head.appendChild(st);
+/* v148: thẻ now-playing cho 8 chủ đề Dark Romantic */
+(function(){var CW={nrswan:['#f6f9fd','#bcd0ee','🦢 🪶 ✨ 🤍'],nrmirror:['#ffffff','#c4d0e6','🪞 ✨ 💎 🤍'],nrwilt:['#ffffff','#d8d2d6','🌹 🥀 🤍 🖤'],nrdusk:['#ffe0c2','rgba(255,160,90,.9)','🌇 🌘 ✨ 🧡'],nrbswan:['#d4d7e4','#ffffff','🦢 🖤 🪶 🌑'],nrshatter:['#e6f0fc','#9cc0ee','🪞 💎 ✨ 🤍'],nrvoid:['#b4bcd6','rgba(190,205,255,.8)','🌑 🖤 ✨ 🌙'],nrmoon:['#dfe7f8','rgba(225,235,255,.9)','🌙 🤍 🌸 ✨']},o='@keyframes mnd-nr{from{background-position:0 0,right 12px bottom 0,0 0,0 0}to{background-position:-80px 130px,right 12px bottom 0,0 0,0 0}}\n';
+Object.keys(CW).forEach(function(id){var c=CW[id],e=c[2].split(' '),P=':root[data-skin='+id+'] #mnow:not(.tvon)',w=wm(c[0],c[1]),
+ tile=V(160,130,'<text x="10" y="38" font-size="22" opacity=".42">'+e[0]+'</text><text x="104" y="26" font-size="16" opacity=".45">'+e[1]+'</text><text x="64" y="100" font-size="20" opacity=".4">'+e[2]+'</text><text x="130" y="116" font-size="18" opacity=".4">'+e[3]+'</text>');
+ o+=P+'{background:linear-gradient(155deg,color-mix(in srgb,var(--g2) 88%,#000),color-mix(in srgb,var(--g2) 50%,#000))!important;box-shadow:0 22px 38px -22px var(--g2),inset 0 0 0 1.5px rgba(255,255,255,.28)!important}\n'
+ +P+'::before{opacity:.22!important}\n'
+ +P+'::after{background:'+tile+' 0 0/160px 130px,'+(w||'none')+' right 12px bottom 0/26px 58px no-repeat,radial-gradient(circle at 86% 10%,color-mix(in srgb,var(--pk) 60%,transparent),transparent 56%),linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.3))!important;animation:mnd-nr 26s linear infinite}\n'
+ +P+' .tt .ttf,'+P+' .tt .ttb{background:linear-gradient(145deg,color-mix(in srgb,var(--g2) 25%,#fff),color-mix(in srgb,var(--g2) 75%,#fff))!important}'+P+' .tt .ttl{background:color-mix(in srgb,var(--g2) 70%,#000)!important}\n'
+ +P+' .mctl button.big{color:color-mix(in srgb,var(--g2) 55%,#000)!important}'+P+' :is(.mnm,.mar,.mtm){text-shadow:0 1px 6px rgba(0,0,0,.28)}\n'});
+o+='@media(prefers-reduced-motion:reduce){:root[data-skin^=nr] #mnow::after{animation:none!important}}';
+var s=document.createElement('style');s.id='nr-card-v148';s.textContent=o;document.head.appendChild(s)})();
 }catch(e){console.warn('[tv-themes2]',e)}})();
 </script>
 <style id="mnow-theme">

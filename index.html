@@ -12923,9 +12923,24 @@ b.querySelectorAll('[data-sk]').forEach(function(e){e.classList.toggle('on',e.da
 function enhance(){var ms=document.querySelector('#modal .ms');if(!ms||ms.classList.contains('setx'))return;var hd=ms.querySelector(':scope>.row');if(!hd)return;ms.classList.add('setx');hd.insertAdjacentHTML('afterend',html());
 ms.querySelectorAll('.card .row').forEach(function(r){var sp=r.querySelector('span');if(sp&&/^(Chế độ tối|Dark mode)$/.test(sp.textContent.trim()))r.classList.add('skx-dup')});
 var b=document.getElementById('skx');b.addEventListener('click',function(ev){var t=ev.target.closest('button');if(!t)return;if(t.dataset.fold!=null){t.parentNode.classList.toggle('open');return}if(t.dataset.sk!=null)setSkin(t.dataset.sk,ev);else if(t.dataset.md!=null&&+t.dataset.md!=dk()){setDark(+t.dataset.md,ev);setTimeout(paint,60);setTimeout(paint,900)}});paint();var hf=b.querySelector('.skx-f.has');if(hf)hf.classList.add('open')}
-var om=mdl;mdl=function(k){var r=om.apply(this,arguments);if(k=='s'){enhance();setTimeout(enhance,0);setTimeout(enhance,150)}return r};
+var om=mdl;mdl=function(k){var r=om.apply(this,arguments);return r};
 window.skxSet=setSkin;
+var OPEN={};
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('#skx');if(!b)return;var t=ev.target.closest('button');if(!t||!b.contains(t))return;
+if(t.dataset.fold!=null){OPEN[t.dataset.fold]=t.parentNode.classList.toggle('open');return}
+if(t.dataset.sk!=null)setSkin(t.dataset.sk,ev);else if(t.dataset.md!=null&&+t.dataset.md!=dk()){setDark(+t.dataset.md,ev);setTimeout(paint,60);setTimeout(paint,900)}});
+window.__skxView=function(){return html()};
+window.__skxPost=function(){paint();document.querySelectorAll('#skx .skx-f').forEach(function(f){var k=f.querySelector('[data-fold]').dataset.fold;if(OPEN[k]===undefined?f.classList.contains('has'):OPEN[k])f.classList.add('open')})};
 })();
+</script>
+<script id="theme-tab-v150">
+/* v150: tab "Chủ đề" riêng (không còn nằm trong Cài đặt) */
+(function(){try{
+if(typeof I==='object'&&!I.themeP)I.themeP='M12 3a9 9 0 000 18c1.8 0 2.5-1.2 2-2.5-.5-1.3.3-2.5 1.8-2.5H18a3 3 0 003-3c0-5-4-10-9-10zM7.5 11h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01';
+if(!TABS.some(function(x){return x[0]=='theme'})){var i=TABS.findIndex(function(x){return x[0]=='up'});TABS.splice(i<0?TABS.length:i+1,0,['theme','themeP','Chủ đề'])}
+V.theme=function(){return '<div id="themeTab" style="padding:2px 2px 12px">'+window.__skxView()+'</div>'};
+var oR=R;R=function(){var r=oR.apply(this,arguments);if(tab=='theme')setTimeout(function(){if(window.__skxPost)window.__skxPost()},0);return r};
+}catch(e){console.warn('theme-tab',e)}})();
 </script>
 
 <!-- ===== Justaseed v2: vẽ lại gian hàng + nâng cấp giao diện toàn game ===== -->
@@ -13440,21 +13455,7 @@ fx.lamb=function(o,dk,P,W,H){var S=Math.max(W,H),cx=W/2,i,e,T=4200,pc=['#fff','#
  twink(o,22,pc,[12,32],300,2800,75)};
 
 /* ===== v146: 8 chủ đề Dark Romantic đen-trắng (thiên nga · gương · hoa hồng · hoàng hôn · mảnh vỡ · đêm · trăng) ===== */
-var nrU=0;function nrLm(c){var m=/^#([0-9a-f]{6})$/i.exec(c||''),n;if(!m)return .5;n=parseInt(m[1],16);return(.299*(n>>16)+.587*(n>>8&255)+.114*(n&255))/255}
-/* v148: người phụ nữ thanh thoát — tóc dài bay, cổ cao, vai trần, váy xòe; có khối sáng-tối, da ấm (nền sáng) hoặc viền sáng (bóng đêm) */
-function nrG(c,gl){var i='ng'+(++nrU),lt=nrLm(c)>.55,
-sk='<ellipse cx="30" cy="14" rx="6.6" ry="8.2" transform="rotate(-5 30 14)"/><path d="M27.2 20L26.7 29L33.4 29L32.8 20Z"/><path d="M21.4 31.5Q25 27.6 30 28.8Q35 27.6 38.7 31.5L37.2 38Q30 41.5 22.8 38Z"/><path d="M22 31Q17.2 45 19.8 62L22.7 62Q22.2 46 25.4 35Z"/><path d="M38.4 31Q43.2 44 40.8 61L38 61Q38.8 46 35 35Z"/>',
-dr='<path d="M22.8 37Q30 42.5 37.2 37L37.8 47Q35.6 53 36.5 59L23.5 59Q24.4 53 22.3 47Z"/><path d="M23.5 56.5Q30 53.5 36.5 56.5C43.5 88 55 128 63 149H-3C5.5 128 17 88 23.5 56.5Z"/><path d="M14 112C9 126 13 140 24 149H-3C5 138 11 126 14 112Z" opacity=".6"/>',
-hr='<path d="M22.4 13.5C20.6 2 32 -1.8 37.6 6.4C41.2 12.4 39 22 43 31C46.4 39.4 42 47 46.5 58C40 53.6 36.6 47 36.2 40C35.2 33 36.4 27 33 22.6C30.6 19.4 27.4 19.6 25.6 22.4C23 19 22.2 16.4 22.4 13.5Z"/><path d="M40.4 22C47.5 33 44.6 45 51 60C43.5 54.6 39.8 46.4 40.6 36Z" opacity=".75"/>',
-fr='<path d="M22.8 14C21.6 4.6 31.6 1.2 37.2 7.6C33 6.4 27.6 8.2 25.2 16Z"/>',
-u=function(k){return '<use href="#'+i+k+'"'},ov=lt?'<use href="#'+i+'h" fill="rgba(70,82,112,.5)"/>':'';
-return '<svg viewBox="-4 0 68 150" style="display:block;width:100%;height:100%;overflow:visible'+(gl?';filter:drop-shadow(0 0 7px '+gl+')':'')+'"><defs><g id="'+i+'b">'+sk+dr+'</g><g id="'+i+'s">'+sk+'</g><g id="'+i+'h">'+hr+'</g><g id="'+i+'f">'+fr+'</g><linearGradient id="'+i+'g" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="'+(lt?.6:.16)+'"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="'+(lt?.24:.4)+'"/></linearGradient></defs>'
-+u('h')+' fill="'+c+'"/>'+ov+u('b')+' fill="'+c+'"/>'+(lt?u('s')+' fill="rgba(236,186,170,.3)"/>':'')+u('b')+' fill="url(#'+i+'g)"/>'
-+u('f')+' fill="'+c+'"/>'+(lt?'<use href="#'+i+'f" fill="rgba(70,82,112,.5)"/>':'')
-+'<path d="M30 60C28 84 22 112 14 148M34.5 62C38 90 48 120 58 148M27 70C20 96 10 124 3 148" fill="none" stroke="'+(lt?'rgba(80,92,125,.22)':'rgba(255,255,255,.13)')+'" stroke-width=".8"/>'
-+'<path d="M23.6 56.5Q30 59.6 36.4 56.5L36.2 60.5Q30 63.6 23.8 60.5Z" fill="'+(lt?'rgba(70,82,112,.35)':'rgba(255,255,255,.15)')+'"/>'
-+'<path d="M28.4 18.6Q29.9 19.8 31.5 18.4" fill="none" stroke="'+(lt?'#b86a72':'rgba(255,255,255,.35)')+'" stroke-width=".9" stroke-linecap="round"/>'
-+(lt?'':u('b')+' fill="none" stroke="'+(gl||'#fff')+'" stroke-opacity=".55" stroke-width=".6"/>')+'</svg>'}
+function nrG(c,gl){return '<svg viewBox="-4 0 68 150" style="display:block;width:100%;height:100%;overflow:visible'+(gl?';filter:drop-shadow(0 0 9px '+gl+')':'')+'"><g fill="'+c+'"><circle cx="30" cy="14" r="9"/><path d="M26 22h8l1 6h-10z"/><path d="M22 28Q30 23 38 28L36 60Q30 64 24 60Z"/><path d="M24 58Q30 54 36 58Q58 118 64 148H-4Q2 118 24 58Z"/></g></svg>'}
 window.__nrG=nrG;
 function nrS(c,e,bk){return '<svg viewBox="0 0 110 80" style="display:block;width:100%;height:100%;overflow:visible"><g stroke="'+e+'" stroke-width="1.2" stroke-linejoin="round"><path d="M8 50C16 72 76 74 94 54C84 57 70 52 62 44C46 46 24 42 8 50Z" fill="'+c+'"/><path d="M84 52C100 44 98 24 86 20C78 18 74 26 80 32" fill="none" stroke="'+c+'" stroke-width="8" stroke-linecap="round"/><circle cx="85" cy="19" r="6" fill="'+c+'"/><path d="M90 18L101 22L90 25Z" fill="'+(bk||'#e9a36b')+'" stroke="none"/></g><path d="M30 48C44 34 66 36 82 50C64 53 46 54 30 48Z" fill="'+e+'" opacity=".35"/></svg>'}
 function nrF(c,e){return '<svg viewBox="0 0 24 24" style="display:block;width:100%;height:100%"><path d="M12 1C19 8 18 18 12 23C6 18 5 8 12 1Z" fill="'+c+'" stroke="'+e+'" stroke-width="1"/><path d="M12 4V21" stroke="'+e+'" stroke-width=".8"/></svg>'}

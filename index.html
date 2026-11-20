@@ -20138,10 +20138,14 @@ try{new MutationObserver(function(){focusOn()}).observe(document.body,{childList
 :root[data-skin^=y2k] nav{box-shadow:inset 1.5px 1.5px 0 var(--y2k-hi),4px 4px 0 var(--y2k-sh)!important}
 :root[data-skin^=y2k] :is(.ms,#sd){border-radius:3px!important}
 :root[data-skin^=y2k] :is(nav button,button.p,button.s,.chip){border-radius:3px!important}
-:root[data-skin^=y2k] :is(button.p,nav button.on,.chip.on){border:2px solid var(--g3)!important;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45),inset -1.5px -1.5px 0 rgba(0,0,0,.22),2px 2px 0 var(--y2k-sh)!important}
+:root[data-skin^=y2k] :is(button.p,nav:not(.nvA) button.on,.chip.on){border:2px solid var(--g3)!important;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45),inset -1.5px -1.5px 0 rgba(0,0,0,.22),2px 2px 0 var(--y2k-sh)!important}
 :root[data-skin^=y2k] :is(button.p,button.s):active{transform:translate(1.5px,1.5px);box-shadow:inset 1.5px 1.5px 2px rgba(0,0,0,.35)!important}
 :root[data-skin^=y2k] :is(.hd h2,h1,h2,h3){letter-spacing:.2px}
 /* VT323 (pixel) nhỏ nét nên tăng cỡ chữ tiêu đề cho dễ đọc */
 :root:is([data-skin=y2kpipboy],[data-skin=y2kphosphor]) :is(.hd h2,h1,h2,h3){font-size:1.15em;letter-spacing:.6px}
+/* tab đang chọn: ô trượt .nvI (viền + vầng sáng bo tròn kiểu cũ) đổi sang khung Y2K vuông, viền bevel, bóng đổ cứng */
+:root[data-skin^=y2k] :is(nav,#sdtabs) :is(.nvI,.nvH){border-radius:3px!important}
+:root[data-skin^=y2k] :is(nav,#sdtabs) .nvI{border:2px solid var(--g3)!important;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45),inset -1.5px -1.5px 0 rgba(0,0,0,.22),2px 2px 0 var(--y2k-sh)!important}
+:root[data-skin^=y2k] :is(nav,#sdtabs).nvA button.on{border-color:transparent!important;box-shadow:none!important}
 </style>
 </body></html>

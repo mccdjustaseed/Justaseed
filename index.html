@@ -12795,6 +12795,7 @@ button.sw::after{box-shadow:0 2px 5px rgba(0,0,0,.28)!important}
 .skx-fs{display:flex;flex-direction:column;gap:10px}
 .skx-f{border-radius:22px;background:color-mix(in srgb,var(--card) 70%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--g2) 22%,transparent);overflow:hidden;transition:box-shadow .3s}
 .skx-f.has{box-shadow:inset 0 0 0 2px var(--g2)}
+.lamb-pop{display:none!important}
 .skx-fh{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;color:var(--ink)}
 .skx-fi{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;width:46px;height:46px;padding:4px;border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--g2) 25%,var(--card)),color-mix(in srgb,var(--pk) 55%,var(--card)))}
 .skx-fi i{font-style:normal;font-size:.95rem;line-height:19px;text-align:center}
@@ -14347,7 +14348,7 @@ function start(el,speed){
 }
 window.__cyl=start;
 function scan(){
- var a=document.querySelectorAll('.skx-gal:not([data-cyz]),.mxcy:not([data-cyz])'),i;
+ var a=document.querySelectorAll('.mxcy:not([data-cyz])'),i;
  for(i=0;i<a.length;i++){a[i].setAttribute('data-cyz','1');start(a[i],a[i].classList.contains('skx-gal')?26:(a[i].hasAttribute('data-rev')?-34:34))}
 }
 try{new MutationObserver(scan).observe(document.body,{childList:true,subtree:true})}catch(e){}
@@ -17976,7 +17977,7 @@ fallRefresh();
 
 <script id="lamb-pop">
 (function(){try{var R=document.documentElement,E;
-addEventListener('pointerdown',function(e){E=(window.__TAPS||{})[R.dataset.skin];if(!E||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+addEventListener('pointerdown',function(e){E=null;if(!E||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
 for(var i=0;i<3;i++){var d=document.createElement('span');d.className='lamb-pop';d.textContent=E[Math.random()*E.length|0];
 d.style.left=(e.clientX-9+(Math.random()*30-15))+'px';d.style.top=(e.clientY-9)+'px';d.style.setProperty('--px',(Math.random()*60-30)+'px');d.style.setProperty('--pr',(Math.random()*60-30)+'deg');d.style.animationDelay=(i*70)+'ms';
 document.body.appendChild(d);setTimeout(function(x){x.remove()},1300,d)}},{passive:true})}catch(e){}})();
@@ -19610,7 +19611,7 @@ if(typeof fallRefresh==='function')fallRefresh();
 </script>
 <script id="lamb-pop">
 (function(){try{var R=document.documentElement,E;
-addEventListener('pointerdown',function(e){E=(window.__TAPS||{})[R.dataset.skin];if(!E||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+addEventListener('pointerdown',function(e){E=null;if(!E||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
 for(var i=0;i<3;i++){var d=document.createElement('span');d.className='lamb-pop';d.textContent=E[Math.random()*E.length|0];
 d.style.left=(e.clientX-9+(Math.random()*30-15))+'px';d.style.top=(e.clientY-9)+'px';d.style.setProperty('--px',(Math.random()*60-30)+'px');d.style.setProperty('--pr',(Math.random()*60-30)+'deg');d.style.animationDelay=(i*70)+'ms';
 document.body.appendChild(d);setTimeout(function(x){x.remove()},1300,d)}},{passive:true})}catch(e){}})();

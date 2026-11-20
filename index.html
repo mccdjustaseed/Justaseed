@@ -5874,7 +5874,7 @@ if(window.SL)SL.menu=function(){document.getElementById('modal').innerHTML='<div
 </script>
 <script>
 /* V28: tab Giá bán xuống cuối thanh tab */
-(function(){const fix=()=>{const i=TABS.findIndex(x=>x[0]=='price');if(i>=0&&i!==TABS.length-1){const x=TABS.splice(i,1)[0];TABS.push(x)}const k=TABS.findIndex(x=>x[0]=='sky');if(k>0)TABS.unshift(TABS.splice(k,1)[0])};fix();const o=R;R=function(){fix();return o.apply(this,arguments)}})();
+(function(){const fix=()=>{const i=TABS.findIndex(x=>x[0]=='price');if(i>=0&&i!==TABS.length-1){const x=TABS.splice(i,1)[0];TABS.push(x)}const k=TABS.findIndex(x=>x[0]=='sky');if(k>0)TABS.unshift(TABS.splice(k,1)[0]);const th=TABS.findIndex(x=>x[0]=='theme');if(th>=0&&th!==TABS.length-1)TABS.push(TABS.splice(th,1)[0])};fix();const o=R;R=function(){fix();return o.apply(this,arguments)}})();
 </script>
 <script>
 /* ===== V28: đồng bộ tiến trình với tài khoản Discord (bảng Supabase game_saves) ===== */
@@ -12795,15 +12795,13 @@ button.sw::after{box-shadow:0 2px 5px rgba(0,0,0,.28)!important}
 .skx-fs{display:flex;flex-direction:column;gap:10px}
 .skx-f{border-radius:22px;background:color-mix(in srgb,var(--card) 70%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--g2) 22%,transparent);overflow:hidden;transition:box-shadow .3s}
 .skx-f.has{box-shadow:inset 0 0 0 2px var(--g2)}
-.skx-fh{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:10px 14px;text-align:left;color:var(--ink);cursor:pointer}
+.skx-fh{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;color:var(--ink)}
 .skx-fi{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;width:46px;height:46px;padding:4px;border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--g2) 25%,var(--card)),color-mix(in srgb,var(--pk) 55%,var(--card)))}
 .skx-fi i{font-style:normal;font-size:.95rem;line-height:19px;text-align:center}
 .skx-fn{flex:1;display:flex;flex-direction:column;min-width:0}.skx-fn b{font:700 .95rem 'Baloo 2',sans-serif}.skx-fn small{font:400 .75rem Onest,sans-serif;color:var(--mut)}
 .skx-fh u{text-decoration:none;font-size:1.5rem;line-height:1;color:var(--mut);transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
 .skx-f.open .skx-fh u{transform:rotate(90deg)}
-.skx-f:not(.open) .skx-gal{display:none}
-.skx-f .skx-gal{margin:0;padding:4px 8px 14px}
-.skx-f.open .skx-gal{animation:skxFo .45s cubic-bezier(.3,1.4,.5,1)}
+.skx-f .skx-gal{margin:0;padding:22px 8px 20px}
 @keyframes skxFo{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.skx-f.open .skx-gal{animation:none}}
 canvas.skx-cv{position:fixed;inset:0;width:100%;height:100%;z-index:99;pointer-events:none;view-transition-name:skxfx}
@@ -12916,7 +12914,7 @@ function TILE(x){return '<button class="skx-t" data-sk="'+x.id+'" style="--t1:'+
 function FOLD(){var used={},out=GRP.map(function(g){var l=SK.filter(function(x){return g[2].indexOf(x.id)>=0});l.forEach(function(x){used[x.id]=1});return{n:g[1]+' '+g[0],l:l}}),rest=SK.filter(function(x){return!used[x.id]});if(rest.length)out.push({n:'✨ Khác',l:rest});return out.filter(function(g){return g.l.length})}
 function html(){return '<section id="skx" class="skx" data-dk="'+dk()+'"><div class="skx-hero"><i class="sun"></i><i class="h h1"></i><i class="h h2"></i><div class="fl"><span>🌷</span><span>🌼</span><span>🌹</span></div><div class="cap"><b id="skx-name"></b><small>Giao diện đang dùng</small></div></div>'
 +'<div class="skx-lab">Chế độ</div><div class="skx-md"><button data-md="0">☀️ Sáng</button><button data-md="1">🌙 Tối</button></div>'
-+'<div class="skx-lab">Chọn giao diện <small>chạm thư mục để mở</small></div><div class="skx-fs">'+FOLD().map(function(g,gi){return '<div class="skx-f"><button class="skx-fh" data-fold="'+gi+'"><span class="skx-fi">'+g.l.slice(0,4).map(function(x){return '<i>'+x.e+'</i>'}).join('')+'</span><span class="skx-fn"><b>'+g.n+'</b><small>'+g.l.length+' chủ đề</small></span><u>›</u></button><div class="skx-gal">'+g.l.map(TILE).join('')+'</div></div>'}).join('')+'</div>'
++'<div class="skx-lab">Chọn giao diện <small>vuốt ngang để xem thêm</small></div><div class="skx-fs">'+FOLD().map(function(g,gi){return '<div class="skx-f"><div class="skx-fh"><span class="skx-fi">'+g.l.slice(0,4).map(function(x){return '<i>'+x.e+'</i>'}).join('')+'</span><span class="skx-fn"><b>'+g.n+'</b><small>'+g.l.length+' chủ đề</small></span></div><div class="skx-gal">'+g.l.map(TILE).join('')+'</div></div>'}).join('')+'</div>'
 +'</section>'}
 function paint(){var b=document.getElementById('skx');if(!b)return;b.dataset.dk=dk();var sk=SK.filter(function(z){return z.id==cur})[0]||SK[0];
 b.querySelectorAll('[data-sk]').forEach(function(e){e.classList.toggle('on',e.dataset.sk==cur)});b.querySelectorAll('[data-md]').forEach(function(e){e.classList.toggle('on',+e.dataset.md==dk())});b.querySelector('#skx-name').textContent=sk.e+' '+sk.n;b.querySelectorAll('.skx-f').forEach(function(f){f.classList.toggle('has',!!f.querySelector('.skx-t.on'))})}
@@ -12930,14 +12928,14 @@ document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.targe
 if(t.dataset.fold!=null){OPEN[t.dataset.fold]=t.parentNode.classList.toggle('open');return}
 if(t.dataset.sk!=null)setSkin(t.dataset.sk,ev);else if(t.dataset.md!=null&&+t.dataset.md!=dk()){setDark(+t.dataset.md,ev);setTimeout(paint,60);setTimeout(paint,900)}});
 window.__skxView=function(){return html()};
-window.__skxPost=function(){paint();document.querySelectorAll('#skx .skx-f').forEach(function(f){var k=f.querySelector('[data-fold]').dataset.fold;if(OPEN[k]===undefined?f.classList.contains('has'):OPEN[k])f.classList.add('open')})};
+window.__skxPost=function(){paint()};
 })();
 </script>
 <script id="theme-tab-v150">
 /* v150: tab "Chủ đề" riêng (không còn nằm trong Cài đặt) */
 (function(){try{
 if(typeof I==='object'&&!I.themeP)I.themeP='M12 3a9 9 0 000 18c1.8 0 2.5-1.2 2-2.5-.5-1.3.3-2.5 1.8-2.5H18a3 3 0 003-3c0-5-4-10-9-10zM7.5 11h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01';
-if(!TABS.some(function(x){return x[0]=='theme'})){var i=TABS.findIndex(function(x){return x[0]=='up'});TABS.splice(i<0?TABS.length:i+1,0,['theme','themeP','Chủ đề'])}
+if(!TABS.some(function(x){return x[0]=='theme'})){var i=TABS.findIndex(function(x){return x[0]=='up'});TABS.push(['theme','themeP','Chủ đề'])}
 V.theme=function(){return '<div id="themeTab" style="padding:2px 2px 12px">'+window.__skxView()+'</div>'};
 var oR=R;R=function(){var r=oR.apply(this,arguments);if(tab=='theme')setTimeout(function(){if(window.__skxPost)window.__skxPost()},0);return r};
 }catch(e){console.warn('theme-tab',e)}})();

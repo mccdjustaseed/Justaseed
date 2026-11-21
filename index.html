@@ -15297,7 +15297,7 @@ window.tone=function(f,d,v){if(!ensure()||ctx.state!='running')return;try{var t=
 window.music=function(){try{clearInterval(MT)}catch(e){}var x=S();
  if(x&&x.mus){ensure();lastBeat=Date.now();try{MT=setInterval(function(){lastBeat=Date.now()},300)}catch(e){}try{if(window.MS&&MS.playing)clearInterval(MT)}catch(e){}}else lastBeat=0;
  setTimeout(check,0)};
-function want(){var x=S();return !!(x&&x.mus&&!document.hidden&&!(window.MS&&MS.playing))}
+function want(){var x=S();return !!(x&&x.mus&&!document.hidden&&!(window.MS&&MS.playing)&&!(window.__shopBgm&&window.__shopBgm.owns()))}
 function check(){if(!ctx)return;if(want()){if(ctx.state=='suspended'){try{ctx.resume()}catch(e){}}if(!sess)startBgm();else if(sess.id!==(R.dataset.skin||'')){stopBgm(.7);setTimeout(check,260)}}else if(sess)stopBgm(.9)}
 setInterval(check,350);
 document.addEventListener('visibilitychange',function(){if(ctx){if(document.hidden){setTimeout(function(){if(document.hidden&&!sess)try{ctx.suspend()}catch(e){}},1500)}else{try{ctx.resume()}catch(e){}}}check()});
@@ -20564,5 +20564,80 @@ function pick(){var n=s.shk===0?0:1,v=s.sv==1?1:0,b=function(on,oc,t){return'<bu
 {var of=V.furn;V.furn=function(){var h=of();Object.keys(NEW).forEach(function(k){h=h.split('<b>'+NEW[k][0]+'</b>').join('<b>'+NEW[k][0]+'</b> <span class=mut>· cấp '+NEW[k][2]+'</span>')});return h}}
 try{R()}catch(e){}
 }catch(e){console.warn('flo-shop',e)}})();
+</script>
+<script id="shopbgm">
+/* ===== Nhạc nền theo phong cách cửa hàng (Việt Nam / Pháp / Trung-Đài-Hồng / Nhật / Hàn) =====
+   - Phong cách cửa hàng (s.shn) -> bản nhạc: 1 VN, 2 Pháp, 4+7+8 Trung/Đài Loan/Hồng Kông, 5 Nhật, 6 Hàn.
+   - Khi cửa hàng kiểu mới đang dùng một trong các phong cách này, nhạc nền theo chủ đề tắt (xem want() của nbx-v110
+     gọi window.__shopBgm.owns()) và nhạc của cửa hàng phát thay thế.
+   - Phát lặp vô hạn bằng Web Audio: mỗi vòng chồng (crossfade) lên vòng sau vài giây nên không có khoảng trống/cắt khúc.
+   - Dùng chung nút Nhạc nền (s.mus) và thanh âm lượng (s.vol). Tạm dừng khi ẩn tab hoặc khi đang nghe nhạc ở tab Nhạc. */
+(function(){
+if(window.__shopBgm)return;
+var AC0=window.AudioContext||window.webkitAudioContext;if(!AC0)return;
+var MAP={1:'vn',2:'fr',4:'cn',5:'jp',6:'kr',7:'cn',8:'cn'};
+var ctx=null,master=null,sess=null,bufKey=null,bufP=null,pending=null,failed={},cIn=null,cOut=null;
+var S=function(){try{return s}catch(e){return null}};
+var SCR=function(){try{return scr}catch(e){return ''}};
+var MSP=function(){try{return !!(window.MS&&MS.playing)}catch(e){return false}};
+var vol=function(){var x=S();return x&&typeof x.vol=='number'?Math.min(1,Math.max(0,x.vol)):.5};
+var gv=function(){var v=vol();return v*v*1.9};
+/* bản nhạc cần phát (null nếu không có) */
+function key(){var x=S();if(!x||!x.mus||SCR()!='game'||x.shk===0)return null;var k=MAP[x.shn|0];return k&&!failed[k]?k:null}
+function want(){return MSP()?null:key()}
+function init(){
+ if(ctx)return ctx;
+ try{ctx=new AC0({latencyHint:'playback'})}catch(e){try{ctx=new AC0()}catch(x){ctx=null;return null}}
+ var lim=ctx.createDynamicsCompressor();lim.threshold.value=-6;lim.knee.value=6;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.2;
+ master=ctx.createGain();master.gain.value=gv();master.connect(lim);lim.connect(ctx.destination);
+ var n=64,i,a;cIn=new Float32Array(n);cOut=new Float32Array(n);
+ for(i=0;i<n;i++){a=i/(n-1)*Math.PI/2;cIn[i]=Math.sin(a);cOut[i]=Math.cos(a)}
+ return ctx}
+function ensure(){if(!init())return null;if(ctx.state!='running'){try{var p=ctx.resume();if(p&&p.catch)p.catch(function(){})}catch(e){}}return ctx}
+function unlock(){var c=ensure();if(!c)return;try{var b=c.createBuffer(1,1,22050),n=c.createBufferSource();n.buffer=b;n.connect(c.destination);n.start(0)}catch(e){}}
+/* giải mã nhạc nhúng sẵn (base64) – chỉ giải mã bản đang cần, bản cũ được giải phóng */
+function fetchBuf(k){return fetch('shopbgm-'+k+'.mp3').then(function(r){if(!r.ok)throw 0;return r.arrayBuffer()})}
+function decode(ab){return new Promise(function(res,rej){var p=ctx.decodeAudioData(ab,res,rej);if(p&&p.then)p.then(res,rej)})}
+function load(k){
+ if(bufKey===k&&bufP)return bufP;
+ bufKey=k;var p=bufP=fetchBuf(k).then(decode);
+ p.catch(function(){failed[k]=1;if(bufP===p){bufKey=null;bufP=null}});
+ return p}
+/* phát lặp mượt: vòng sau bắt đầu (fade-in) khi vòng trước còn X giây cuối (fade-out), công suất đều */
+function seg(se){
+ var c=ctx,D=se.D,X=se.X,t=se.next,g=c.createGain(),n=c.createBufferSource();
+ n.buffer=se.buf;n.connect(g);g.connect(se.env);
+ if(se.n===0)g.gain.setValueAtTime(1,t);else g.gain.setValueCurveAtTime(cIn,t,X);
+ g.gain.setValueCurveAtTime(cOut,t+D-X,X);
+ n.start(t);n.stop(t+D+.05);
+ se.segs.push(n);
+ n.onended=function(){var i=se.segs.indexOf(n);if(i>=0)se.segs.splice(i,1);try{g.disconnect()}catch(e){}};
+ se.n++;se.next=t+D-X}
+function fill(se){if(se.dead||!ctx)return;var lim=ctx.currentTime+120;while(se.next<lim)seg(se)}
+function play(k,buf){
+ var c=ctx,D=buf.duration,se={key:k,buf:buf,dead:false,n:0,segs:[],D:D,X:Math.min(4,D*.12),next:c.currentTime+.08,env:c.createGain()};
+ se.env.gain.setValueAtTime(.0001,c.currentTime);se.env.gain.linearRampToValueAtTime(1,c.currentTime+1.5);se.env.connect(master);
+ sess=se;fill(se);se.timer=setInterval(function(){fill(se)},1000)}
+function stop(se,fade){
+ if(!se||se.dead)return;se.dead=true;clearInterval(se.timer);if(sess===se)sess=null;
+ try{var t=ctx.currentTime;se.env.gain.cancelScheduledValues(t);se.env.gain.setValueAtTime(Math.max(.0001,se.env.gain.value),t);se.env.gain.linearRampToValueAtTime(.0001,t+fade)}catch(e){}
+ setTimeout(function(){se.segs.forEach(function(n){try{n.stop()}catch(e){}});se.segs.length=0;try{se.env.disconnect()}catch(e){}},fade*1000+250)}
+function syncVol(){if(ctx&&master)try{master.gain.setTargetAtTime(gv(),ctx.currentTime,.05)}catch(e){}}
+function startFor(k){
+ var c=ensure();if(!c||c.state!='running'||pending===k)return;
+ pending=k;
+ load(k).then(function(buf){pending=null;if(!sess&&want()===k&&ctx.state=='running')play(k,buf)},function(){pending=null})}
+function check(){
+ if(document.hidden)return;
+ var k=want();syncVol();
+ if(sess&&sess.key!==k)stop(sess,k?.9:1.2);
+ if(!sess&&k)startFor(k)}
+setInterval(check,300);
+['pointerdown','touchend','click','keydown'].forEach(function(n){document.addEventListener(n,function(){unlock();setTimeout(check,30)},{capture:true,passive:true})});
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.matches&&t.matches('.nbvol input'))setTimeout(syncVol,0)},true);
+document.addEventListener('visibilitychange',function(){if(!ctx)return;if(document.hidden){try{ctx.suspend()}catch(e){}}else{ensure();check()}});
+addEventListener('pagehide',function(){try{ctx&&ctx.suspend()}catch(e){}});
+window.__shopBgm={owns:function(){return !!key()},cur:function(){return sess?sess.key:null}};
+})();
 </script>
 </body></html>

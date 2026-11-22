@@ -6519,7 +6519,7 @@ function feedPostHtml(p){
  const own=p.user_id===currentUser.id,w=feedWho(p.user_id);
  const img=feedImgOk(p.image)?`<img class=fpimg src="${p.image}" alt="Danh thiếp" loading=lazy>`:'';
  const n=(FEED.cm[p.id]||[]).length;
- return `<div class="card fpost" id="fp-${p.id}"><div class=fph><span style="line-height:0;flex:0 0 auto">${w.av}</span><div class=fpn><b>${esc(w.name)}</b><small class=mut>${feedTime(p.created_at)}</small></div>${own?`<button class="s fcx" onclick="feedDelPost(${p.id})" aria-label="Xóa bài đăng">🗑</button>`:''}</div>${p.caption?`<p class=fpcap>${esc(p.caption)}</p>`:''}${img}<div class=fpa><button class="s ${(FEED.likes[p.id]||{}).me?'liked':''}" id="fl-${p.id}" onclick="feedLike(${p.id})">${feedLikeBtn(p.id)}</button><button class=s id="fcb-${p.id}" onclick="feedToggleCm(${p.id})">💬 <span>${n||''}</span></button></div><div id="fc-${p.id}" style="display:${FEED.open[p.id]?'block':'none'};margin-top:8px">${feedCmHtml(p.id)}</div></div>`}
+ return `<div class="card fpost" id="fp-${p.id}"><div class=fph><span style="line-height:0;flex:0 0 auto">${w.av}</span><div class=fpn><b>${esc(w.name)}</b><small class=mut>${feedTime(p.created_at)}</small></div>${own?'':rkBtn(p.user_id)}${own?`<button class="s fcx" onclick="feedDelPost(${p.id})" aria-label="Xóa bài đăng">🗑</button>`:''}</div>${p.caption?`<p class=fpcap>${esc(p.caption)}</p>`:''}${img}<div class=fpa><button class="s ${(FEED.likes[p.id]||{}).me?'liked':''}" id="fl-${p.id}" onclick="feedLike(${p.id})">${feedLikeBtn(p.id)}</button><button class=s id="fcb-${p.id}" onclick="feedToggleCm(${p.id})">💬 <span>${n||''}</span></button></div><div id="fc-${p.id}" style="display:${FEED.open[p.id]?'block':'none'};margin-top:8px">${feedCmHtml(p.id)}</div></div>`}
 function feedPaint(){
  const box=document.getElementById('feed-box');if(!box)return;
  const keep={},fa=document.activeElement&&document.activeElement.id=='fcap';box.querySelectorAll('input[id^=fci-],textarea#fcap').forEach(i=>{if(i.value)keep[i.id]=i.value});
@@ -6528,7 +6528,7 @@ function feedPaint(){
   h+=feedMissing({message:FEED.err})
    ?`<div class=fsetup><b>Bảng tin chưa được bật</b><p class=mut style="margin:4px 0 0">Cần chạy file <b>justaseed-feed.sql</b> một lần trong Supabase (SQL Editor) để tạo bảng bài đăng, tim và bình luận.</p></div>`
    :`<div class=fsetup><b>Không tải được bảng tin</b><p class=mut style="margin:4px 0 0">${esc(FEED.err)}</p></div>`}
- else if(!FEED.posts.length&&!FEED.busy)h+=`<div class=card><p class=mut style="margin:0">Chưa có bài đăng nào. Tạo <b>card visit</b> rồi bấm <b>📌 Đăng lên tường</b> để bài của bạn hiện ở đây cho bạn bè thả tim và bình luận.</p></div>`;
+ else if(!FEED.posts.length&&!FEED.busy)h+=`<div class=card><p class=mut style="margin:0">Chưa có bài đăng nào. Tạo <b>card visit</b> rồi bấm <b>📌 Đăng lên tường</b> để bài của bạn hiện ở đây cho mọi người thả tim và bình luận.</p></div>`;
  h+=FEED.posts.map(feedPostHtml).join('');
  if(FEED.more&&!FEED.err)h+=`<button class=s style="width:100%;margin:6px 0" onclick="feedLoad(true)" ${FEED.busy?'disabled':''}>${FEED.busy?'Đang tải...':'Xem thêm'}</button>`;
  box.innerHTML=h;
@@ -6544,7 +6544,7 @@ async function feedLoad(more){
   if(!more&&!(FEED.ids&&FEED.ids.length&&FEED.idsT&&Date.now()-FEED.idsT<120000)){
    const {data:fr}=await supabaseClient.from('friends').select('user_id, friend_id, status').eq('status','accepted').or(`user_id.eq.${uid},friend_id.eq.${uid}`);
    FEED.ids=[uid,...new Set((fr||[]).map(r=>r.user_id===uid?r.friend_id:r.user_id))];FEED.idsT=Date.now()}
-  let q=supabaseClient.from('feed_posts').select('id, user_id, image, caption, music, created_at').in('user_id',FEED.ids).order('created_at',{ascending:false}).limit(FEED_PAGE);
+  let q=supabaseClient.from('feed_posts').select('id, user_id, image, caption, music, created_at').order('created_at',{ascending:false}).limit(FEED_PAGE);
   if(more&&FEED.posts.length)q=q.lt('created_at',FEED.posts[FEED.posts.length-1].created_at);
   const {data:ps,error}=await q;
   if(error){FEED.err=error.message||'Lỗi';if(!more)FEED.posts=[];return}
@@ -6560,6 +6560,7 @@ async function feedLoad(more){
    (lk.data||[]).forEach(r=>{const L=FEED.likes[r.post_id];if(L){L.n++;if(r.user_id===uid)L.me=1}});
    (cm.data||[]).forEach(c=>{if(FEED.cm[c.post_id])FEED.cm[c.post_id].push(c)});
    await Promise.all([feedProfiles([...got.map(p=>p.user_id),...(cm.data||[]).map(c=>c.user_id)]),feedClLoad(cm.data||[])])}
+  try{await rkRel()}catch(e){}
   FEED.t=Date.now();
  }catch(e){FEED.err=(e&&e.message)||String(e)}
  finally{FEED.busy=0;feedPaint()}}
@@ -20900,4 +20901,120 @@ addEventListener('pagehide',function(){try{ctx&&ctx.suspend()}catch(e){}});
 window.__shopBgm={owns:function(){return !!key()},cur:function(){return sess?sess.key:null}};
 })();
 </script>
+<style>
+/* ===== V60: Bảng xếp hạng + kết bạn từ BXH/bảng tin ===== */
+.rksub{display:flex;gap:6px;margin:6px 0}
+.rksub button{flex:1;padding-left:4px;padding-right:4px}
+.rkrow{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px dashed var(--ln)}
+.rkrow:last-child{border-bottom:0}
+.rkrow.me{background:color-mix(in srgb,var(--g) 45%,transparent);border-radius:12px;border-bottom-color:transparent}
+.rkpos{flex:0 0 30px;text-align:center;font-weight:800;font-size:1.05rem}
+.rkinf{flex:1;min-width:0}
+.rkinf b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rkinf small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rkval{flex:0 0 auto;text-align:right;font-weight:800;color:var(--g3)}
+.rkbtn{flex:0 0 auto;white-space:nowrap;font-size:.82rem;padding:5px 10px}
+.fph .rkbtn{margin-left:auto}
+.fph .rkbtn+.fcx{margin-left:6px}
+</style>
+<script>
+/* ---- Quan hệ bạn bè của tôi (để hiện nút Kết bạn / Đã gửi / Chấp nhận / Bạn bè) ---- */
+const RK={mode:'level',rows:[],pmap:{},busy:0,err:'',t:0,rel:{},relT:0,sig:''};
+const rkUuid=x=>typeof x=='string'&&/^[0-9a-fA-F-]{32,40}$/.test(x);
+const rkE=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rkMoney=n=>Math.round(Number.isFinite(+n)?+n:0).toLocaleString('vi-VN')+'đ';
+async function rkRel(force){
+ if(typeof currentUser==='undefined'||!currentUser)return;
+ if(!force&&RK.relT&&Date.now()-RK.relT<60000)return;
+ const uid=currentUser.id,{data,error}=await supabaseClient.from('friends').select('id, user_id, friend_id, status').or(`user_id.eq.${uid},friend_id.eq.${uid}`);
+ if(error)return;
+ const m={};(data||[]).forEach(r=>{const o=r.user_id===uid?r.friend_id:r.user_id;m[o]={id:r.id,status:r.status,out:r.user_id===uid}});
+ RK.rel=m;RK.relT=Date.now()}
+function rkBtn(uid){
+ if(!rkUuid(uid)||typeof currentUser=='undefined'||!currentUser||uid===currentUser.id)return '';
+ const r=RK.rel[uid];
+ if(!r)return `<button class="s rkbtn" onclick="rkAdd('${uid}',this)">➕ Kết bạn</button>`;
+ if(r.status==='accepted')return `<span class="mut rkbtn" style="font-size:.8rem">✓ Bạn bè</span>`;
+ if(r.out)return `<span class="mut rkbtn" style="font-size:.8rem">⏳ Đã gửi lời mời</span>`;
+ return `<button class="p rkbtn" onclick="rkAccept(${+r.id},this)">Chấp nhận</button>`}
+function rkRefreshUI(){
+ try{if(typeof FEEDMODE!='undefined'&&FEEDMODE=='feed')feedPaint();rkPaint()}catch(e){}}
+async function rkAdd(uid,btn){
+ if(!currentUser)return toast('Hãy liên kết Discord');
+ if(!rkUuid(uid)||uid===currentUser.id)return;
+ if(btn)btn.disabled=true;
+ const {data,error}=await supabaseClient.from('friends').insert({user_id:currentUser.id,friend_id:uid,status:'pending'}).select('id').maybeSingle();
+ if(error&&error.code!=='23505'){if(btn)btn.disabled=false;return toast('Lỗi: '+error.message)}
+ toast(error?'Đã gửi lời mời hoặc đã là bạn':'Đã gửi lời mời kết bạn');
+ await rkRel(true);rkRefreshUI();
+ try{if(typeof FEED!='undefined')FEED.idsT=0}catch(e){}}
+async function rkAccept(id,btn){
+ if(btn)btn.disabled=true;
+ const {error}=await supabaseClient.from('friends').update({status:'accepted'}).eq('id',id);
+ if(error){if(btn)btn.disabled=false;return toast('Lỗi: '+error.message)}
+ toast('Đã chấp nhận');await rkRel(true);rkRefreshUI();
+ try{if(typeof FEED!='undefined')FEED.idsT=0}catch(e){}}
+
+/* ---- Bảng xếp hạng ---- */
+const RK_TABS=[['level','⭐ Level'],['money','💰 Tiền'],['day','📅 Ngày chơi']],RK_LIMIT=50;
+function rkSet(m){if(RK.mode===m&&RK.rows.length)return;RK.mode=m;rkLoad()}
+async function rkLoad(){
+ if(!currentUser||RK.busy)return;
+ RK.busy=1;RK.err='';rkPaint();
+ try{
+  const m=RK.mode;
+  let q=supabaseClient.from('shop_public').select('user_id, shop_name, day, money, level, game_avatar, updated_at');
+  if(m==='money')q=q.gt('money',0).order('money',{ascending:false}).order('level',{ascending:false});
+  else if(m==='day')q=q.order('day',{ascending:false}).order('level',{ascending:false});
+  else q=q.order('level',{ascending:false}).order('day',{ascending:false});
+  const {data,error}=await q.limit(RK_LIMIT);
+  if(error){RK.err=error.message||'Lỗi';RK.rows=[];return}
+  RK.rows=data||[];
+  const need=RK.rows.map(r=>r.user_id).filter(u=>u&&!RK.pmap[u]);
+  if(need.length){
+   const {data:ps}=await supabaseClient.from('profiles').select('id, display_name, username').in('id',need);
+   (ps||[]).forEach(p=>RK.pmap[p.id]=p)}
+  await rkRel(true);
+  RK.t=Date.now();
+ }catch(e){RK.err=(e&&e.message)||String(e)}
+ finally{RK.busy=0;rkPaint()}}
+function rkHtml(){
+ const me=currentUser&&currentUser.id,medal=['🥇','🥈','🥉'];
+ let h=`<div class=row style="margin:4px 0"><h3 style="margin:0">🏆 Bảng xếp hạng</h3><button class=s onclick="rkLoad()" ${RK.busy?'disabled':''}>${RK.busy?'Đang tải...':'↻ Làm mới'}</button></div>`;
+ h+=`<div class=rksub>${RK_TABS.map(t=>`<button class="s ${RK.mode===t[0]?'on2':''}" onclick="rkSet('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
+ if(RK.err)h+=`<div class=fsetup><b>Không tải được bảng xếp hạng</b><p class=mut style="margin:4px 0 0">${rkE(RK.err)}</p></div>`;
+ else if(!RK.rows.length&&!RK.busy)h+=`<div class=card><p class=mut style="margin:0">Chưa có ai trên bảng xếp hạng.</p></div>`;
+ else{
+  h+='<div class=card style="padding:6px">'+RK.rows.map((r,i)=>{
+   const p=RK.pmap[r.user_id]||{},nm=p.display_name||p.username||r.shop_name||'Người chơi',own=r.user_id===me;
+   const gav=r.game_avatar,av=own?avH(38):friendAvTap(gav,38,r.user_id);
+   const val=RK.mode==='money'?rkMoney(r.money):RK.mode==='day'?'Ngày '+(r.day||1):'Lv '+(r.level||1);
+   const sub=RK.mode==='money'?`Lv ${r.level||1} · Ngày ${r.day||1}`:RK.mode==='day'?`Lv ${r.level||1} · ${(+r.money>0)?rkMoney(r.money):'ẩn số dư'}`:`Ngày ${r.day||1} · ${(+r.money>0)?rkMoney(r.money):'ẩn số dư'}`;
+   return `<div class="rkrow${own?' me':''}"><span class=rkpos>${i<3?medal[i]:i+1}</span><span style="line-height:0;flex:0 0 auto">${av}</span><div class=rkinf><b>${rkE(nm)}${own?' (Bạn)':''}</b><small class=mut>${rkE(r.shop_name||'Tiệm hoa')} · ${sub}</small></div><span class=rkval>${val}</span>${own?'':rkBtn(r.user_id)}</div>`}).join('')+'</div>';
+  const mine=RK.rows.some(r=>r.user_id===me);
+  if(!mine)h+=`<p class=mut style="margin:4px 2px;font-size:.85rem">Bạn chưa nằm trong top ${RK_LIMIT}${RK.mode==='money'?' (hoặc đang ẩn số dư)':''}. Chơi tiếp để leo hạng nhé!</p>`}
+ return h}
+function rkPaint(){try{if(typeof tab!='undefined'&&tab=='rank'&&scr=='game'){const y=window.scrollY;R();window.scrollTo(0,y)}}catch(e){}}
+/* Tab riêng "Xếp hạng" trong ngăn Cộng đồng (vuốt phải để mở) */
+V.rank=function(){
+ if(typeof currentUser==='undefined'||!currentUser)return `<div class=card><h3>🏆 Xếp hạng</h3><p class=mut>Đăng nhập Discord để xem bảng xếp hạng và kết bạn.</p><button class=p onclick="loginWithDiscord()">Đăng nhập Discord</button></div>`;
+ if(!RK.busy&&!RK.err&&(!RK.t||Date.now()-RK.t>60000))setTimeout(rkLoad,0);
+ return rkHtml()};
+try{Object.assign(I,{trophy:'M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3'})}catch(e){}
+if(!TABS.some(x=>x[0]=='rank')){const i=TABS.findIndex(x=>x[0]=='up');TABS.splice(i<0?TABS.length:i+1,0,['rank','trophy','Xếp hạng'])}
+
+/* ---- Đồng bộ level / tiền / ngày chơi lên máy chủ để xếp hạng luôn mới ---- */
+async function rkSyncStats(){
+ try{
+  if(typeof currentUser==='undefined'||!currentUser||typeof s==='undefined'||!s||!s.pf)return;
+  const lv=typeof lvOf==='function'?lvOf(s.xp||0):1,day=s.day||1,money=(s.pf&&s.pf.hb)?0:(s.money||0);
+  const sig=lv+'|'+day+'|'+money+'|'+(s.name||'');
+  if(sig===RK.sig)return;
+  const {error}=await supabaseClient.from('shop_public').upsert({user_id:currentUser.id,shop_name:s.name||'Tiệm hoa',day,money,level:lv,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  if(!error)RK.sig=sig;else console.warn('rank sync',error)
+ }catch(e){console.warn(e)}}
+setInterval(rkSyncStats,60000);
+setTimeout(rkSyncStats,8000);
+</script>
+
 </body></html>

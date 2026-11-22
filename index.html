@@ -15724,7 +15724,10 @@ html.tvmode #tc.tin > * { animation: none !important; }
     var t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) {
       var el = e.target;
-      if (el && el.closest && el.closest('input,textarea,select,#msk,nav.fx,#sdtabs,.skx-gal,.cy,.mxcy')) return;
+      if (el && el.closest && el.closest('input,textarea,select,#msk,nav.fx,#sdtabs,.skx-gal,.skx-t,.cy,.mxcy,#modal,#menu')) return;
+      for (var q = el; q && q !== document.body && q.nodeType === 1; q = q.parentElement) {
+        if (q.scrollWidth > q.clientWidth + 2 && /auto|scroll/.test(getComputedStyle(q).overflowX)) return;
+      }
       if (e.cancelable) e.preventDefault();
     }
   }, { passive: false, capture: true });

@@ -12871,6 +12871,62 @@ window.__NOIR=[
 {id:'nrmoon',n:'Ánh Trăng Sau Cùng',e:'🌙',a:'#b8c3d9',a3:'#56627c',l:'#f3f5fa',d:'#0d111c',pk:'#eef0f8',s1:'#dfe5f1',s2:'#fbfcff',f:'Playfair Display'}
 ];
 </script>
+<script id="chrome-defs">
+/* Thư mục Chrome Lỏng: 9 chủ đề bạc lỏng / pha lê / bướm / nơ trên nền đen — có viền thẻ chrome + tivi khung kim loại */
+(function(){
+var T=[
+['chrblue','Chrome Thiên Hà','🌌','#5b86ff','#2c3fa6','#e9f0ff','#050a1c','#cfe0ff','#bcd0ff','#eef3ff','Comfortaa','star'],
+['chrsilver','Bạc Lỏng','💿','#a3acba','#3e4552','#f2f3f6','#08090b','#e3e7ee','#dfe3ea','#f8f9fb','Quicksand','star'],
+['chrglass','Khung Kính Bạc','🪟','#b4bfcf','#4a5568','#f1f4f8','#050608','#e6ebf3','#dde4ef','#f7f9fc','Comfortaa','drip'],
+['chrink','Nét Mực Đêm','🖋️','#8e939e','#2a2d34','#f1f1f3','#040405','#e4e4e8','#dcdce2','#f6f6f8','Playfair Display','stroke'],
+['chrbead','Chuỗi Sao Sương','✨','#c3cad6','#4d5666','#f3f5f8','#06070a','#e8ecf3','#e1e6ee','#f9fafc','Quicksand','beads'],
+['chrveil','Voan Bướm Đêm','🦋','#cfae6e','#7a5f2a','#faf5ea','#0a0907','#f1e4c4','#ece0c6','#fffaf0','Playfair Display','fly'],
+['chrbow','Nơ Pha Lê','🎀','#a5bbdc','#44587c','#eef3fb','#05070d','#dbe6f6','#d3e0f3','#f6f9fe','Comfortaa','bow'],
+['chrfly','Bướm Bạc Lỏng','🪽','#bcc4d0','#454d5b','#f4f6f9','#07080b','#e9edf3','#e2e7ee','#fafbfd','Quicksand','fly'],
+['chrsmoke','Khói Lụa Bạc','🌫️','#9ea6b4','#394150','#eff1f5','#060709','#dde2ea','#d6dce6','#f6f7fa','Quicksand','wave']];
+window.__CHROME=T.map(function(x){return{id:x[0],n:x[1],e:x[2],a:x[3],a3:x[4],l:x[5],d:x[6],pk:x[7],s1:x[8],s2:x[9],f:x[10]}});
+function orn(k,f,s){var a="<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='"+f+"' stroke='"+s+"' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'>",b='</g></svg>',p={
+star:"<path d='M60 8Q64 52 108 60Q64 68 60 112Q56 68 12 60Q56 52 60 8Z'/><path d='M98 14Q100 28 114 30Q100 32 98 46Q96 32 82 30Q96 28 98 14Z'/><path d='M24 84Q26 94 36 96Q26 98 24 108Q22 98 12 96Q22 94 24 84Z'/>",
+fly:"<path d='M60 60C38 14 8 22 18 56C24 72 46 70 60 60Z'/><path d='M60 60C82 14 112 22 102 56C96 72 74 70 60 60Z'/><path d='M60 63C44 72 30 98 48 102C58 103 60 82 60 63Z'/><path d='M60 63C76 72 90 98 72 102C62 103 60 82 60 63Z'/><path d='M60 50V80M56 40Q50 28 42 26M64 40Q70 28 78 26' fill='none'/>",
+bow:"<path d='M60 58C40 28 10 34 14 60C10 86 40 92 60 62C80 92 110 86 106 60C110 34 80 28 60 58Z'/><rect x='54' y='52' width='12' height='16' rx='4'/><path d='M55 68C48 92 40 104 28 114L46 108L52 114C58 98 60 84 60 70Z'/><path d='M65 68C72 92 80 104 92 114L74 108L68 114C62 98 60 84 60 70Z'/>",
+beads:"<path d='M6 24Q54 100 114 36' fill='none'/><circle cx='28' cy='60' r='6'/><circle cx='54' cy='80' r='4'/><circle cx='84' cy='68' r='7'/><circle cx='104' cy='44' r='4'/><path d='M84 34Q86 46 98 48Q86 50 84 62Q82 50 70 48Q82 46 84 34Z'/>",
+stroke:"<path d='M14 112C30 50 70 22 108 10C80 34 50 66 30 114Z'/><path d='M40 112C54 76 82 48 112 40' fill='none'/><circle cx='96' cy='84' r='3'/><circle cx='80' cy='100' r='2'/><circle cx='24' cy='28' r='2.4'/>",
+wave:"<path d='M4 78C30 20 62 100 116 34C86 98 40 50 4 96Z'/><path d='M8 56C40 10 70 70 112 20' fill='none'/><circle cx='92' cy='84' r='3'/><circle cx='30' cy='30' r='2'/>",
+drip:"<path d='M60 8C82 40 102 56 98 80C94 106 26 106 22 80C18 56 38 40 60 8Z'/><path d='M46 74C46 86 56 92 66 90' fill='none'/><path d='M96 18Q98 30 110 32Q98 34 96 46Q94 34 82 32Q94 30 96 18Z'/>"};
+return 'url("data:image/svg+xml,'+encodeURIComponent(a+p[k]+b)+'")'}
+var C=[];
+T.forEach(function(x){var id=x[0],A=x[3],A3=x[4],L=x[5],D=x[6],K=x[11],P=':root[data-skin='+id+']',DK=P+'[data-theme=dark]',
+CARD=':not(.tvon):not(.ghero):not(.ghd):not([id=mnow]):not([id=mtv])',
+chromeG='linear-gradient(135deg,#fff,'+A+' 28%,'+A3+' 52%,#fff 72%,'+A+')',
+ol=orn(K,'#ffffff',A3),od=orn(K,'#e9eef8',A);
+C.push(
+P+' body{background-image:radial-gradient(60% 38% at 90% 0,color-mix(in srgb,'+A+' 32%,transparent),transparent 70%),radial-gradient(50% 34% at 0 100%,color-mix(in srgb,'+A3+' 22%,transparent),transparent 72%)!important;background-attachment:fixed!important}',
+DK+' body{background-image:radial-gradient(60% 38% at 90% 0,color-mix(in srgb,'+A+' 26%,transparent),transparent 70%),radial-gradient(50% 34% at 0 100%,color-mix(in srgb,'+A3+' 34%,transparent),transparent 72%)!important}',
+/* viền thẻ: khung chrome chuyển sắc + viền kính trong + họa tiết góc */
+P+' .card'+CARD+'{background:linear-gradient(var(--card),var(--card)) padding-box,'+chromeG+' border-box!important;border:2px solid transparent!important;border-radius:22px;box-shadow:0 14px 28px -18px '+A3+',inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,'+A+' 45%,transparent)}',
+DK+' .card'+CARD+'{background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#f4f7ff,'+A+' 26%,#1a1d26 50%,'+A+' 74%,#f4f7ff) border-box!important;box-shadow:0 16px 30px -16px #000,0 0 26px -12px '+A+',inset 0 0 0 3px var(--card),inset 0 0 0 4px rgba(255,255,255,.12)}',
+P+' .card'+CARD+'.cartc{background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,var(--g2),#fff,var(--g2)) border-box!important}',
+P+' .card'+CARD+':not([style*=overflow]){position:relative;isolation:isolate}',
+P+' .card'+CARD+':not([style*=overflow])::before{content:"";position:absolute;z-index:-1;pointer-events:none;top:4px;right:6px;width:min(104px,36%);height:calc(100% - 8px);max-height:104px;background:'+ol+' right top/contain no-repeat;opacity:.5}',
+DK+' .card'+CARD+':not([style*=overflow])::before{background-image:'+od+';opacity:.42}',
+P+' .card>h3:first-child{background:linear-gradient(90deg,'+A3+','+A+' 60%,'+A3+');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}',
+DK+' .card>h3:first-child{background-image:linear-gradient(90deg,#fff,'+A+' 55%,#fff)}',
+P+' nav{background:color-mix(in srgb,var(--card) 80%,transparent)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1.5px solid color-mix(in srgb,'+A+' 55%,transparent);border-radius:26px;box-shadow:0 14px 28px -16px '+A3+',inset 0 1px 0 rgba(255,255,255,.55)}',
+P+' nav button.on,'+P+' button.p{background:linear-gradient(135deg,#fff 0,'+A+' 38%,'+A3+' 100%);color:#10131a;border:1px solid color-mix(in srgb,#fff 60%,'+A+');box-shadow:0 8px 16px -10px '+A3+',inset 0 1px 0 rgba(255,255,255,.7)}',
+DK+' nav button.on,'+DK+' button.p{color:#0a0c12}',
+P+' button.s:not(.on2):not(.on){border-radius:14px;border-color:color-mix(in srgb,'+A+' 60%,var(--card))}',
+/* tivi: thân kim loại lỏng, màn hình viền chrome, sao 4 cánh trên góc */
+P+' :is(#mnow.tvon,.tvn-body){--tvbody:linear-gradient(145deg,#f3f6fb 0,#8c95a5 22%,#1c2029 48%,#0a0c10 62%,#9aa3b4 86%,#f3f6fb 100%);background:var(--tvbody)!important;overflow:visible!important;box-shadow:0 30px 44px -26px #000,0 0 70px -22px '+A+',inset 0 0 0 1px rgba(255,255,255,.55),inset 0 2px 0 rgba(255,255,255,.7)!important}',
+P+' #mnow.tvon .mnr::before,'+P+' .tvn-scr{box-shadow:0 0 0 2px #05060a,0 0 0 4px '+A+',0 0 0 5px rgba(255,255,255,.7),0 0 26px -2px '+A+',inset 0 0 36px rgba(0,0,0,.5)}',
+P+' .tvn-scr::after{background:linear-gradient(112deg,rgba(255,255,255,0) 26%,rgba(255,255,255,.3) 42%,rgba(255,255,255,0) 58%) 160% 0/220% 100% no-repeat;animation:tvSheen 6.5s 1s ease-in-out infinite}',
+P+' .tvn-body::before,'+P+' #mnow.tvon::before{content:"";position:absolute;z-index:2;pointer-events:none;inset:auto;left:auto;right:6px;top:-18px;width:46px;height:46px;background:'+od+' center/contain no-repeat;filter:drop-shadow(0 0 6px '+A+');opacity:1}',
+P+' .tvn-chin{color:#e8edf6}'+P+' .tvn-br{font-size:0}'+P+' .tvn-br::after{content:"CHROME TV ✦";font-size:.62rem}',
+P+' .tvn-led.on{background:#fff;box-shadow:0 0 8px '+A+',0 0 2px #fff}',
+P+' #mnow.tvon :is(.mnm,.mar){color:#f3f6fb!important}',
+P+' #mnow.tvon .mni::before{background:#fff;box-shadow:0 0 9px '+A+'}')});
+var st=document.createElement('style');st.id='chrome-deco';st.textContent=C.join('\n');document.head.appendChild(st);
+})();
+</script>
 <script id="fairy-defs">
 /* v141: 6 chủ đề cổ tích — Tiên rừng · Pha lê · Voan · Lâu đài · Nàng thơ lả lơi · Ruy băng organza */
 window.__FAIRY=[
@@ -12984,7 +13040,7 @@ var SK=[
 {id:'catpink',n:'Mèo hồng',e:'😻',a:'#ec7fb0',a3:'#b8497f',l:'#ffeaf3',d:'#2a1520',pk:'#ffc9de',s1:'#ffd3e5',s2:'#fff3f8',f:'Comfortaa'},
 {id:'candy',n:'Kẹo hồng',e:'🎀',a:'#ec4079',a3:'#b81f57',l:'#ffeaf2',d:'#2a1019',pk:'#ffb8d0',s1:'#ffc9dc',s2:'#fff0f6',f:'Baloo 2'},
 {id:'bakery',n:'Tiệm bánh mì',e:'🍞',a:'#35a58b',a3:'#7d4c2b',l:'#fff4dc',d:'#1f1a14',pk:'#ffc6d3',s1:'#cdeee4',s2:'#fff9e8',f:'Patrick Hand'},
-{id:'croffy',n:'Croffy',e:'🥐',a:'#b4722f',a3:'#5a3315',l:'#fdecd8',d:'#22150c',pk:'#f8d3b0',s1:'#f6d9b5',s2:'#fff5e8',f:'Nunito'}].concat(window.__SWEET||[]).concat(window.__MOON||[]).concat(window.__MAGIC||[]).concat(window.__NOIR||[]).concat(window.__FAIRY||[]).concat(window.__Y2K||[]).concat(window.__ANGEL||[]).concat(window.__PASTEL||[]);
+{id:'croffy',n:'Croffy',e:'🥐',a:'#b4722f',a3:'#5a3315',l:'#fdecd8',d:'#22150c',pk:'#f8d3b0',s1:'#f6d9b5',s2:'#fff5e8',f:'Nunito'}].concat(window.__SWEET||[]).concat(window.__MOON||[]).concat(window.__MAGIC||[]).concat(window.__NOIR||[]).concat(window.__FAIRY||[]).concat(window.__Y2K||[]).concat(window.__ANGEL||[]).concat(window.__PASTEL||[]).concat(window.__CHROME||[]);
 function g(k){try{return localStorage.getItem(k)}catch(e){return null}}function p(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 var cur=g(K)||'';if(cur&&SK.some(function(x){return x.id==cur}))R.dataset.skin=cur;else cur='';setTimeout(function(){try{if(typeof s!='undefined'&&s&&(s.skx||'')!==cur){s.skx=cur;save()}}catch(e){}},4000);
 var st=document.createElement('style');st.id='skx-vars';st.textContent=SK.filter(function(x){return x.id}).map(function(x){var P=':root[data-skin='+x.id+']',D=P+'[data-theme=dark]',I='!important;',m=function(a,b,c){return 'color-mix(in srgb,'+a+' '+b+'%,'+c+')'};
@@ -13006,7 +13062,7 @@ if(matchMedia('(prefers-reduced-motion:reduce)').matches||!document.startViewTra
 var rad=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),clip=['circle(0px at '+x+'px '+y+'px)','circle('+rad+'px at '+x+'px '+y+'px)'];
 try{burst(fx,x,y,col);var t=document.startViewTransition(ap);t.ready.then(function(){R.animate({clipPath:clip},{duration:800,easing:'cubic-bezier(.4,0,.2,1)',pseudoElement:'::view-transition-new(root)'})}).catch(function(){})}catch(e){ap()}}
 /* v149: gom chủ đề thành thư mục */
-var GRP=[['Cơ bản','🌿',['','sakura','kraft','dusk','lavender','ocean','sea']],['Kính','💎',['glass','glassrose','glassmint','glassviolet','glassamber','glassgraphite']],['Mèo','🐱',['catorange','catcalico','catwhite','catblack','catgray','catpink']],['Kẹo & bánh','🍰',['rbblue','rbpink','rblilac','rbcherry','candy','bakery','croffy','mmmatcha','mmhoney','mmberry','mmcocoa']],['Cổ tích & phép thuật','🪄',['lamb','lunar','moonmilk','mgirl','witch','fairy','crystal','veil','castle','coquette','organza']],['Dark Romantic','🖤',['nrswan','nrmirror','nrwilt','nrdusk','nrbswan','nrshatter','nrvoid','nrmoon']],['Y2K','🖥️',['y2kxp','y2kaqua','y2kbuddy','y2kwinamp','y2kflip','y2kcassette','y2kcyan','y2kmagenta','y2khud','y2kpipboy','y2kphosphor','y2krust','y2kconsole','y2kpico','y2kgothic','y2knotebook']],['Thiên Thần Sa Ngã','🪽',['ang1','ang2','ang3','ang4','ang5','ang6','ang7','ang8','ang9']],['Pastel Mộng Mơ','🎀',['pst01','pst02','pst03','pst04','pst05','pst06','pst07','pst08','pst09','pst10','pst11','pst12','pst13','pst14','pst15','pst16','pst17','pst18','pst19','pst20','pst21','pst22','pst23','pst24','pst25','pst26','pst27','pst28','pst29','pst30']]];
+var GRP=[['Cơ bản','🌿',['','sakura','kraft','dusk','lavender','ocean','sea']],['Kính','💎',['glass','glassrose','glassmint','glassviolet','glassamber','glassgraphite']],['Mèo','🐱',['catorange','catcalico','catwhite','catblack','catgray','catpink']],['Kẹo & bánh','🍰',['rbblue','rbpink','rblilac','rbcherry','candy','bakery','croffy','mmmatcha','mmhoney','mmberry','mmcocoa']],['Cổ tích & phép thuật','🪄',['lamb','lunar','moonmilk','mgirl','witch','fairy','crystal','veil','castle','coquette','organza']],['Dark Romantic','🖤',['nrswan','nrmirror','nrwilt','nrdusk','nrbswan','nrshatter','nrvoid','nrmoon']],['Y2K','🖥️',['y2kxp','y2kaqua','y2kbuddy','y2kwinamp','y2kflip','y2kcassette','y2kcyan','y2kmagenta','y2khud','y2kpipboy','y2kphosphor','y2krust','y2kconsole','y2kpico','y2kgothic','y2knotebook']],['Thiên Thần Sa Ngã','🪽',['ang1','ang2','ang3','ang4','ang5','ang6','ang7','ang8','ang9']],['Pastel Mộng Mơ','🎀',['pst01','pst02','pst03','pst04','pst05','pst06','pst07','pst08','pst09','pst10','pst11','pst12','pst13','pst14','pst15','pst16','pst17','pst18','pst19','pst20','pst21','pst22','pst23','pst24','pst25','pst26','pst27','pst28','pst29','pst30']],['Chrome Lỏng','🪩',['chrblue','chrsilver','chrglass','chrink','chrbead','chrveil','chrbow','chrfly','chrsmoke']]];
 function TILE(x){return '<button class="skx-t" data-sk="'+x.id+'" style="--t1:'+x.s1+';--t2:'+x.s2+';--ta:'+x.a+';--tp:'+x.pk+';--td:'+x.d+'"><i><em>'+x.e+'</em></i><b style="font-family:\''+x.f+'\',sans-serif">'+x.n+'</b></button>'}
 function FOLD(){var used={},out=GRP.map(function(g){var l=SK.filter(function(x){return g[2].indexOf(x.id)>=0});l.forEach(function(x){used[x.id]=1});return{n:g[1]+' '+g[0],l:l}}),rest=SK.filter(function(x){return!used[x.id]});if(rest.length)out.push({n:'✨ Khác',l:rest});return out.filter(function(g){return g.l.length})}
 function html(){return '<section id="skx" class="skx" data-dk="'+dk()+'"><div class="skx-hero"><i class="sun"></i><i class="h h1"></i><i class="h h2"></i><div class="fl"><span>🌷</span><span>🌼</span><span>🌹</span></div><div class="cap"><b id="skx-name"></b><small>Giao diện đang dùng</small></div></div>'
@@ -20856,7 +20912,7 @@ scene=function(fs){if(s.shk===0)return oS(fs);try{return shop(fs)}catch(e){conso
 /* ---------- giao diện chọn kiểu + hiển thị cấp mở khóa ---------- */
 {var st=document.createElement('style');st.textContent='.fshop{max-width:440px;margin-left:auto;margin-right:auto}.card:has(>.fshop){background:transparent;border-color:transparent;box-shadow:none}@media(max-width:480px){.card:has(>.fshop){background:var(--card);border-color:var(--ln)}}';document.head.appendChild(st)}
 function pick(){var n=s.shk===0?0:1,v=s.sv==1?1:0,b=function(on,oc,t){return'<button class="s '+(on?'on2':'')+'" onclick="'+oc+'">'+t+'</button>'};
- return'<div class=card><h3>Kiểu gian hàng</h3><div class=row style="justify-content:flex-start">'+b(n,'s.shk=1;R()','🌸 Tiệm hoa mới')+b(!n,'s.shk=0;R()','🛖 Gian hàng cũ')+'</div>'+(n?'<div class=sec>Quốc gia / phong cách</div><div class=row style="justify-content:flex-start;gap:4px">'+SN.map(function(t,i){return b((s.shn|0)==i,'s.shn='+i+';R()',t)}).join('')+'</div><div class=row style="justify-content:flex-start">'+b(!v,'s.sv=0;R()','🌳 Mặt tiền')+b(v,'s.sv=1;R()','🛋️ Bên trong')+'</div><p class=mut style="margin:2px 0 0">Mỗi quốc gia có kiểu cửa hàng, phong cảnh và nội thất riêng. Màu mái hiên và màu gỗ bên dưới chỉ áp dụng cho phong cách Mặc định. Nội thất tự xếp theo khu vực (sân trước / trong tiệm); bấm vào ảnh để vào/ra.</p>':'<p class=mut style="margin:2px 0 0">Các món nội thất mới chỉ hiện ở Tiệm hoa mới.</p>')+'</div>'}
+ return'<div class=card><h3>Kiểu gian hàng</h3><div class=row style="justify-content:flex-start">'+b(n,'s.shk=1;R()','🌸 Tiệm hoa mới')+b(!n,'s.shk=0;R()','🛖 Gian hàng cũ')+'</div>'+(n?'<div class=sec>Quốc gia / phong cách</div><div class=row style="justify-content:flex-start;gap:4px">'+SN.map(function(t,i){return b((s.shn|0)==i,'s.shn='+i+';R()',t)}).join('')+'</div><div class=row style="justify-content:flex-start">'+b(!v,'s.sv=0;R()','🌳 Mặt tiền')+b(v,'s.sv=1;R()','🛋️ Bên trong')+'</div><div class=row><span>🎵 Nhạc nền quốc gia<small class=mut style="display:block;font-size:.72rem;line-height:1.2">Việt Nam · Pháp · Trung/Đài/Hồng · Nhật · Hàn</small></span>'+b(s.shm!==0,'s.shm=s.shm===0?1:0;save();R()',s.shm!==0?'Bật':'Tắt')+'</div><p class=mut style="margin:2px 0 0">Mỗi quốc gia có kiểu cửa hàng, phong cảnh và nội thất riêng. Màu mái hiên và màu gỗ bên dưới chỉ áp dụng cho phong cách Mặc định. Nội thất tự xếp theo khu vực (sân trước / trong tiệm); bấm vào ảnh để vào/ra.</p>':'<p class=mut style="margin:2px 0 0">Các món nội thất mới chỉ hiện ở Tiệm hoa mới.</p>')+'</div>'}
 {var os=V.sty;V.sty=function(){var h=os(),i=h.indexOf('</svg></div>');return i<0?pick()+h:h.slice(0,i+12)+pick()+h.slice(i+12)}}
 {var of=V.furn;V.furn=function(){var h=of();Object.keys(NEW).forEach(function(k){h=h.split('<b>'+NEW[k][0]+'</b>').join('<b>'+NEW[k][0]+'</b> <span class=mut>· cấp '+NEW[k][2]+'</span>')});return h}}
 try{R()}catch(e){}
@@ -20881,7 +20937,7 @@ var MSP=function(){try{return !!(window.MS&&MS.playing)}catch(e){return false}};
 var vol=function(){var x=S();return x&&typeof x.vol=='number'?Math.min(1,Math.max(0,x.vol)):.5};
 var gv=function(){var v=vol();return v*v*1.9};
 /* bản nhạc cần phát (null nếu không có) */
-function key(){var x=S();if(!x||!x.mus||SCR()!='game'||x.shk===0)return null;if(window.__skinBgm&&window.__skinBgm.owns())return null;var k=MAP[x.shn|0];return k&&!failed[k]?k:null}
+function key(){var x=S();if(!x||!x.mus||SCR()!='game'||x.shk===0||x.shm===0)return null;if(window.__skinBgm&&window.__skinBgm.owns())return null;var k=MAP[x.shn|0];return k&&!failed[k]?k:null}
 function want(){return MSP()?null:key()}
 function init(){
  if(ctx)return ctx;
@@ -20935,7 +20991,7 @@ setInterval(check,300);
 document.addEventListener('input',function(e){var t=e.target;if(t&&t.matches&&t.matches('.nbvol input'))setTimeout(syncVol,0)},true);
 document.addEventListener('visibilitychange',function(){if(!ctx)return;if(document.hidden){try{ctx.suspend()}catch(e){}}else{ensure();check()}});
 addEventListener('pagehide',function(){try{ctx&&ctx.suspend()}catch(e){}});
-window.__shopBgm={owns:function(){return !!key()},cur:function(){return sess?sess.key:null}};
+window.__shopBgm={owns:function(){var x=S();return !!key()||!!(x&&x.shm===0&&x.mus&&SCR()=='game'&&x.shk!==0&&MAP[x.shn|0]&&!(window.__skinBgm&&window.__skinBgm.owns()))},cur:function(){return sess?sess.key:null}};
 })();
 </script>
 <style>
@@ -21183,14 +21239,18 @@ document.addEventListener('input',function(e){var t=e.target;if(t&&t.matches&&t.
 document.addEventListener('visibilitychange',function(){if(!ctx)return;if(document.hidden){try{ctx.suspend()}catch(e){}}else{ensure();check()}});
 addEventListener('pagehide',function(){try{ctx&&ctx.suspend()}catch(e){}});
 /* ---- nút bật/tắt trong Cài đặt ---- */
+var shopOn=function(){var x=S();return !!x&&x.shm!==0};
+var rowShop=function(){var o=shopOn();return '<div class="row nbshop"><span>🎵 Nhạc quốc gia<small style="display:block;opacity:.7;font-size:.72rem;line-height:1.2">Tiệm hoa mới: VN · Pháp · Trung · Nhật · Hàn</small></span><button class="s '+(o?'on2':'')+'" data-shm="1" aria-pressed="'+o+'">'+(o?'Bật':'Tắt')+'</button></div>'};
 var rowHtml=function(){var o=on();return '<div class="row nbskin"><span>🎵 Nhạc chủ đề<small style="display:block;opacity:.7;font-size:.72rem;line-height:1.2">Dark Romantic · Thiên Thần Sa Ngã</small></span><button class="s '+(o?'on2':'')+'" data-skm="1" aria-pressed="'+o+'">'+(o?'Bật':'Tắt')+'</button></div>'};
 function enhance(){var rows=document.querySelectorAll('#modal .row,#menu .row'),i,r,sp,p;
- for(i=0;i<rows.length;i++){r=rows[i];if(r.classList.contains('nbvol')||r.classList.contains('nbskin'))continue;sp=r.querySelector(':scope>span');
-  if(sp&&sp.textContent.trim()=='Nhạc nền'){p=r.parentNode;if(p.querySelector(':scope>.nbskin'))continue;var nx=r.nextElementSibling;(nx&&nx.classList.contains('nbvol')?nx:r).insertAdjacentHTML('afterend',rowHtml())}}}
-function paint(){var o=on();document.querySelectorAll('.nbskin button[data-skm]').forEach(function(b){b.classList.toggle('on2',o);b.textContent=o?'Bật':'Tắt';b.setAttribute('aria-pressed',o)})}
+ for(i=0;i<rows.length;i++){r=rows[i];if(r.classList.contains('nbvol')||r.classList.contains('nbskin')||r.classList.contains('nbshop'))continue;sp=r.querySelector(':scope>span');
+  if(sp&&sp.textContent.trim()=='Nhạc nền'){p=r.parentNode;if(p.querySelector(':scope>.nbskin'))continue;var nx=r.nextElementSibling;(nx&&nx.classList.contains('nbvol')?nx:r).insertAdjacentHTML('afterend',rowShop()+rowHtml())}}}
+function paint(){var o=on();document.querySelectorAll('.nbskin button[data-skm]').forEach(function(b){b.classList.toggle('on2',o);b.textContent=o?'Bật':'Tắt';b.setAttribute('aria-pressed',o)});var q=shopOn();document.querySelectorAll('.nbshop button[data-shm]').forEach(function(b){b.classList.toggle('on2',q);b.textContent=q?'Bật':'Tắt';b.setAttribute('aria-pressed',q)})}
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button[data-skm]');if(!b)return;var x=S();if(!x)return;
  x.skm=on()?0:1;try{save()}catch(er){}paint();unlock();setTimeout(check,30);
  try{toast(x.skm?'Đã bật nhạc chủ đề':'Đã tắt nhạc chủ đề')}catch(er){}},true);
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.nbshop button[data-shm]');if(!b)return;var x=S();if(!x)return;
+ x.shm=shopOn()?0:1;try{save()}catch(er){}paint();try{toast(x.shm?'Đã bật nhạc quốc gia':'Đã tắt nhạc quốc gia')}catch(er){}},true);
 var t=0,mo=new MutationObserver(function(){clearTimeout(t);t=setTimeout(enhance,40)});
 [document.getElementById('modal'),document.getElementById('menu')].forEach(function(n){if(n)mo.observe(n,{childList:true,subtree:true})});
 enhance();

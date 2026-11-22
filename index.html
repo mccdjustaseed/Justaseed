@@ -20369,7 +20369,7 @@ build();setTimeout(build,800);
 }catch(e){console.warn('angel-deco',e)}})();
 </script>
 <script id="flo-shop">
-/* ===== Tiệm hoa mới: mặt tiền + bên trong, nhiều nội thất mới. s.shk===0 → gian hàng cũ; s.sv==1 → xem bên trong ===== */
+/* ===== Tiệm hoa mới v2: mỗi quốc gia một kiểu cửa hàng riêng + phong cảnh nền + nội thất bố trí theo khu vực. s.shk===0 → gian hàng cũ; s.sv==1 → xem bên trong ===== */
 (function(){try{
 if(window.__flo)return;window.__flo=1;
 var oS=scene;
@@ -20424,147 +20424,407 @@ function env(){var se=0,D=!!s.dark,wx=s.wx||'sun',k=window.__skinC&&window.__ski
   if(wx=='rain'){c0=mx(c0,'#7f8ea0',.62);c1=mx(c1,'#a3afbb',.55);g=mx(g,'#6f8478',.3)}
   if(D){c0=mx(c0,'#0c1a2a',.65);c1=mx(c1,'#102338',.6);g=mx(g,'#0b1f14',.55)}}
  return{D:D,wx:wx,se:se,c0:c0,c1:c1,g:g}}
-var own=function(t){return FK.filter(function(k){return s.fo&&s.fo[k]==1&&IT[k]&&IT[k].t==t})};
-function lay(v,rows,w,D){var ex=v=='e'?'i':'e',L2=own('f').filter(function(k){return IT[k].v!=ex}),out=rows.map(function(){return''}),r=0,rw=rows[0],x=rw.x0,i,it,ww,ok;
- L2.sort(function(p,q){return(IT[p].v==v?0:1)-(IT[q].v==v?0:1)});
- for(i=0;i<L2.length;i++){it=IT[L2[i]];ok=0;
-  while(rw){ww=it.w*rw.sc;if(x+ww>rw.x1){r++;rw=rows[r];if(rw)x=rw.x0;continue}if(rw.sk&&x+ww>rw.sk[0]&&x<rw.sk[1]){x=rw.sk[1];continue}ok=1;break}
-  if(!ok)break;out[r]+='<g transform="translate('+(x+ww/2)+' '+rw.by+') scale('+rw.sc+')">'+it.g(0,0,w,D)+'</g>';x+=ww+4}
- return out}
-function wall(slots,w,D){var o='';own('w').slice(0,slots.length).forEach(function(k,i){o+=IT[k].g(slots[i][0],slots[i][1],w,D)});return o}
-function ceil(pos,w,D){var o='';Object.keys(pos).forEach(function(k){if(s.fo&&s.fo[k]==1&&IT[k])pos[k].forEach(function(p){o+=IT[k].g(p[0],p[1],w,D)})});return o}
-var spark=function(){return[[84,40],[316,46],[40,120],[362,128]].map(function(p,i){return'<path class="tw" d="M'+p[0]+' '+p[1]+'l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="#fff3a0" style="animation-delay:'+i*.5+'s"/>'}).join('')};
-/* ---------- phong cách theo quốc gia (s.shn: 0 mặc định, 1..8) ---------- */
-var ln=function(x,y,c,h){return pa('M'+x+' '+(y-8)+'v8','','#6b4428',1)+el(x,y+8,6,h||8,c)+pa('M'+(x-3.5)+' '+(y+2)+'h7M'+(x-3.5)+' '+(y+14)+'h7','','#ffd166',1)+pa('M'+x+' '+(y+16)+'v5','','#ffd166',1.4)},
+/* ---------- tiện ích vẽ chung (v2) ---------- */
+hx=function(h){if(h.length==4)h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];return[1,3,5].map(function(i){return parseInt(h.slice(i,i+2),16)})};
+var R2=function(n,f){var o='',i;for(i=0;i<n;i++)o+=f(i);return o},
+tx=function(x,y,t,z,f,e){return'<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+z+'" fill="'+f+'" '+(e||'')+'>'+t+'</text>'},
+gg=function(x,y,k,inner){return'<g transform="translate('+x+' '+y+') scale('+k+')">'+inner+'</g>'},
+zm=function(k,inner){return'<g transform="translate(200 252) scale('+k+') translate(-200 -252)">'+inner+'</g>'},
+awn=function(x,y,w,h,c1,c2,n){var sw=w/n;return R2(n,function(i){return rc(x+i*sw,y,sw+.4,h,i%2?c2:c1)+el(x+i*sw+sw/2,y+h,sw/2,3.2,i%2?c2:c1)})+rc(x-1,y-2,w+2,3,mx(c1,'#000',.2),1)},
+fam=function(){try{return SFN[s.sf||0]||'Baloo 2'}catch(e){return'Baloo 2'}},
+ln=function(x,y,c,h){return pa('M'+x+' '+(y-8)+'v8','','#6b4428',1)+el(x,y+8,6,h||8,c)+pa('M'+(x-3.5)+' '+(y+2)+'h7M'+(x-3.5)+' '+(y+14)+'h7','','#ffd166',1)+pa('M'+x+' '+(y+16)+'v5','','#ffd166',1.4)},
 nn=function(x,y,t,c,f){return'<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+f+'" font-weight="700" fill="'+c+'" style="filter:drop-shadow(0 0 3px '+c+')">'+t+'</text>'},
 vn=function(x,y,t,c,f){return t.split('').map(function(ch,i){return nn(x,y+i*(f+3),ch,c,f)}).join('')},
-curve=function(c){return pa('M22 72Q56 70 70 28H330Q344 70 378 72Q346 86 330 78H70Q54 86 22 72z',c)+pa('M70 28H330','',mx(c,'#fff',.3),2.4)},
-flat=function(c){return rc(46,36,308,40,c,3)+rc(42,30,316,8,mx(c,'#fff',.22),2)+rc(300,8,34,24,mx(c,'#000',.1),3)+rc(306,2,22,8,mx(c,'#000',.2),2)},
-rows=function(n,f){var o='',i;for(i=0;i<n;i++)o+=f(i);return o};
-var TS=[null,
-{n:'🇻🇳 Việt Nam',wl:'#f1cf6b',rf:'#b5543a',iw:'#f4dc8a',fl:'#c9955c',w:['#8a5a3a','#6b4428','#4a2e1a','#d9b98a'],a:['#3f8a5a','#f6e7b0'],sh:'#3f8a5a',
- aw:function(){return rc(46,106,308,7,'#6b4428',3)+rc(46,113,308,18,'#d9b98a')+rows(31,function(i){return pa('M'+(50+i*10)+' 113v18','','#b89a6a',1)})+rows(14,function(i){return ci(52+i*22,110+(i%3)*3,6,['#d6246e','#ff5aa0','#b0185a'][i%3])+ci(58+i*22,122+(i%2)*4,4.5,'#c01d63')+ci(46+i*22,118,3,'#4a9a5a')})},
- fr:function(){return[96,150,250,304].map(function(x,i){return ln(x,126,['#e0446f','#ffb347','#4fb06f','#ff6b4a'][i])}).join('')},
- fg:function(){return pa('M12 289L30 256L48 289z','#e8d28a')+pa('M12 289Q30 279 48 289','','#c9a85a',1.5)+pa('M30 256V289M21 273L30 289M39 273L30 289','','#c9a85a',.8)},
- ib:function(){return[60,160,240,340].map(function(x,i){return ln(x,18,['#e0446f','#ffb347','#4fb06f','#ff6b4a'][i],9)}).join('')}},
-{n:'🇫🇷 Pháp',wl:'#f4eedd',rf:'#4b5563',iw:'#f5efe0',fl:'#d9c7a5',w:['#3c4a5a','#2b3744','#1e2832','#e8e2d0'],a:['#2f5d4a','#f7f1e1'],sh:'#7ea08a',
- bk:function(){return pa('M286 192Q300 120 306 72L308 34L310 72Q316 120 332 192','','#8a99ad',2.4)+pa('M296 140H320M300 112H316M303 90H313M290 172H326','','#8a99ad',1.6)+pa('M298 192Q308 150 318 192','','#8a99ad',1.6)},
- fr:function(c){return[150,250].map(function(x){return ci(x,178,11,'#ffe9a0',.3)+rc(x-2,174,4,9,'#2b3744',1)+ci(x,172,3.2,'#fff3b0')}).join('')},
- fg:function(){return el(364,262,13,3,'#2b3744')+rc(363,262,2,26,'#2b3744')+el(364,289,8,2,'#2b3744')+pa('M346 289v-14M346 275h9M346 262v13M382 289v-14M382 275h-9M382 262v13','','#2b3744',2)+ci(364,259,3,'#f2c14e')}},
-{n:'🇬🇧 Anh',wl:'#b5523b',rf:'#3b3f4a',iw:'#e9dcc6',fl:'#8a5a3a',w:['#2f4a3a','#223a2c','#16281e','#f5f1e6'],a:['#2f4a3a','#f5f1e6'],
- fc:function(){return rows(21,function(i){var d='M56 '+(82+i*7)+'H344',k;for(k=0;k<13;k++)d+='M'+(62+k*24+(i%2)*12)+' '+(75+i*7)+'v7';return pa(d,'',mx('#b5523b','#fff',.28),.8,.55)})},
- fr:function(){return[150,250].map(function(x){return pa('M'+x+' 128v8','','#444',1)+el(x,141,10,5.5,'#6b4428')+ci(x-5,136,3.6,'#ff8fab')+ci(x+1,134,3.6,'#ffd166')+ci(x+6,137,3.2,'#fff')+ci(x-1,138,3,'#58ad69')}).join('')},
- fg:function(){var x=30,y=289;return sh(x,y,16)+rc(x-13,y-58,26,58,'#d9232d',2)+pa('M'+(x-13)+' '+(y-58)+'Q'+x+' '+(y-70)+' '+(x+13)+' '+(y-58)+'z','#d9232d')+rc(x-10,y-52,20,40,'#ffe9a0',1,.85)+pa('M'+x+' '+(y-52)+'V'+(y-12)+'M'+(x-10)+' '+(y-39)+'H'+(x+10)+'M'+(x-10)+' '+(y-26)+'H'+(x+10),'','#d9232d',1.4)}},
-{n:'🇨🇳 Trung Quốc',wl:'#b3202a',rf:'#d4a017',rt:curve,sq:1,iw:'#a31d27',fl:'#6b3a2a',w:['#8c1d1d','#6b1414','#4a0e0e','#f2c14e'],a:['#8c1d1d','#f2c14e'],
- aw:function(){return rc(46,106,308,7,'#4a0e0e',3)+rc(46,113,308,12,'#d4a017')+rows(31,function(i){return rc(48+i*10,115,8,8,'#b3202a',1)})},
- lt:function(x){return pa('M'+(x+5)+' 186L'+(x+39)+' 155L'+(x+73)+' 186L'+(x+39)+' 217z','','#6b1414',1.4)},
- bk:function(){return rows(3,function(i){return pa('M'+(322+i*4)+' '+(172-i*20)+'l'+(14-i*4)+'-9 '+(14-i*4)+' 9z','#7a4a3a')+rc(326+i*4,172-i*20,6+(2-i)*8,10,'#a35a4a')})},
- fr:function(){return[90,130,170,230,270,310].map(function(x){return ln(x,126,'#e02a2a')}).join('')+ci(200,134,5,'#e02a2a')+pa('M200 139v10','','#e02a2a',1.4)},
- fg:function(){var x=28,y=289;return sh(x,y,12)+pa('M'+(x-8)+' '+(y-16)+'h16l-2 16h-12z','#c0392b')+rc(x-9,y-18,18,3,'#f2c14e',1.5)+ci(x,y-30,13,'#58ad69')+[[-6,-34],[5,-28],[-2,-24],[8,-36]].map(function(p){return ci(x+p[0],y+p[1],2.6,'#ff9f1c')}).join('')},
- ib:function(){return[60,120,280,340].map(function(x,i){return ln(x,16,'#e02a2a',9)}).join('')}},
-{n:'🇯🇵 Nhật Bản',wl:'#e7dcc4',rf:'#5d6670',rt:curve,sq:1,iw:'#efe4cc',fl:'#c9c58a',w:['#4a3426','#33221a','#22160f','#e8d8b8'],a:['#2d4a8a','#fff'],
- aw:function(){return rc(46,106,308,7,'#22160f',3)+rc(46,113,308,6,'#33221a')+rows(3,function(i){return rc(170+i*20,119,19,36,'#2d4a8a',2)+ci(179.5+i*20,136,5,'#fff',.85)})},
- lt:function(x){return pa('M'+(x+28)+' 155v62M'+(x+51)+' 155v62M'+(x+5)+' 176h68M'+(x+5)+' 197h68','','#4a3426',1.4)},
- bk:function(){return pa('M110 192L200 92L290 192z','#9fb4cf')+pa('M177 117L200 92L223 117L212 111L200 121L188 111z','#fff')},
- fr:function(){return ln(150,128,'#e02a2a')+ln(250,128,'#e02a2a')},
- fg:function(){var x=30,y=289;return sh(x,y,14)+rc(x-9,y-6,18,6,'#9a9a9a',1)+rc(x-3,y-24,6,18,'#aaa')+rc(x-10,y-32,20,8,'#9a9a9a',2)+pa('M'+(x-13)+' '+(y-32)+'L'+x+' '+(y-42)+'L'+(x+13)+' '+(y-32)+'z','#8a8a8a')+ci(22,112,26,'#ffc2d4')+ci(34,128,17,'#ffd6e2')},
- ib:function(c){return pa('M0 256H400M100 224V290M200 224V290M300 224V290','',mx('#c9c58a','#000',.25),1.6)+ln(60,18,'#e02a2a',9)+ln(340,18,'#e02a2a',9)}},
-{n:'🇰🇷 Hàn Quốc',wl:'#f6f1e7',rf:'#4a4f57',rt:curve,sq:1,iw:'#f3ead8',fl:'#d8a95f',w:['#7a4e32','#5a3622','#3a2214','#e3c9a0'],a:['#2f7d5a','#d9534f'],
- aw:function(){return rc(46,106,308,7,'#3a2214',3)+rows(28,function(i){return rc(46+i*11,113,11,12,['#2f7d5a','#d9534f','#3b6fe0','#f2c14e'][i%4])})+rc(46,125,308,3,'#3a2214')},
- lt:function(x){return pa('M'+(x+5)+' 170H'+(x+73)+'M'+(x+5)+' 202H'+(x+73)+'M'+(x+22)+' 155V217M'+(x+39)+' 155V217M'+(x+56)+' 155V217','','#7a4e32',1.3)},
- bk:function(){return rc(78,70,3,122,'#8a99ad')+ci(79.5,104,7,'#8a99ad')+rc(72,60,15,8,'#8a99ad',2)},
- fr:function(){return ln(150,128,'#4fa3d9')+ln(250,128,'#ff8fab')},
- fg:function(){return[26,44,62].map(function(x,i){var y=289,k=i==1?1.15:1;return pa('M'+(x-8*k)+' '+(y-2)+'Q'+(x-12*k)+' '+(y-14*k)+' '+(x-6*k)+' '+(y-20*k)+'h'+12*k+'Q'+(x+12*k)+' '+(y-14*k)+' '+(x+8*k)+' '+(y-2)+'z','#8a5a3a')+rc(x-7*k,y-23*k,14*k,3,'#6b4428',1)}).join('')},
- ib:function(){return ln(80,18,'#4fa3d9',9)+ln(320,18,'#ff8fab',9)}},
-{n:'🇹🇼 Đài Loan',wl:'#d8d3c7',rf:'#8a8f98',rt:flat,iw:'#e8dfcf',fl:'#b9d3cf',w:['#2f6f5a','#1f4f40','#143528','#f5f1e6'],a:['#3b82c4','#3b82c4'],
- aw:function(){return rc(46,106,308,7,'#2a5f94',2)+rc(46,113,308,16,'#3b82c4')+rows(62,function(i){return pa('M'+(48+i*5)+' 113v16','','#2a5f94',1)})},
- fc:function(){return rows(14,function(i){return pa('M'+(66+i*20)+' 76V232','',mx('#d8d3c7','#000',.07),1)})},
- fr:function(){return rows(9,function(i){return ln(70+i*32,124,'#e02a2a',7)})+rc(338,78,20,76,'#1b1b22',3,0,'#ff4fa0')+vn(348,98,'花店','#ff7ab8',13)},
- fg:function(){var y=289;return sh(330,y,26)+ci(312,y-6,6,'#333')+ci(348,y-6,6,'#333')+pa('M310 '+(y-9)+'Q316 '+(y-27)+' 330 '+(y-23)+'L346 '+(y-23)+'L350 '+(y-9)+'z','#ffd166')+rc(320,y-32,18,5,'#444',2)+pa('M345 '+(y-23)+'L342 '+(y-37)+'h9','','#444',2)},
- ib:function(){return rows(9,function(i){return ln(30+i*42,16,'#e02a2a',7)})+nn(200,170,'花店','#ff7ab8',11)}},
-{n:'🇭🇰 Hồng Kông',wl:'#c4bfae',rf:'#6f7680',rt:flat,iw:'#d8d2c0',fl:'#aeb4b8',w:['#3a3f4a','#2a2e37','#1a1d24','#d6d0c0'],a:['#2a2e37','#1de9ff'],
- aw:function(){return rc(46,106,308,7,'#1a1d24',2)+rc(46,113,308,14,'#2a2e37')+pa('M46 128H354','','#1de9ff',7,.25)+pa('M46 128H354','','#1de9ff',2.4)},
- fc:function(){return rows(14,function(i){return pa('M'+(66+i*20)+' 76V232','',mx('#c4bfae','#000',.08),1)})+[72,302].map(function(x){return rc(x,80,28,16,'#9aa0a8',2)+ci(x+14,88,5,'#6f7680')}).join('')},
- bk:function(c){return[[40,120,30],[75,100,26],[110,130,28],[150,90,24],[290,110,28],[330,96,26],[366,124,28]].map(function(p){return rc(p[0],p[1],p[2],192-p[1],mx(c.c1,'#556677',.4))}).join('')},
- fr:function(){return rc(30,76,24,84,'#1b1b22',3,0,'#1de9ff')+vn(42,95,'花店','#1de9ff',14)+rc(346,76,24,84,'#1b1b22',3,0,'#ff4fa0')+vn(358,95,'鮮花','#ff7ab8',14)},
- fg:function(){var y=289;return sh(340,y,34)+rc(310,y-27,64,18,'#d9232d',6)+rc(320,y-39,40,14,'#d9232d',6)+rc(320,y-41,40,4,'#cfd3d8',2)+rc(324,y-36,14,9,'#bfe9fb',1)+rc(342,y-36,14,9,'#bfe9fb',1)+ci(324,y-6,7,'#222')+ci(362,y-6,7,'#222')},
- ib:function(){return rc(120,16,160,4,'#e8f7ff',2,.9)+nn(200,170,'花店','#1de9ff',11)}}
-];
-var SN=['🌸 Mặc định'].concat(TS.slice(1).map(function(t){return t.n}));
-function TH(){var i=s.shn|0;return i>0&&TS[i]?TS[i]:null}
-/* ---------- mặt tiền ---------- */
-function EXT(c,pool,w,a){var T=TH();if(T){w=T.w;a=T.a}var D=c.D,lv=s.sl||0,o='',i,x,wl=T?(D?mx(T.wl,'#1a2238',.4):T.wl):mx(a[0],'#fffdf5',D?.5:.82),roof=T?T.rf:mx(a[0],'#4a3a3a',.5),trim=w[3],gl=D?'#ffd27a':'#fff0d4',sw=D?'#4a4e5a':'#e4dccd',nm=String(s.name||'Tiệm hoa'),gd=lv>=3?'#ffc83d':w[2],cc=D?'#4a5a78':c.wx=='sun'?'#fff':c.wx=='rain'?'#8e9bab':'#c9d0d7';
- o+=rc(0,0,400,290,'url(#flsk)');
- if(D)o+=[[60,20],[120,40],[200,16],[260,50],[300,20],[30,60]].map(function(p,i){return'<circle class="tw" cx="'+p[0]+'" cy="'+p[1]+'" r="1.4" fill="#fff" style="animation-delay:'+i*.4+'s"/>'}).join('')+ci(342,36,13,'#f4f1d0')+ci(342,36,34,'#dfe7ff',.18);else o+=ci(342,36,40,'#ffe9a0',.35)+ci(342,36,13,'#ffe9a0');
+/* bảng hiệu có tên tiệm (tự co chữ nếu dài) */
+sgn=function(x,y,w,h,bg,bd,fg,fs,X,r,fm){var L=X.nm.length,t=L*fs*.6>w-14;return rc(x,y,w,h,bg,r==null?Math.min(8,h/3):r)+(bd?rc(x+2,y+2,w-4,h-4,'none',r==null?Math.min(6,h/3):Math.max(0,r-2),0,bd):'')+'<text x="'+(x+w/2)+'" y="'+(y+h/2+fs*.34)+'" text-anchor="middle" font-family="'+(fm||X.fam)+'" font-size="'+fs+'" fill="'+fg+'"'+(t?' textLength="'+(w-16)+'" lengthAdjust="spacingAndGlyphs"':'')+'>'+esc(X.nm)+'</text>'},
+opn=function(x,y,X){return rc(x,y,30,12,X.op?'#4fb06f':'#d9534f',4)+tx(x+15,y+8.8,X.op?'OPEN':'CLOSED',X.op?7.5:6.4,'#fff','font-weight="700"')},
+/* cửa sổ trưng bày hoa */
+disp=function(X,x,y,w,h,j,fr,gl){var n=Math.max(1,Math.floor((w-6)/22)),o=rc(x,y,w,h,fr,3)+rc(x+3,y+3,w-6,h-6,gl||X.gl,2),i;for(i=0;i<n;i++)o+=sp(X.pool[(j+i)%X.pool.length],x+3+i*((w-6)/n)+((w-6)/n-24)/2,y+h-29,24);return o+rc(x+3,y+h-6,w-6,3,fr,1)+pa('M'+(x+w*.2)+' '+(y+h-4)+'L'+(x+w*.45)+' '+(y+4),'','#fff',2,.45)},
+/* chậu hoa trước tường */
+bkt=function(X,xs,y){return xs.map(function(bx,j){return sp(X.pool[j%X.pool.length],bx-17,y-26,30)+sp(X.pool[(j+1)%X.pool.length],bx-3,y-22,28)+pa('M'+(bx-12)+' '+y+'h24l-3 18h-18z','#aebdc4')+rc(bx-13,y-2,26,3.5,'#cfdbe0',1.5)}).join('')};
+var own=function(t){return FK.filter(function(k){return s.fo&&s.fo[k]==1&&IT[k]&&IT[k].t==t})};
+var spark=function(){return[[84,40],[316,46],[40,120],[362,128]].map(function(p,i){return'<path class="tw" d="M'+p[0]+' '+p[1]+'l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="#fff3a0" style="animation-delay:'+i*.5+'s"/>'}).join('')};
+function ceil(pos,w,D){var o='';Object.keys(pos).forEach(function(k){if(s.fo&&s.fo[k]==1&&IT[k])pos[k].forEach(function(p){o+=IT[k].g(p[0],p[1],w,D)})});return o}
+/* ---------- bố trí nội thất theo vùng (logic) ----------
+   cổng vòm: chính giữa lối vào · đèn đường/cây: ngoài rìa · đài phun, xe, sofa, kệ: sân/góc · ghế, bàn, biển: sát lối đi · chậu, thỏ: chỗ trống */
+var ROLE={cong:'gate',den2:'edge',cay:'edge',phun:'yard',xe:'yard',xedap:'yard',sofa:'yard',kehoa:'yard',ghe:'wall',ban:'wall',bien:'wall',chau:'any',tho:'any'},
+SIDE={den2:'L',cay:'R',phun:'L',xe:'R',xedap:'R',sofa:'L',kehoa:'R',ghe:'L',ban:'R',bien:'L',chau:'R',tho:'L'},
+ORD={edge:0,gate:0,yard:1,wall:2,any:3};
+function place(v,Z,w,D){var ks=own('f').filter(function(k){return v=='e'?IT[k].v!='i':IT[k].v!='e'}),zs={L:[],R:[]},ro=Z.rows.map(function(){return[]}),gate='';
+ Z.rows.forEach(function(){zs.L.push({lo:Z.L[0],hi:Z.L[1]});zs.R.push({lo:Z.R[0],hi:Z.R[1]})});
+ ks.sort(function(p,q){return ORD[ROLE[p]||'any']-ORD[ROLE[q]||'any']});
+ ks.forEach(function(k){var it=IT[k],r=ROLE[k]||'any',pf=SIDE[k]||'L',ot=pf=='L'?'R':'L',cd=[],i,c,z,ww,inner,lo;
+  if(r=='gate'){if(Z.gate!=null)gate=gg(Z.gate,Z.gy,1,it.g(0,0,w,D));return}
+  for(i=0;i<Z.rows.length;i++){cd.push([pf,i]);cd.push([ot,i])}
+  for(i=0;i<cd.length;i++){c=cd[i];z=zs[c[0]][c[1]];ww=it.w*Z.rows[c[1]].sc;if(z.hi-z.lo<ww)continue;
+   inner=r=='wall';lo=c[0]=='L'?!inner:inner;
+   if(lo){ro[c[1]].push({x:z.lo+ww/2,k:k});z.lo+=ww+3}else{ro[c[1]].push({x:z.hi-ww/2,k:k});z.hi-=ww+3}
+   break}});
+ var o='',rs=[],r,t;for(r=Z.rows.length-1;r>=0;r--){t='';ro[r].sort(function(a,b){return a.x-b.x}).forEach(function(q){t+=gg(q.x.toFixed(1),Z.rows[r].by,Z.rows[r].sc,IT[q.k].g(0,0,w,D))});rs[r]=t;o+=t}
+ return{b:gate,f:o,r:rs}}
+var WPF={tranh:[2,3,0,1],dh:[1,0,3,2],guong:[3,2,1,0],neon:[4,5],chim:[5,4,3,2],keo:[5,4,2,3]};
+function wallP(sl,w,D){var used={},o='';own('w').forEach(function(k){var ps=(WPF[k]||[]).concat(sl.map(function(_,i){return i})),i,j;for(j=0;j<ps.length;j++){i=ps[j];if(i<sl.length&&!used[i]){used[i]=1;o+=IT[k].g(sl[i][0],sl[i][1],w,D);break}}});return o}
+
+/* ---------- trời, thời tiết, mặt tiền ---------- */
+var STARS=[[60,20],[120,40],[200,16],[260,50],[300,20],[30,60],[160,64],[230,30],[380,70],[18,34],[90,76],[330,60],[210,70],[140,14]];
+function sky(X){var c=X.c,D=X.D,o=rc(0,0,400,290,'url(#flsk)'),cc=X.cc;
+ if(D)o+=STARS.map(function(p,i){return'<circle class="tw" cx="'+p[0]+'" cy="'+p[1]+'" r="1.4" fill="#fff" style="animation-delay:'+i*.4+'s"/>'}).join('')+ci(342,36,13,'#f4f1d0')+ci(342,36,34,'#dfe7ff',.18);
+ else if(c.wx!='rain')o+=ci(342,36,40,'#ffe9a0',c.wx=='cloud'?.18:.35)+ci(342,36,13,'#ffe9a0',c.wx=='cloud'?.6:0);
  o+='<g class="cl" opacity=".9">'+el(70,32,30,11,cc,.85)+el(92,26,20,10,cc,.85)+'</g><g class="cl d2" opacity=".85">'+el(250,48,28,10,cc,.8)+el(270,42,18,9,cc,.8)+'</g>';
- o+=(T&&T.bk?T.bk(c):'');o+=pa('M0 190Q70 140 150 172T320 150T400 172V290H0z',mx(c.g,'#fff',.22))+pa('M0 210Q100 176 200 200T400 190V290H0z',c.g);
+ if(c.wx=='rain')o+='<g class="cl d2" opacity=".8">'+el(170,22,34,12,cc,.9)+el(330,30,30,11,cc,.9)+'</g>';
+ return o}
+function fx(X){var c=X.c,o='',n,rn,i,x,T=X.T,pc=T&&T.pc||'#ffb6c9';
+ if(c.wx=='rain'||c.se==3||c.se==2||(c.se==0&&c.wx!='cloud')){rn=c.wx=='rain';n=rn?26:c.se==3?24:c.se==2?9:12;
+  for(i=0;i<n;i++){x=Math.round(rr(i+1)*400);o+=rn?'<line class="xrn" x1="'+x+'" y1="-10" x2="'+(x-3)+'" y2="2" stroke="#d4e6f7" stroke-width="1.2" opacity=".75" style="animation-duration:'+(.55+rr(i+9)*.5).toFixed(2)+'s;animation-delay:-'+(rr(i+3)*1.2).toFixed(2)+'s"/>':'<circle class="xsn" cx="'+x+'" cy="-6" r="'+(1.2+rr(i+7)*1.4).toFixed(1)+'" fill="'+(c.se==3?'#fff':c.se==2?['#e8913a','#d9622b','#f2c14e'][i%3]:pc)+'" opacity=".9" style="animation-duration:'+(5+rr(i+4)*5).toFixed(1)+'s;animation-delay:-'+(rr(i+2)*8).toFixed(1)+'s"/>'}}
+ return o}
+var walk=function(X,col,lines){var D=X.D,k=D?mx(col,'#1a2238',.45):col;return rc(0,252,400,38,k)+rc(0,252,400,3,mx(k,'#000',.14))+R2(20,function(i){return pa('M'+(i*22)+' 262v28M'+(i*22+11)+' 276v14','',mx(k,'#000',.08),1)})+pa('M0 276H400','',mx(k,'#000',.08),1)},
+bunt=function(x0,x1,y,sag,sk){var n=Math.round((x1-x0)/24),m=(x0+x1)/2,h=(x1-x0)/2;return R2(n,function(i){var x=x0+(i+.5)*(x1-x0)/n,yy=y+sag*(1-Math.pow((x-m)/h,2));if(sk&&x>sk[0]&&x<sk[1])return'';return pa('M'+(x-5)+' '+yy.toFixed(1)+'h10l-5 10z',['#ff8fab','#ffd166','#8fd3ff','#b7e4a8'][i%4])})},
+/* bụi hoa giấy / cành hoa rủ */
+bgv=function(X,x,y,r,cols){cols=cols||['#d6246e','#ff5aa0','#b0185a'];return ci(x-r*.5,y,r*.7,X.dm('#4a9a5a'))+ci(x+r*.5,y+1,r*.65,X.dm('#3f8a5a'))+R2(7,function(i){return ci(x-r+i*r*.3,y-2+((i%3)-1)*r*.45,r*.34,cols[i%cols.length])})};
+function mkX(c,pool,w,a){var T=TH(),D=c.D;return{c:c,pool:pool,w:T?T.w:w,a:T?T.a:a,D:D,T:T,lv:s.sl||0,nm:String(s.name||'Tiệm hoa'),fam:fam(),dm:function(k){return D?mx(k,'#1a2238',.42):k},gl:D?'#ffd27a':'#fff0d4',wg:D?'#ffd27a':'#cfeaf3',op:s.ph=='open',gd:(s.sl||0)>=3?'#ffc83d':null,cc:D?'#4a5a78':c.wx=='sun'?'#fff':c.wx=='rain'?'#8e9bab':'#c9d0d7'}}
+function EXT(c,pool,w,a){var T=TH(),D=c.D,X=mkX(c,pool,w,a),o=sky(X),Z=T&&T.zn||{L:[6,148],R:[252,394],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:200,gy:289},P,K=T||DEF;
+ o+=T?T.ext(X):extDef(X);
+ o+=wallP(K.ws,X.w,D)+ceil(K.hg,X.w,D);if(s.fo&&s.fo.den==1)o+=swag.apply(null,K.sw);
+ if(s.fo&&s.fo.tham==1)o+=K.tm;
+ if(X.lv>=2&&K.bn)o+=bunt(K.bn[0],K.bn[1],K.bn[2],K.bn[3],K.bn[4]);
+ P=place('e',Z,X.w,D);o+=P.b+P.f;o+=(T&&T.fg?T.fg(X):'');
+ if(X.lv>=4)o+=spark();
+ return o+fx(X)}
+var DEF={ws:[[152,196],[248,196]],hg:{long:[[68,122],[332,122]],gio:[[150,134]]},sw:[60,130,200,162,340,130],tm:pa('M168 262h64l9 26h-82z','#d9534f')+pa('M174 266h52l6 18h-64z','','#fff',1,.7),bn:[62,338,76,20,[104,296]]};
+function extDef(X){var c=X.c,D=X.D,w=X.w,a=X.a,lv=X.lv,pool=X.pool,o='',i,x,wl=mx(a[0],'#fffdf5',D?.5:.82),roof=mx(a[0],'#4a3a3a',.5),trim=w[3],gl=X.gl,sw=D?'#4a4e5a':'#e4dccd',gd=X.gd||w[2],nm=X.nm;
+ o+=pa('M0 190Q70 140 150 172T320 150T400 172V290H0z',mx(c.g,'#fff',.22))+pa('M0 210Q100 176 200 200T400 190V290H0z',c.g);
  [22,378].forEach(function(tx){o+=rc(tx-3,128,6,110,'#8a5a30')+ci(tx,112,26,mx(c.g,'#1b4a2a',.3))+ci(tx+(tx<200?10:-10),126,17,mx(c.g,'#1b4a2a',.4))});
- /* tòa nhà */
- o+=(T&&T.rt?T.rt(roof):pa('M42 74L62 22H338L358 74z',roof))+pa('M50 52H350M46 63H354','',mx(roof,'#000',.25),1)+(T&&T.rt?'':rc(56,17,288,8,mx(roof,'#fff',.18),4))+(lv>=4?rc(42,72,316,3,'#ffc83d'):'');
+ o+=pa('M42 74L62 22H338L358 74z',roof)+pa('M50 52H350M46 63H354','',mx(roof,'#000',.25),1)+rc(56,17,288,8,mx(roof,'#fff',.18),4)+(lv>=4?rc(42,72,316,3,'#ffc83d'):'');
  for(i=0;i<14;i++)o+=pa('M'+(70+i*20)+' 26v26M'+(60+i*20)+' 52v11','',mx(roof,'#000',.18),1);
  o+=rc(56,74,288,178,wl)+rc(56,74,10,178,trim)+rc(334,74,10,178,trim)+rc(56,232,288,20,mx(w[2],'#fff',.28));
  for(i=0;i<12;i++)o+=pa('M'+(64+i*24)+' 232v10M'+(76+i*24)+' 242v10','',mx(w[2],'#fff',.1),1);
- o+=pa('M56 232H344M56 242H344','',mx(w[2],'#fff',.1),1);o+=(T&&T.fc?T.fc(c,w):'');
- o+=wall([[152,196],[248,196]],w,D);
- /* biển hiệu */
- o+=rc(110,76,180,30,w[1],9,0,gd)+rc(115,80,170,22,mx(w[1],'#fff',.12),6)+'<text x="200" y="97" text-anchor="middle" font-family="Baloo 2" font-size="15" fill="#fff"'+(nm.length>14?' textLength="150" lengthAdjust="spacingAndGlyphs"':'')+'>'+esc(nm)+'</text>'+ci(116,92,4.5,'#ff8fab')+ci(123,99,3.5,'#ffd166')+ci(284,92,4.5,'#ff8fab')+ci(277,99,3.5,'#ffd166');
- if(lv>=4)o+=spark();
- /* cửa sổ */
- [[62,0],[260,3]].forEach(function(q){var x=q[0],j=q[1];o+=rc(x,150,78,72,w[0],5)+rc(x+5,155,68,62,gl,2)+sp(pool[j%pool.length],x+9,190,24)+sp(pool[(j+1)%pool.length],x+31,186,24)+sp(pool[(j+2)%pool.length],x+51,190,22)+rc(x+5,212,68,3,w[1],1)+pa('M'+(x+39)+' 155V217M'+(x+5)+' 186H'+(x+73),'',w[0],2.5)+pa('M'+(x+12)+' 215L'+(x+32)+' 157M'+(x+20)+' 215L'+(x+34)+' 175','','#fff',2.2,.5)+rc(x-3,220,84,5,trim,2)+rc(x-1,224,80,12,w[1],2)+(T&&T.lt?T.lt(x):'')+(T&&T.sh?rc(x-9,152,8,68,T.sh,1.5)+rc(x+79,152,8,68,T.sh,1.5):'');
-  for(i=0;i<7;i++)o+=ci(x+4+i*11.6,226,3.2,'#58ad69')+ci(x+4+i*11.6,221-(i%2)*2,4.6,cl[(i+j)%5])});
- /* cửa chính */
- o+=(T&&T.sq?pa('M166 252V156H234V252z',w[1])+pa('M173 252V163H227V252z',w[0])+pa('M180 214V170H220V214z',gl)+pa('M200 170V214M180 192H220','',w[1],1.6):pa('M166 252V182a34 34 0 0 1 68 0V252z',w[1])+pa('M173 252V183a27 27 0 0 1 54 0V252z',w[0])+pa('M180 214V187a20 20 0 0 1 40 0V214z',gl)+pa('M200 167V214M180 192H220','',w[1],1.6))+rc(180,220,40,26,w[1],3,.35)+ci(222,232,2.4,'#ffd166')+'<circle cx="200" cy="233" r="7" fill="none" stroke="#58ad69" stroke-width="3.6"/>'+ci(196,229,1.8,'#ff8fab')+ci(205,236,1.8,'#ffd166')+rc(188,196,24,12,s.ph=='open'?'#4fb06f':'#d9534f',4)+'<text x="200" y="205" text-anchor="middle" font-size="7.5" font-weight="700" fill="#fff">'+(s.ph=='open'?'OPEN':'CLOSED')+'</text>';
- /* mái hiên */
- if(T&&T.aw)o+=T.aw(w);else{o+=rc(46,106,308,7,mx(a[0],'#000',.18),3);for(i=0;i<8;i++)o+=pa('M'+(46+i*38.5)+' 112h38.5v14a19.25 14 0 0 1-38.5 0z',i%2?a[1]:a[0]);}
+ o+=pa('M56 232H344M56 242H344','',mx(w[2],'#fff',.1),1);
+ o+=sgn(110,76,180,30,w[1],gd,'#fff',15,X,9)+ci(116,92,4.5,'#ff8fab')+ci(123,99,3.5,'#ffd166')+ci(284,92,4.5,'#ff8fab')+ci(277,99,3.5,'#ffd166');
+ [[62,0],[260,3]].forEach(function(q){var x=q[0],j=q[1];o+=rc(x,150,78,72,w[0],5)+rc(x+5,155,68,62,gl,2)+sp(pool[j%pool.length],x+9,190,24)+sp(pool[(j+1)%pool.length],x+31,186,24)+sp(pool[(j+2)%pool.length],x+51,190,22)+rc(x+5,212,68,3,w[1],1)+pa('M'+(x+39)+' 155V217M'+(x+5)+' 186H'+(x+73),'',w[0],2.5)+pa('M'+(x+12)+' 215L'+(x+32)+' 157M'+(x+20)+' 215L'+(x+34)+' 175','','#fff',2.2,.5)+rc(x-3,220,84,5,trim,2)+rc(x-1,224,80,12,w[1],2)+R2(7,function(i){return ci(x+4+i*11.6,226,3.2,'#58ad69')+ci(x+4+i*11.6,221-(i%2)*2,4.6,cl[(i+j)%5])})});
+ o+=pa('M166 252V182a34 34 0 0 1 68 0V252z',w[1])+pa('M173 252V183a27 27 0 0 1 54 0V252z',w[0])+pa('M180 214V187a20 20 0 0 1 40 0V214z',gl)+pa('M200 167V214M180 192H220','',w[1],1.6)+rc(180,220,40,26,w[1],3,.35)+ci(222,232,2.4,'#ffd166')+'<circle cx="200" cy="233" r="7" fill="none" stroke="#58ad69" stroke-width="3.6"/>'+ci(196,229,1.8,'#ff8fab')+ci(205,236,1.8,'#ffd166')+opn(185,196,X);
+ o+=rc(46,106,308,7,mx(a[0],'#000',.18),3);for(i=0;i<8;i++)o+=pa('M'+(46+i*38.5)+' 112h38.5v14a19.25 14 0 0 1-38.5 0z',i%2?a[1]:a[0]);
  o+=rc(56,140,288,9,'#000',0,.1);
- o+=ceil({long:[[68,122],[332,122]],gio:[[150,134]]},w,D);if(s.fo&&s.fo.den==1)o+=swag(60,130,200,162,340,130);
- o+=(T&&T.fr?T.fr(c,w):'');
- o+=rc(0,252,400,38,sw)+rc(0,252,400,3,mx(sw,'#000',.14))+rc(158,252,84,6,'#cfc7b8',1);for(i=0;i<20;i++)o+=pa('M'+(i*22)+' 262v28M'+(i*22+11)+' 276v14','',mx(sw,'#000',.08),1);o+=pa('M0 276H400','',mx(sw,'#000',.08),1);
- [78,112,288,322].forEach(function(bx,j){o+=sp(pool[j%pool.length],bx-17,226,30)+sp(pool[(j+1)%pool.length],bx-3,230,28)+pa('M'+(bx-12)+' 252h24l-3 18h-18z','#aebdc4')+rc(bx-13,250,26,3.5,'#cfdbe0',1.5)});
- if(s.fo&&s.fo.tham==1)o+=pa('M168 262h64l9 26h-82z','#d9534f')+pa('M174 266h52l6 18h-64z','','#fff',1,.7);
- o+=lay('e',[{by:289,sc:1,x0:6,x1:396,sk:[162,238]}],w,D)[0];o+=(T&&T.fg?T.fg(c,w):'');
- if(lv>=2)for(i=0;i<12;i++){x=62+i*24;if(x>104&&x<296)continue;o+=pa('M'+(x-5)+' '+(76+20*(1-Math.pow((x-200)/150,2)))+'h10l-5 10z',['#ff8fab','#ffd166','#8fd3ff','#b7e4a8'][i%4])}
- if(c.wx=='rain'||c.se==3||(c.se==0&&c.wx!='cloud')){var n=c.wx=='rain'?26:c.se==3?24:12,rn=c.wx=='rain';for(i=0;i<n;i++){x=Math.round(rr(i+1)*400);o+=rn?'<line class="xrn" x1="'+x+'" y1="-10" x2="'+(x-3)+'" y2="2" stroke="#d4e6f7" stroke-width="1.2" opacity=".75" style="animation-duration:'+(.55+rr(i+9)*.5).toFixed(2)+'s;animation-delay:-'+(rr(i+3)*1.2).toFixed(2)+'s"/>':'<circle class="xsn" cx="'+x+'" cy="-6" r="'+(1.2+rr(i+7)*1.4).toFixed(1)+'" fill="'+(c.se==3?'#fff':'#ffb6c9')+'" opacity=".9" style="animation-duration:'+(5+rr(i+4)*5).toFixed(1)+'s;animation-delay:-'+(rr(i+2)*8).toFixed(1)+'s"/>'}}
+ o+=walk(X,'#e4dccd')+rc(158,252,84,6,'#cfc7b8',1)+bkt(X,[78,112,288,322],252);
  return o}
-/* ---------- bên trong ---------- */
-function INT(c,pool,w,a){var T=TH();if(T){w=T.w;a=T.a}var D=c.D,lv=s.sl||0,o='',i,r,wl=T?T.iw:mx(a[0],'#fffdf5',D?.55:.84),wn=mx(w[3],'#fff',.12),fl=T?T.fl:mx(w[0],'#fff',.08),nm=String(s.name||'Tiệm hoa');
- o+=rc(0,0,400,224,wl);for(i=1;i<20;i++)o+=pa('M'+i*20+' 14V148','',mx(wl,'#000',.05),1);
- o+=rc(0,148,400,76,wn)+rc(0,146,400,5,w[3])+rc(0,151,400,2,w[1],0,.35);for(i=0;i<10;i++)o+=rc(8+i*40,160,30,52,mx(wn,'#000',.05),3);
- o+=rc(0,224,400,66,fl);for(r=0;r<4;r++){o+=pa('M0 '+(238+r*14)+'H400','',mx(fl,'#000',.13),1);for(i=0;i<8;i++)o+=pa('M'+(i*52+(r%2)*26+10)+' '+(224+r*14)+'v14','',mx(fl,'#000',.1),1)}
- o+=rc(0,220,400,6,w[1])+rc(0,0,400,12,w[1])+rc(0,12,400,3,w[2],0,.5);
- /* cửa sổ vòm */
- o+=pa('M144 152V74a56 56 0 0 1 112 0V152z',w[1])+pa('M150 152V74a50 50 0 0 1 100 0V152z','url(#flsk)')+pa('M150 152V120Q200 100 250 122V152z',c.g)+pa('M150 152V134Q200 118 250 136V152z',mx(c.g,'#1b4a2a',.25));
- if(D)o+=ci(226,56,8,'#f4f1d0')+[[170,50],[200,38],[190,70],[236,84]].map(function(p){return ci(p[0],p[1],1.3,'#fff')}).join('');else o+=ci(226,58,10,'#ffe9a0');
- o+=pa('M200 26V152M150 92H250','',w[1],3)+rc(138,152,124,6,w[3],2);
- /* kệ hoa hai bên */
- var shelf=function(x0,j0){var q=rc(x0+5,58,90,162,mx(wl,'#000',.07))+rc(x0,56,5,164,w[1])+rc(x0+95,56,5,164,w[1])+rc(x0-2,52,104,6,w[0],2);[100,144,188].forEach(function(ty,k){q+=rc(x0,ty,100,4,w[0],1.5);for(var n=0;n<3;n++){var sx=x0+8+n*30;q+=sp(pool[(j0+k*3+n)%pool.length],sx,ty-26,27)+pa('M'+(sx+5)+' '+(ty-9)+'h17l-2 9h-13z',['#8fb1c4','#f2b8c6','#e8d8c0'][(k+n)%3])}});return q};
+
+/* ===================== 1. VIỆT NAM · nhà phố cổ Hội An ===================== */
+function extVN(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,roof=dm('#b8583a'),roof2=dm('#8f3f2b'),Y=dm('#f2c84e'),Y2=dm('#e9b24a'),G=dm('#3f8a5a'),br=dm('#6b4428'),lc=['#e0446f','#ffb347','#4fb06f','#ff6b4a','#f2c14e'];
+ /* xa: đồi xanh + hàng dừa */
+ o+=pa('M0 148Q60 108 130 138T260 122T400 140V252H0z',mx(c.g,'#7fb6c8',.5))+pa('M0 176Q90 142 200 170T400 160V252H0z',mx(c.g,'#fff',.08))+pa('M0 200Q120 180 250 196T400 188V252H0z',c.g);
+ [[34,56,1],[368,62,-1]].forEach(function(p){var x=p[0],y=p[1],d=p[2];o+=pa('M'+x+' 252Q'+(x+d*10)+' '+(y+60)+' '+(x+d*3)+' '+y,'',dm('#7a5a38'),4.5)+R2(7,function(i){var a=(-160+i*50)*Math.PI/180;return pa('M'+(x+d*3)+' '+y+'Q'+(x+d*3+Math.cos(a)*18)+' '+(y+Math.sin(a)*14-8)+' '+(x+d*3+Math.cos(a)*34)+' '+(y+Math.sin(a)*30+8),'',dm(i%2?'#3f9a52':'#58ad69'),3.4)})+ci(x+d*3,y+3,3,dm('#8a5a2a'))});
+ /* nhà bên trái (cam đất) */
+ o+=rc(-4,104,106,148,dm('#e8a35e'))+pa('M-8 106L16 72H86L108 106z',roof)+pa('M-2 86H102M-6 96H104','',roof2,1.2)+R2(9,function(i){return pa('M'+(2+i*11)+' 74V106','',roof2,.9,.6)})+rc(-8,104,120,4,dm('#8a3a28'),2)+
+  rc(22,126,30,40,dm('#fff4d8'),2,0,br)+pa('M37 126V166M22 146H52','',br,1.4)+pa('M14 126L22 126V166L14 168z',G)+pa('M60 126L52 126V166L60 168z',G)+rc(64,200,28,52,dm('#7a4a2a'),2)+bgv(X,18,170,9)+
+  /* nhà bên phải (vàng chanh) */
+  rc(298,116,106,136,dm('#d8cf7a'))+pa('M294 118L318 84H386L410 118z',roof)+pa('M300 98H404M296 108H408','',roof2,1.2)+R2(9,function(i){return pa('M'+(304+i*11)+' 86V118','',roof2,.9,.6)})+rc(294,116,120,4,dm('#8a3a28'),2)+
+  rc(322,136,30,38,dm('#fff4d8'),2,0,br)+pa('M337 136V174M322 155H352','',br,1.4)+pa('M314 136L322 136V174L314 176z',dm('#3b7fbf'))+pa('M360 136L352 136V174L360 176z',dm('#3b7fbf'))+rc(364,204,26,48,dm('#7a4a2a'),2)+bgv(X,392,150,9,['#ff8fab','#ffd1dc','#e0446f']);
+ /* nhà chính: mái ngói âm dương */
+ o+=pa('M86 82L110 38H290L314 82z',roof)+R2(19,function(i){return pa('M'+(104+i*10.5)+' 42V80','',roof2,1,.55)})+pa('M98 60H302M92 71H308','',roof2,1.3)+rc(104,34,192,7,dm('#8a3a28'),3)+ci(104,37,5,dm('#8a3a28'))+ci(296,37,5,dm('#8a3a28'))+rc(86,80,228,4,dm('#8a3a28'),2);
+ o+=rc(106,84,188,70,Y)+rc(106,84,8,70,Y2)+rc(286,84,8,70,Y2)+el(150,100,12,4,'#6a8a3a',.28)+el(258,126,14,5,'#6a8a3a',.25)+el(200,92,16,3,'#a0742a',.18);
+ [124,236].forEach(function(x){o+=pa('M'+x+' 140V108a20 20 0 0 1 40 0V140z',dm('#fff4d8'),br,2.4)+pa('M'+(x+20)+' 88V140','',br,1.4)+pa('M'+(x-2)+' 143V108L'+(x-12)+' 103V138z',G)+pa('M'+(x+42)+' 143V108L'+(x+52)+' 103V138z',G)+R2(3,function(i){return pa('M'+(x-11+i*0)+' '+(110+i*9)+'h8','',dm('#2e6e44'),1)})+R2(3,function(i){return pa('M'+(x+43)+' '+(110+i*9)+'h8','',dm('#2e6e44'),1)})});
+ o+=rc(114,140,172,3,br,1.5)+R2(17,function(i){return rc(118+i*10,143,2,11,br)})+rc(110,154,180,4,dm('#8a3a28'),2);
+ o+=bgv(X,126,142,11)+bgv(X,172,146,10,['#ff5aa0','#d6246e'])+bgv(X,230,146,10)+bgv(X,276,142,11,['#ff5aa0','#b0185a','#d6246e'])+bgv(X,112,100,9)+bgv(X,290,96,9);
+ /* mái hiên che cửa hàng */
+ o+=pa('M84 156H316L328 178H72z',roof)+R2(25,function(i){return pa('M'+(88+i*9.6)+' 158V176','',roof2,1,.5)})+pa('M80 166H320','',roof2,1.2)+rc(72,176,256,5,dm('#8a3a28'),2);
+ o+=rc(100,181,200,71,Y2)+rc(100,181,8,71,mx(Y2,'#fff',.2))+rc(292,181,8,71,mx(Y2,'#fff',.2))+rc(100,234,200,18,dm('#a98a58'))+R2(8,function(i){return pa('M'+(100+i*25)+' 234v18','',dm('#8a6a3a'),1)});
+ /* cửa gỗ mở hai cánh */
+ o+=rc(148,200,104,52,dm('#3a2214'))+pa('M148 208L130 214V252H148z',br)+pa('M252 208L270 214V252H252z',br)+R2(4,function(i){return pa('M'+(146-i*4.5)+' '+(212+i*0)+'V252','',dm('#4a2e1a'),1)})+R2(4,function(i){return pa('M'+(254+i*4.5)+' 212V252','',dm('#4a2e1a'),1)})+rc(156,218,88,5,dm('#6b4428'),1)+rc(156,236,88,4,dm('#6b4428'),1)+sp(pool[0],160,196+14,28)+sp(pool[1%pool.length],188,200+14,28)+sp(pool[2%pool.length],216,196+14,28);
+ o+=sgn(142,180,116,20,'#5a3620',X.gd||'#e8c15a','#ffe9a0',12,X,3)+opn(185,202,X);
+ /* cửa sổ trưng bày hai bên */
+ o+=disp(X,106,196,36,38,3,br)+disp(X,258,196,36,38,5,br);
+ /* đèn lồng Hội An */
+ [114,132,268,286].forEach(function(x,i){o+=ln(x,182,lc[i%5],8)});
+ o+=walk(X,'#cdbfa3')+rc(150,252,100,5,'#b9ab8f',1)+bkt(X,[84,316],252);
+ return o}
+
+/* ===================== 2. PHÁP · tiệm hoa kiểu Haussmann, Paris ===================== */
+function extFR(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,st=dm('#f1e6cf'),st2=dm('#d9c9a8'),mn=dm('#56657a'),mn2=dm('#3f4b5c'),ir=dm('#2f3a44'),gr=dm('#2f5d4a'),au=X.gd||'#d8b04a',hz=mx(c.c1,'#7d8da0',.5),ef=mx(c.c1,'#4a5a70',.8);
+ /* xa: dãy nhà Paris + tháp Eiffel */
+ o+=R2(9,function(i){var h=70+((i*37)%50);return rc(i*46-6,200-h,44,h+52,mx(hz,'#fff',.25),0,.9)+rc(i*46-6,200-h,44,6,hz)})+
+  gg(46,0,1,pa('M28 252Q38 196 43 168H53Q58 196 68 252H60Q52 214 48 214Q44 214 36 252z',ef)+pa('M43 168L45.5 112H50.5L53 168z',ef)+pa('M45.5 112L47.7 52H48.3L50.5 112z',ef)+rc(38,166,20,4,ef)+rc(42,110,12,3,ef)+pa('M48 52V34','',ef,1.6)+pa('M43 150H53M44 130H52','',mx(ef,'#fff',.35),1));
+ [[20,1],[382,-1]].forEach(function(p){var x=p[0];o+=rc(x-3,150,6,102,dm('#6b4a30'))+ci(x,134,30,mx(c.g,'#1b4a2a',.25))+ci(x+p[1]*12,150,20,mx(c.g,'#1b4a2a',.38))});
+ /* mái mansard xám xanh + ống khói + cửa sổ mái */
+ var o0=o;o='';
+ o+=pa('M50 70L68 26H332L350 70z',mn)+R2(14,function(i){return pa('M'+(54+i*21.5)+' 28L'+(48+i*22.1)+' 70','',mn2,1,.7)})+R2(4,function(i){return pa('M'+(58+i*4)+' '+(38+i*10)+'H'+(342-i*4),'',mn2,1,.7)})+rc(66,24,268,5,mn2,2)+
+  rc(98,10,14,20,dm('#cdbca0'))+rc(95,8,20,3,dm('#b3a283'),1)+rc(290,12,14,18,dm('#cdbca0'))+rc(287,10,20,3,dm('#b3a283'),1);
+ [112,186,260].forEach(function(x){o+=pa('M'+(x-3)+' 44L'+(x+14)+' 30L'+(x+31)+' 44z',mn2)+rc(x,42,28,26,st)+rc(x+6,46,16,20,X.wg,1.5,0,dm('#fff'))+pa('M'+(x+14)+' 46V66M'+(x+6)+' 56H'+(x+22),'',st2,1.2)});
+ /* thân nhà đá vôi + ban công sắt rèn */
+ o+=rc(46,70,308,112,st)+rc(46,70,10,112,st2)+rc(344,70,10,112,st2)+rc(44,124,312,5,dm('#e8dcc4'))+rc(44,129,312,2,st2)+rc(44,180,312,5,dm('#e8dcc4'));
+ [78,139,200,261,322].forEach(function(cx,i){var x=cx-12;o+=rc(x-3,78,30,4,st2,1)+pa('M'+x+' 120V92a12 12 0 0 1 24 0V120z',X.wg,ir,1.8)+pa('M'+(x+12)+' 80V120M'+x+' 104H'+(x+24),'',ir,1.2)+rc(x-3,120,30,3,st2,1)+
+  rc(x,134,24,42,X.wg,1.5,0,ir)+pa('M'+(x+12)+' 134V176M'+x+' 155H'+(x+24),'',ir,1.2)});
+ o+=rc(52,168,296,3,ir,1)+R2(40,function(i){return rc(56+i*7.3,171,1.6,10,ir)})+R2(10,function(i){return pa('M'+(58+i*30)+' 171q8-8 16 0','',ir,1.4)});
+ /* mặt tiền cửa hàng xanh bạc hà + rèm sọc */
+ o+=rc(44,185,312,67,gr)+rc(44,185,12,67,mx(gr,'#fff',.14))+rc(344,185,12,67,mx(gr,'#fff',.14))+sgn(96,188,208,22,mx(gr,'#000',.25),au,'#f4e3a0',15,X,2);
+ o+=disp(X,62,222,92,28,2,mx(gr,'#000',.2))+disp(X,246,222,92,28,4,mx(gr,'#000',.2))+awn(60,210,96,12,dm('#f7f1e1'),gr,8)+awn(244,210,96,12,dm('#f7f1e1'),gr,8);
+ o+=pa('M166 252V224a34 12 0 0 1 68 0V252z',mx(gr,'#000',.25))+pa('M172 252V228a28 9 0 0 1 56 0V252z',X.gl)+pa('M200 219V252M172 238H228','',mx(gr,'#000',.25),2)+ci(224,240,2,'#ffd166')+opn(185,226,X)+ci(160,206,3.4,'#ffe9a0',.8)+ci(240,206,3.4,'#ffe9a0',.8);
+ o=o0+zm(.84,o);
+ o+=walk(X,'#cdc7bb')+rc(160,252,80,5,'#b8b2a4',1)+bkt(X,[148,252],252);
+ return o}
+/* ===================== 3. ANH · tiệm gạch đỏ kiểu Victoria, London ===================== */
+function extUK(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,br=dm('#b5523b'),br2=dm('#8f3f2e'),wh=dm('#f4f0e6'),gr=dm('#244a3a'),au=X.gd||'#d8b04a',hz=mx(c.c1,'#7a8794',.55);
+ /* xa: Big Ben + London Eye + dãy nhà */
+ o+=R2(8,function(i){var h=70+((i*53)%46);return rc(i*52-6,214-h,50,h+40,mx(hz,'#fff',.18),0,.9)})+
+  gg(352,0,1,rc(-9,70,18,150,hz)+pa('M-9 70L0 36L9 70z',hz)+pa('M0 36V22','',hz,1.6)+rc(-11,66,22,6,hz)+ci(0,86,6.4,'#fff6d8',.95,hz)+pa('M0 86v-4M0 86l3 1.6','','#555',1)+rc(-6,110,12,6,mx(hz,'#fff',.15)))+
+  '<circle cx="46" cy="84" r="34" fill="none" stroke="'+hz+'" stroke-width="1.6"/>'+ci(46,84,3,hz)+R2(12,function(i){var a=i*Math.PI/6;return pa('M46 84L'+(46+Math.cos(a)*34)+' '+(84+Math.sin(a)*34),'',hz,.8)})+pa('M46 84L34 150M46 84L58 150','',hz,1.4);
+ /* hai ngôi nhà bên cạnh */
+ o+=rc(-4,110,98,142,dm('#c77a55'))+rc(-4,104,98,8,wh)+rc(8,84,16,22,br)+rc(52,90,16,16,br)+[10,54].map(function(x){return rc(x,80,12,5,wh)}).join('')+R2(7,function(i){return pa('M-4 '+(120+i*11)+'H94','',dm('#a85a3c'),.8,.6)})+
+  rc(14,128,28,32,wh,2)+rc(18,132,20,24,X.wg,1)+pa('M28 132V156M18 144H38','',wh,1.4)+rc(56,128,28,32,wh,2)+rc(60,132,20,24,X.wg,1)+pa('M70 132V156M60 144H80','',wh,1.4)+rc(14,172,28,28,wh,2)+rc(18,176,20,20,X.wg,1)+rc(8,200,30,52,dm('#2b3a4a'),2)+rc(52,200,36,52,dm('#33423a'),2);
+ o+=rc(306,100,98,152,dm('#9a4a38'))+rc(306,94,98,8,wh)+rc(322,76,16,20,br2)+rc(368,82,16,14,br2)+R2(8,function(i){return pa('M306 '+(110+i*11)+'H404','',dm('#7a3a2c'),.8,.6)})+
+  [322,364].forEach(function(x){o+=rc(x,116,26,32,wh,2)+rc(x+4,120,18,24,X.wg,1)+pa('M'+(x+13)+' 120V144M'+(x+4)+' 132H'+(x+22),'',wh,1.4)});
+ /* nhà chính: gạch đỏ, tường chắn, ống khói, cửa sổ trượt */
+ o+=rc(92,44,216,208,br)+R2(18,function(i){return pa('M92 '+(52+i*11)+'H308','',br2,.8,.55)})+R2(9,function(i){return pa('M'+(108+i*22)+' '+(56+(i%2)*5)+'v130','',br2,.6,.35)})+rc(88,36,224,10,wh,2)+rc(88,44,224,3,mx(wh,'#000',.15))+
+  rc(108,6,26,32,br2)+rc(104,3,34,5,wh,1)+[112,121,130].map(function(x){return rc(x,-6,6,10,dm('#c06a3a'),2)}).join('')+rc(262,10,26,28,br2)+rc(258,7,34,5,wh,1)+[266,276].map(function(x){return rc(x,-2,6,10,dm('#c06a3a'),2)}).join('');
+ [128,200,272].forEach(function(cx,i){[[58,40],[112,42]].forEach(function(r,j){var x=cx-17,y=r[0];o+=pa('M'+(x-4)+' '+(y+r[1]+4)+'V'+(y+10)+'q21-18 42 0V'+(y+r[1]+4)+'z',wh)+rc(x,y+10,34,r[1]-10,X.wg,1)+pa('M'+(x+17)+' '+(y+10)+'V'+(y+r[1])+'M'+x+' '+(y+10+(r[1]-10)/2)+'H'+(x+34),'',wh,2.2)+rc(x-4,y+r[1],42,4,wh,1)})});
+ o+=[128,272].map(function(cx,i){return rc(cx-21,156,42,8,dm('#5a3a28'),1)+sp(pool[i%pool.length],cx-18,138,22)+sp(pool[(i+1)%pool.length],cx-3,136,22)+sp(pool[(i+2)%pool.length],cx+10,138,20)}).join('');
+ /* mặt tiền cửa hàng xanh rêu + biển chữ vàng */
+ o+=rc(92,166,216,86,gr)+rc(88,164,224,6,wh,2)+rc(92,170,216,3,mx(gr,'#000',.3))+sgn(112,174,176,24,mx(gr,'#000',.3),au,'#f4e3a0',15,X,2)+rc(92,170,12,82,mx(gr,'#fff',.16))+rc(296,170,12,82,mx(gr,'#fff',.16));
+ o+=disp(X,110,208,58,38,0,wh,X.wg)+pa('M139 208V246M110 227H168','',wh,2)+disp(X,232,208,58,38,3,wh,X.wg)+pa('M261 208V246M232 227H290','',wh,2);
+ o+=pa('M174 252V232a26 26 0 0 1 52 0V252z',wh)+pa('M179 252V234a21 21 0 0 1 42 0V252z',dm('#1b3a2e'))+pa('M179 240a21 21 0 0 1 42 0z',X.gl)+rc(184,242,32,10,mx(gr,'#fff',.1),2)+ci(214,246,2.2,'#d8b04a')+opn(185,206,X);
+ o+=ci(104,200,6,'#6b4428')+R2(5,function(i){return ci(100+i*3.4,198+(i%2)*3,2.6,['#ff8fab','#ffd166','#fff','#b39ddb','#ff6b81'][i])})+pa('M101 192L104 186L107 192','','#444',1);
+ /* hộp thư + bốt điện thoại đỏ */
+ o+=rc(334,206,22,46,'#d9232d',3)+rc(338,212,14,26,X.wg,1)+pa('M345 212V238M338 225H352','','#d9232d',1.4)+rc(332,203,26,5,'#d9232d',2)+rc(368,228,16,24,'#d9232d',7)+rc(368,236,16,3,'#222');
+ o+=walk(X,'#b7b9bd')+R2(36,function(i){return''})+rc(174,252,52,5,'#a4a6aa',1)+bkt(X,[156,244],252);
+ return o}
+
+/* ===================== 4. TRUNG QUỐC · điện ngói vàng hai tầng mái, cột đỏ, cổng nguyệt ===================== */
+function extCN(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,rd=dm('#b3202a'),rd2=dm('#8c1d1d'),gd=dm('#e8b923'),gd2=dm('#a8780f'),tl=dm('#2f7d6a'),au=X.gd||'#f2c14e',m1=mx(c.c1,'#8aa6a8',.55),m2=mx(c.c1,'#6f9296',.6);
+ /* xa: núi đá vôi Quế Lâm + sương + chùa tháp */
+ o+=pa('M0 190L22 120Q30 96 40 120L58 160L84 82Q92 66 100 82L126 150L150 118Q158 104 166 120L190 190z',m1,0,0,.9)+pa('M170 200L210 128Q222 108 234 128L262 170L290 104Q300 88 310 104L336 160L360 126Q368 114 376 126L400 170V252H170z',m2,0,0,.92)+rc(0,160,400,14,'#fff',6,.32)+rc(0,196,400,18,'#fff',6,.28);
+ o+=gg(344,0,1,rc(-4,118,8,34,mx(m2,'#fff',.1))+pa('M-16 118H16L8 108H-8zM-12 108H12L6 98H-6zM-9 98H9L4 88H-4zM-6 88H6L0 78z',mx(m2,'#fff',.1)));
+ /* nền đá cẩm thạch + bậc thềm */
+ var Bm=dm('#e8e2d4');o+=rc(20,236,360,16,Bm)+rc(20,236,360,3,mx(Bm,'#000',.12))+R2(15,function(i){return rc(24+i*24.4,222,5,14,Bm,1)})+rc(20,222,360,3,Bm,1)+rc(160,244,80,8,mx(Bm,'#000',.07))+rc(170,248,60,4,mx(Bm,'#000',.12));
+ /* tầng thân: tường đỏ + cột đỏ + cửa sổ chấn song */
+ o+=rc(62,142,276,94,rd)+rc(62,138,276,6,rd2);
+ [[78,134],[266,322]].forEach(function(r,k){var x=r[0],w=r[1]-r[0];o+=disp(X,x,176,w,46,k*2+1,gd2,X.wg)+R2(7,function(i){return pa('M'+(x+4+i*8)+' 179L'+(x+12+i*8)+' 219M'+(x+4+i*8)+' 219L'+(x+12+i*8)+' 179','',gd,.8,.55)})});
+ [62,134,258,330].forEach(function(x){o+=rc(x-2,138,12,98,rd2)+rc(x-3,146,14,4,gd)+rc(x-3,226,14,10,gd2,1)});
+ /* cổng nguyệt + cánh cửa đỏ đinh vàng */
+ o+='<circle cx="200" cy="208" r="34" fill="'+dm('#3a0f12')+'"/>'+'<circle cx="200" cy="208" r="34" fill="none" stroke="'+gd+'" stroke-width="3.4"/>'+pa('M200 174V242','',gd2,1.4)+
+  '<clipPath id="cncl"><circle cx="200" cy="208" r="32"/></clipPath><g clip-path="url(#cncl)">'+rc(166,176,33,68,rd)+rc(201,176,33,68,rd)+R2(4,function(r){return R2(3,function(k){return ci(174+k*9,186+r*14,1.7,gd)+ci(209+k*9,186+r*14,1.7,gd)})})+rc(166,200,33,3,gd2)+rc(201,200,33,3,gd2)+sp(pool[0],168,212,26)+sp(pool[1%pool.length],204,212,28)+'</g>'+opn(185,186,X);
+ /* mái dưới: góc cong vút, ngói vàng, xà gỗ xanh lục */
+ o+=pa('M10 124Q46 130 66 96H334Q354 130 390 124Q374 148 340 144H60Q26 148 10 124z',gd)+R2(21,function(i){return pa('M'+(74+i*12.4)+' 100V138','',gd2,1,.55)})+pa('M66 96H334','',gd2,2.6)+pa('M14 126Q46 134 62 140','',gd2,1.4)+pa('M386 126Q354 134 338 140','',gd2,1.4)+rc(60,144,280,10,tl)+R2(23,function(i){return rc(62+i*12.1,145,9,7,[rd,gd,'#2f6f9a','#fff'][i%4],1)})+rc(60,154,280,3,rd2);
+ /* mái trên + tường trên */
+ o+=rc(128,66,144,38,rd)+R2(3,function(i){return rc(142+i*42,74,26,22,gd2,2)+rc(145+i*42,77,20,16,X.wg,1,.85)+pa('M'+(155+i*42)+' 77V93M145 85H165','',gd2,.8)}).replace(/M145 85H165/,'M145 85H165')+rc(128,100,144,5,rd2);
+ o+=pa('M84 70Q110 74 124 40H276Q290 74 316 70Q300 92 272 90H128Q100 92 84 70z',gd)+R2(14,function(i){return pa('M'+(130+i*10.4)+' 44V84','',gd2,1,.55)})+rc(124,36,152,7,gd2,3)+pa('M124 36Q116 24 126 22M276 36Q284 24 274 22','',gd2,3)+ci(200,30,6,'#d9232d')+pa('M200 24V16','',gd2,2);
+ /* biển hoành phi + đèn lồng */
+ o+=sgn(140,157,120,18,'#1b1b22',au,'#f2c14e',12,X,2);
+ [34,76,324,366].forEach(function(x){o+=ln(x,132,'#e02a2a',10)});
+ o+=walk(X,'#d8d2c4')+bkt(X,[128,272],252);
+ return o}
+/* ===================== 5. NHẬT BẢN · machiya Kyoto, núi Phú Sĩ, hoa anh đào ===================== */
+function extJP(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,wd=dm('#4a3426'),wd2=dm('#33221a'),pl=dm('#efe8d8'),rf=dm('#4f5a66'),rf2=dm('#38414b'),fj=mx(c.c1,'#8fa6c6',.55),sc=['#ffc2d4','#7cc06a','#e8913a','#cfc4bc'][c.se],au=X.gd||'#e8c15a';
+ /* núi Phú Sĩ + dãy đồi xa + chùa tháp */
+ o+=pa('M-60 214L70 96Q92 64 114 96L242 214z',fj)+pa('M52 112L82 70Q92 62 102 70L128 112L112 104L100 118L88 104L76 118L64 104z','#fff',0,0,.95)+pa('M-60 214L70 96Q92 64 114 96L242 214z','none',mx(fj,'#fff',.4),1.2,.5)+
+  pa('M180 190Q250 150 320 182T400 170V252H180z',mx(c.g,'#8fa6c6',.4))+rc(0,176,400,12,'#fff',6,.3);
+ o+=gg(372,0,1,rc(-1.5,120,3,60,rf2)+R2(5,function(i){return pa('M'+(-12+i*1.5)+' '+(176-i*14)+'H'+(12-i*1.5)+'L'+(8-i*1.2)+' '+(168-i*14)+'H'+(-8+i*1.2)+'z',rf2)}));
+ /* machiya: mái ngói thấp, cửa sổ mushiko, hisashi, lưới gỗ koshi, rèm noren */
+ var cx=220;
+ o+=pa('M112 94L156 62H284L328 94z',rf)+R2(16,function(i){return pa('M'+(124+i*12.6)+' 94L'+(158+i*8.8)+' 64','',rf2,1,.7)})+pa('M112 94H328','',rf2,2.6)+rc(150,58,140,6,rf2,3)+ci(150,60,5,rf2)+ci(290,60,5,rf2);
+ o+=rc(120,94,200,40,pl)+rc(120,94,8,40,wd)+rc(312,94,8,40,wd)+rc(120,92,200,5,wd2);
+ [[136,172],[268,304]].forEach(function(r){o+=rc(r[0],104,r[1]-r[0]+0,20,wd2,1)+R2(Math.floor((r[1]-r[0])/5),function(i){return pa('M'+(r[0]+2+i*5)+' 106V122','',mx(wd,'#fff',.15),1)})});
+ o+=sgn(178,100,84,24,'#2b1d12',au,'#ffe9a0',13,X,2);
+ o+=pa('M98 132H342L352 150H88z',rf)+R2(24,function(i){return pa('M'+(100+i*10.2)+' 134L'+(94+i*10.9)+' 148','',rf2,1,.6)})+rc(88,148,264,4,wd2,1);
+ o+=rc(120,152,200,100,pl)+rc(120,152,200,6,wd2)+rc(120,246,200,6,wd2);
+ [[128,190],[250,312]].forEach(function(r,k){o+=disp(X,r[0],174,r[1]-r[0],62,k*2+1,wd2,X.wg)+R2(Math.floor((r[1]-r[0])/5),function(i){return pa('M'+(r[0]+3+i*5)+' 177V233','',wd,1.6)})});
+ o+=rc(196,156,48,96,wd2)+rc(198,158,44,92,dm('#f6efd9'))+R2(4,function(i){return pa('M'+(210+i*11)+' 158V250','',wd,1)})+pa('M198 190H242M198 220H242','',wd,1);
+ o+=pa('M194 158H246','',wd2,3)+R2(4,function(i){var x=198+i*11.5;return rc(x,160,10.5,36,dm('#27407a'),1)+ci(x+5.2,178,3.6,'#fff',.85)});
+ o+=opn(205,206,X);
+ o+=ln(184,152,'#e02a2a',10)+ln(256,152,'#e02a2a',10);
+ /* biển dọc kanban + hàng rào tre + cây anh đào */
+ o+=rc(100,160,12,52,'#c9a063',1)+tx(106,176,'花',11,'#8a2a2a','font-weight="700"')+tx(106,190,'屋',11,'#8a2a2a','font-weight="700"')+pa('M106 154V160','',wd2,1.4);
+ o+=R2(9,function(i){return rc(332+i*8,210,4,42,dm('#b9c27a'),2)})+rc(326,222,80,3,dm('#6b4a2a'),1)+rc(326,238,80,3,dm('#6b4a2a'),1);
+ o+=rc(28,150,8,102,wd2)+ci(30,116,30,sc,.95)+ci(10,134,20,mx(sc,'#fff',.15),.95)+ci(52,132,22,mx(sc,'#000',.06),.95)+ci(34,96,18,mx(sc,'#fff',.25),.95);
+ o+=pa('M-10 252Q60 234 120 246','',dm('#9a9a8a'),0)+walk(X,'#d3ccbc')+rc(190,252,60,5,'#bfb8a6',1)+rc(78,238,12,14,'#9a9a9a',2)+rc(74,230,20,9,'#8a8a8a',3)+bkt(X,[156,284],252);
+ return o}
+
+/* ===================== 6. HÀN QUỐC · hanok mái cong, tường đá dolstam ===================== */
+function extKR(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,rf=dm('#3a3f46'),rf2=dm('#262a30'),wh=dm('#f6f1e7'),wd=dm('#7a4e32'),wd2=dm('#5a3622'),stn=dm('#b9b2a3'),au=X.gd||'#e8c15a',sc=['#f7a8c4','#58ad69','#f2b134','#c9b8a8'][c.se],mt=mx(c.c1,'#8a9aa8',.55);
+ /* xa: núi đá Bukhan + tháp N Seoul */
+ o+=pa('M0 196L36 128L62 150L104 84L144 138L180 108L226 160L286 112L330 146L370 112L400 140V252H0z',mt,0,0,.92)+pa('M104 84L120 108L108 102L96 114z M286 112L300 130L288 124L278 136z','#fff',0,0,.35)+
+  gg(60,0,1,pa('M-34 252Q-10 196 0 190Q12 196 34 252z',mx(c.g,'#6a8a70',.3))+rc(-1.5,96,3,94,mx(mt,'#fff',.1))+ci(0,112,6,mx(mt,'#fff',.1))+rc(-4,104,8,3,mx(mt,'#fff',.1))+pa('M0 96V78','',mx(mt,'#fff',.1),1.4))+pa('M0 214Q100 190 220 208T400 200V252H0z',mx(c.g,'#fff',.06));
+ /* cây ngân hạnh / hoa theo mùa */
+ [[20,1],[384,-1]].forEach(function(p){var x=p[0];o+=rc(x-3,150,7,102,dm('#6b4a30'))+ci(x,132,26,sc,.95)+ci(x+p[1]*10,150,18,mx(sc,'#000',.1),.95)+ci(x-p[1]*6,112,16,mx(sc,'#fff',.2),.95)});
+ /* tường đá dolstam hai bên */
+ [[-4,92],[308,404]].forEach(function(r){o+=rc(r[0],212,r[1]-r[0],40,stn)+R2(8,function(i){return ci(r[0]+8+i*12,222+(i%2)*10,7,mx(stn,'#fff',.14),.9)})+R2(8,function(i){return ci(r[0]+14+i*12,238+((i+1)%2)*6,6,mx(stn,'#000',.07),.9)})+pa('M'+(r[0]-4)+' 212H'+(r[1]+4)+'L'+(r[1])+' 203H'+r[0]+'z',rf)});
+ /* nền đá + sàn */
+ o+=rc(74,228,252,24,stn)+R2(12,function(i){return pa('M'+(74+i*21)+' 228V252','',mx(stn,'#000',.12),1)})+rc(74,226,252,4,mx(stn,'#fff',.2))+rc(156,244,88,8,mx(stn,'#000',.08));
+ /* thân nhà: cột gỗ + tường trắng + cửa lưới giấy */
+ o+=rc(84,130,232,98,wh)+rc(84,126,232,6,wd2);
+ [[92,158],[242,308]].forEach(function(r,k){o+=disp(X,r[0],160,r[1]-r[0],56,k*2+2,wd,'#f7efd8')+R2(Math.floor((r[1]-r[0])/10),function(i){return pa('M'+(r[0]+4+i*10)+' 163V213','',wd,1.2,.85)})+R2(5,function(i){return pa('M'+(r[0]+3)+' '+(172+i*10)+'H'+(r[1]-3),'',wd,1.2,.7)})});
+ o+=rc(164,146,72,82,wd2)+rc(167,149,32,76,dm('#f3ead8'))+rc(201,149,32,76,dm('#f3ead8'))+R2(5,function(i){return pa('M'+(170+i*6.4)+' 149V225M'+(204+i*6.4)+' 149V225','',wd,1)})+R2(8,function(i){return pa('M167 '+(158+i*9)+'H199M201 '+(158+i*9)+'H233','',wd,1)})+ci(199,190,2,'#d4a94a')+ci(201,190,2,'#d4a94a')+opn(206,176,X).replace('x="206"','x="206"');
+ [84,158,242,316].forEach(function(x){o+=rc(x-4,126,9,102,wd)+rc(x-5,222,11,6,stn,1)});
+ /* dancheong dưới mái hiên + mái cong */
+ o+=rc(76,112,248,14,rf2)+R2(24,function(i){return rc(78+i*10.2,114,8,10,['#2f7d5a','#d9534f','#3b6fe0','#f2c14e'][i%4],1)})+R2(24,function(i){return pa('M'+(82+i*10.2)+' 114v10','',rf2,.8)});
+ o+=pa('M22 112Q62 112 86 78Q112 40 200 34Q288 40 314 78Q338 112 378 112Q342 130 322 122H78Q58 130 22 112z',rf)+R2(17,function(i){var t=(i-8)/8;return pa('M'+(200+t*92)+' '+(40+Math.abs(t)*34)+'Q'+(200+t*108)+' '+(78+Math.abs(t)*6)+' '+(200+t*128)+' '+(113+Math.abs(t)*2),'',rf2,1.1,.6)})+pa('M96 66Q200 24 304 66','',rf2,3.2)+R2(26,function(i){return ci(76+i*9.6,121-Math.sin((i/25)*Math.PI)*0,2.1,mx(rf,'#fff',.25),.8)})+pa('M22 112Q36 108 34 100M378 112Q364 108 366 100','',rf2,2.4);
+ o+=sgn(150,130,100,18,'#2b1d12',au,'#ffe9a0',12,X,2)+ln(100,132,'#4fa3d9',9)+ln(300,132,'#ff8fab',9);
+ /* chum chum onggi */
+ o+=[104,122,140].map(function(x,i){var y=252,k=i==1?1.15:1;return pa('M'+(x-8*k)+' '+(y-2)+'Q'+(x-12*k)+' '+(y-14*k)+' '+(x-6*k)+' '+(y-20*k)+'h'+12*k+'Q'+(x+12*k)+' '+(y-14*k)+' '+(x+8*k)+' '+(y-2)+'z',dm('#8a5a3a'))+rc(x-7*k,y-23*k,14*k,3,dm('#6b4428'),1.5)}).join('');
+ o+=walk(X,'#cfc8b8')+rc(160,252,80,5,'#b8b2a0',1)+bkt(X,[148,252],252);
+ return o}
+/* ===================== 7. ĐÀI LOAN · nhà lầu kỳ lô (qilou), Taipei 101, biển neon dọc ===================== */
+function extTW(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,tl=dm('#7fb5a8'),tl2=dm('#5f968a'),cr=dm('#f1e4c8'),cn=dm('#d8d3c7'),au=X.gd||'#e02a2a',tw=mx(c.c1,'#4f6a82',.8),hl=mx(c.g,'#4a8a5a',.35);
+ /* xa: núi xanh + Taipei 101 */
+ o+=pa('M0 170Q70 112 150 150T290 128T400 150V252H0z',hl,0,0,.95)+pa('M0 196Q120 160 240 190T400 176V252H0z',mx(c.g,'#fff',.05))+rc(0,150,400,12,'#fff',6,.25);
+ o+=gg(374,0,1,rc(-7,196,14,56,tw)+R2(8,function(i){var y=190-i*18;return pa('M'+(-10+i*.6)+' '+(y+18)+'L'+(-12+i*.5)+' '+(y+4)+'H'+(12-i*.5)+'L'+(10-i*.6)+' '+(y+18)+'z',mx(tw,'#fff',(i%2)*.12))})+pa('M-6 46H6L2 30H-2z',tw)+pa('M0 30V8','',tw,1.6));
+ var o0=o;o='';
+ o+=rc(46,64,308,128,tl)+rc(46,60,308,8,cn,1)+rc(46,66,308,3,mx(cn,'#000',.14))+R2(26,function(i){return pa('M'+(54+i*11.4)+' 70V190','',tl2,.8,.45)})+
+  rc(288,30,26,30,dm('#c9c9c9'),4)+pa('M286 32L301 20L316 32z',dm('#9a9a9a'))+pa('M110 60V34M100 42H120M104 48H116','',dm('#555'),1.4)+rc(66,44,30,16,dm('#e8e8e8'),2)+rc(70,48,22,8,dm('#8fc8e8'),1)+rc(150,50,24,10,dm('#a6c4cf'),1);
+ [[74,108],[130,108],[186,108],[242,108],[298,108]].forEach(function(p,j){var x=p[0];[[78],[132]].forEach(function(r,k){var y=r[0];if(j==4&&k==0)return;o+=rc(x-2,y-2,44,38,cn,2)+rc(x,y,40,34,X.wg,1)+pa('M'+(x+20)+' '+y+'V'+(y+34)+'M'+x+' '+(y+17)+'H'+(x+40),'',cn,2)+pa('M'+(x+4)+' '+(y+4)+'L'+(x+14)+' '+(y+14),'','#fff',1.4,.6)+rc(x+6,y+37,28,9,'#e9e9e6',1.5)+ci(x+20,y+41.5,3,'#bfc3c4')});});
+ o+=rc(46,184,308,8,cn)+rc(46,184,308,3,mx(cn,'#000',.14));
+ /* tầng trệt: hành lang vòm qilou */
+ o+=rc(46,192,308,60,dm('#e9dcc0'))+R2(4,function(i){var x=[52,140,260,348][i];return rc(x-8,192,16,60,cr,2)+rc(x-9,192,18,4,mx(cr,'#000',.1))});
+ [[62,132],[148,252],[268,338]].forEach(function(r,k){var x0=r[0],x1=r[1],w=x1-x0;o+=pa('M'+x0+' 252V222a'+w/2+' 22 0 0 1 '+w+' 0V252z',dm('#4a3a30'))+pa('M'+(x0+4)+' 252V224a'+(w/2-4)+' 18 0 0 1 '+(w-8)+' 0V252z',k==1?X.gl:dm('#f6ead0'))+pa('M'+x0+' 222a'+w/2+' 22 0 0 1 '+w+' 0','',cn,3)});
+ o+=disp(X,70,224,54,26,1,dm('#9a8a70'))+disp(X,276,224,54,26,3,dm('#9a8a70'))+rc(160,232,80,20,dm('#4a3a30'))+sp(pool[0],166,222,28)+sp(pool[1%pool.length],196,224,28)+sp(pool[2%pool.length],222,222,26)+opn(185,234,X);
+ o+=sgn(110,198,180,22,'#fff7dc',au,'#c01d2f',14,X,3)+rc(110,218,180,3,'#c01d2f');
+ o+=R2(7,function(i){return ln(120+i*26,224,'#e02a2a',8)});
+ /* biển neon dọc */
+ o+=rc(22,96,22,84,'#1b1b22',3,0,'#ff4fa0')+vn(33,116,'花店','#ff7ab8',14)+rc(356,104,20,70,'#1b1b22',3,0,'#4fe0ff')+vn(366,122,'鮮花','#7fe9ff',13)+pa('M44 100H50M44 176H50','','#555',2)+pa('M356 108H350M356 168H350','','#555',2);
+ o=o0+zm(.86,o);
+ o+=walk(X,'#cfd0cb')+rc(160,252,80,5,'#bfc0ba',1)+bkt(X,[148,252],252);
+ return o}
+/* ===================== 8. HỒNG KÔNG · tòa nhà tong lau, neon, cảng Victoria, xe điện ===================== */
+function extHK(X){var c=X.c,D=X.D,dm=X.dm,pool=X.pool,o='',i,cn=dm('#b9b4a4'),cn2=dm('#8e8a7c'),sk=mx(c.c1,'#5f7388',.55),sk2=mx(c.c1,'#44566a',.6),sea=dm('#3b86b8'),au=X.gd||'#ff4fa0';
+ /* xa: đỉnh Victoria + nhà chọc trời + cảng + thuyền buồm đỏ */
+ o+=pa('M0 140Q60 64 150 110T300 84T400 130V252H0z',mx(c.g,'#6a8a70',.45),0,0,.95);
+ o+=[[0,120,26],[22,84,24],[44,140,22],[64,96,26],[300,110,26],[322,76,22],[342,126,26],[366,92,24],[386,118,20]].map(function(p,j){var h=p[1];return rc(p[0],214-h,p[2],h+40,j%2?sk:sk2)+(D?R2(5,function(k){return rc(p[0]+4+(k%2)*10,214-h+8+k*14,4,4,'#ffe97a',1,.9)}):'')}).join('');
+ o+=pa('M322 138L334 98L346 138z',mx(sk,'#fff',.2))+pa('M334 98V76','',sk,1.6)+rc(4,24+10,3,0,'#000',0,0);
+ o+=rc(0,206,400,34,sea)+R2(9,function(i){return pa('M'+(i*46)+' '+(214+(i%3)*8)+'q8-4 16 0t16 0','','#fff',1.2,.45)})+rc(0,238,400,14,dm('#8a8a82'))+rc(0,238,400,3,dm('#6a6a62'));
+ o+=gg(24,0,1,pa('M-16 222H16L12 232H-12z',dm('#6b3a2a'))+pa('M0 222V196','',dm('#6b3a2a'),1.6)+pa('M0 198L14 220H0z',dm('#d9232d'))+pa('M0 202L-12 220H0z',dm('#b01820')))+pa('M0 22Q200 40 400 22','','#555',.8,.5)+pa('M0 30Q200 48 400 30','','#555',.8,.5);
+ /* xe điện hai tầng */
+ o+=rc(4,218,92,28,dm('#2f6f4a'),4)+rc(4,216,92,5,dm('#e8e2d0'),2)+rc(4,230,92,5,dm('#e8e2d0'))+R2(7,function(i){return rc(10+i*12,222,9,8,X.wg,1)+rc(10+i*12,236,9,7,X.wg,1)})+ci(20,248,5,'#222')+ci(80,248,5,'#222')+pa('M46 216V204L60 196','','#555',1.4);
+ /* tòa nhà tong lau */
+ o+=rc(100,16,200,176,cn)+rc(100,16,200,5,cn2)+rc(100,16,6,176,mx(cn,'#000',.1))+rc(294,16,6,176,mx(cn,'#000',.1))+R2(12,function(i){return pa('M100 '+(30+i*14)+'H300','',cn2,.8,.3)})+el(150,96,18,6,cn2,.18)+el(250,150,22,6,cn2,.15);
+ o+=rc(240,-4,40,24,dm('#c9c9c9'),3)+rc(244,2,32,10,dm('#e8e8e8'),2)+rc(120,6,24,10,dm('#a8a8a0'),2);
+ [[26],[70],[114],[158]].forEach(function(r,k){var y=r[0];[112,206].forEach(function(x,j){o+=rc(x,y,34,30,X.wg,1.5,0,cn2)+pa('M'+(x+17)+' '+y+'V'+(y+30)+'M'+x+' '+(y+15)+'H'+(x+34),'',cn2,1.2)+rc(x-2,y+32,38,3,dm('#2f6f4a'),1)+R2(9,function(i){return rc(x-1+i*4.4,y+35,1.2,8,dm('#2f6f4a'))});if(k%2==0)o+=rc(x+36,y+10,22,14,dm('#e8e8e8'),2)+ci(x+47,y+17,5,dm('#9a9a9a'))+ci(x+47,y+17,2,dm('#6a6a6a'));else o+=pa('M'+(x-4)+' '+(y+44)+'H'+(x+40),'',dm('#888'),1.2)+rc(x+4,y+45,8,12,['#ff8fab','#4fa3d9','#f2c14e','#7bc88a'][j+k],1)+rc(x+14,y+45,8,14,['#fff','#e0446f','#7bc88a'][(j+k)%3],1)})});
+ /* biển neon dọc bên hông + biển neon ngang */
+ o+=rc(78,34,24,112,'#1b1b22',3,0,'#1de9ff')+vn(90,56,'花店','#1de9ff',16)+pa('M100 40H108M100 140H108','','#555',2)+rc(298,60,24,100,'#1b1b22',3,0,'#ff4fa0')+vn(310,82,'鮮花','#ff7ab8',15)+pa('M298 64H292M298 156H292','','#555',2);
+ /* mặt tiền cửa hàng */
+ o+=rc(100,192,200,60,dm('#c9c4b4'))+rc(104,190,192,10,dm('#8e8a7c'))+R2(18,function(i){return pa('M'+(108+i*10.4)+' 192v8','',dm('#6e6a5e'),1)})+rc(108,202,184,48,dm('#2a2e37'))+R2(3,function(k){return R2(7,function(i){return sp(pool[(i+k)%pool.length],112+i*25,208+k*14,24)})})+rc(108,203,184,2,'#e8f7ff',1,.8)+R2(3,function(k){return rc(108,222+k*14-12,184,2,'#cfd3d8',1,.7)})+sgn(114,200,172,20,'#1b1b22',au,'#ff9bc0',14,X,3)+opn(185,226,X);
+ o+=walk(X,'#c9c9c4')+rc(160,252,80,5,'#b3b3ae',1)+bkt(X,[118,282],252);
+ return o}
+
+/* ---------- bên trong: khung chung + chi tiết riêng từng quốc gia ---------- */
+var pat=function(id,w,h,inner){return'<pattern id="'+id+'" width="'+w+'" height="'+h+'" patternUnits="userSpaceOnUse">'+inner+'</pattern>'};
+var IWS=[[132,78],[268,78],[132,124],[268,124],[168,170],[232,170]];
+function INT(c,pool,w,a){var T=TH(),X=mkX(c,pool,w,a),D=X.D,lv=X.lv,w2=X.w,nm=X.nm,o='<defs>',i,r,
+ wl=T?T.iw:mx(a[0],'#fffdf5',D?.55:.84),wn=T?T.iwc:mx(w2[3],'#fff',.12),fl=T?T.ifl:mx(w2[0],'#fff',.08),cf=T?T.icf:w2[1],ct=T?T.ict:w2[3];
+ if(T&&T.idf)o+=T.idf(X);o+='</defs>';
+ o+=rc(0,0,400,224,wl);
+ if(T&&T.iwl)o+=T.iwl(X);else for(i=1;i<20;i++)o+=pa('M'+i*20+' 14V148','',mx(wl,'#000',.05),1);
+ o+=rc(0,148,400,76,wn)+rc(0,146,400,5,w2[3])+rc(0,151,400,2,w2[1],0,.35);
+ if(T&&T.iwp)o+=T.iwp(X);else for(i=0;i<10;i++)o+=rc(8+i*40,160,30,52,mx(wn,'#000',.05),3);
+ o+=rc(0,224,400,66,fl);
+ if(T&&T.ifp)o+=T.ifp(X);else for(r=0;r<4;r++){o+=pa('M0 '+(238+r*14)+'H400','',mx(fl,'#000',.13),1);for(i=0;i<8;i++)o+=pa('M'+(i*52+(r%2)*26+10)+' '+(224+r*14)+'v14','',mx(fl,'#000',.1),1)}
+ o+=rc(0,220,400,6,w2[1])+rc(0,0,400,12,w2[1])+rc(0,12,400,3,w2[2],0,.5);
+ if(T&&T.iwin)o+=T.iwin(X);else{o+=pa('M144 152V74a56 56 0 0 1 112 0V152z',w2[1])+pa('M150 152V74a50 50 0 0 1 100 0V152z','url(#flsk)')+pa('M150 152V120Q200 100 250 122V152z',c.g)+pa('M150 152V134Q200 118 250 136V152z',mx(c.g,'#1b4a2a',.25));
+  o+=D?ci(226,56,8,'#f4f1d0')+[[170,50],[200,38],[190,70],[236,84]].map(function(p){return ci(p[0],p[1],1.3,'#fff')}).join(''):ci(226,58,10,'#ffe9a0');o+=pa('M200 26V152M150 92H250','',w2[1],3)+rc(138,152,124,6,w2[3],2)}
+ var shelf=function(x0,j0){var q=rc(x0+5,58,90,162,mx(wl,'#000',.07))+rc(x0,56,5,164,w2[1])+rc(x0+95,56,5,164,w2[1])+rc(x0-2,52,104,6,w2[0],2);[100,144,188].forEach(function(ty,k){q+=rc(x0,ty,100,4,w2[0],1.5);for(var n=0;n<3;n++){var sx=x0+8+n*30;q+=sp(pool[(j0+k*3+n)%pool.length],sx,ty-26,27)+pa('M'+(sx+5)+' '+(ty-9)+'h17l-2 9h-13z',['#8fb1c4','#f2b8c6','#e8d8c0'][(k+n)%3])}});return q};
  o+=shelf(14,0)+shelf(286,4);
- o+=wall([[132,78],[268,78],[132,124],[268,124],[168,166],[232,166]],w,D);
- o+=(T&&T.ib?T.ib(c,w):'');o+=ceil({long:[[84,15],[316,15]],gio:[[128,15]],chum:[[200,15]]},w,D);if(s.fo&&s.fo.den==1)o+=swag(8,18,200,62,392,18);
- var rows=lay('i',[{by:284,sc:1,x0:8,x1:394,sk:[108,292]},{by:246,sc:.8,x0:10,x1:392,sk:[116,284]}],w,D);
- o+=rows[1];
+ o+=wallP(IWS,w2,D);if(T&&T.ie)o+=T.ie(X);
+ o+=ceil({long:[[84,15],[316,15]],gio:[[128,15]],chum:[[200,15]]},w2,D);if(s.fo&&s.fo.den==1)o+=swag(8,18,200,62,392,18);
+ var P=place('i',{L:[6,112],R:[288,394],rows:[{by:287,sc:1},{by:248,sc:.8}]},w2,D);
+ o+=P.r[1];
  /* quầy */
- o+=rc(124,196,152,54,w[1],4)+rc(120,188,160,10,w[3],4)+rc(122,188,156,2,'#fff',0,.5)+rc(134,204,132,38,w[0],5,.55)+'<text x="200" y="228" text-anchor="middle" font-family="Baloo 2" font-size="15" fill="#fff" stroke="'+w[2]+'" stroke-width="2.6" paint-order="stroke"'+(nm.length>14?' textLength="116" lengthAdjust="spacingAndGlyphs"':'')+'>'+esc(nm)+'</text>'
+ o+=rc(124,196,152,54,cf,4)+rc(120,188,160,10,ct,4)+rc(122,188,156,2,'#fff',0,.5)+rc(134,204,132,38,w2[0],5,.55)+'<text x="200" y="228" text-anchor="middle" font-family="'+X.fam+'" font-size="15" fill="#fff" stroke="'+w2[2]+'" stroke-width="2.6" paint-order="stroke"'+(nm.length>14?' textLength="116" lengthAdjust="spacingAndGlyphs"':'')+'>'+esc(nm)+'</text>'
   +pa('M142 188l3-14h10l3 14z','#cfeefa')+sp(pool[0],137,152,28)+sp(pool[1%pool.length],150,150,28)+rc(186,176,34,12,'#ffd3dc',3)+rc(186,176,6,12,'#f2a9bd',3)+rc(240,170,26,18,'#4a4a52',3)+rc(244,174,18,7,'#bfe9fb',1)+ci(232,184,3,'#ffd166');
+ if(T&&T.ip)o+=T.ip(X);
  if(s.fo&&s.fo.tham==1)o+=pa('M118 258h164l14 24H104z','#d9534f')+pa('M126 263h148l9 15H117z','','#fff',1,.7);
- o+=rows[0];
+ o+=P.r[0];
  if(D)o+=rc(0,0,400,290,'#0a1228',0,.2);
  if(lv>=2)for(i=0;i<14;i++){var x=14+i*28;o+=pa('M'+(x-6)+' '+(16+6*Math.sin(i))+'h12l-6 11z',['#ff8fab','#ffd166','#8fd3ff','#b7e4a8'][i%4])}
  if(lv>=4)o+=spark();
  return o}
+/* --- hook nội thất theo quốc gia --- */
+var shut=function(x,y,h,d,col){return pa('M'+x+' '+(y+h)+'V'+(y+6)+'L'+(x+d*22)+' '+y+'V'+(y+h+8)+'z',col)+R2(6,function(i){return pa('M'+(x+d*2)+' '+(y+14+i*(h/7))+'L'+(x+d*20)+' '+(y+10+i*(h/7)),'',mx(col,'#000',.25),1)})};
+var I_VN={iw:'#f4dc8a',iwc:'#8a5a3a',ifl:'#d9b98a',icf:'#6b4428',ict:'#d9b98a',
+ idf:function(){return pat('pvn',28,16,rc(0,0,14,16,'#c9955c')+rc(14,0,14,16,'#e7c9a0')+pa('M7 3L11 8L7 13L3 8z','#2f6f7a')+pa('M21 3L25 8L21 13L17 8z','#b5543a'))},
+ iwl:function(X){return rc(0,12,8,136,X.dm('#6b4428'))+rc(392,12,8,136,X.dm('#6b4428'))+el(70,40,22,6,'#8a9a3a',.2)+el(330,100,26,7,'#8a9a3a',.18)+pa('M0 40H400','',X.dm('#6b4428'),3,.5)},
+ ifp:function(){return rc(0,224,400,66,'url(#pvn)')},
+ iwin:function(X){var c=X.c,g=X.dm('#3f8a5a');return pa('M144 152V74a56 56 0 0 1 112 0V152z',X.dm('#6b4428'))+pa('M150 152V74a50 50 0 0 1 100 0V152z','url(#flsk)')+pa('M150 152V126Q200 108 250 128V152z',c.g)+pa('M178 152Q184 120 180 96','',X.dm('#7a5a38'),4)+R2(5,function(i){var a=(-160+i*55)*Math.PI/180;return pa('M180 96Q'+(180+Math.cos(a)*14)+' '+(96+Math.sin(a)*12-6)+' '+(180+Math.cos(a)*28)+' '+(96+Math.sin(a)*24+6),'',X.dm('#3f9a52'),3)})+pa('M200 26V152','',X.dm('#6b4428'),3)+rc(138,152,124,6,X.dm('#d9b98a'),2)+shut(144,72,84,-1,g)+shut(256,72,84,1,g)},
+ ie:function(X){return bgv(X,150,64,10)+bgv(X,250,64,10)+bgv(X,200,22,9)},
+ ip:function(X){return pa('M188 178Q200 150 212 178z','#e8d28a')+pa('M192 172Q200 158 208 172','','#b89a4a',1)+pa('M188 178H212','','#8a5a2a',1.6)}};
+var I_FR={iw:'#f5efe0',iwc:'#e8dcc4',ifl:'#c9a572',icf:'#2f5d4a',ict:'#f4e3a0',
+ idf:function(){return pat('pfr',16,16,ci(8,8,1.3,'#d8c9a5')+pa('M8 3v3M8 10v3M3 8h3M10 8h3','','#e4d7b8',.8))+pat('pfl',20,14,pa('M0 7L10 0L20 7M0 14L10 7L20 14','','#8a6a3a',1.2))},
+ iwl:function(X){return rc(0,15,400,133,'url(#pfr)')+R2(40,function(i){return rc(i*10+2,15,6,4,X.dm('#e8dcc4'))})+rc(0,146,400,3,'#d8b04a')},
+ iwp:function(X){return R2(8,function(i){return rc(8+i*50,158,40,54,'none',3,0,X.dm('#b8a780'))})},
+ ifp:function(){return rc(0,224,400,66,'url(#pfl)')},
+ iwin:function(X){return pa('M146 152V52a54 26 0 0 1 108 0V152z','#fff')+pa('M152 152V54a48 22 0 0 1 96 0V152z','url(#flsk)')+pa('M178 152L196 70L204 70L222 152z',mx(X.c.c1,'#4a5a70',.6),0,0,.7)+pa('M200 52V152M152 100H248','','#fff',3)+rc(146,132,108,3,'#2f3a44')+R2(14,function(i){return rc(150+i*7.6,135,1.6,17,'#2f3a44')})+pa('M146 44Q164 90 152 152H172Q176 90 162 44z','#fff',0,0,.88)+pa('M254 44Q236 90 248 152H228Q224 90 238 44z','#fff',0,0,.88)},
+ ie:function(){return''},
+ ip:function(){return pa('M194 188L200 160L206 188z','#d8b04a')+pa('M196 176H204M197 170H203','','#a8802a',1)+rc(192,186,16,3,'#b8902a',1)}};
+var I_UK={iw:'#3d5a48',iwc:'#4a3426',ifl:'#f0ece0',icf:'#223a2c',ict:'#d8b04a',
+ idf:function(){return pat('puk',14,14,rc(0,0,7,14,'#47664f'))+pat('pck',32,32,rc(0,0,16,16,'#25252a')+rc(16,16,16,16,'#25252a'))},
+ iwl:function(){return rc(0,15,400,133,'url(#puk)')+rc(0,26,400,3,'#d8b04a',0,.7)},
+ iwp:function(X){return R2(8,function(i){return rc(8+i*50,158,40,54,'none',2,0,mx(X.w[2],'#fff',.3))})},
+ ifp:function(){return rc(0,224,400,66,'url(#pck)')},
+ iwin:function(X){return rc(144,34,112,118,'#f4f0e6',3)+rc(150,40,100,106,'url(#flsk)')+R2(4,function(i){return rc(156+i*22,100-((i*13)%22),20,46,['#b5523b','#a8482f','#c0604a','#9a4030'][i],0)})+rc(228,60,12,60,mx(X.c.c1,'#6b7886',.6))+pa('M200 40V146M150 93H250','','#f4f0e6',4)+rc(138,152,124,6,'#f4f0e6',2)+pa('M144 30Q156 60 146 110','#a82f3a',0,0,0)+pa('M144 30Q160 80 148 150H134V30z','#8f2f3a',0,0,.85)+pa('M256 30Q240 80 252 150H266V30z','#8f2f3a',0,0,.85)},
+ ie:function(){return rc(0,12,400,8,'#e8e2d4',0,.9)},
+ ip:function(){return el(200,184,13,3,'#fff')+pa('M192 172h16q0 12-8 12t-8-12z','#fff','#9aa6b4',1)+pa('M208 175q5 0 4 5','','#9aa6b4',1.2)}};
+var I_CN={iw:'#a31d27',iwc:'#4a0e0e',ifl:'#6b4a3a',icf:'#6b1414',ict:'#f2c14e',
+ idf:function(){return pat('pcn',16,16,pa('M0 8L8 0L16 8L8 16z','','#e0a92a',.8,.55))+pat('pcs',40,22,rc(0,0,40,22,'none',0,0,'#4a3a3a'))},
+ iwl:function(){return rc(0,15,400,133,'url(#pcn)')+rc(0,15,400,5,'#f2c14e',0,.8)},
+ iwp:function(){return R2(10,function(i){return pa('M'+(20+i*40)+' 186L'+(30+i*40)+' 174L'+(40+i*40)+' 186L'+(30+i*40)+' 198z','','#e0a92a',1.2,.8)})},
+ ifp:function(){return rc(0,224,400,66,'url(#pcs)')},
+ iwin:function(){return ci(200,90,52,'#f2c14e')+ci(200,90,48,'#6b1414')+'<clipPath id="cnw"><circle cx="200" cy="90" r="45"/></clipPath><g clip-path="url(#cnw)">'+rc(150,40,100,100,'url(#flsk)')+pa('M150 120L180 80L200 104L226 70L250 118V140H150z','#8aa6a8',0,0,.8)+R2(4,function(i){return rc(160+i*20,60+i%2*12,4,90,'#58ad69')+pa('M'+(162+i*20)+' '+(90+i*8)+'h-10M'+(162+i*20)+' '+(110-i*6)+'h12','','#58ad69',2)})+'</g>'+R2(12,function(i){var a=i*Math.PI/6;return pa('M200 90L'+(200+Math.cos(a)*45)+' '+(90+Math.sin(a)*45),'','#f2c14e',1,.5)})+ci(200,90,45,'none',0,'#f2c14e')+rc(138,152,124,6,'#f2c14e',2)},
+ ie:function(X){return rc(124,26,10,110,'#d9232d',2,0,'#f2c14e')+rc(266,26,10,110,'#d9232d',2,0,'#f2c14e')+tx(129,56,'花',9,'#4a0e0e','font-weight="700"')+tx(129,72,'開',9,'#4a0e0e','font-weight="700"')+tx(271,56,'春',9,'#4a0e0e','font-weight="700"')+tx(271,72,'好',9,'#4a0e0e','font-weight="700"')+ln(160,12,'#e02a2a',11)+ln(240,12,'#e02a2a',11)},
+ ip:function(){return pa('M188 186Q192 174 200 176Q208 174 212 186z','#f2c14e')+el(200,186,13,3,'#c8981a')+pa('M194 178Q200 170 206 178','','#a8780f',1)}};
+var I_JP={iw:'#efe4cc',iwc:'#4a3426',ifl:'#c9c58a',icf:'#33221a',ict:'#e8d8b8',
+ iwl:function(X){var d=X.dm('#4a3426');return rc(0,15,9,133,d)+rc(391,15,9,133,d)+rc(0,40,400,4,d,0,.8)+rc(0,110,400,3,d,0,.5)},
+ iwp:function(X){return R2(10,function(i){return rc(6+i*40,156,34,60,'none',1,0,'#6b4a32')})+rc(0,146,400,4,'#e8d8b8')},
+ ifp:function(){return R2(2,function(r){return R2(6,function(k){return rc(k*80+(r%2)*-40,226+r*32,80,32,'#c9c58a',0,0,'#6a6a38')})})},
+ iwin:function(X){var o=rc(146,30,108,122,'#33221a',2)+rc(150,34,100,114,'#f7f0dc')+rc(150,34,34,114,'url(#flsk)')+pa('M150 120Q170 100 184 118V148H150z',X.c.g)+pa('M156 50Q168 44 176 56M160 66Q172 60 182 70','',['#ffc2d4','#ffc2d4'][0],4);o+=R2(5,function(i){return pa('M'+(184+i*16.5)+' 34V148','','#6b4a32',1.4)})+R2(8,function(i){return pa('M150 '+(34+i*14.2)+'H250','','#6b4a32',1.2)})+pa('M184 34V148','','#33221a',2.4);return o+rc(138,152,124,6,'#33221a',2)},
+ ie:function(X){return ln(150,12,'#fff3d8',10)+ln(250,12,'#fff3d8',10)},
+ ip:function(){return ci(200,180,8,'#fff','',0)+ci(200,170,6.5,'#fff')+pa('M195 165l-2-6 5 3zM205 165l2-6-5 3z','#fff')+rc(194,174,12,2.4,'#d9232d')+pa('M207 176q8-4 6-12','','#fff',3)+ci(200,180,2.2,'#f2c14e')}};
+var I_KR={iw:'#f6f1e7',iwc:'#7a4e32',ifl:'#d8a95f',icf:'#5a3622',ict:'#e3c9a0',
+ iwl:function(X){var d=X.dm('#7a4e32');return rc(0,15,9,133,d)+rc(391,15,9,133,d)+rc(0,28,400,6,d)+rc(0,110,400,3,d,0,.5)},
+ iwp:function(X){return R2(10,function(i){return rc(6+i*40,158,34,54,'none',2,0,'#5a3622')})},
+ ifp:function(){return R2(12,function(i){return pa('M0 '+(226+i*5.5)+'H400','','#b88a40',1)})+R2(10,function(i){return pa('M'+(i*45+((i*17)%30))+' 224v66','','#b88a40',.6)})},
+ iwin:function(X){var o=rc(138,38,124,112,'#5a3622',2)+rc(144,44,112,100,'#f7efd8');o+=R2(8,function(i){return pa('M'+(144+i*14)+' 44V144','','#7a4e32',1.6)})+R2(7,function(i){return pa('M144 '+(44+i*14.3)+'H256','','#7a4e32',1.6)})+pa('M200 44V144','','#5a3622',3);return o+rc(130,150,140,6,'#5a3622',2)},
+ ie:function(){return ln(110,12,'#4fa3d9',10)+ln(290,12,'#ff8fab',10)+R2(5,function(i){return rc(160+i*16,16,14,14,['#ff8fab','#f2c14e','#4fa3d9','#7bc88a','#b39ddb'][i],1)})},
+ ip:function(){return ci(200,172,9,'#d9534f')+pa('M191 172a9 9 0 0 0 18 0a4.5 4.5 0 0 0-9 0a4.5 4.5 0 0 1-9 0z','#3b6fe0')}};
+var I_TW={iw:'#e8dfcf',iwc:'#2f6f5a',ifl:'#cfd0c5',icf:'#1f4f40',ict:'#f5f1e6',
+ iwl:function(){return rc(0,15,400,6,'#c9c0a8')},
+ iwp:function(){return R2(40,function(i){return pa('M'+(i*10)+' 152V222','','#5f968a',.8,.6)})+R2(8,function(i){return pa('M0 '+(158+i*9)+'H400','','#5f968a',.8,.6)})},
+ ifp:function(X){return R2(46,function(i){return ci(rr(i+3)*400,226+rr(i+9)*62,1.6,['#9a9a90','#c47a6a','#7a9a9a','#e0d0a0'][i%4],.8)})},
+ iwin:function(X){var o=rc(140,40,120,110,'#c9c9c9',3)+rc(146,46,108,98,'url(#flsk)');o+=rc(226,70,10,74,mx(X.c.c1,'#6f8aa0',.6))+R2(5,function(i){return rc(224+(i%2),76+i*13,12-(i%2)*2,8,mx(X.c.c1,'#6f8aa0',.4))})+rc(152,120,30,24,'#e8a0a8',0,.8)+pa('M200 46V144','','#c9c9c9',3)+pa('M146 95H254','','#c9c9c9',2);return o+rc(134,150,132,6,'#c9c9c9',2)},
+ ie:function(){return rc(164,14,72,5,'#fffbe8',2)+rc(158,12,84,2,'#999')+rc(14,22,56,16,'#2b1d3a',5,0,'#ff6fa0')+tx(42,34,'花店',11,'#ff9bc0','font-weight="700"')+R2(5,function(i){return ln(300+i*18,12,'#e02a2a',7)})},
+ ip:function(){return pa('M192 174h16l-3 14h-10z','#fff','#d98a5f',1.2)+rc(191,172,18,3,'#f2b8c6',1)+pa('M204 172L208 160','','#7bc88a',2)+R2(5,function(i){return ci(195+i*2.6,184-(i%2),1.4,'#4a2e1a')})}};
+var I_HK={iw:'#cfd3d6',iwc:'#e8eaec',ifl:'#aeb4b8',icf:'#2a2e37',ict:'#cfd3d8',
+ idf:function(){return pat('phk',12,12,rc(0,0,12,12,'#d8dce0')+pa('M0 0H12V12','','#aab0b6',.8))+pat('pmo',8,8,rc(0,0,8,8,'#aeb4b8')+rc(0,0,4,4,'#9aa2a8')+rc(4,4,4,4,'#9aa2a8'))},
+ iwl:function(){return rc(0,15,400,133,'url(#phk)')},
+ iwp:function(){return rc(0,152,400,70,'url(#phk)')+rc(0,148,400,3,'#2a2e37')},
+ ifp:function(){return rc(0,224,400,66,'url(#pmo)')},
+ iwin:function(X){var o=rc(140,34,120,116,'#2a2e37',3)+rc(146,40,108,104,mx(X.c.c0,'#1a2238',.3));o+=R2(8,function(i){var h=30+((i*37)%50);return rc(148+i*13,140-h,11,h,mx(X.c.c1,'#44566a',.5))})+(X.D?R2(10,function(i){return rc(152+(i%8)*13,100+(i*7)%36,3,3,'#ffe97a')}):'');return o+R2(7,function(i){return rc(146,40+i*6,108,5,'#e8eaec',0,.9)})+rc(134,150,132,6,'#2a2e37',2)},
+ ie:function(){return rc(26,44,26,86,'#1b1b22',3,0,'#ff4fa0')+vn(39,64,'花店','#ff7ab8',14)+rc(348,44,26,86,'#1b1b22',3,0,'#1de9ff')+vn(361,64,'鮮花','#7fe9ff',14)+rc(158,12,84,4,'#8a8f96',2)+pa('M180 14L220 14','','#555',1)},
+ ip:function(){return rc(190,178,20,8,'#d9232d',3)+rc(194,172,12,7,'#d9232d',2)+rc(196,174,4,4,'#bfe9fb')+rc(201,174,4,4,'#bfe9fb')+ci(194,187,2.2,'#222')+ci(206,187,2.2,'#222')}};
+
+var TS=[null,
+{n:'🇻🇳 Việt Nam',I:I_VN,w:['#8a5a3a','#6b4428','#4a2e1a','#d9b98a'],a:['#3f8a5a','#f6e7b0'],ext:extVN,ws:[[200,100],[200,124],[84,178],[338,196]],hg:{long:[[96,184],[304,184]],gio:[[150,196]]},sw:[84,182,200,198,316,182],tm:DEF.tm,bn:[90,310,176,10,[130,270]],pc:'#ffb6c9'},
+{n:'🇫🇷 Pháp',I:I_FR,w:['#3c4a5a','#2b3744','#1e2832','#e8e2d0'],a:['#2f5d4a','#f7f1e1'],ext:extFR,ws:[[108,100],[292,100],[170,100],[230,100]],hg:{long:[[60,214],[340,214]],gio:[[158,212]]},sw:[50,188,200,206,350,188],tm:pa('M170 262h60l9 26h-78z','#d9534f')+pa('M176 266h48l6 18h-60z','','#fff',1,.7),zn:{L:[6,160],R:[240,394],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:200,gy:289}},
+{n:'🇬🇧 Anh',I:I_UK,w:['#2f4a3a','#223a2c','#16281e','#f5f1e6'],a:['#2f4a3a','#f5f1e6'],ext:extUK,sk:['#aab4bf',.3],ws:[[128,100],[272,100],[200,100],[200,150]],hg:{long:[[96,200],[304,200]],gio:[[170,202]]},sw:[92,170,200,188,308,170],tm:pa('M170 262h60l9 26h-78z','#9a2f2f')+pa('M176 266h48l6 18h-60z','','#fff',1,.7),zn:{L:[6,160],R:[240,336],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:200,gy:289}},
+{n:'🇨🇳 Trung Quốc',I:I_CN,w:['#8c1d1d','#6b1414','#4a0e0e','#f2c14e'],a:['#8c1d1d','#f2c14e'],ext:extCN,sk:['#f2c79b',.18],ws:[[158,88],[242,88],[200,92],[104,150]],hg:{long:[[44,138],[356,138]],gio:[[150,160]]},sw:[62,140,200,152,338,140],tm:pa('M170 262h60l9 26h-78z','#b3202a')+pa('M176 266h48l6 18h-60z','','#f2c14e',1,.8),zn:{L:[26,160],R:[240,376],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:200,gy:289}},
+{n:'🇯🇵 Nhật Bản',I:I_JP,w:['#4a3426','#33221a','#22160f','#e8d8b8'],a:['#2d4a8a','#fff'],ext:extJP,ws:[[220,128],[180,128],[260,128]],hg:{long:[[184,160],[256,160]],gio:[[220,150]]},sw:[112,150,220,166,328,150],tm:pa('M190 262h60l9 26h-78z','#27407a')+pa('M196 266h48l6 18h-60z','','#fff',1,.5),zn:{L:[6,190],R:[250,394],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:220,gy:289},pc:'#ffc2d4'},
+{n:'🇰🇷 Hàn Quốc',I:I_KR,w:['#7a4e32','#5a3622','#3a2214','#e3c9a0'],a:['#2f7d5a','#d9534f'],ext:extKR,ws:[[44,232],[356,232],[200,120]],hg:{long:[[112,134],[288,134]],gio:[[170,136]]},sw:[90,126,200,144,310,126],tm:pa('M170 262h60l9 26h-78z','#8a5a3a')+pa('M176 266h48l6 18h-60z','','#e3c9a0',1,.7),zn:{L:[6,152],R:[248,394],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:200,gy:289}},
+{n:'🇹🇼 Đài Loan',I:I_TW,w:['#2f6f5a','#1f4f40','#143528','#f5f1e6'],a:['#3b82c4','#3b82c4'],ext:extTW,ws:[[123,96],[185,96],[247,96],[310,150]],hg:{long:[[84,230],[316,230]],gio:[[110,226]]},sw:[52,200,200,214,348,200],tm:pa('M170 262h60l9 26h-78z','#3b82c4')+pa('M176 266h48l6 18h-60z','','#fff',1,.6),zn:{L:[6,152],R:[248,394],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:200,gy:289}},
+{n:'🇭🇰 Hồng Kông',I:I_HK,w:['#3a3f4a','#2a2e37','#1a1d24','#d6d0c0'],a:['#2a2e37','#1de9ff'],ext:extHK,sk:['#9a8aa8',.18],ws:[[200,104],[200,150],[162,70]],hg:{long:[[112,226],[288,226]],gio:[[200,230]]},sw:[100,196,200,214,300,196],tm:pa('M170 262h60l9 26h-78z','#2a2e37')+pa('M176 266h48l6 18h-60z','','#1de9ff',1,.7),zn:{L:[6,104],R:[296,394],rows:[{by:289,sc:1},{by:270,sc:.78}],gate:200,gy:289}}];
+
 /* ---------- gộp lại: scene() ---------- */
-function shop(fs){var c=env(),w=WDf(),a=AWf(),ins=s.sv==1,pool=(fs&&fs.length?fs:F.slice(0,6).map(function(f){return f.id})).filter(function(i){return FH[i]});if(!pool.length)pool=Object.keys(FH).slice(0,6);
- return'<svg viewBox="0 0 400 290" style="width:100%;display:block;border-radius:20px" role="img" aria-label="Tiệm hoa '+esc(String(s.name||''))+(ins?' (bên trong)':' (mặt tiền)')+'"><defs><linearGradient id="flsk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+c.c0+'"/><stop offset="1" stop-color="'+c.c1+'"/></linearGradient></defs>'+(ins?INT(c,pool,w,a):EXT(c,pool,w,a))
+function TH(){var i=s.shn|0;return i>0&&TS[i]?TS[i]:null}
+TS.forEach(function(t){if(t&&t.I)Object.assign(t,t.I)});
+var SN=['🌸 Mặc định'].concat(TS.slice(1).map(function(t){return t.n}));
+function shop(fs){var T=TH(),c=env(),w=WDf(),a=AWf(),ins=s.sv==1,pool=(fs&&fs.length?fs:F.slice(0,6).map(function(f){return f.id})).filter(function(i){return FH[i]});if(!pool.length)pool=Object.keys(FH).slice(0,6);
+ if(T&&T.sk){c.c0=mx(c.c0,T.sk[0],T.sk[1]);c.c1=mx(c.c1,T.sk[0],T.sk[1]*.7)}
+ return'<svg class="fshop" viewBox="0 0 400 290" style="width:100%;display:block;border-radius:20px" role="img" aria-label="Tiệm hoa '+esc(String(s.name||''))+(T?' · '+T.n.replace(/^\S+\s/,''):'')+(ins?' (bên trong)':' (mặt tiền)')+'"><defs><linearGradient id="flsk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+c.c0+'"/><stop offset="1" stop-color="'+c.c1+'"/></linearGradient></defs>'+(ins?INT(c,pool,w,a):EXT(c,pool,w,a))
   +'<g onclick="s.sv='+(ins?0:1)+';R()" style="cursor:pointer" role="button" aria-label="'+(ins?'Ra ngoài':'Vào trong')+'">'+rc(8,5,94,24,'#fffdf7',12,.94,'#4fb06f')+'<text x="55" y="21.5" text-anchor="middle" font-family="Baloo 2" font-size="12" fill="#244033">'+(ins?'🌳 Ra ngoài':'🚪 Vào trong')+'</text></g></svg>'}
 scene=function(fs){if(s.shk===0)return oS(fs);try{return shop(fs)}catch(e){console.warn('flo',e);return oS(fs)}};
 /* ---------- giao diện chọn kiểu + hiển thị cấp mở khóa ---------- */
+{var st=document.createElement('style');st.textContent='.fshop{max-width:440px;margin-left:auto;margin-right:auto}.card:has(>.fshop){background:transparent;border-color:transparent;box-shadow:none}@media(max-width:480px){.card:has(>.fshop){background:var(--card);border-color:var(--ln)}}';document.head.appendChild(st)}
 function pick(){var n=s.shk===0?0:1,v=s.sv==1?1:0,b=function(on,oc,t){return'<button class="s '+(on?'on2':'')+'" onclick="'+oc+'">'+t+'</button>'};
- return'<div class=card><h3>Kiểu gian hàng</h3><div class=row style="justify-content:flex-start">'+b(n,'s.shk=1;R()','🌸 Tiệm hoa mới')+b(!n,'s.shk=0;R()','🛖 Gian hàng cũ')+'</div>'+(n?'<div class=sec>Phong cách</div><div class=row style="justify-content:flex-start;gap:4px">'+SN.map(function(t,i){return b((s.shn|0)==i,'s.shn='+i+';R()',t)}).join('')+'</div><div class=row style="justify-content:flex-start">'+b(!v,'s.sv=0;R()','🌳 Mặt tiền')+b(v,'s.sv=1;R()','🛋️ Bên trong')+'</div><p class=mut style="margin:2px 0 0">Màu mái hiên và màu gỗ bên dưới chỉ áp dụng cho phong cách Mặc định. Nội thất chia nhau ở sân trước và trong tiệm; bấm vào ảnh để vào/ra.</p>':'<p class=mut style="margin:2px 0 0">Các món nội thất mới chỉ hiện ở Tiệm hoa mới.</p>')+'</div>'}
+ return'<div class=card><h3>Kiểu gian hàng</h3><div class=row style="justify-content:flex-start">'+b(n,'s.shk=1;R()','🌸 Tiệm hoa mới')+b(!n,'s.shk=0;R()','🛖 Gian hàng cũ')+'</div>'+(n?'<div class=sec>Quốc gia / phong cách</div><div class=row style="justify-content:flex-start;gap:4px">'+SN.map(function(t,i){return b((s.shn|0)==i,'s.shn='+i+';R()',t)}).join('')+'</div><div class=row style="justify-content:flex-start">'+b(!v,'s.sv=0;R()','🌳 Mặt tiền')+b(v,'s.sv=1;R()','🛋️ Bên trong')+'</div><p class=mut style="margin:2px 0 0">Mỗi quốc gia có kiểu cửa hàng, phong cảnh và nội thất riêng. Màu mái hiên và màu gỗ bên dưới chỉ áp dụng cho phong cách Mặc định. Nội thất tự xếp theo khu vực (sân trước / trong tiệm); bấm vào ảnh để vào/ra.</p>':'<p class=mut style="margin:2px 0 0">Các món nội thất mới chỉ hiện ở Tiệm hoa mới.</p>')+'</div>'}
 {var os=V.sty;V.sty=function(){var h=os(),i=h.indexOf('</svg></div>');return i<0?pick()+h:h.slice(0,i+12)+pick()+h.slice(i+12)}}
 {var of=V.furn;V.furn=function(){var h=of();Object.keys(NEW).forEach(function(k){h=h.split('<b>'+NEW[k][0]+'</b>').join('<b>'+NEW[k][0]+'</b> <span class=mut>· cấp '+NEW[k][2]+'</span>')});return h}}
 try{R()}catch(e){}
 }catch(e){console.warn('flo-shop',e)}})();
 </script>
+
 <script id="shopbgm">
 /* ===== Nhạc nền theo phong cách cửa hàng (Việt Nam / Pháp / Trung-Đài-Hồng / Nhật / Hàn) =====
    - Phong cách cửa hàng (s.shn) -> bản nhạc: 1 VN, 2 Pháp, 4+7+8 Trung/Đài Loan/Hồng Kông, 5 Nhật, 6 Hàn.

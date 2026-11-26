@@ -13122,7 +13122,7 @@ html[data-skin^=anm]::after{content:"";position:fixed;inset:0;pointer-events:non
 /* Anime theme: nạp Sakuga VFX (https://sakuga-vfx.vercel.app/gallery/) khi dùng chủ đề Anime */
 (function(){try{
 var R=document.documentElement,B='https://sakuga-vfx.vercel.app/',M='https://cdn.jsdelivr.net/gh/finktheartist/sakuga-vfx@main/',LS='animeVfx',LR='animeRate',
-FILES=['button/button.js','toast/toast.js','tabs/tabs.js','progress/progress.js','rating/rating.js','toggle/toggle.js'],pm=null,tb=null;
+FILES=['toast/toast.js'],pm=null,tb=null;
 function on(){try{return localStorage.getItem(LS)!=='0'}catch(e){return true}}
 function isA(){return /^anm/.test(R.dataset.skin||'')}
 function dkv(){return typeof s!='undefined'&&s&&s.dark?1:0}
@@ -13152,7 +13152,7 @@ var SK_SEL='sakuga-button,sakuga-toggle,sakuga-tabs,sakuga-rating,sakuga-progres
 var TG='input[type=checkbox],input[type=radio],nav button,button,.chip,[role=button],summary';
 function squashable(el){var r=el.getBoundingClientRect();return r.width<280&&r.height<96&&r.width>0}
 function relSq(el){var a=el._sq;if(a){try{a.cancel()}catch(e){}el._sq=null}try{el.animate([{transform:'scale(1.1,.86)'},{transform:'scale(.95,1.09)',offset:.5},{transform:'scale(1)'}],{duration:380,easing:'cubic-bezier(.3,1.5,.5,1)'})}catch(e){}}
-document.addEventListener('pointerdown',function(e){if(!act()||!e.isTrusted)return;var el=e.target.closest&&e.target.closest(TG);if(!el||el.closest(SK_SEL)||el.disabled||el.matches('input')||!squashable(el))return;try{el._sq=el.animate([{transform:'scale(1)'},{transform:'scale(1.07,.87)'}],{duration:90,fill:'forwards',easing:'ease-out'})}catch(x){}var u=function(){document.removeEventListener('pointerup',u,true);document.removeEventListener('pointercancel',u,true);if(el._sq)relSq(el)};document.addEventListener('pointerup',u,true);document.addEventListener('pointercancel',u,true)},true);
+document.addEventListener('pointerdown',function(e){if(!act()||!e.isTrusted)return;var el=e.target.closest&&e.target.closest(TG);if(!el||el.closest(SK_SEL)||el.disabled||el.matches('input')||!el.matches('button.p,nav button')||!squashable(el))return;try{el._sq=el.animate([{transform:'scale(1)'},{transform:'scale(1.07,.87)'}],{duration:90,fill:'forwards',easing:'ease-out'})}catch(x){}var u=function(){document.removeEventListener('pointerup',u,true);document.removeEventListener('pointercancel',u,true);if(el._sq)relSq(el)};document.addEventListener('pointerup',u,true);document.addEventListener('pointercancel',u,true)},true);
 document.addEventListener('click',function(e){if(!act()||!e.isTrusted)return;var t=e.target.closest&&e.target.closest(TG);if(!t||t.closest(SK_SEL)||t.disabled)return;var r=t.getBoundingClientRect(),x=e.clientX||r.left+r.width/2,y=e.clientY||r.top+r.height/2;
 if(t.matches('input[type=checkbox]')){if(t.checked){slash(x,y);sfx(x,y,'ズザッ')}else dust(x,y,4)}
 else if(t.matches('input[type=radio]')){dust(x,y,4);sfx(x,y,'ポン')}
@@ -13165,23 +13165,6 @@ else if(t.matches('input:not([type=checkbox]):not([type=radio]):not([type=color]
 try{if(document.fonts&&document.fonts.load){document.fonts.load('400 34px "Dela Gothic One"','ドンズザッポンパキラ！');}}catch(e){}
 var ot=window.toast;
 window.toast=function(t){try{if(isA()&&on()){if(act()&&performance.now()-lastT>500){lastT=performance.now();var bx=innerWidth/2,by=innerHeight-110;streaks(bx,by,90);dust(bx,by+14,4)}var e=mkT();if(e&&typeof e.show==='function'){e.show(String(t==null?'':t));var o=document.getElementById('toast');if(o)o.style.display='none';return}}}catch(x){}return ot.apply(this,arguments)};
-function panel(){var a=isA();return '<section id="anmx" class="anmx"><div class="anmx-h"><b>🎌 Phòng VFX Anime</b><small>'+(a?'VFX squash · burst · SFX đang chạy trên toàn app':'Chọn một chủ đề trong nhóm Anime ở trên để kích hoạt toast VFX')+'</small></div>'
-+'<div class="anmx-r"><sakuga-toggle id="anmT" label="Bật VFX anime"></sakuga-toggle></div>'
-+'<div class="anmx-r"><sakuga-tabs id="anmM" label="Chế độ"><option'+(dkv()?'':' selected')+'>☀️ Sáng</option><option'+(dkv()?' selected':'')+'>🌙 Tối</option></sakuga-tabs></div>'
-+'<div class="anmx-r"><sakuga-button id="anmB">Thử ドン!</sakuga-button><sakuga-rating id="anmS" label="Bạn thích chủ đề này?"></sakuga-rating></div>'
-+'<div class="anmx-r"><sakuga-progress id="anmP" label="Nạp năng lượng"></sakuga-progress><sakuga-button id="anmC" variant="secondary">Nạp</sakuga-button></div></section>'}
-function bind(){var p=document.getElementById('anmx');if(!p)return;var q=function(i){return p.querySelector(i)};
-ensure().then(function(){
-def('sakuga-toggle').then(function(){var t=q('#anmT');if(!t)return;t.checked=on();t.addEventListener('change',function(){var v=t.checked;if(v){try{localStorage.setItem(LS,'1')}catch(e){}toast('⚡ VFX anime: BẬT')}else{toast('VFX anime: TẮT');try{localStorage.setItem(LS,'0')}catch(e){}}})});
-def('sakuga-tabs').then(function(){var t=q('#anmM');if(!t)return;t.addEventListener('change',function(e){var i=e.detail&&e.detail.index;if(i!=null&&i!==dkv()&&typeof setDark==='function')setDark(i?1:0,null)})});
-def('sakuga-button').then(function(){var b=q('#anmB'),c=q('#anmC'),pr=q('#anmP');
-if(b)b.addEventListener('click',function(){var rr=b.getBoundingClientRect();FX.burst(rr.left+rr.width/2,rr.top+rr.height/2,null,56);FX.sfx(rr.left+rr.width/2,rr.top,'ドン！');toast('💥 ドン！Tuyệt chiêu!');setTimeout(function(){try{b.done()}catch(e){}},450)});
-if(c)c.addEventListener('click',function(){if(!pr||c._run)return;c._run=1;var v=0;try{pr.reset()}catch(e){}var iv=setInterval(function(){v=Math.min(1,v+.08+Math.random()*.08);try{pr.set(v)}catch(e){}if(v>=1){clearInterval(iv);setTimeout(function(){c._run=0},800)}},160)});
-if(pr)pr.addEventListener('sakuga:done',function(){toast('🔥 Đầy năng lượng!')})});
-def('sakuga-rating').then(function(){var r=q('#anmS');if(!r)return;try{r.value=+localStorage.getItem(LR)||0}catch(e){}r.addEventListener('change',function(){try{localStorage.setItem(LR,String(r.value))}catch(e){}toast('⭐ Cảm ơn bạn đã chấm '+r.value+'/5!')})})})}
-var ov=window.__skxView,op=window.__skxPost;
-if(typeof ov==='function')window.__skxView=function(){return ov.apply(this,arguments)+panel()};
-if(typeof op==='function')window.__skxPost=function(){var r=op.apply(this,arguments);try{bind()}catch(e){}return r};
 var last=R.dataset.skin||'';if(isA())ensure();
 new MutationObserver(function(){var c=R.dataset.skin||'';if(c===last)return;last=c;if(isA()){ensure().then(function(){if(on())toast('🎌 Chủ đề Anime — VFX bật!');FX.skin()})}}).observe(R,{attributes:true,attributeFilter:['data-skin']});
 }catch(e){console.warn('anime-vfx',e)}})();
@@ -21356,7 +21339,7 @@ try{var sb=window.__shopBgm;if(sb){var o0=sb.owns;sb.owns=function(){return !!sk
 </script>
 <style id="anime-manga">
 :root[data-skin^=anm]{--ink-line:color-mix(in srgb,var(--ink) 92%,#000)}
-:root[data-skin^=anm] :is(.card,nav,.chip,button.p,button.s,.bub){border:2.5px solid var(--ink-line)!important;box-shadow:3px 3px 0 var(--ink-line)!important}
+:root[data-skin^=anm] :is(.card,nav){border:2.5px solid var(--ink-line)!important;box-shadow:3px 3px 0 var(--ink-line)!important}
 :root[data-skin^=anm] button.p{text-shadow:1px 1px 0 rgba(0,0,0,.35)}
 :root[data-skin^=anm] .hd h2{letter-spacing:.5px;text-shadow:2px 2px 0 color-mix(in srgb,var(--g2) 40%,transparent)}
 html[data-skin=anm9]::before,html[data-skin=anm10]::before{opacity:1;background:radial-gradient(circle,rgba(0,0,0,.2) 1px,transparent 1.5px) 0 0/6px 6px;-webkit-mask-image:linear-gradient(135deg,#000 0,transparent 30%,transparent 72%,#000 100%);mask-image:linear-gradient(135deg,#000 0,transparent 30%,transparent 72%,#000 100%)}

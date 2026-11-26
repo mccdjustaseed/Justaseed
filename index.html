@@ -130,7 +130,7 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&display=swap" rel="stylesheet"><style id="mtv-hide-mobile">@media(max-width:899px){#mtv:not(.tvon){display:none!important}#mdesc{display:none!important}}</style>
 <style id="mdesc-order">@media(min-width:900px){#tc#tc:has(#mnow){grid-template-areas:"now q" "ly tv" "info tv" "srch tv"}#tc#tc:has(#mnow.tvon){grid-template-areas:"now q" "now tv" "ly tv" "info tv" "srch tv";grid-template-rows:auto auto auto auto 1fr}}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<style id="v139-fullscreen">/* v139: trang phủ kín màn hình (black-translucent + viewport-fit=cover), không còn nắp che thanh trạng thái. */</style></head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
+<style id="v139-fullscreen">/* v139: trang phủ kín màn hình (black-translucent + viewport-fit=cover), không còn nắp che thanh trạng thái. */</style><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;800&family=Dela+Gothic+One&display=swap" rel="stylesheet"></head><body><div id=lv></div><div id=app></div><div id=menu></div><div id=modal></div><div id=toast></div><div id=tutw></div>
 <script id="yt-guard-js">
 /* v124: hàng đợi gọi YouTube API — giãn cách, tự thử lại khi 429, nghỉ 60s nếu vẫn bị giới hạn */
 (()=>{
@@ -12975,6 +12975,15 @@ window.__ANGEL=[
 </script>
 <script id="pastel-defs">
 /* Thư mục Pastel Mộng Mơ: 30 chủ đề pastel (nền hoa văn + vật rơi + hiệu ứng chạm riêng cho từng chủ đề) */
+window.__ANIME=[
+{id:'anm1',n:'Sakura Shōjo',e:'🌸',a:'#f2799f',a3:'#9a3b5e',l:'#fff0f5',d:'#25131b',pk:'#ffc4d8',s1:'#ffd6e4',s2:'#fff7fa',f:'Zen Maru Gothic'},
+{id:'anm2',n:'Shounen Lửa',e:'🔥',a:'#ff6b2c',a3:'#a8330a',l:'#fff1e4',d:'#1f0e08',pk:'#ffc09a',s1:'#ffd8b8',s2:'#fff7ee',f:'Dela Gothic One'},
+{id:'anm3',n:'Neon Tokyo',e:'🌃',a:'#7c5cff',a3:'#3a2a99',l:'#f0ecff',d:'#0c0a22',pk:'#ff9ad5',s1:'#d6d0ff',s2:'#f8f5ff',f:'M PLUS Rounded 1c'},
+{id:'anm4',n:'Magical Girl',e:'⭐',a:'#ff5fbd',a3:'#8d2d86',l:'#fff0fa',d:'#220f26',pk:'#ffb3e6',s1:'#ffd1f0',s2:'#fff7fd',f:'Mochiy Pop One'},
+{id:'anm5',n:'Đồng cỏ mùa hè',e:'🌾',a:'#3fae7a',a3:'#1f6a47',l:'#eefbe6',d:'#0f1f16',pk:'#ffe08a',s1:'#bfeed2',s2:'#f6fff0',f:'Zen Maru Gothic'},
+{id:'anm6',n:'Isekai Đêm',e:'🗡️',a:'#5b8cff',a3:'#2b4aa8',l:'#eaf1ff',d:'#0a1226',pk:'#b9a6ff',s1:'#cbdcff',s2:'#f5f8ff',f:'M PLUS Rounded 1c'},
+{id:'anm7',n:'Mecha Cyber',e:'🤖',a:'#14b8cc',a3:'#0b6577',l:'#e4fbff',d:'#061418',pk:'#ff8fa3',s1:'#bdf1f8',s2:'#f3feff',f:'Dela Gothic One'},
+{id:'anm8',n:'Hoàng hôn học đường',e:'🎒',a:'#f08a5d',a3:'#9a4524',l:'#fff1e6',d:'#241310',pk:'#ffb8c6',s1:'#ffd9bf',s2:'#fff8f1',f:'Zen Maru Gothic'}];
 window.__PASTEL=[
 {id:'pst01',n:'Tuyết mùa đông',e:'⛄',a:'#7fb2e5',a3:'#4f6e8e',l:'#eef6ff',d:'#121a2a',pk:'#cce0f5',s1:'#dcebff',s2:'#f5faff',f:'Quicksand'},
 {id:'pst02',n:'Sakura',e:'🌸',a:'#f08fb0',a3:'#95596d',l:'#fff0f4',d:'#251a21',pk:'#f9d2df',s1:'#ffdfe9',s2:'#fff6f8',f:'Quicksand'},
@@ -13040,7 +13049,7 @@ var SK=[
 {id:'catpink',n:'Mèo hồng',e:'😻',a:'#ec7fb0',a3:'#b8497f',l:'#ffeaf3',d:'#2a1520',pk:'#ffc9de',s1:'#ffd3e5',s2:'#fff3f8',f:'Comfortaa'},
 {id:'candy',n:'Kẹo hồng',e:'🎀',a:'#ec4079',a3:'#b81f57',l:'#ffeaf2',d:'#2a1019',pk:'#ffb8d0',s1:'#ffc9dc',s2:'#fff0f6',f:'Baloo 2'},
 {id:'bakery',n:'Tiệm bánh mì',e:'🍞',a:'#35a58b',a3:'#7d4c2b',l:'#fff4dc',d:'#1f1a14',pk:'#ffc6d3',s1:'#cdeee4',s2:'#fff9e8',f:'Patrick Hand'},
-{id:'croffy',n:'Croffy',e:'🥐',a:'#b4722f',a3:'#5a3315',l:'#fdecd8',d:'#22150c',pk:'#f8d3b0',s1:'#f6d9b5',s2:'#fff5e8',f:'Nunito'}].concat(window.__SWEET||[]).concat(window.__MOON||[]).concat(window.__MAGIC||[]).concat(window.__NOIR||[]).concat(window.__FAIRY||[]).concat(window.__Y2K||[]).concat(window.__ANGEL||[]).concat(window.__PASTEL||[]).concat(window.__CHROME||[]);
+{id:'croffy',n:'Croffy',e:'🥐',a:'#b4722f',a3:'#5a3315',l:'#fdecd8',d:'#22150c',pk:'#f8d3b0',s1:'#f6d9b5',s2:'#fff5e8',f:'Nunito'}].concat(window.__SWEET||[]).concat(window.__MOON||[]).concat(window.__MAGIC||[]).concat(window.__NOIR||[]).concat(window.__FAIRY||[]).concat(window.__Y2K||[]).concat(window.__ANGEL||[]).concat(window.__PASTEL||[]).concat(window.__CHROME||[]).concat(window.__ANIME||[]);
 function g(k){try{return localStorage.getItem(k)}catch(e){return null}}function p(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 var cur=g(K)||'';if(cur&&SK.some(function(x){return x.id==cur}))R.dataset.skin=cur;else cur='';setTimeout(function(){try{if(typeof s!='undefined'&&s&&(s.skx||'')!==cur){s.skx=cur;save()}}catch(e){}},4000);
 var st=document.createElement('style');st.id='skx-vars';st.textContent=SK.filter(function(x){return x.id}).map(function(x){var P=':root[data-skin='+x.id+']',D=P+'[data-theme=dark]',I='!important;',m=function(a,b,c){return 'color-mix(in srgb,'+a+' '+b+'%,'+c+')'};
@@ -13062,7 +13071,7 @@ if(matchMedia('(prefers-reduced-motion:reduce)').matches||!document.startViewTra
 var rad=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),clip=['circle(0px at '+x+'px '+y+'px)','circle('+rad+'px at '+x+'px '+y+'px)'];
 try{burst(fx,x,y,col);var t=document.startViewTransition(ap);t.ready.then(function(){R.animate({clipPath:clip},{duration:800,easing:'cubic-bezier(.4,0,.2,1)',pseudoElement:'::view-transition-new(root)'})}).catch(function(){})}catch(e){ap()}}
 /* v149: gom chủ đề thành thư mục */
-var GRP=[['Cơ bản','🌿',['','sakura','kraft','dusk','lavender','ocean','sea']],['Kính','💎',['glass','glassrose','glassmint','glassviolet','glassamber','glassgraphite']],['Mèo','🐱',['catorange','catcalico','catwhite','catblack','catgray','catpink']],['Kẹo & bánh','🍰',['rbblue','rbpink','rblilac','rbcherry','candy','bakery','croffy','mmmatcha','mmhoney','mmberry','mmcocoa']],['Cổ tích & phép thuật','🪄',['lamb','lunar','moonmilk','mgirl','witch','fairy','crystal','veil','castle','coquette','organza']],['Dark Romantic','🖤',['nrswan','nrmirror','nrwilt','nrdusk','nrbswan','nrshatter','nrvoid','nrmoon']],['Y2K','🖥️',['y2kxp','y2kaqua','y2kbuddy','y2kwinamp','y2kflip','y2kcassette','y2kcyan','y2kmagenta','y2khud','y2kpipboy','y2kphosphor','y2krust','y2kconsole','y2kpico','y2kgothic','y2knotebook']],['Thiên Thần Sa Ngã','🪽',['ang1','ang2','ang3','ang4','ang5','ang6','ang7','ang8','ang9']],['Pastel Mộng Mơ','🎀',['pst01','pst02','pst03','pst04','pst05','pst06','pst07','pst08','pst09','pst10','pst11','pst12','pst13','pst14','pst15','pst16','pst17','pst18','pst19','pst20','pst21','pst22','pst23','pst24','pst25','pst26','pst27','pst28','pst29','pst30']],['Chrome Lỏng','🪩',['chrblue','chrsilver','chrglass','chrink','chrbead','chrveil','chrbow','chrfly','chrsmoke']]];
+var GRP=[['Anime','🎌',['anm1', 'anm2', 'anm3', 'anm4', 'anm5', 'anm6', 'anm7', 'anm8']],['Cơ bản','🌿',['','sakura','kraft','dusk','lavender','ocean','sea']],['Kính','💎',['glass','glassrose','glassmint','glassviolet','glassamber','glassgraphite']],['Mèo','🐱',['catorange','catcalico','catwhite','catblack','catgray','catpink']],['Kẹo & bánh','🍰',['rbblue','rbpink','rblilac','rbcherry','candy','bakery','croffy','mmmatcha','mmhoney','mmberry','mmcocoa']],['Cổ tích & phép thuật','🪄',['lamb','lunar','moonmilk','mgirl','witch','fairy','crystal','veil','castle','coquette','organza']],['Dark Romantic','🖤',['nrswan','nrmirror','nrwilt','nrdusk','nrbswan','nrshatter','nrvoid','nrmoon']],['Y2K','🖥️',['y2kxp','y2kaqua','y2kbuddy','y2kwinamp','y2kflip','y2kcassette','y2kcyan','y2kmagenta','y2khud','y2kpipboy','y2kphosphor','y2krust','y2kconsole','y2kpico','y2kgothic','y2knotebook']],['Thiên Thần Sa Ngã','🪽',['ang1','ang2','ang3','ang4','ang5','ang6','ang7','ang8','ang9']],['Pastel Mộng Mơ','🎀',['pst01','pst02','pst03','pst04','pst05','pst06','pst07','pst08','pst09','pst10','pst11','pst12','pst13','pst14','pst15','pst16','pst17','pst18','pst19','pst20','pst21','pst22','pst23','pst24','pst25','pst26','pst27','pst28','pst29','pst30']],['Chrome Lỏng','🪩',['chrblue','chrsilver','chrglass','chrink','chrbead','chrveil','chrbow','chrfly','chrsmoke']]];
 function TILE(x){return '<button class="skx-t" data-sk="'+x.id+'" style="--t1:'+x.s1+';--t2:'+x.s2+';--ta:'+x.a+';--tp:'+x.pk+';--td:'+x.d+'"><i><em>'+x.e+'</em></i><b style="font-family:\''+x.f+'\',sans-serif">'+x.n+'</b></button>'}
 function FOLD(){var used={},out=GRP.map(function(g){var l=SK.filter(function(x){return g[2].indexOf(x.id)>=0});l.forEach(function(x){used[x.id]=1});return{n:g[1]+' '+g[0],l:l}}),rest=SK.filter(function(x){return!used[x.id]});if(rest.length)out.push({n:'✨ Khác',l:rest});return out.filter(function(g){return g.l.length})}
 function html(){return '<section id="skx" class="skx" data-dk="'+dk()+'"><div class="skx-hero"><i class="sun"></i><i class="h h1"></i><i class="h h2"></i><div class="fl"><span>🌷</span><span>🌼</span><span>🌹</span></div><div class="cap"><b id="skx-name"></b><small>Giao diện đang dùng</small></div></div>'
@@ -13094,6 +13103,54 @@ var oR=R;R=function(){var r=oR.apply(this,arguments);if(tab=='theme')setTimeout(
 }catch(e){console.warn('theme-tab',e)}})();
 </script>
 
+<style id="anime-css">
+:root{--sk-ink:var(--ink);--sk-card:var(--card);--sk-pri:var(--g2);--sk-acc:var(--pk)}
+html[data-skin^=anm]::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.55;background:radial-gradient(circle,color-mix(in srgb,var(--g2) 24%,transparent) 1.2px,transparent 1.7px) 0 0/11px 11px;-webkit-mask-image:linear-gradient(160deg,#000 0,transparent 36%,transparent 68%,#000 100%);mask-image:linear-gradient(160deg,#000 0,transparent 36%,transparent 68%,#000 100%)}
+html[data-skin^=anm]::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.09;background:repeating-conic-gradient(from 0deg at 50% 40%,var(--g2) 0 .6deg,transparent .6deg 4.2deg);-webkit-mask-image:radial-gradient(circle at 50% 40%,transparent 36%,#000 85%);mask-image:radial-gradient(circle at 50% 40%,transparent 36%,#000 85%)}
+:root[data-skin^=anm] .hd h2{text-shadow:2px 2px 0 color-mix(in srgb,var(--g2) 35%,transparent)}
+:root[data-skin^=anm] .card{border-width:2px;box-shadow:4px 4px 0 color-mix(in srgb,var(--g3) 26%,transparent)}
+:root[data-skin^=anm] nav button.on{box-shadow:0 3px 0 var(--g3)}
+#skToastBox{position:fixed;left:0;right:0;bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;pointer-events:none;z-index:60}
+.anmx{margin:16px 0 8px;padding:14px;border:2px solid var(--ln);border-radius:22px;background:var(--card)}
+.anmx-h{display:flex;flex-direction:column;gap:2px}.anmx-h b{font-size:1.1rem}.anmx-h small{color:var(--mut)}
+.anmx-r{margin:14px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.anmx-r>sakuga-progress,.anmx-r>sakuga-tabs{flex:1 1 220px}
+.anmx-go{margin-top:8px}
+</style>
+<script id="anime-vfx">
+/* Anime theme: nạp Sakuga VFX (https://sakuga-vfx.vercel.app/gallery/) khi dùng chủ đề Anime */
+(function(){try{
+var R=document.documentElement,B='https://sakuga-vfx.vercel.app/',M='https://cdn.jsdelivr.net/gh/finktheartist/sakuga-vfx@main/',LS='animeVfx',LR='animeRate',
+FILES=['button/button.js','toast/toast.js','tabs/tabs.js','progress/progress.js','rating/rating.js','toggle/toggle.js'],pm=null,tb=null;
+function on(){try{return localStorage.getItem(LS)!=='0'}catch(e){return true}}
+function isA(){return /^anm/.test(R.dataset.skin||'')}
+function dkv(){return typeof s!='undefined'&&s&&s.dark?1:0}
+function lo(f){return new Promise(function(ok){var t=document.createElement('script');t.src=B+f;t.onload=ok;t.onerror=function(){var u=document.createElement('script');u.src=M+f;u.onload=ok;u.onerror=ok;document.head.appendChild(u)};document.head.appendChild(t)})}
+function ensure(){if(pm)return pm;pm=FILES.reduce(function(p,f){return p.then(function(){return lo(f)})},Promise.resolve());return pm}
+function def(n){return window.customElements&&customElements.whenDefined(n)}
+function mkT(){if(tb)return tb;if(!(window.customElements&&customElements.get('sakuga-toast')))return null;var w=document.createElement('div');w.id='skToastBox';w.innerHTML='<sakuga-toast duration="2.4"></sakuga-toast>';document.body.appendChild(w);tb=w.firstChild;return tb}
+var ot=window.toast;
+window.toast=function(t){try{if(isA()&&on()){var e=mkT();if(e&&typeof e.show==='function'){e.show(String(t==null?'':t));var o=document.getElementById('toast');if(o)o.style.display='none';return}}}catch(x){}return ot.apply(this,arguments)};
+function panel(){var a=isA();return '<section id="anmx" class="anmx"><div class="anmx-h"><b>🎌 Phòng VFX Anime</b><small>'+(a?'Hiệu ứng Sakuga đang chạy theo chủ đề Anime':'Chọn một chủ đề trong nhóm Anime ở trên để kích hoạt toast VFX')+'</small></div>'
++'<div class="anmx-r"><sakuga-toggle id="anmT" label="Bật VFX anime"></sakuga-toggle></div>'
++'<div class="anmx-r"><sakuga-tabs id="anmM" label="Chế độ"><option'+(dkv()?'':' selected')+'>☀️ Sáng</option><option'+(dkv()?' selected':'')+'>🌙 Tối</option></sakuga-tabs></div>'
++'<div class="anmx-r"><sakuga-button id="anmB">Thử ドン!</sakuga-button><sakuga-rating id="anmS" label="Bạn thích chủ đề này?"></sakuga-rating></div>'
++'<div class="anmx-r"><sakuga-progress id="anmP" label="Nạp năng lượng"></sakuga-progress><sakuga-button id="anmC" variant="secondary">Nạp</sakuga-button></div></section>'}
+function bind(){var p=document.getElementById('anmx');if(!p)return;var q=function(i){return p.querySelector(i)};
+ensure().then(function(){
+def('sakuga-toggle').then(function(){var t=q('#anmT');if(!t)return;t.checked=on();t.addEventListener('change',function(){var v=t.checked;if(v){try{localStorage.setItem(LS,'1')}catch(e){}toast('⚡ VFX anime: BẬT')}else{toast('VFX anime: TẮT');try{localStorage.setItem(LS,'0')}catch(e){}}})});
+def('sakuga-tabs').then(function(){var t=q('#anmM');if(!t)return;t.addEventListener('change',function(e){var i=e.detail&&e.detail.index;if(i!=null&&i!==dkv()&&typeof setDark==='function')setDark(i?1:0,null)})});
+def('sakuga-button').then(function(){var b=q('#anmB'),c=q('#anmC'),pr=q('#anmP');
+if(b)b.addEventListener('click',function(){toast('💥 ドン！Tuyệt chiêu!');setTimeout(function(){try{b.done()}catch(e){}},450)});
+if(c)c.addEventListener('click',function(){if(!pr||c._run)return;c._run=1;var v=0;try{pr.reset()}catch(e){}var iv=setInterval(function(){v=Math.min(1,v+.08+Math.random()*.08);try{pr.set(v)}catch(e){}if(v>=1){clearInterval(iv);setTimeout(function(){c._run=0},800)}},160)});
+if(pr)pr.addEventListener('sakuga:done',function(){toast('🔥 Đầy năng lượng!')})});
+def('sakuga-rating').then(function(){var r=q('#anmS');if(!r)return;try{r.value=+localStorage.getItem(LR)||0}catch(e){}r.addEventListener('change',function(){try{localStorage.setItem(LR,String(r.value))}catch(e){}toast('⭐ Cảm ơn bạn đã chấm '+r.value+'/5!')})})})}
+var ov=window.__skxView,op=window.__skxPost;
+if(typeof ov==='function')window.__skxView=function(){return ov.apply(this,arguments)+panel()};
+if(typeof op==='function')window.__skxPost=function(){var r=op.apply(this,arguments);try{bind()}catch(e){}return r};
+var last=R.dataset.skin||'';if(isA())ensure();
+new MutationObserver(function(){var c=R.dataset.skin||'';if(c===last)return;last=c;if(isA()){ensure().then(function(){if(on())toast('🎌 Chủ đề Anime — VFX bật!')})}}).observe(R,{attributes:true,attributeFilter:['data-skin']});
+}catch(e){console.warn('anime-vfx',e)}})();
+</script>
 <!-- ===== Justaseed v2: vẽ lại gian hàng + nâng cấp giao diện toàn game ===== -->
 <style id="skx-ui">
 body{background:var(--bg) radial-gradient(60% 36% at 100% 0,color-mix(in srgb,var(--pk) 55%,transparent),transparent 70%) fixed,radial-gradient(50% 30% at 0 100%,color-mix(in srgb,var(--g) 65%,transparent),transparent 72%) fixed}
